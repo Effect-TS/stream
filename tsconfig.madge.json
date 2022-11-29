@@ -4,8 +4,8 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "@effect/stm": ["./build/esm/index.js"],
-      "@effect/stm/*": ["./build/esm/*"]
+      "@effect/stream": ["./build/esm/index.js"],
+      "@effect/stream/*": ["./build/esm/*"]
     }
   },
   "include": ["./build/esm/**/*.js"]

@@ -13,8 +13,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@effect/stm/test": path.resolve(__dirname, "/test"),
-      "@effect/stm": path.resolve(__dirname, "/src")
+      "@effect/stream/test": path.resolve(__dirname, "/test"),
+      "@effect/stream": path.resolve(__dirname, "/src")
     }
   }
 })

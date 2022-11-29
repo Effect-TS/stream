@@ -1,3 +1,3 @@
 WIP.
 
-Docs: https://effect-ts.github.io/stm
+Docs: https://effect-ts.github.io/stream

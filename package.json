@@ -1,5 +1,5 @@
 {
-  "name": "@effect/stm",
+  "name": "@effect/stream",
   "version": "0.0.0",
   "publishConfig": {
     "access": "public",
@@ -7,14 +7,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Effect-TS/stm.git"
+    "url": "https://github.com/Effect-TS/stream.git"
   },
   "author": "Michael Arnaldi <ma@matechs.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Effect-TS/stm/issues"
+    "url": "https://github.com/Effect-TS/stream/issues"
   },
-  "homepage": "https://github.com/Effect-TS/stm",
+  "homepage": "https://github.com/Effect-TS/stream",
   "description": "Functional programming in TypeScript",
   "tags": [
     "typescript",

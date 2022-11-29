@@ -38,10 +38,10 @@
     "removeComments": false,
     "paths": {
       "@effect/io/*": ["./node_modules/@effect/io/src/*"],
-      "@effect/stm": ["./src/index.ts"],
-      "@effect/stm/test/*": ["./test/*"],
-      "@effect/stm/examples/*": ["./examples/*"],
-      "@effect/stm/*": ["./src/*"]
+      "@effect/stream": ["./src/index.ts"],
+      "@effect/stream/test/*": ["./test/*"],
+      "@effect/stream/examples/*": ["./examples/*"],
+      "@effect/stream/*": ["./src/*"]
     },
     "plugins": [
       {
