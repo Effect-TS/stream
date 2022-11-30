@@ -37,7 +37,6 @@
     "incremental": true,
     "removeComments": false,
     "paths": {
-      "@effect/io/*": ["./node_modules/@effect/io/src/*"],
       "@effect/stream": ["./src/index.ts"],
       "@effect/stream/test/*": ["./test/*"],
       "@effect/stream/examples/*": ["./examples/*"],
@@ -55,7 +54,7 @@
       {
         "name": "./plugins/tsPlugin.ts",
         "trace": { "exclude": ["src/**/*.ts", "test/**/*.ts"] },
-        "debug": { "include": ["examples/bench.ts"] }
+        "debug": { "include": ["examples/main.ts"] }
       }
     ],
     "tsPlusEnabled": false
