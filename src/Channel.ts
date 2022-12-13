@@ -791,6 +791,17 @@ export const fromHub: <Err, Done, Elem>(
 ) => Channel<never, unknown, unknown, unknown, Err, Elem, Done> = channel.fromHub
 
 /**
+ * Construct a `Channel` from a `Hub` within a scoped effect.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const fromHubScoped: <Err, Done, Elem>(
+  hub: Hub.Hub<Either.Either<Exit.Exit<Err, Done>, Elem>>
+) => Effect.Effect<Scope.Scope, never, Channel<never, unknown, unknown, unknown, Err, Elem, Done>> =
+  channel.fromHubScoped
+
+/**
  * Construct a `Channel` from an `Option`.
  *
  * @since 1.0.0
@@ -1194,6 +1205,28 @@ export const orDieWith: <OutErr>(
 ) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ) => Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone> = channel.orDieWith
+
+/**
+ * Returns a new channel that will perform the operations of this one, until
+ * failure, and then it will switch over to the operations of the specified
+ * fallback channel.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+export const orElse: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+  that: LazyArg<Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>>
+) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+) => Channel<
+  Env1 | Env,
+  InErr & InErr1,
+  InElem & InElem1,
+  InDone & InDone1,
+  OutErr1,
+  OutElem1 | OutElem,
+  OutDone1 | OutDone
+> = channel.orElse
 
 /**
  * Returns a new channel that pipes the output of this channel into the

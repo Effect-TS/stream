@@ -516,10 +516,10 @@ export const foldChannel = <
   OutDone2
 >(
   onError: (
-    oErr: OutErr
+    error: OutErr
   ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
   onSuccess: (
-    oErr: OutDone
+    done: OutDone
   ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
 ) => {
   return <Env, InErr, InElem, InDone, OutElem>(
@@ -576,6 +576,14 @@ export const fromHub = <Err, Done, Elem>(
   hub: Hub.Hub<Either.Either<Exit.Exit<Err, Done>, Elem>>
 ): Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done> => {
   return unwrapScoped(pipe(Hub.subscribe(hub), Effect.map(fromQueue)))
+}
+
+/** @internal */
+export const fromHubScoped = <Err, Done, Elem>(
+  hub: Hub.Hub<Either.Either<Exit.Exit<Err, Done>, Elem>>
+): Effect.Effect<Scope.Scope, never, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>> => {
+  const trace = getCallTrace()
+  return pipe(Hub.subscribe(hub), Effect.map(fromQueue), Effect.traced(trace))
 }
 
 /** @internal */
@@ -1637,6 +1645,23 @@ export const orDieWith = <OutErr>(f: (e: OutErr) => unknown) => {
         throw f(e)
       })
     ) as Channel.Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+}
+
+/** @internal */
+export const orElse = <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+  that: LazyArg<Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>>
+) => {
+  return <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ): Channel.Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem | OutElem1,
+    OutDone | OutDone1
+  > => pipe(self, catchAll(that))
 }
 
 /** @internal */
