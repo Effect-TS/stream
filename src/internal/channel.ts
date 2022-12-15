@@ -1677,7 +1677,7 @@ export const pipeToOrFail = <
 ) => {
   return <Env, InErr, InElem, InDone, OutErr>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> =>
+  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr | OutErr2, OutElem2, OutDone2> =>
     core.suspend(() => {
       let channelException: Channel.ChannelException<OutErr | OutErr2> | undefined = undefined
 

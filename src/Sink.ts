@@ -83,8 +83,7 @@ export const as: <Z2>(z: Z2) => <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => 
 export const collectAll: <In>() => Sink<never, never, In, never, Chunk.Chunk<In>> = internal.collectAll
 
 /**
- * A sink that collects first `n` elements into a chunk. Note that the `Chunk`
- * is preallocated and must fit in memory.
+ * A sink that collects first `n` elements into a chunk.
  *
  * @since 1.0.0
  * @category constructors
@@ -1301,9 +1300,17 @@ export const some: <In>(predicate: Predicate<In>) => Sink<never, never, In, In, 
  * @since 1.0.0
  * @category mutations
  */
-export const splitWhere: <In2>(
-  f: Predicate<In2>
-) => <R, E, In, L extends In2, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In & In2, In2, Z> = internal.splitWhere
+export const splitWhere: <In>(
+  f: Predicate<In>
+) => <R, E, L extends In, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, In, Z> = internal.splitWhere
+
+/**
+ * A sink that immediately ends with the specified value.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const succeed: <Z>(z: Z) => Sink<never, never, unknown, never, Z> = internal.succeed
 
 /**
  * A sink that sums incoming numeric values.
@@ -1334,6 +1341,14 @@ export const summarized: <R2, E2, Z2, Z3>(
  */
 export const suspend: <R, E, In, L, Z>(evaluate: LazyArg<Sink<R, E, In, L, Z>>) => Sink<R, E, In, L, Z> =
   internal.suspend
+
+/**
+ * A sink that immediately ends with the specified lazy value.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const sync: <Z>(evaluate: LazyArg<Z>) => Sink<never, never, unknown, never, Z> = internal.sync
 
 /**
  * A sink that takes the specified number of values.
