@@ -1508,52 +1508,62 @@ export const mergeWith = <
                 Env1,
                 OutErr,
                 Either.Either<OutDone, OutElem | OutElem1>
-              > = Fiber.join(state.left)
+              > = Effect.interruptible(Fiber.join(state.left))
               const rightJoin: Effect.Effect<
                 Env1,
                 OutErr1,
                 Either.Either<OutDone1, OutElem | OutElem1>
-              > = Fiber.join(state.right)
+              > = Effect.interruptible(Fiber.join(state.right))
               return unwrap(
                 pipe(
                   leftJoin,
                   Effect.raceWith(
                     rightJoin,
-                    (leftExit, _) =>
-                      handleSide(leftExit, state.right, pullL)(
-                        leftDone as (
-                          ex: Exit.Exit<OutErr | InErr, OutDone>
-                        ) => MergeDecision.MergeDecision<
-                          Env1 | Env,
-                          OutErr1,
-                          OutDone1,
-                          OutErr2 | OutErr3,
-                          OutDone2 | OutDone3
-                        >,
-                        (left, right) =>
-                          mergeState.BothRunning(
-                            left as Fiber.Fiber<OutErr, Either.Either<OutDone, OutElem1 | OutElem>>,
-                            right
-                          ),
-                        (f) => mergeState.LeftDone(f)
+                    (leftExit, rf) =>
+                      pipe(
+                        Fiber.interrupt(rf),
+                        Effect.zipRight(
+                          handleSide(leftExit, state.right, pullL)(
+                            leftDone as (
+                              ex: Exit.Exit<OutErr | InErr, OutDone>
+                            ) => MergeDecision.MergeDecision<
+                              Env1 | Env,
+                              OutErr1,
+                              OutDone1,
+                              OutErr2 | OutErr3,
+                              OutDone2 | OutDone3
+                            >,
+                            (left, right) =>
+                              mergeState.BothRunning(
+                                left as Fiber.Fiber<OutErr, Either.Either<OutDone, OutElem1 | OutElem>>,
+                                right
+                              ),
+                            (f) => mergeState.LeftDone(f)
+                          )
+                        )
                       ),
-                    (rightExit, _) =>
-                      handleSide(rightExit, state.left, pullR)(
-                        rightDone as (
-                          ex: Exit.Exit<InErr1 | OutErr1, OutDone1>
-                        ) => MergeDecision.MergeDecision<
-                          Env1 | Env,
-                          OutErr,
-                          OutDone,
-                          OutErr2 | OutErr3,
-                          OutDone2 | OutDone3
-                        >,
-                        (left, right) =>
-                          mergeState.BothRunning(
-                            right,
-                            left as Fiber.Fiber<OutErr1, Either.Either<OutDone1, OutElem | OutElem1>>
-                          ),
-                        (f) => mergeState.RightDone(f)
+                    (rightExit, lf) =>
+                      pipe(
+                        Fiber.interrupt(lf),
+                        Effect.zipRight(
+                          handleSide(rightExit, state.left, pullR)(
+                            rightDone as (
+                              ex: Exit.Exit<InErr1 | OutErr1, OutDone1>
+                            ) => MergeDecision.MergeDecision<
+                              Env1 | Env,
+                              OutErr,
+                              OutDone,
+                              OutErr2 | OutErr3,
+                              OutDone2 | OutDone3
+                            >,
+                            (left, right) =>
+                              mergeState.BothRunning(
+                                right,
+                                left as Fiber.Fiber<OutErr1, Either.Either<OutDone1, OutElem | OutElem1>>
+                              ),
+                            (f) => mergeState.RightDone(f)
+                          )
+                        )
                       )
                   )
                 )
@@ -1677,7 +1687,7 @@ export const pipeToOrFail = <
 ) => {
   return <Env, InErr, InElem, InDone, OutErr>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> =>
+  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr | OutErr2, OutElem2, OutDone2> =>
     core.suspend(() => {
       let channelException: Channel.ChannelException<OutErr | OutErr2> | undefined = undefined
 

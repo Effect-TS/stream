@@ -71,14 +71,8 @@ const collectAllLoop = <In>(
 /** @internal */
 export const collectAllN = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> => {
   return pipe(
-    fromEffect(Effect.sync(() => new Array<In>(n))),
-    flatMap((builder) =>
-      foldUntil<Array<In>, In>(builder, n, (builder, input) => {
-        builder.push(input)
-        return builder
-      })
-    ),
-    map(Chunk.unsafeFromArray)
+    fromEffect(Effect.sync(() => Chunk.empty<In>())),
+    flatMap((builder) => foldUntil<Chunk.Chunk<In>, In>(builder, n, (chunk, input) => pipe(chunk, Chunk.append(input))))
   )
 }
 
@@ -426,7 +420,7 @@ const dropUntilEffectReader = <In, R, E>(
     (input: Chunk.Chunk<In>) =>
       pipe(
         input,
-        Effect.dropWhile((input) => Effect.negate(predicate(input))),
+        Effect.dropUntil(predicate),
         Effect.map((leftover) => {
           const more = Chunk.isEmpty(leftover)
           return more ?
@@ -619,6 +613,45 @@ export const fold = <S, In>(
   f: (z: S, input: In) => S
 ): Sink.Sink<never, never, In, In, S> => suspend(() => new SinkImpl(foldReader(s, contFn, f)))
 
+// def fold[In, S](
+//   z: => S
+// )(contFn: S => Boolean)(f: (S, In) => S)(implicit trace: Trace): ZSink[Any, Nothing, In, In, S] =
+//   ZSink.suspend {
+//     def foldChunkSplit(z: S, chunk: Chunk[In])(
+//       contFn: S => Boolean
+//     )(f: (S, In) => S): (S, Chunk[In]) = {
+//       def fold(s: S, chunk: Chunk[In], idx: Int, len: Int): (S, Chunk[In]) =
+//         if (idx == len) {
+//           (s, Chunk.empty)
+//         } else {
+//           val s1 = f(s, chunk(idx))
+//           if (contFn(s1)) {
+//             fold(s1, chunk, idx + 1, len)
+//           } else {
+//             (s1, chunk.drop(idx + 1))
+//           }
+//         }
+
+//       fold(z, chunk, 0, chunk.length)
+//     }
+
+//     def reader(s: S): ZChannel[Any, ZNothing, Chunk[In], Any, Nothing, Chunk[In], S] =
+//       if (!contFn(s)) ZChannel.succeedNow(s)
+//       else
+//         ZChannel.readWith(
+//           (in: Chunk[In]) => {
+//             val (nextS, leftovers) = foldChunkSplit(s, in)(contFn)(f)
+
+//             if (leftovers.nonEmpty) ZChannel.write(leftovers).as(nextS)
+//             else reader(nextS)
+//           },
+//           (err: ZNothing) => ZChannel.fail(err),
+//           (x: Any) => ZChannel.succeedNow(s)
+//         )
+
+//     new ZSink(reader(z))
+//   }
+
 /** @internal */
 const foldReader = <S, In>(
   s: S,
@@ -629,15 +662,15 @@ const foldReader = <S, In>(
     return core.succeedNow(s)
   }
   return core.readWith(
-    (input) => {
-      const [nextS, leftovers] = foldChunkSplit(s, input, contFn, f)
+    (input: Chunk.Chunk<In>) => {
+      const [nextS, leftovers] = foldChunkSplit(s, input, contFn, f, 0, input.length)
       if (Chunk.isNonEmpty(leftovers)) {
         return pipe(core.write(leftovers), channel.as(nextS))
       }
       return foldReader(nextS, contFn, f)
     },
     core.fail,
-    (done) => core.succeedNow(done as S)
+    () => core.succeedNow(s)
   )
 }
 
@@ -646,24 +679,16 @@ const foldChunkSplit = <S, In>(
   s: S,
   chunk: Chunk.Chunk<In>,
   contFn: Predicate<S>,
-  f: (z: S, input: In) => S
-): readonly [S, Chunk.Chunk<In>] => foldChunkSplitInternal(s, chunk, 0, chunk.length, contFn, f)
-
-/** @internal */
-const foldChunkSplitInternal = <S, In>(
-  s: S,
-  chunk: Chunk.Chunk<In>,
+  f: (z: S, input: In) => S,
   index: number,
-  length: number,
-  contFn: Predicate<S>,
-  f: (z: S, input: In) => S
+  length: number
 ): readonly [S, Chunk.Chunk<In>] => {
   if (index === length) {
     return [s, Chunk.empty()]
   }
   const s1 = f(s, pipe(chunk, Chunk.unsafeGet(index)))
   if (contFn(s1)) {
-    return foldChunkSplitInternal(s1, chunk, index + 1, length, contFn, f)
+    return foldChunkSplit(s1, chunk, contFn, f, index + 1, length)
   }
   return [s1, pipe(chunk, Chunk.drop(index + 1))] as const
 }
@@ -1266,11 +1291,7 @@ export const fromQueue = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never,
 /** @internal */
 export const fromQueueWithShutdown = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
   pipe(
-    Effect.acquireRelease(
-      Effect.succeed(queue),
-      // TODO: remove cast
-      (queue) => Queue.shutdown(queue as Queue.Queue<In>)
-    ),
+    Effect.acquireRelease(Effect.succeed(queue), Queue.shutdown),
     Effect.map(fromQueue),
     unwrapScoped
   )
@@ -1501,7 +1522,7 @@ export const raceWith = <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
         reader,
         channel.mergeWith(
           writer,
-          () => mergeDecision.Await(Effect.done),
+          () => mergeDecision.Await((exit) => Effect.done(exit)),
           (done) => mergeDecision.Done(Effect.done(done))
         )
       )
@@ -1561,13 +1582,13 @@ export const some = <In>(predicate: Predicate<In>): Sink.Sink<never, never, In, 
   fold(false, (bool) => !bool, (acc, input) => acc || predicate(input))
 
 /** @internal */
-export const splitWhere = <In2>(f: Predicate<In2>) => {
-  return <R, E, In, L extends In2, Z>(self: Sink.Sink<R, E, In, L, Z>): Sink.Sink<R, E, In & In2, In2, Z> => {
+export const splitWhere = <In>(f: Predicate<In>) => {
+  return <R, E, L extends In, Z>(self: Sink.Sink<R, E, In, L, Z>): Sink.Sink<R, E, In, In, Z> => {
     const newChannel = pipe(
-      core.fromEffect(Ref.make(Chunk.empty<In & In2>())),
+      core.fromEffect(Ref.make(Chunk.empty<In>())),
       core.flatMap((ref) =>
         pipe(
-          splitWhereSplitter(false, ref, f),
+          splitWhereSplitter<E, In>(false, ref, f),
           channel.pipeToOrFail(self.channel),
           core.collectElements,
           core.flatMap(([leftovers, z]) =>
@@ -1575,7 +1596,7 @@ export const splitWhere = <In2>(f: Predicate<In2>) => {
               core.fromEffect(Ref.get(ref)),
               core.flatMap((leftover) =>
                 pipe(
-                  core.write(pipe(leftover, Chunk.concat(Chunk.flatten(leftovers)))),
+                  core.write<Chunk.Chunk<In>>(pipe(leftover, Chunk.concat(Chunk.flatten(leftovers)))),
                   channel.zipRight(core.succeed(z))
                 )
               )
@@ -1597,26 +1618,45 @@ const splitWhereSplitter = <E, A>(
   core.readWithCause(
     (input) => {
       if (Chunk.isEmpty(input)) {
-        return core.suspend(() => splitWhereSplitter<E, A>(written, leftovers, f))
+        return splitWhereSplitter<E, A>(written, leftovers, f)
       }
       if (written) {
-        const index = pipe(input, Chunk.findFirstIndex(f))
-        if (Option.isNone(index)) {
-          return pipe(core.write(input), core.flatMap(() => splitWhereSplitter<E, A>(true, leftovers, f)))
+        const index = indexWhere(input, f)
+        if (index === -1) {
+          return pipe(core.write(input), channel.zipRight(splitWhereSplitter<E, A>(true, leftovers, f)))
         }
-        const [left, right] = pipe(input, Chunk.splitAt(index.value))
-        return pipe(core.write(left), core.flatMap(() => core.fromEffect(pipe(leftovers, Ref.set(right)))))
+        const [left, right] = pipe(input, Chunk.splitAt(index))
+        return pipe(core.write(left), channel.zipRight(core.fromEffect(pipe(leftovers, Ref.set(right)))))
       }
-      const index = pipe(input, Chunk.drop(1), Chunk.findFirstIndex(f))
-      if (Option.isNone(index)) {
-        return pipe(core.write(input), core.flatMap(() => splitWhereSplitter<E, A>(true, leftovers, f)))
+      const index = indexWhere(input, f, 1)
+      if (index === -1) {
+        return pipe(core.write(input), channel.zipRight(splitWhereSplitter<E, A>(true, leftovers, f)))
       }
-      const [left, right] = pipe(input, Chunk.splitAt(Math.max(index.value, 1)))
-      return pipe(core.write(left), core.flatMap(() => core.fromEffect(pipe(leftovers, Ref.set(right)))))
+      const [left, right] = pipe(input, Chunk.splitAt(Math.max(index, 1)))
+      return pipe(core.write(left), channel.zipRight(core.fromEffect(pipe(leftovers, Ref.set(right)))))
     },
-    (cause) => core.failCause(cause),
+    core.failCause,
     core.succeed
   )
+
+/** @internal */
+const indexWhere = <A>(self: Chunk.Chunk<A>, predicate: Predicate<A>, from = 0): number => {
+  const iterator = self[Symbol.iterator]()
+  let index = 0
+  let result = -1
+  let next: IteratorResult<A, any>
+  while (result < 0 && (next = iterator.next()) && !next.done) {
+    const a = next.value
+    if (index >= from && predicate(a)) {
+      result = index
+    }
+    index = index + 1
+  }
+  return result
+}
+
+/** @internal */
+export const succeed = <Z>(z: Z): Sink.Sink<never, never, unknown, never, Z> => new SinkImpl(core.succeed(z))
 
 /** @internal */
 export const sum = (): Sink.Sink<never, never, number, never, number> => foldLeft(0, (a, b) => a + b)
@@ -1648,6 +1688,10 @@ export const summarized = <R2, E2, Z2, Z3>(
 /** @internal */
 export const suspend = <R, E, In, L, Z>(evaluate: LazyArg<Sink.Sink<R, E, In, L, Z>>): Sink.Sink<R, E, In, L, Z> =>
   new SinkImpl(core.suspend(() => evaluate().channel))
+
+/** @internal */
+export const sync = <Z>(evaluate: LazyArg<Z>): Sink.Sink<never, never, unknown, never, Z> =>
+  new SinkImpl(core.sync(evaluate))
 
 /** @internal */
 export const take = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> =>
@@ -1784,3 +1828,10 @@ export const zipWithPar = <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     )
   }
 }
+
+// Circular with Channel
+
+/** @internal */
+export const channelToSink = <Env, InErr, InElem, OutErr, OutElem, OutDone>(
+  self: Channel.Channel<Env, InErr, Chunk.Chunk<InElem>, unknown, OutErr, Chunk.Chunk<OutElem>, OutDone>
+): Sink.Sink<Env, OutErr, InElem, OutElem, OutDone> => new SinkImpl(self)

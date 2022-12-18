@@ -18,16 +18,16 @@ import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRe
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import * as channel from "@effect/stream/internal/channel"
 import * as core from "@effect/stream/internal/core"
+import * as sink from "@effect/stream/internal/sink"
+import * as stream from "@effect/stream/internal/stream"
+import type * as Sink from "@effect/stream/Sink"
+import type * as Stream from "@effect/stream/Stream"
 import type * as Chunk from "@fp-ts/data/Chunk"
 import type * as Context from "@fp-ts/data/Context"
 import type * as Either from "@fp-ts/data/Either"
 import type { LazyArg } from "@fp-ts/data/Function"
 import type * as Option from "@fp-ts/data/Option"
 import type { Predicate } from "@fp-ts/data/Predicate"
-
-// TODO:
-// - toSink
-// - toStream
 
 /**
  * @since 1.0.0
@@ -1255,7 +1255,7 @@ export const pipeToOrFail: <Env2, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
   that: Channel<Env2, never, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
 ) => <Env, InErr, InElem, InDone, OutErr>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> = channel.pipeToOrFail
+) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr | OutErr2, OutElem2, OutDone2> = channel.pipeToOrFail
 
 /**
  * Provides the channel with its required environment, which eliminates its
@@ -1557,6 +1557,25 @@ export const toPull: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
 export const toQueue: <Err, Done, Elem>(
   queue: Queue.Enqueue<Either.Either<Exit.Exit<Err, Done>, Elem>>
 ) => Channel<never, Err, Elem, Done, never, never, unknown> = channel.toQueue
+
+/** Converts this channel to a `Sink`.
+ *
+ * @since 1.0.0
+ * @category destructors
+ */
+export const toSink: <Env, InErr, InElem, OutErr, OutElem, OutDone>(
+  self: Channel<Env, InErr, Chunk.Chunk<InElem>, unknown, OutErr, Chunk.Chunk<OutElem>, OutDone>
+) => Sink.Sink<Env, OutErr, InElem, OutElem, OutDone> = sink.channelToSink
+
+/**
+ * Converts this channel to a `Stream`.
+ *
+ * @since 1.0.0
+ * @category destructors
+ */
+export const toStream: <Env, OutErr, OutElem, OutDone>(
+  self: Channel<Env, unknown, unknown, unknown, OutErr, Chunk.Chunk<OutElem>, OutDone>
+) => Stream.Stream<Env, OutErr, OutElem> = stream.channelToStream
 
 /**
  * @since 1.0.0
