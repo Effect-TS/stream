@@ -204,15 +204,16 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                 )
                 executor._input = this._input
 
+                const channel = this._currentChannel
                 this._activeSubexecutor = new Subexecutor.PullFromUpstream(
                   executor,
-                  this._currentChannel.k,
+                  (value) => channel.k(value),
                   undefined,
                   [],
-                  this._currentChannel.combineInners,
-                  this._currentChannel.combineAll,
-                  this._currentChannel.onPull,
-                  this._currentChannel.onEmit
+                  (x, y) => channel.combineInners(x, y),
+                  (x, y) => channel.combineAll(x, y),
+                  (request) => channel.onPull(request),
+                  (value) => channel.onEmit(value)
                 )
 
                 this._closeLastSubstream = undefined

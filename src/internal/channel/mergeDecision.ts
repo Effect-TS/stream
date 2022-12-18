@@ -38,14 +38,14 @@ export type Op<OpCode extends number, Body = {}> =
 /** @internal */
 export interface Done extends
   Op<OpCodes.OP_DONE, {
-    readonly effect: Effect.Effect<unknown, unknown, unknown>
+    readonly effect: Effect.Effect<never, never, never>
   }>
 {}
 
 /** @internal */
 export interface Await extends
   Op<OpCodes.OP_AWAIT, {
-    readonly f: (exit: Exit.Exit<unknown, unknown>) => Effect.Effect<unknown, unknown, unknown>
+    readonly f: (exit: Exit.Exit<unknown, unknown>) => Effect.Effect<never, never, never>
   }>
 {}
 
@@ -98,10 +98,10 @@ export const match = <R, E0, Z0, E, Z, Z2>(
     const op = self as Primitive
     switch (op.op) {
       case OpCodes.OP_DONE: {
-        return onDone(op.effect as any)
+        return onDone(op.effect)
       }
       case OpCodes.OP_AWAIT: {
-        return onAwait(op.f as any)
+        return onAwait(op.f)
       }
     }
   }

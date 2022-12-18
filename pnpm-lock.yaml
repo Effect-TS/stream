@@ -16,7 +16,7 @@ specifiers:
   '@changesets/cli': ^2.25.2
   '@effect-ts/build-utils': 0.40.3
   '@effect-ts/core': ^0.60.2
-  '@effect/io': ~0.0.38
+  '@effect/io': ~0.0.39
   '@effect/language-service': 0.0.15
   '@effect/stm': ~0.0.3
   '@fp-ts/core': ~0.0.11
@@ -59,7 +59,7 @@ specifiers:
   vitest: 0.25.8
 
 dependencies:
-  '@effect/io': 0.0.38
+  '@effect/io': 0.0.39
   '@effect/stm': 0.0.3
   '@fp-ts/core': 0.0.11
   '@fp-ts/data': 0.0.26
@@ -620,8 +620,8 @@ packages:
     resolution: {integrity: sha512-gGnOCvDv6829EeeC+NgTnwIt4XxclR0KqrG7BRemmNX5cm75cF0CKiuEB/o902wjAlt+MdrxTtFC+XsYdLnxzA==}
     dev: true
 
-  /@effect/io/0.0.38:
-    resolution: {integrity: sha512-LXCSuNCldsFYEAIHAC/urgplG8uqcv1TNsw2N/4je+WG3+kIoE2e20K43DZdkeLxaHLjNRn7/fhkRGnHolpkJg==}
+  /@effect/io/0.0.39:
+    resolution: {integrity: sha512-JVcKYevmppJc6FIq3GakfNM+UUYAac+FgahTxNvdeCyu/JayL+Ly69HWSo7RU/19mqSdL5Q8eFk7ktUCbANeUQ==}
     dependencies:
       '@fp-ts/core': 0.0.11
       '@fp-ts/data': 0.0.26
@@ -637,7 +637,7 @@ packages:
   /@effect/stm/0.0.3:
     resolution: {integrity: sha512-jDslezcHubjEOuKIjB1LW27hGP+6b1X9xU8rcQ08D6ebsQ1+hdPq+UIj3R3ffw+Mu7ompxXmjc6VXEMMLe1sOA==}
     dependencies:
-      '@effect/io': 0.0.38
+      '@effect/io': 0.0.39
       '@fp-ts/core': 0.0.11
       '@fp-ts/data': 0.0.26
     dev: false
