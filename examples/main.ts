@@ -1,17 +1,31 @@
 import * as Effect from "@effect/io/Effect"
-import * as Logger from "@effect/io/Logger"
-import * as LogLevel from "@effect/io/Logger/Level"
-import * as Channel from "@effect/stream/Channel"
-import { pipe } from "@fp-ts/data/Function"
+import * as Sink from "@effect/stream/Sink"
+import * as Stream from "@effect/stream/Stream"
+import * as Chunk from "@fp-ts/data/Chunk"
+import { constVoid, pipe } from "@fp-ts/data/Function"
+import * as Option from "@fp-ts/data/Option"
 
-const channel = pipe(
-  Channel.writeAll(1, 2, 3),
-  Channel.concatMap((i) => Channel.writeAll(i, i))
-)
+const findSink = <A>(a: A): Sink.Sink<never, void, A, A, A> =>
+  pipe(
+    Sink.fold<Option.Option<A>, A>(
+      Option.none,
+      Option.isNone,
+      (_, v) => (a === v ? Option.some(a) : Option.none)
+    ),
+    Sink.mapEffect(Option.match(() => Effect.failSync(constVoid), Effect.succeed))
+  )
 
-const program = pipe(
-  Channel.runCollect(channel),
-  Effect.provideLayer(Logger.console(LogLevel.Debug))
-)
+const program = Effect.gen(function*($) {
+  const chunk = Chunk.make(0, 1, 2, 20)
+  const sink = findSink(20)
+  const result = yield* $(pipe(
+    Stream.fromChunk(chunk),
+    Stream.run(pipe(sink, Sink.zipPar(sink))),
+    Effect.either
+  ))
+  return result
+})
 
-Effect.unsafeFork(program)
+Effect.unsafeRunPromiseExit(program).then((exit) => {
+  console.log(exit)
+})

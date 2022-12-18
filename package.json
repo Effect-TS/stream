@@ -69,7 +69,7 @@
     "@changesets/cli": "^2.25.2",
     "@effect-ts/build-utils": "0.40.3",
     "@effect-ts/core": "^0.60.2",
-    "@effect/language-service": "0.0.13",
+    "@effect/language-service": "0.0.15",
     "@repo-tooling/eslint-plugin-dprint": "^0.0.4",
     "@rollup/pluginutils": "^5.0.2",
     "@types/benchmark": "^2.1.2",

@@ -17,7 +17,7 @@ specifiers:
   '@effect-ts/build-utils': 0.40.3
   '@effect-ts/core': ^0.60.2
   '@effect/io': ~0.0.38
-  '@effect/language-service': 0.0.13
+  '@effect/language-service': 0.0.15
   '@effect/stm': ~0.0.3
   '@fp-ts/core': ~0.0.11
   '@fp-ts/data': ~0.0.26
@@ -72,7 +72,7 @@ devDependencies:
   '@changesets/cli': 2.25.2
   '@effect-ts/build-utils': 0.40.3_wzvflwv62ngf22ppz3frldq37m_smskbqsf3q6kbozdrpluio47kq
   '@effect-ts/core': 0.60.4
-  '@effect/language-service': 0.0.13
+  '@effect/language-service': 0.0.15
   '@repo-tooling/eslint-plugin-dprint': 0.0.4_delwud2hnnlzcq6m6ihqj3umw4
   '@rollup/pluginutils': 5.0.2
   '@types/benchmark': 2.1.2
@@ -627,8 +627,8 @@ packages:
       '@fp-ts/data': 0.0.26
     dev: false
 
-  /@effect/language-service/0.0.13:
-    resolution: {integrity: sha512-OU/DVn8NP4pVZ3pxEk2quVedgt9vuD7L3A5w3pgXP5H7bKFLnw6OaAN3dr5PGmjwyrmCroABt/cbYrBvOIe4bg==}
+  /@effect/language-service/0.0.15:
+    resolution: {integrity: sha512-ELYL6h56W2TjTd13AiddZgbZjZFaa0J6MpnLpM26XlxYIR66j5tmdNFW67dtJxFbieoFS33+E713E5hrkg8MKg==}
     dependencies:
       '@fp-ts/core': 0.0.11
       '@fp-ts/data': 0.0.26
