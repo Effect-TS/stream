@@ -613,45 +613,6 @@ export const fold = <S, In>(
   f: (z: S, input: In) => S
 ): Sink.Sink<never, never, In, In, S> => suspend(() => new SinkImpl(foldReader(s, contFn, f)))
 
-// def fold[In, S](
-//   z: => S
-// )(contFn: S => Boolean)(f: (S, In) => S)(implicit trace: Trace): ZSink[Any, Nothing, In, In, S] =
-//   ZSink.suspend {
-//     def foldChunkSplit(z: S, chunk: Chunk[In])(
-//       contFn: S => Boolean
-//     )(f: (S, In) => S): (S, Chunk[In]) = {
-//       def fold(s: S, chunk: Chunk[In], idx: Int, len: Int): (S, Chunk[In]) =
-//         if (idx == len) {
-//           (s, Chunk.empty)
-//         } else {
-//           val s1 = f(s, chunk(idx))
-//           if (contFn(s1)) {
-//             fold(s1, chunk, idx + 1, len)
-//           } else {
-//             (s1, chunk.drop(idx + 1))
-//           }
-//         }
-
-//       fold(z, chunk, 0, chunk.length)
-//     }
-
-//     def reader(s: S): ZChannel[Any, ZNothing, Chunk[In], Any, Nothing, Chunk[In], S] =
-//       if (!contFn(s)) ZChannel.succeedNow(s)
-//       else
-//         ZChannel.readWith(
-//           (in: Chunk[In]) => {
-//             val (nextS, leftovers) = foldChunkSplit(s, in)(contFn)(f)
-
-//             if (leftovers.nonEmpty) ZChannel.write(leftovers).as(nextS)
-//             else reader(nextS)
-//           },
-//           (err: ZNothing) => ZChannel.fail(err),
-//           (x: Any) => ZChannel.succeedNow(s)
-//         )
-
-//     new ZSink(reader(z))
-//   }
-
 /** @internal */
 const foldReader = <S, In>(
   s: S,

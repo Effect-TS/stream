@@ -950,8 +950,9 @@ export const mapOutEffect: <OutElem, Env1, OutErr1, OutElem1>(
  * @since 1.0.0
  * @category mapping
  */
-export const mapOutEffectPar: <OutElem, Env1, OutErr1, OutElem1>(
-  n: number,
+export const mapOutEffectPar: (
+  n: number
+) => <OutElem, Env1, OutErr1, OutElem1>(
   f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>
 ) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
@@ -961,7 +962,11 @@ export const mapOutEffectPar: <OutElem, Env1, OutErr1, OutElem1>(
  * @since 1.0.0
  * @category mutations
  */
-export const mergeAll: <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
+export const mergeAll: (
+  n: number,
+  bufferSize?: number,
+  mergeStrategy?: MergeStrategy.MergeStrategy
+) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
   channels: Channel<
     Env,
     InErr,
@@ -970,10 +975,7 @@ export const mergeAll: <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDon
     OutErr,
     Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem, unknown>,
     unknown
-  >,
-  n: number,
-  bufferSize?: number,
-  mergeStrategy?: MergeStrategy.MergeStrategy
+  >
 ) => Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem, unknown> =
   channel.mergeAll
 
@@ -1029,20 +1031,11 @@ export const mergeAllUnboundedWith: <
  * @since 1.0.0
  * @category mutations
  */
-export const mergeAllWith: <
-  Env,
-  Env1,
-  InErr,
-  InErr1,
-  InElem,
-  InElem1,
-  InDone,
-  InDone1,
-  OutErr,
-  OutErr1,
-  OutElem,
-  OutDone
->(
+export const mergeAllWith: (
+  n: number,
+  bufferSize?: number,
+  mergeStrategy?: MergeStrategy.MergeStrategy
+) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem, OutDone>(
   channels: Channel<
     Env,
     InErr,
@@ -1052,10 +1045,7 @@ export const mergeAllWith: <
     Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem, OutDone>,
     OutDone
   >,
-  n: number,
-  f: (o1: OutDone, o2: OutDone) => OutDone,
-  bufferSize?: number,
-  mergeStrategy?: MergeStrategy.MergeStrategy
+  f: (o1: OutDone, o2: OutDone) => OutDone
 ) => Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem, OutDone> =
   channel.mergeAllWith
 
@@ -1072,11 +1062,12 @@ export const mergeAllWith: <
  * @since 1.0.0
  * @category mapping
  */
-export const mergeMap: <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+export const mergeMap: (
   n: number,
-  f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
   bufferSize?: number,
   mergeStrategy?: MergeStrategy.MergeStrategy
+) => <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+  f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>
 ) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown> =
