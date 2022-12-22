@@ -3476,6 +3476,7 @@ export const toHub: (
  * finished, or with Some error if it fails, otherwise it returns a chunk of
  * the stream's output.
  *
+ * @macro traced
  * @since 1.0.0
  * @category destructors
  */

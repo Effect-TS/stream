@@ -391,7 +391,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       }
     }
     this.storeInProgressFinalizer(effect)
-    return pipe(effect, Effect.flatMap(Effect.done), Effect.traced(trace)) as Effect.Effect<Env, never, unknown>
+    return pipe(effect, Effect.flatMap(Effect.done)).traced(trace) as Effect.Effect<Env, never, unknown>
   }
 
   popNextFinalizers(): Array<Continuation.ContinuationFinalizer<Env, unknown, unknown>> {
@@ -419,9 +419,9 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       const effect = currInput.close(exit)
       return effect === undefined ?
         effect :
-        pipe(effect, Effect.traced(trace))
+        effect.traced(trace)
     }
-    return pipe(Effect.unit(), Effect.traced(trace))
+    return Effect.unit().traced(trace)
   }
 
   /** @macro traced */
@@ -464,9 +464,8 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       Effect.zip(Effect.exit(ifNotNull(closeSelf))),
       Effect.map(([[exit1, exit2], exit3]) => pipe(exit1, Exit.zipRight(exit2), Exit.zipRight(exit3))),
       Effect.uninterruptible,
-      Effect.flatMap(Effect.done),
-      Effect.traced(trace)
-    )
+      Effect.flatMap(Effect.done)
+    ).traced(trace)
   }
 
   doneSucceed(value: unknown): ChannelState.ChannelState<Env, unknown> | undefined {
@@ -625,8 +624,8 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     )
     this._activeSubexecutor = undefined
     return state === undefined ?
-      pipe(Effect.unit(), Effect.traced(trace)) :
-      pipe(ChannelState.effect(state), Effect.traced(trace))
+      Effect.unit().traced(trace) :
+      ChannelState.effect(state).traced(trace)
   }
 
   finishSubexecutorWithCloseEffect(
@@ -1023,8 +1022,8 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 const ifNotNull = <Env>(effect: Effect.Effect<Env, never, unknown> | undefined): Effect.Effect<Env, never, unknown> => {
   const trace = getCallTrace()
   return effect !== undefined ?
-    pipe(effect, Effect.traced(trace)) :
-    pipe(Effect.unit(), Effect.traced(trace))
+    effect.traced(trace) :
+    Effect.unit().traced(trace)
 }
 
 /**
@@ -1043,9 +1042,8 @@ const runFinalizers = <Env>(
     finalizers.map((cont) => cont.finalizer),
     Effect.forEach((fin) => Effect.exit(fin(exit))),
     Effect.map((exits) => pipe(Exit.collectAll(exits), Option.getOrElse(() => Exit.unit()))),
-    Effect.flatMap((exit) => Effect.done(exit as Exit.Exit<never, unknown>)),
-    Effect.traced(trace)
-  )
+    Effect.flatMap((exit) => Effect.done(exit as Exit.Exit<never, unknown>))
+  ).traced(trace)
 }
 
 /**
@@ -1074,49 +1072,36 @@ export const readUpstream = <R, E, E2, A>(
           }
           return pipe(
             emitEffect as Effect.Effect<never, never, void>,
-            Effect.foldCauseEffect(onFailure, onSuccess),
-            Effect.traced(trace)
-          )
+            Effect.foldCauseEffect(onFailure, onSuccess)
+          ).traced(trace)
         }
         if (emitEffect === undefined) {
-          return pipe(
-            Effect.suspendSucceed(() => read()),
-            Effect.traced(trace)
-          )
+          return Effect.suspendSucceed(() => read()).traced(trace)
         }
         return pipe(
           emitEffect as Effect.Effect<never, never, void>,
-          Effect.foldCauseEffect(onFailure, () => read()),
-          Effect.traced(trace)
-        )
+          Effect.foldCauseEffect(onFailure, () => read())
+        ).traced(trace)
       }
 
       case ChannelStateOpCodes.OP_DONE: {
         const doneEffect = current.onDone(current.upstream.getDone())
         if (readStack.length === 0) {
           if (doneEffect === undefined) {
-            return pipe(
-              Effect.suspendSucceed(onSuccess),
-              Effect.traced(trace)
-            )
+            return Effect.suspendSucceed(onSuccess).traced(trace)
           }
           return pipe(
             doneEffect as Effect.Effect<never, never, void>,
-            Effect.foldCauseEffect(onFailure, () => onSuccess()),
-            Effect.traced(trace)
-          )
+            Effect.foldCauseEffect(onFailure, () => onSuccess())
+          ).traced(trace)
         }
         if (doneEffect === undefined) {
-          return pipe(
-            Effect.suspendSucceed(() => read()),
-            Effect.traced(trace)
-          )
+          return Effect.suspendSucceed(() => read()).traced(trace)
         }
         return pipe(
           doneEffect as Effect.Effect<never, never, void>,
-          Effect.foldCauseEffect(onFailure, () => read()),
-          Effect.traced(trace)
-        )
+          Effect.foldCauseEffect(onFailure, () => read())
+        ).traced(trace)
       }
 
       case ChannelStateOpCodes.OP_FROM_EFFECT: {
@@ -1129,18 +1114,14 @@ export const readUpstream = <R, E, E2, A>(
               return doneEffect === undefined ? Effect.unit() : doneEffect
             })
           ),
-          Effect.foldCauseEffect(onFailure, () => read()),
-          Effect.traced(trace)
-        )
+          Effect.foldCauseEffect(onFailure, () => read())
+        ).traced(trace)
       }
 
       case ChannelStateOpCodes.OP_READ: {
         readStack.unshift(current)
         readStack.unshift(state)
-        return pipe(
-          Effect.suspendSucceed(() => read()),
-          Effect.traced(trace)
-        )
+        return Effect.suspendSucceed(() => read()).traced(trace)
       }
     }
   }
@@ -1152,11 +1133,7 @@ export const run = <Env, InErr, InDone, OutErr, OutDone>(
   self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
 ): Effect.Effect<Env, OutErr, OutDone> => {
   const trace = getCallTrace()
-  return pipe(
-    runScoped(self),
-    Effect.scoped,
-    Effect.traced(trace)
-  )
+  return pipe(runScoped(self), Effect.scoped).traced(trace)
 }
 
 /** @internal */

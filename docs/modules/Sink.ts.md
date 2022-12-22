@@ -877,7 +877,9 @@ Creates a sink from a `Channel`.
 **Signature**
 
 ```ts
-export declare const fromChannel: <R, E, In, L, Z>(channel: any) => Sink<R, E, In, L, Z>
+export declare const fromChannel: <R, E, In, L, Z>(
+  channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
+) => Sink<R, E, In, L, Z>
 ```
 
 Added in v1.0.0
@@ -1143,7 +1145,9 @@ Converts ths sink to its underlying `Channel`.
 **Signature**
 
 ```ts
-export declare const toChannel: <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => any
+export declare const toChannel: <R, E, In, L, Z>(
+  self: Sink<R, E, In, L, Z>
+) => Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
 ```
 
 Added in v1.0.0
@@ -1953,8 +1957,8 @@ function as soon as one result or the other has been computed.
 ```ts
 export declare const raceWith: <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
   that: Sink<R2, E2, In2, L2, Z2>,
-  leftDone: (exit: Exit.Exit<E, Z>) => any,
-  rightDone: (exit: Exit.Exit<E2, Z2>) => any,
+  leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
+  rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
   capacity?: number | undefined
 ) => <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
 ```

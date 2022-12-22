@@ -68,13 +68,12 @@ export class PullFromChild<R> implements Subexecutor<R> {
     if (fin1 !== undefined && fin2 !== undefined) {
       return pipe(
         Effect.exit(fin1),
-        Effect.zipWith(Effect.exit(fin2), (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2))),
-        Effect.traced(trace)
-      )
+        Effect.zipWith(Effect.exit(fin2), (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2)))
+      ).traced(trace)
     } else if (fin1 !== undefined) {
-      return pipe(fin1, Effect.traced(trace))
+      return fin1.traced(trace)
     } else if (fin2 !== undefined) {
-      return pipe(fin2, Effect.traced(trace))
+      return fin2.traced(trace)
     } else {
       return undefined
     }
@@ -140,7 +139,7 @@ export class PullFromUpstream<R> implements Subexecutor<R> {
       },
       undefined
     )
-    return result === undefined ? result : pipe(result, Effect.traced(trace))
+    return result === undefined ? result : result.traced(trace)
   }
 
   enqueuePullFromChild(child: PullFromChild<R>): Subexecutor<R> {
@@ -207,7 +206,7 @@ export class DrainChildExecutors<R> implements Subexecutor<R> {
       },
       undefined
     )
-    return result === undefined ? result : pipe(result, Effect.traced(trace))
+    return result === undefined ? result : result.traced(trace)
   }
 
   enqueuePullFromChild(child: PullFromChild<R>): Subexecutor<R> {
@@ -234,7 +233,7 @@ export class Emit<R> implements Subexecutor<R> {
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
     const trace = getCallTrace()
     const result = this.next.close(exit)
-    return result === undefined ? result : pipe(result, Effect.traced(trace))
+    return result === undefined ? result : result.traced(trace)
   }
 
   enqueuePullFromChild(_child: PullFromChild<R>): Subexecutor<R> {

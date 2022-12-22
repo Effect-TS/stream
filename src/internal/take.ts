@@ -43,7 +43,7 @@ export const dieMessage = (message: string): Take.Take<never, never> =>
 /** @internal */
 export const done = <E, A>(self: Take.Take<E, A>): Effect.Effect<never, Option.Option<E>, Chunk.Chunk<A>> => {
   const trace = getCallTrace()
-  return pipe(Effect.done(self.exit), Effect.traced(trace))
+  return pipe(Effect.done(self.exit)).traced(trace)
 }
 
 /** @internal */
@@ -59,7 +59,7 @@ export const failCause = <E>(cause: Cause.Cause<E>): Take.Take<E, never> =>
 /** @internal */
 export const fromEffect = <R, E, A>(effect: Effect.Effect<R, E, A>): Effect.Effect<R, never, Take.Take<E, A>> => {
   const trace = getCallTrace()
-  return pipe(effect, Effect.foldCause(failCause, singleton), Effect.traced(trace))
+  return pipe(effect, Effect.foldCause(failCause, singleton)).traced(trace)
 }
 
 /** @internal */
@@ -77,9 +77,8 @@ export const fromPull = <R, E, A>(
       pipe(
         Cause.flipCauseOption(cause),
         Option.match(() => end, failCause)
-      ), chunk),
-    Effect.traced(trace)
-  )
+      ), chunk)
+  ).traced(trace)
 }
 
 /** @internal */
@@ -143,9 +142,8 @@ export const matchEffect = <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
       Exit.matchEffect<Option.Option<E>, Chunk.Chunk<A>, R | R2, E | E2, Z | Z2, R3, E3, Z3>(
         (cause) => pipe(Cause.flipCauseOption(cause), Option.match(onEnd, onError)),
         onSuccess
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
 }
 
 /** @internal */
@@ -160,10 +158,5 @@ export const singleton = <A>(value: A): Take.Take<never, A> => new TakeImpl(Exit
 export const tap = <A, R, E2, _>(f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>) => {
   const trace = getCallTrace()
   return <E>(self: Take.Take<E, A>): Effect.Effect<R, E | E2, void> =>
-    pipe(
-      self.exit,
-      Exit.forEachEffect(f),
-      Effect.asUnit,
-      Effect.traced(trace)
-    )
+    pipe(self.exit, Exit.forEachEffect(f), Effect.asUnit).traced(trace)
 }

@@ -2,7 +2,6 @@
  * @since 1.0.0
  */
 import * as internal from "@effect/stream/internal/channel/upstreamPullStrategy"
-import type * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
 import type * as Option from "@fp-ts/data/Option"
 
 /**
@@ -43,7 +42,7 @@ export declare namespace UpstreamPullStrategy {
  * @category models
  */
 export interface PullAfterNext<A> extends UpstreamPullStrategy.Variance<A> {
-  readonly op: OpCodes.OP_PULL_AFTER_NEXT
+  readonly op: 0
   readonly emitSeparator: Option.Option<A>
 }
 
@@ -52,7 +51,7 @@ export interface PullAfterNext<A> extends UpstreamPullStrategy.Variance<A> {
  * @category models
  */
 export interface PullAfterAllEnqueued<A> extends UpstreamPullStrategy.Variance<A> {
-  readonly op: OpCodes.OP_PULL_AFTER_ALL_ENQUEUED
+  readonly op: 1
   readonly emitSeparator: Option.Option<A>
 }
 

@@ -1,7 +1,6 @@
 /**
  * @since 1.0.0
  */
-import type * as OpCodes from "@effect/stream/internal/opCodes/haltStrategy"
 import * as internal from "@effect/stream/internal/stream/haltStrategy"
 
 /**
@@ -15,7 +14,7 @@ export type HaltStrategy = Left | Right | Both | Either
  * @category models
  */
 export interface Left {
-  readonly op: OpCodes.OP_LEFT
+  readonly op: 0
 }
 
 /**
@@ -23,7 +22,7 @@ export interface Left {
  * @category models
  */
 export interface Right {
-  readonly op: OpCodes.OP_RIGHT
+  readonly op: 1
 }
 
 /**
@@ -31,7 +30,7 @@ export interface Right {
  * @category models
  */
 export interface Both {
-  readonly op: OpCodes.OP_BOTH
+  readonly op: 2
 }
 
 /**
@@ -39,7 +38,7 @@ export interface Both {
  * @category models
  */
 export interface Either {
-  readonly op: OpCodes.OP_EITHER
+  readonly op: 3
 }
 
 /**

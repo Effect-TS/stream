@@ -104,9 +104,8 @@ export const make = <A>(): Effect.Effect<never, never, Handoff<A>> => {
     Effect.map((ref) => ({
       [HandoffTypeId]: handoffVariance,
       ref
-    })),
-    Effect.traced(trace)
-  )
+    }))
+  ).traced(trace)
 }
 
 /**
@@ -138,9 +137,8 @@ export const offer = <A>(value: A) => {
           ),
           Effect.flatten
         )
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
   }
 }
 
@@ -172,9 +170,8 @@ export const take = <A>(self: Handoff<A>): Effect.Effect<never, never, A> => {
         ),
         Effect.flatten
       )
-    ),
-    Effect.traced(trace)
-  )
+    )
+  ).traced(trace)
 }
 
 /**
@@ -205,7 +202,6 @@ export const poll = <A>(self: Handoff<A>): Effect.Effect<never, never, Option.Op
         ),
         Effect.flatten
       )
-    ),
-    Effect.traced(trace)
-  )
+    )
+  ).traced(trace)
 }

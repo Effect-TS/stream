@@ -371,7 +371,7 @@ Construct a `Channel` from an `AsyncInputConsumer`.
 
 ```ts
 export declare const fromInput: <Err, Elem, Done>(
-  input: any
+  input: SingleProducerAsyncInput.AsyncInputConsumer<Err, Elem, Done>
 ) => Channel<never, unknown, unknown, unknown, Err, Elem, Done>
 ```
 
@@ -742,7 +742,7 @@ Converts this channel to a `Sink`.
 ```ts
 export declare const toSink: <Env, InErr, InElem, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, Chunk.Chunk<InElem>, unknown, OutErr, Chunk.Chunk<OutElem>, OutDone>
-) => any
+) => Sink.Sink<Env, OutErr, InElem, OutElem, OutDone>
 ```
 
 Added in v1.0.0
@@ -756,7 +756,7 @@ Converts this channel to a `Stream`.
 ```ts
 export declare const toStream: <Env, OutErr, OutElem, OutDone>(
   self: Channel<Env, unknown, unknown, unknown, OutErr, Chunk.Chunk<OutElem>, OutDone>
-) => any
+) => Stream.Stream<Env, OutErr, OutElem>
 ```
 
 Added in v1.0.0
@@ -1281,7 +1281,7 @@ created. See `Channel.mergeAll`.
 export declare const mergeMap: (
   n: number,
   bufferSize?: number | undefined,
-  mergeStrategy?: any
+  mergeStrategy?: MergeStrategy.BackPressure | MergeStrategy.BufferSliding | undefined
 ) => <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
   f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>
 ) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
@@ -1441,8 +1441,10 @@ export declare const concatMapWithCustom: <
   f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
   g: (o: OutDone, o1: OutDone) => OutDone,
   h: (o: OutDone, o2: OutDone2) => OutDone3,
-  onPull: (upstreamPullRequest: any) => any,
-  onEmit: (elem: OutElem2) => any
+  onPull: (
+    upstreamPullRequest: UpstreamPullRequest.UpstreamPullRequest<OutElem>
+  ) => UpstreamPullStrategy.UpstreamPullStrategy<OutElem2>,
+  onEmit: (elem: OutElem2) => ChildExecutorDecision.ChildExecutorDecision
 ) => <Env, InErr, InElem, InDone, OutErr>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
 ) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, OutDone3>
@@ -1620,7 +1622,7 @@ this channel's input.
 
 ```ts
 export declare const embedInput: <InErr, InElem, InDone>(
-  input: any
+  input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
 ) => <Env, OutErr, OutElem, OutDone>(
   self: Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>
 ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
@@ -1814,7 +1816,7 @@ Added in v1.0.0
 export declare const mergeAll: (
   n: number,
   bufferSize?: number | undefined,
-  mergeStrategy?: any
+  mergeStrategy?: MergeStrategy.BackPressure | MergeStrategy.BufferSliding | undefined
 ) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
   channels: Channel<
     Env,
@@ -1904,7 +1906,7 @@ Added in v1.0.0
 export declare const mergeAllWith: (
   n: number,
   bufferSize?: number | undefined,
-  mergeStrategy?: any
+  mergeStrategy?: MergeStrategy.BackPressure | MergeStrategy.BufferSliding | undefined
 ) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem, OutDone>(
   channels: Channel<
     Env,
@@ -2000,8 +2002,10 @@ export declare const mergeWith: <
   OutDone3
 >(
   that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-  leftDone: (exit: Exit.Exit<OutErr, OutDone>) => any,
-  rightDone: (ex: Exit.Exit<OutErr1, OutDone1>) => any
+  leftDone: (
+    exit: Exit.Exit<OutErr, OutDone>
+  ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>,
+  rightDone: (ex: Exit.Exit<OutErr1, OutDone1>) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
 ) => <Env, InErr, InElem, InDone, OutElem>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ) => Channel<
