@@ -71,9 +71,7 @@ describe.concurrent("SubscriptionRef", () => {
       assert.deepStrictEqual(Array.from(result2), [1, 2])
     }))
 
-  // TODO(Mike/Max): this test hangs if the number of parallel subscriptions is
-  //                 anything other than 1 (i.e. if there *is* any parallelism)
-  it.effect.skip("concurrent subscribes and unsubscribes are handled correctly", () =>
+  it.effect("concurrent subscribes and unsubscribes are handled correctly", () =>
     Effect.gen(function*($) {
       const subscriber = (subscriptionRef: SubscriptionRef.SubscriptionRef<number>) =>
         pipe(
