@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.0.2
+
+### Patch Changes
+
+- [#8](https://github.com/Effect-TS/stream/pull/8) [`c85d175`](https://github.com/Effect-TS/stream/commit/c85d175b82cd0f201f651ddc13c5f9ecd992ab54) Thanks [@IMax153](https://github.com/IMax153)! - replace Effect.traced with .traced
+
+- [#8](https://github.com/Effect-TS/stream/pull/8) [`c85d175`](https://github.com/Effect-TS/stream/commit/c85d175b82cd0f201f651ddc13c5f9ecd992ab54) Thanks [@IMax153](https://github.com/IMax153)! - hide op codes
+
 ## 0.0.1
 
 ### Patch Changes
