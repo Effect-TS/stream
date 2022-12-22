@@ -36,7 +36,9 @@ Constructs a `GroupBy` from a `Stream`.
 **Signature**
 
 ```ts
-export declare const make: <R, E, K, V>(grouped: any) => GroupBy<R, E, K, V>
+export declare const make: <R, E, K, V>(
+  grouped: Stream.Stream<R, E, readonly [K, Queue.Dequeue<Take.Take<E, V>>]>
+) => GroupBy<R, E, K, V>
 ```
 
 Added in v1.0.0
@@ -52,9 +54,9 @@ arbitrary order.
 
 ```ts
 export declare const evaluate: <K, E, V, R2, E2, A>(
-  f: (key: K, stream: any) => any,
+  f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
   bufferSize?: number | undefined
-) => <R>(self: GroupBy<R, E, K, V>) => any
+) => <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
 ```
 
 Added in v1.0.0

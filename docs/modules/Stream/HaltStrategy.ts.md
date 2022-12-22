@@ -100,7 +100,7 @@ Added in v1.0.0
 
 ```ts
 export interface Both {
-  readonly op: OpCodes.OP_BOTH
+  readonly op: 2
 }
 ```
 
@@ -112,7 +112,7 @@ Added in v1.0.0
 
 ```ts
 export interface Either {
-  readonly op: OpCodes.OP_EITHER
+  readonly op: 3
 }
 ```
 
@@ -134,7 +134,7 @@ Added in v1.0.0
 
 ```ts
 export interface Left {
-  readonly op: OpCodes.OP_LEFT
+  readonly op: 0
 }
 ```
 
@@ -146,7 +146,7 @@ Added in v1.0.0
 
 ```ts
 export interface Right {
-  readonly op: OpCodes.OP_RIGHT
+  readonly op: 1
 }
 ```
 

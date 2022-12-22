@@ -5,7 +5,7 @@ patchedDependencies:
     hash: wzvflwv62ngf22ppz3frldq37m
     path: patches/@effect-ts__build-utils@0.40.3.patch
   docs-ts@0.6.10:
-    hash: cafcqw24npsdw2cmfoccfh2gly
+    hash: xlixozi5tp7fzjxdl3rsrdvw4m
     path: patches/docs-ts@0.6.10.patch
 
 specifiers:
@@ -88,7 +88,7 @@ devDependencies:
   babel-plugin-annotate-pure-calls: 0.4.0_@babel+core@7.20.7
   concurrently: 7.6.0
   cpx: 1.5.0
-  docs-ts: 0.6.10_cafcqw24npsdw2cmfoccfh2gly_66ut27vo4l3s6n4zdtl5wmmpza
+  docs-ts: 0.6.10_xlixozi5tp7fzjxdl3rsrdvw4m_66ut27vo4l3s6n4zdtl5wmmpza
   eslint: 8.30.0
   eslint-import-resolver-typescript: 3.5.2_2lbwmhbr7bncddqbzzpg77o75m
   eslint-plugin-codegen: 0.16.1
@@ -2515,7 +2515,7 @@ packages:
       path-type: 4.0.0
     dev: true
 
-  /docs-ts/0.6.10_cafcqw24npsdw2cmfoccfh2gly_66ut27vo4l3s6n4zdtl5wmmpza:
+  /docs-ts/0.6.10_xlixozi5tp7fzjxdl3rsrdvw4m_66ut27vo4l3s6n4zdtl5wmmpza:
     resolution: {integrity: sha512-DTX9c5AJ92ojMOKqqvwF8t77C8Gdgs9FPB8seymHs+F+Wl6aapc3ZkHUM+p8o+jwcBmPoihxssdK903dfwQ1JQ==}
     hasBin: true
     peerDependencies:

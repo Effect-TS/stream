@@ -78,7 +78,7 @@ Added in v1.0.0
 
 ```ts
 export interface NoUpstream extends UpstreamPullRequest.Variance<never> {
-  readonly op: OpCodes.OP_NO_UPSTREAM
+  readonly op: 1
 }
 ```
 
@@ -90,7 +90,7 @@ Added in v1.0.0
 
 ```ts
 export interface Pulled<A> extends UpstreamPullRequest.Variance<A> {
-  readonly op: OpCodes.OP_PULLED
+  readonly op: 0
   readonly value: A
 }
 ```
