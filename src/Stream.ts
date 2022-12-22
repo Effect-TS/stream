@@ -15,6 +15,7 @@ import type * as GroupBy from "@effect/stream/GroupBy"
 import * as _groupBy from "@effect/stream/internal/groupBy"
 import * as internal from "@effect/stream/internal/stream"
 import type * as Sink from "@effect/stream/Sink"
+import type * as Emit from "@effect/stream/Stream/Emit"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 import type * as Take from "@effect/stream/Take"
 import type * as Order from "@fp-ts/core/typeclass/Order"
@@ -185,6 +186,78 @@ export const aggregateWithinEither: <R2, E2, A, A2, B, R3, C>(
  * @category mapping
  */
 export const as: <B>(value: B) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, B> = internal.as
+
+const _async: <R, E, A>(register: (emit: Emit.Emit<R, E, A, void>) => void, outputBuffer?: number) => Stream<R, E, A> =
+  internal._async
+export {
+  /**
+   * Creates a stream from an asynchronous callback that can be called multiple
+   * times. The optionality of the error type `E` can be used to signal the end
+   * of the stream, by setting it to `None`.
+   *
+   * @since 1.0.0
+   * @category constructors
+   */
+  _async as async
+}
+
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times The registration of the callback itself returns an effect. The
+ * optionality of the error type `E` can be used to signal the end of the
+ * stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const asyncEffect: <R, E, A>(
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R, E, unknown>,
+  outputBuffer?: number
+) => Stream<R, E, A> = internal.asyncEffect
+
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times. The registration of the callback returns either a canceler or
+ * synchronously returns a stream. The optionality of the error type `E` can
+ * be used to signal the end of the stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const asyncInterrupt: <R, E, A>(
+  register: (emit: Emit.Emit<R, E, A, void>) => Either.Either<Effect.Effect<R, never, unknown>, Stream<R, E, A>>,
+  outputBuffer?: number
+) => Stream<R, E, A> = internal.asyncInterrupt
+
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times. The registration of the callback can possibly return the stream
+ * synchronously. The optionality of the error type `E` can be used to signal
+ * the end of the stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const asyncOption: <R, E, A>(
+  register: (emit: Emit.Emit<R, E, A, void>) => Option.Option<Stream<R, E, A>>,
+  outputBuffer?: number
+) => Stream<R, E, A> = internal.asyncOption
+
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times. The registration of the callback itself returns an a scoped
+ * resource. The optionality of the error type `E` can be used to signal the
+ * end of the stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const asyncScoped: <R, E, A>(
+  register: (
+    cb: (effect: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>) => void
+  ) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  outputBuffer?: number
+) => Stream<R, E, A> = internal.asyncScoped
 
 /**
  * Returns a `Stream` that first collects `n` elements from the input `Stream`,
