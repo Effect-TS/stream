@@ -14,6 +14,7 @@ import * as take from "@effect/stream/internal/take"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Take from "@effect/stream/Take"
 import * as Chunk from "@fp-ts/data/Chunk"
+import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 import type { Predicate } from "@fp-ts/data/Predicate"
@@ -182,7 +183,9 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
   constructor(
     readonly dequeue: Queue.Dequeue<A>,
     readonly f: (a: A) => B
-  ) {}
+  ) {
+    Equal.considerByRef(this)
+  }
 
   capacity(): number {
     return Queue.capacity(this.dequeue)

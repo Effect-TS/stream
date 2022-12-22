@@ -66,9 +66,7 @@ describe.concurrent("Sink", () => {
       assert.strictEqual(result, "hello")
     }))
 
-  // TODO(Mike/Max): if either `success1` or `success2` are `true`, the test
-  // never finishes
-  it.effect.skip("zipWithPar - coherence", () =>
+  it.effect("zipWithPar - coherence", () =>
     Effect.gen(function*($) {
       const ints = yield* $(Effect.unfold(0, (n) =>
         pipe(

@@ -8,6 +8,8 @@ import type * as SingleProducerAsyncInput from "@effect/stream/Channel/SinglePro
 import * as Either from "@fp-ts/data/Either"
 import { pipe } from "@fp-ts/data/Function"
 
+import * as Equal from "@fp-ts/data/Equal"
+
 /** @internal */
 type State<Err, Elem, _Done> =
   | Empty
@@ -93,7 +95,9 @@ const stateDone = <Done>(done: Done): State<never, never, Done> => ({
 class SingleProducerAsyncInputImpl<Err, Elem, Done>
   implements SingleProducerAsyncInput.SingleProducerAsyncInput<Err, Elem, Done>
 {
-  constructor(readonly ref: Ref.Ref<State<Err, Elem, Done>>) {}
+  constructor(readonly ref: Ref.Ref<State<Err, Elem, Done>>) {
+    Equal.considerByRef(this)
+  }
 
   awaitRead(): Effect.Effect<never, never, unknown> {
     const trace = getCallTrace()
