@@ -22,6 +22,7 @@ import * as singleProducerAsyncInput from "@effect/stream/internal/channel/singl
 import * as core from "@effect/stream/internal/core"
 import * as _sink from "@effect/stream/internal/sink"
 import * as DebounceState from "@effect/stream/internal/stream/debounceState"
+import * as emit from "@effect/stream/internal/stream/emit"
 import * as haltStrategy from "@effect/stream/internal/stream/haltStrategy"
 import * as Handoff from "@effect/stream/internal/stream/handoff"
 import * as HandoffSignal from "@effect/stream/internal/stream/handoffSignal"
@@ -33,6 +34,7 @@ import { RingBuffer } from "@effect/stream/internal/support"
 import * as _take from "@effect/stream/internal/take"
 import type * as Sink from "@effect/stream/Sink"
 import type * as Stream from "@effect/stream/Stream"
+import type * as Emit from "@effect/stream/Stream/Emit"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 import type * as Take from "@effect/stream/Take"
 import type * as Order from "@fp-ts/core/typeclass/Order"
@@ -407,6 +409,204 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
 export const as = <B>(value: B) => {
   return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, B> => pipe(self, map(() => value))
 }
+
+/** @internal */
+export const _async = <R, E, A>(
+  register: (emit: Emit.Emit<R, E, A, void>) => void,
+  outputBuffer = 16
+): Stream.Stream<R, E, A> =>
+  asyncOption((cb) => {
+    register(cb)
+    return Option.none
+  }, outputBuffer)
+
+/** @internal */
+export const asyncEffect = <R, E, A>(
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R, E, unknown>,
+  outputBuffer = 16
+): Stream.Stream<R, E, A> =>
+  pipe(
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      (queue) => Queue.shutdown(queue)
+    ),
+    Effect.flatMap((output) =>
+      pipe(
+        Effect.runtime<R>(),
+        Effect.flatMap((runtime) =>
+          pipe(
+            register(
+              emit.make((k) =>
+                pipe(
+                  _take.fromPull(k),
+                  Effect.flatMap((take) => pipe(output, Queue.offer(take))),
+                  Effect.asUnit,
+                  runtime.unsafeRunPromiseExit
+                ).then((exit) => {
+                  if (Exit.isFailure(exit)) {
+                    if (!Cause.isInterrupted(exit.cause)) {
+                      throw Cause.squash(exit.cause)
+                    }
+                  }
+                })
+              )
+            ),
+            Effect.map(() => {
+              const loop: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
+                Queue.take(output),
+                Effect.flatMap(_take.done),
+                Effect.fold(
+                  (maybeError) =>
+                    pipe(
+                      core.fromEffect(Queue.shutdown(output)),
+                      channel.zipRight(pipe(maybeError, Option.match(core.unit, core.fail)))
+                    ),
+                  (chunk) => pipe(core.write(chunk), core.flatMap(() => loop))
+                ),
+                channel.unwrap
+              )
+              return loop
+            })
+          )
+        )
+      )
+    ),
+    channel.unwrapScoped,
+    fromChannel
+  )
+
+/** @internal */
+export const asyncInterrupt = <R, E, A>(
+  register: (
+    emit: Emit.Emit<R, E, A, void>
+  ) => Either.Either<Effect.Effect<R, never, unknown>, Stream.Stream<R, E, A>>,
+  outputBuffer = 16
+): Stream.Stream<R, E, A> =>
+  pipe(
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      (queue) => Queue.shutdown(queue)
+    ),
+    Effect.flatMap((output) =>
+      pipe(
+        Effect.runtime<R>(),
+        Effect.flatMap((runtime) =>
+          pipe(
+            Effect.sync(() =>
+              register(
+                emit.make((k) =>
+                  pipe(
+                    _take.fromPull(k),
+                    Effect.flatMap((take) => pipe(output, Queue.offer(take))),
+                    Effect.asUnit,
+                    runtime.unsafeRunPromiseExit
+                  ).then((exit) => {
+                    if (Exit.isFailure(exit)) {
+                      if (!Cause.isInterrupted(exit.cause)) {
+                        throw Cause.squash(exit.cause)
+                      }
+                    }
+                  })
+                )
+              )
+            ),
+            Effect.map(Either.match(
+              (canceler) => {
+                const loop: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
+                  Queue.take(output),
+                  Effect.flatMap(_take.done),
+                  Effect.fold(
+                    (maybeError) =>
+                      pipe(
+                        core.fromEffect(Queue.shutdown(output)),
+                        channel.zipRight(pipe(maybeError, Option.match(core.unit, core.fail)))
+                      ),
+                    (chunk) => pipe(core.write(chunk), core.flatMap(() => loop))
+                  ),
+                  channel.unwrap
+                )
+                return pipe(fromChannel(loop), ensuring(canceler))
+              },
+              (stream) => unwrap(pipe(Queue.shutdown(output), Effect.as(stream)))
+            ))
+          )
+        )
+      )
+    ),
+    unwrapScoped
+  )
+
+/** @internal */
+export const asyncOption = <R, E, A>(
+  register: (emit: Emit.Emit<R, E, A, void>) => Option.Option<Stream.Stream<R, E, A>>,
+  outputBuffer = 16
+): Stream.Stream<R, E, A> =>
+  asyncInterrupt(
+    (emit) => pipe(register(emit), Either.fromOption(Effect.unit)),
+    outputBuffer
+  )
+
+/** @internal */
+export const asyncScoped = <R, E, A>(
+  register: (
+    cb: (effect: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>) => void
+  ) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  outputBuffer = 16
+): Stream.Stream<R, E, A> =>
+  pipe(
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      (queue) => Queue.shutdown(queue)
+    ),
+    Effect.flatMap((output) =>
+      pipe(
+        Effect.runtime<R>(),
+        Effect.flatMap((runtime) =>
+          pipe(
+            register(
+              emit.make((k) =>
+                pipe(
+                  _take.fromPull(k),
+                  Effect.flatMap((take) => pipe(output, Queue.offer(take))),
+                  Effect.asUnit,
+                  runtime.unsafeRunPromiseExit
+                ).then((exit) => {
+                  if (Exit.isFailure(exit)) {
+                    if (!Cause.isInterrupted(exit.cause)) {
+                      throw Cause.squash(exit.cause)
+                    }
+                  }
+                })
+              )
+            ),
+            Effect.zipRight(Ref.make(false)),
+            Effect.flatMap((ref) =>
+              pipe(
+                Ref.get(ref),
+                Effect.map((isDone) =>
+                  isDone ?
+                    pull.end() :
+                    pipe(
+                      Queue.take(output),
+                      Effect.flatMap(_take.done),
+                      Effect.onError(() =>
+                        pipe(
+                          ref,
+                          Ref.set(true),
+                          Effect.zipRight(Queue.shutdown(output))
+                        )
+                      )
+                    )
+                )
+              )
+            )
+          )
+        )
+      )
+    ),
+    scoped,
+    flatMap(repeatEffectChunkOption)
+  )
 
 /** @internal */
 export const branchAfter = <A, R2, E2, A2>(
@@ -4593,9 +4793,7 @@ export const unfoldChunk = <S, A>(
   f: (s: S) => Option.Option<readonly [Chunk.Chunk<A>, S]>
 ): Stream.Stream<never, never, A> => {
   const loop = (s: S): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown> =>
-    pipe( f(s), Option.match( core.unit, ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))
-      )
-    )
+    pipe(f(s), Option.match(core.unit, ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))))
   return new StreamImpl(core.suspend(() => loop(s)))
 }
 
