@@ -16,6 +16,7 @@ import * as Chunk from "@fp-ts/data/Chunk"
 import type * as Context from "@fp-ts/data/Context"
 import * as Duration from "@fp-ts/data/Duration"
 import * as Either from "@fp-ts/data/Either"
+import * as Equal from "@fp-ts/data/Equal"
 import type { LazyArg } from "@fp-ts/data/Function"
 import { constTrue, identity, pipe } from "@fp-ts/data/Function"
 import * as HashMap from "@fp-ts/data/HashMap"
@@ -46,7 +47,9 @@ export class SinkImpl<R, E, In, L, Z> implements Sink.Sink<R, E, In, L, Z> {
   readonly [SinkTypeId] = sinkVariance
   constructor(
     readonly channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
-  ) {}
+  ) {
+    Equal.considerByRef(this)
+  }
 }
 
 /** @internal */

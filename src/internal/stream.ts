@@ -69,7 +69,9 @@ export class StreamImpl<R, E, A> implements Stream.Stream<R, E, A> {
   readonly [StreamTypeId] = streamVariance
   constructor(
     readonly channel: Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
-  ) {}
+  ) {
+    Equal.considerByRef(this)
+  }
 }
 
 /** @internal */
@@ -3237,7 +3239,9 @@ class StreamRechunker<E, A> {
   private builder: Array<A> = []
   private pos = 0
 
-  constructor(readonly n: number) {}
+  constructor(readonly n: number) {
+    Equal.considerByRef(this)
+  }
 
   isEmpty(): boolean {
     return this.pos === 0
@@ -4593,9 +4597,7 @@ export const unfoldChunk = <S, A>(
   f: (s: S) => Option.Option<readonly [Chunk.Chunk<A>, S]>
 ): Stream.Stream<never, never, A> => {
   const loop = (s: S): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown> =>
-    pipe( f(s), Option.match( core.unit, ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))
-      )
-    )
+    pipe(f(s), Option.match(core.unit, ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))))
   return new StreamImpl(core.suspend(() => loop(s)))
 }
 

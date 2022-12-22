@@ -16,11 +16,11 @@ specifiers:
   '@changesets/cli': ^2.26.0
   '@effect-ts/build-utils': 0.40.3
   '@effect-ts/core': ^0.60.2
-  '@effect/io': ~0.0.41
+  '@effect/io': ~0.0.42
   '@effect/language-service': 0.0.15
-  '@effect/stm': ~0.0.4
+  '@effect/stm': ~0.0.5
   '@fp-ts/core': ~0.0.11
-  '@fp-ts/data': ~0.0.28
+  '@fp-ts/data': ~0.0.29
   '@repo-tooling/eslint-plugin-dprint': ^0.0.4
   '@rollup/pluginutils': ^5.0.2
   '@types/benchmark': ^2.1.2
@@ -59,10 +59,10 @@ specifiers:
   vitest: 0.26.2
 
 dependencies:
-  '@effect/io': 0.0.41
-  '@effect/stm': 0.0.4
+  '@effect/io': 0.0.42
+  '@effect/stm': 0.0.5
   '@fp-ts/core': 0.0.11
-  '@fp-ts/data': 0.0.28
+  '@fp-ts/data': 0.0.29
 
 devDependencies:
   '@babel/cli': 7.20.7_@babel+core@7.20.7
@@ -648,26 +648,26 @@ packages:
     resolution: {integrity: sha512-gGnOCvDv6829EeeC+NgTnwIt4XxclR0KqrG7BRemmNX5cm75cF0CKiuEB/o902wjAlt+MdrxTtFC+XsYdLnxzA==}
     dev: true
 
-  /@effect/io/0.0.41:
-    resolution: {integrity: sha512-W3bsyouaBF3EUZ4WYucR5bnXd6i/rIcr0/jqx7491GyHxL3QbwHMYlu19YITAZGziHO7SEoUTsckgZlHIKz4Eg==}
+  /@effect/io/0.0.42:
+    resolution: {integrity: sha512-l6Mtm8KadL1pbV9BmyO7q0sz2oZn1mmSdLOYLtKe3A74t8h6+zEVB7XcUvTFa3U6wqtbg+sjxTT+FMM9k3o4rw==}
     dependencies:
       '@fp-ts/core': 0.0.11
-      '@fp-ts/data': 0.0.28
+      '@fp-ts/data': 0.0.29
     dev: false
 
   /@effect/language-service/0.0.15:
     resolution: {integrity: sha512-ELYL6h56W2TjTd13AiddZgbZjZFaa0J6MpnLpM26XlxYIR66j5tmdNFW67dtJxFbieoFS33+E713E5hrkg8MKg==}
     dependencies:
       '@fp-ts/core': 0.0.11
-      '@fp-ts/data': 0.0.28
+      '@fp-ts/data': 0.0.29
     dev: true
 
-  /@effect/stm/0.0.4:
-    resolution: {integrity: sha512-p32VWCdxbq2ZWmUQydWSt/ef7OkuyHg1ERPnR0ePGMEv7PbG4hzwuV7UR/EI8D0Fp4s+pXatLfouhVICj+b/lw==}
+  /@effect/stm/0.0.5:
+    resolution: {integrity: sha512-pEbBRsb+0X71RfTpKMQXzK5+ZqrwsKk6V/APZSlFmLfC8R/W07BRGP+ISNcHdCQSqInJ0TzMn4mj95IraG4eYA==}
     dependencies:
-      '@effect/io': 0.0.41
+      '@effect/io': 0.0.42
       '@fp-ts/core': 0.0.11
-      '@fp-ts/data': 0.0.28
+      '@fp-ts/data': 0.0.29
     dev: false
 
   /@esbuild/android-arm/0.16.10:
@@ -888,8 +888,8 @@ packages:
   /@fp-ts/core/0.0.11:
     resolution: {integrity: sha512-BCAJBYzghwoJpcUOARJ1tui50HoYJFlV2pJlVMlsEkDFhD8MTtq8xQVpZCRF66RmtkxtGBYINCQ+5H1lRaL35Q==}
 
-  /@fp-ts/data/0.0.28:
-    resolution: {integrity: sha512-GV0IZ8mNhee6znuJ3lFvqSOQO8H8KNWY9yAI7cbxX/9qbM7pyaHPFfmoyfzHpfiXGy9sd9UVVHSTgI+slRcsGQ==}
+  /@fp-ts/data/0.0.29:
+    resolution: {integrity: sha512-EntBeQllKV9mwKziSXfABcmts4wHwSj+pt9NDH9V/jlSk088WDD41/Ju8ksFuiqMUzgySKUYyZzDtKgqLWVXrw==}
     dependencies:
       '@fp-ts/core': 0.0.11
 

@@ -4,6 +4,7 @@ import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as Take from "@effect/stream/Take"
 import * as Chunk from "@fp-ts/data/Chunk"
+import * as Equal from "@fp-ts/data/Equal"
 import { constFalse, constTrue, pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 
@@ -24,7 +25,9 @@ const takeVariance = {
 /** @internal */
 export class TakeImpl<E, A> implements Take.Take<E, A> {
   readonly [TakeTypeId] = takeVariance
-  constructor(readonly exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<A>>) {}
+  constructor(readonly exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<A>>) {
+    Equal.considerByRef(this)
+  }
 }
 
 /** @internal */

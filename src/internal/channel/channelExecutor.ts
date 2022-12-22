@@ -18,6 +18,7 @@ import * as ChildExecutorDecisionOpCodes from "@effect/stream/internal/opCodes/c
 import * as ContinuationOpCodes from "@effect/stream/internal/opCodes/continuation"
 import * as UpstreamPullStrategyOpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
 import type * as Context from "@fp-ts/data/Context"
+import * as Equal from "@fp-ts/data/Equal"
 import { identity, pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 
@@ -88,6 +89,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     providedEnv: Context.Context<unknown> | undefined,
     executeCloseLastSubstream: (effect: Effect.Effect<Env, never, unknown>) => Effect.Effect<Env, never, unknown>
   ) {
+    Equal.considerByRef(this)
     this._currentChannel = initialChannel as core.Primitive
     this._executeCloseLastSubstream = executeCloseLastSubstream
     this._providedEnv = providedEnv

@@ -9,6 +9,7 @@ import * as TSemaphore from "@effect/stm/TSemaphore"
 import * as stream from "@effect/stream/internal/stream"
 import type { Stream } from "@effect/stream/Stream"
 import type * as SubscriptionRef from "@effect/stream/SubscriptionRef"
+import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
 
 /** @internal */
@@ -33,7 +34,9 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
     readonly ref: Ref.Ref<A>,
     readonly hub: Hub.Hub<A>,
     readonly semaphore: TSemaphore.TSemaphore
-  ) {}
+  ) {
+    Equal.considerByRef(this)
+  }
   get changes(): Stream<never, never, A> {
     return pipe(
       Ref.get(this.ref),
