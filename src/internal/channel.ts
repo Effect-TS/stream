@@ -583,7 +583,7 @@ export const fromHubScoped = <Err, Done, Elem>(
   hub: Hub.Hub<Either.Either<Exit.Exit<Err, Done>, Elem>>
 ): Effect.Effect<Scope.Scope, never, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>> => {
   const trace = getCallTrace()
-  return pipe(Hub.subscribe(hub), Effect.map(fromQueue), Effect.traced(trace))
+  return pipe(Hub.subscribe(hub), Effect.map(fromQueue)).traced(trace)
 }
 
 /** @internal */
@@ -1756,10 +1756,7 @@ export const run = <Env, InErr, InDone, OutErr, OutDone>(
   self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
 ): Effect.Effect<Env, OutErr, OutDone> => {
   const trace = getCallTrace()
-  return pipe(
-    Effect.scoped(executor.runScoped(self)),
-    Effect.traced(trace)
-  )
+  return Effect.scoped(executor.runScoped(self)).traced(trace)
 }
 
 /** @internal */
@@ -1767,10 +1764,7 @@ export const runCollect = <Env, InErr, InDone, OutErr, OutElem, OutDone>(
   self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, OutElem, OutDone>
 ): Effect.Effect<Env, OutErr, readonly [Chunk.Chunk<OutElem>, OutDone]> => {
   const trace = getCallTrace()
-  return pipe(
-    executor.run(core.collectElements(self)),
-    Effect.traced(trace)
-  )
+  return executor.run(core.collectElements(self)).traced(trace)
 }
 
 /** @internal */
@@ -1778,10 +1772,7 @@ export const runDrain = <Env, InErr, InDone, OutElem, OutErr, OutDone>(
   self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, OutElem, OutDone>
 ): Effect.Effect<Env, OutErr, OutDone> => {
   const trace = getCallTrace()
-  return pipe(
-    executor.run(drain(self)),
-    Effect.traced(trace)
-  )
+  return executor.run(drain(self)).traced(trace)
 }
 
 /** @internal */

@@ -108,17 +108,15 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
           [Deferred.await(state.notifyProducer), state] :
           [Effect.unit(), state]
       ),
-      Effect.flatten,
-      Effect.traced(trace)
-    )
+      Effect.flatten
+    ).traced(trace)
   }
 
   close(): Effect.Effect<never, never, unknown> {
     const trace = getCallTrace()
-    return pipe(
-      Effect.fiberIdWith((fiberId) => this.error(Cause.interrupt(fiberId))),
-      Effect.traced(trace)
-    )
+    return Effect.fiberIdWith(
+      (fiberId) => this.error(Cause.interrupt(fiberId))
+    ).traced(trace)
   }
 
   done(value: Done): Effect.Effect<never, never, unknown> {
@@ -149,9 +147,8 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
           }
         }
       }),
-      Effect.flatten,
-      Effect.traced(trace)
-    )
+      Effect.flatten
+    ).traced(trace)
   }
 
   emit(element: Elem): Effect.Effect<never, never, unknown> {
@@ -194,9 +191,8 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
           }),
           Effect.flatten
         )
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
   }
 
   error(cause: Cause.Cause<Err>): Effect.Effect<never, never, unknown> {
@@ -225,21 +221,17 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
           }
         }
       }),
-      Effect.flatten,
-      Effect.traced(trace)
-    )
+      Effect.flatten
+    ).traced(trace)
   }
 
   take(): Effect.Effect<never, never, Exit.Exit<Either.Either<Err, Done>, Elem>> {
     const trace = getCallTrace()
-    return pipe(
-      this.takeWith(
-        (cause) => Exit.failCause(pipe(cause, Cause.map(Either.left))),
-        (elem) => Exit.succeed(elem) as Exit.Exit<Either.Either<Err, Done>, Elem>,
-        (done) => Exit.fail(Either.right(done))
-      ),
-      Effect.traced(trace)
-    )
+    return this.takeWith(
+      (cause) => Exit.failCause(pipe(cause, Cause.map(Either.left))),
+      (elem) => Exit.succeed(elem) as Exit.Exit<Either.Either<Err, Done>, Elem>,
+      (done) => Exit.fail(Either.right(done))
+    ).traced(trace)
   }
 
   takeWith<A>(
@@ -289,9 +281,8 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
           }),
           Effect.flatten
         )
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
   }
 }
 
@@ -305,7 +296,6 @@ export const make = <Err, Elem, Done>(): Effect.Effect<
   return pipe(
     Deferred.make<never, void>(),
     Effect.flatMap((deferred) => Ref.make(stateEmpty(deferred) as State<Err, Elem, Done>)),
-    Effect.map((ref) => new SingleProducerAsyncInputImpl(ref)),
-    Effect.traced(trace)
-  )
+    Effect.map((ref) => new SingleProducerAsyncInputImpl(ref))
+  ).traced(trace)
 }

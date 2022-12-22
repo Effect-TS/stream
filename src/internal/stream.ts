@@ -660,9 +660,8 @@ export const broadcast = <N extends number>(n: N, maximumLag: number) => {
             flattenTake
           )
         ) as Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
 }
 
 /** @internal */
@@ -672,9 +671,8 @@ export const broadcastDynamic = (maximumLag: number) => {
     pipe(
       self,
       broadcastedQueuesDynamic(maximumLag),
-      Effect.map((effect) => pipe(scoped(effect), flatMap(fromQueue), flattenTake)),
-      Effect.traced(trace)
-    )
+      Effect.map((effect) => pipe(scoped(effect), flatMap(fromQueue), flattenTake))
+    ).traced(trace)
 }
 
 /** @internal */
@@ -693,9 +691,8 @@ export const broadcastedQueues = <N extends number>(n: N, maximumLag: number) =>
           ),
           Effect.tap(() => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
         )
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
 }
 
 /** @internal */
@@ -704,7 +701,7 @@ export const broadcastedQueuesDynamic = (maximumLag: number) => {
   return <R, E, A>(
     self: Stream.Stream<R, E, A>
   ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>> =>
-    pipe(self, toHub(maximumLag), Effect.map(Hub.subscribe), Effect.traced(trace))
+    pipe(self, toHub(maximumLag), Effect.map(Hub.subscribe)).traced(trace)
 }
 
 /** @internal */
@@ -1751,9 +1748,8 @@ export const distributedWithDynamic = <E, A, _>(
             Effect.flatten(Ref.get(newQueue))
           )
         })
-      ),
-      Effect.traced(trace)
-    )
+      )
+    ).traced(trace)
 }
 
 /** @internal */
@@ -2284,9 +2280,8 @@ export const fromHubScoped = <A>(
         Hub.subscribe(hub),
         Effect.map((queue) => fromQueueWithShutdown(queue, maxChunkSize))
       )
-    ),
-    Effect.traced(trace)
-  )
+    )
+  ).traced(trace)
 }
 
 /** @internal */
@@ -2303,9 +2298,8 @@ export const fromHubScopedWithShutdown = <A>(
   const trace = getCallTrace()
   return pipe(
     fromHubScoped(hub, maxChunkSize),
-    Effect.map(ensuring(Hub.shutdown(hub))),
-    Effect.traced(trace)
-  )
+    Effect.map(ensuring(Hub.shutdown(hub)))
+  ).traced(trace)
 }
 
 /** @internal */
@@ -2999,7 +2993,7 @@ export const mergeWith = <R2, E2, A2, A, A3, A4>(
 /** @internal */
 export const mkString = <R, E>(self: Stream.Stream<R, E, string>): Effect.Effect<R, E, string> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.mkString()), Effect.traced(trace))
+  return pipe(self, run(_sink.mkString())).traced(trace)
 }
 
 /** @internal */
@@ -3251,9 +3245,8 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
           })
         )
       ),
-      Effect.flatten,
-      Effect.traced(trace)
-    )
+      Effect.flatten
+    ).traced(trace)
   }
 }
 
@@ -3731,60 +3724,60 @@ export const rightOrFail = <E2>(error: LazyArg<E2>) => {
 export const run = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, unknown, Z>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, Z> =>
-    pipe(self.channel, channel.pipeToOrFail(sink.channel), channel.runDrain, Effect.traced(trace))
+    pipe(self.channel, channel.pipeToOrFail(sink.channel), channel.runDrain).traced(trace)
 }
 
 /** @internal */
 export const runCollect = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Chunk.Chunk<A>> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.collectAll()), Effect.traced(trace))
+  return pipe(self, run(_sink.collectAll())).traced(trace)
 }
 
 /** @internal */
 export const runCount = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, number> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.count()), Effect.traced(trace))
+  return pipe(self, run(_sink.count())).traced(trace)
 }
 
 /** @internal */
 export const runDrain = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, void> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.drain()), Effect.traced(trace))
+  return pipe(self, run(_sink.drain())).traced(trace)
 }
 
 /** @internal */
 export const runFold = <S, A>(s: S, f: (s: S, a: A) => S) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, S> =>
-    pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.scoped, Effect.traced(trace))
+    pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.scoped).traced(trace)
 }
 
 /** @internal */
 export const runFoldEffect = <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, S> =>
-    pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.scoped, Effect.traced(trace))
+    pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.scoped).traced(trace)
 }
 
 /** @internal */
 export const runFoldScoped = <S, A>(s: S, f: (s: S, a: A) => S) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, E, S> =>
-    pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.traced(trace))
+    pipe(self, runFoldWhileScoped(s, constTrue, f)).traced(trace)
 }
 
 /** @internal */
 export const runFoldScopedEffect = <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
-    pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.traced(trace))
+    pipe(self, runFoldWhileScopedEffect(s, constTrue, f)).traced(trace)
 }
 
 /** @internal */
 export const runFoldWhile = <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, S> =>
-    pipe(self, runFoldWhileScoped(s, cont, f), Effect.scoped, Effect.traced(trace))
+    pipe(self, runFoldWhileScoped(s, cont, f), Effect.scoped).traced(trace)
 }
 
 /** @internal */
@@ -3795,14 +3788,14 @@ export const runFoldWhileEffect = <S, A, R2, E2>(
 ) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, S> =>
-    pipe(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped, Effect.traced(trace))
+    pipe(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped).traced(trace)
 }
 
 /** @internal */
 export const runFoldWhileScoped = <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, E, S> =>
-    pipe(self, runScoped(_sink.fold(s, cont, f)), Effect.traced(trace))
+    pipe(self, runScoped(_sink.fold(s, cont, f))).traced(trace)
 }
 
 /** @internal */
@@ -3813,85 +3806,75 @@ export const runFoldWhileScopedEffect = <S, A, R2, E2>(
 ) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
-    pipe(self, runScoped(_sink.foldEffect(s, cont, f)), Effect.traced(trace))
+    pipe(self, runScoped(_sink.foldEffect(s, cont, f))).traced(trace)
 }
 
 /** @internal */
 export const runForEach = <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
-    pipe(self, run(_sink.forEach(f)), Effect.traced(trace))
+    pipe(self, run(_sink.forEach(f))).traced(trace)
 }
 
 /** @internal */
 export const runForEachChunk = <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
-    pipe(self, run(_sink.forEachChunk(f)), Effect.traced(trace))
+    pipe(self, run(_sink.forEachChunk(f))).traced(trace)
 }
 
 /** @internal */
 export const runForEachChunkScoped = <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
-    pipe(self, runScoped(_sink.forEachChunk(f)), Effect.traced(trace))
+    pipe(self, runScoped(_sink.forEachChunk(f))).traced(trace)
 }
 
 /** @internal */
 export const runForEachScoped = <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
-    pipe(
-      self,
-      runScoped(_sink.forEach(f)),
-      Effect.traced(trace)
-    )
+    pipe(self, runScoped(_sink.forEach(f))).traced(trace)
 }
 
 /** @internal */
 export const runForEachWhile = <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
-    pipe(self, run(_sink.forEachWhile(f)), Effect.traced(trace))
+    pipe(self, run(_sink.forEachWhile(f))).traced(trace)
 }
 
 /** @internal */
 export const runForEachWhileScoped = <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>) => {
   const trace = getCallTrace()
   return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
-    pipe(self, runScoped(_sink.forEachWhile(f)), Effect.traced(trace))
+    pipe(self, runScoped(_sink.forEachWhile(f))).traced(trace)
 }
 
 /** @internal */
 export const runHead = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.head<A>()), Effect.traced(trace))
+  return pipe(self, run(_sink.head<A>())).traced(trace)
 }
 
 /** @internal */
 export const runIntoHub = <E, A>(hub: Hub.Hub<Take.Take<E, A>>) => {
   const trace = getCallTrace()
-  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> =>
-    pipe(self, runIntoQueue(hub), Effect.traced(trace))
+  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> => pipe(self, runIntoQueue(hub)).traced(trace)
 }
 
 /** @internal */
 export const runIntoHubScoped = <E, A>(hub: Hub.Hub<Take.Take<E, A>>) => {
   const trace = getCallTrace()
   return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> =>
-    pipe(self, runIntoQueueScoped(hub), Effect.traced(trace))
+    pipe(self, runIntoQueueScoped(hub)).traced(trace)
 }
 
 /** @internal */
 export const runIntoQueue = <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) => {
   const trace = getCallTrace()
   return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> =>
-    pipe(
-      self,
-      runIntoQueueScoped(queue),
-      Effect.scoped,
-      Effect.traced(trace)
-    )
+    pipe(self, runIntoQueueScoped(queue), Effect.scoped).traced(trace)
 }
 
 /** @internal */
@@ -3930,9 +3913,8 @@ export const runIntoQueueElementsScoped = <E, A>(queue: Queue.Enqueue<Exit.Exit<
       channel.mapOutEffect((exit) => pipe(queue, Queue.offer(exit))),
       channel.drain,
       channelExecutor.runScoped,
-      Effect.asUnit,
-      Effect.traced(trace)
-    )
+      Effect.asUnit
+    ).traced(trace)
   }
 }
 
@@ -3951,16 +3933,15 @@ export const runIntoQueueScoped = <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) 
       channel.mapOutEffect((take) => pipe(queue, Queue.offer(take))),
       channel.drain,
       channelExecutor.runScoped,
-      Effect.asUnit,
-      Effect.traced(trace)
-    )
+      Effect.asUnit
+    ).traced(trace)
   }
 }
 
 /** @internal */
 export const runLast = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.last()), Effect.traced(trace))
+  return pipe(self, run(_sink.last())).traced(trace)
 }
 
 /** @internal */
@@ -3971,15 +3952,14 @@ export const runScoped = <R2, E2, A, A2>(sink: Sink.Sink<R2, E2, A, unknown, A2>
       self.channel,
       channel.pipeToOrFail(sink.channel),
       channel.drain,
-      channelExecutor.runScoped,
-      Effect.traced(trace)
-    )
+      channelExecutor.runScoped
+    ).traced(trace)
 }
 
 /** @internal */
 export const runSum = <R, E>(self: Stream.Stream<R, E, number>): Effect.Effect<R, E, number> => {
   const trace = getCallTrace()
-  return pipe(self, run(_sink.sum()), Effect.traced(trace))
+  return pipe(self, run(_sink.sum())).traced(trace)
 }
 
 /** @internal */
@@ -4637,16 +4617,16 @@ export const toHub = (capacity: number) => {
   return <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, Hub.Hub<Take.Take<E, A>>> =>
     pipe(
       Effect.acquireRelease(Hub.bounded<Take.Take<E, A>>(capacity), (hub) => Hub.shutdown(hub)),
-      Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped)),
-      Effect.traced(trace)
-    )
+      Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
+    ).traced(trace)
 }
 
 /** @internal */
 export const toPull = <R, E, A>(
   self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> =>
-  pipe(
+): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> => {
+  const trace = getCallTrace()
+  return pipe(
     channel.toPull(self.channel),
     Effect.map((pull) =>
       pipe(
@@ -4655,7 +4635,8 @@ export const toPull = <R, E, A>(
         Effect.flatMap(Either.match(() => Effect.fail(Option.none), Effect.succeed))
       )
     )
-  )
+  ).traced(trace)
+}
 
 /** @internal */
 export const toQueue = (capacity = 2) => {
@@ -4665,9 +4646,8 @@ export const toQueue = (capacity = 2) => {
   ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
     pipe(
       Effect.acquireRelease(Queue.bounded<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped)),
-      Effect.traced(trace)
-    )
+      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+    ).traced(trace)
 }
 
 /** @internal */
@@ -4678,9 +4658,8 @@ export const toQueueDropping = (capacity = 2) => {
   ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
     pipe(
       Effect.acquireRelease(Queue.dropping<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped)),
-      Effect.traced(trace)
-    )
+      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+    ).traced(trace)
 }
 
 /** @internal */
@@ -4691,9 +4670,8 @@ export const toQueueOfElements = (capacity = 2) => {
   ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
     pipe(
       Effect.acquireRelease(Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueElementsScoped(queue), Effect.forkScoped)),
-      Effect.traced(trace)
-    )
+      Effect.tap((queue) => pipe(self, runIntoQueueElementsScoped(queue), Effect.forkScoped))
+    ).traced(trace)
 }
 
 /** @internal */
@@ -4704,9 +4682,8 @@ export const toQueueSliding = (capacity = 2) => {
   ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
     pipe(
       Effect.acquireRelease(Queue.sliding<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped)),
-      Effect.traced(trace)
-    )
+      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+    ).traced(trace)
 }
 
 /** @internal */
@@ -4716,9 +4693,8 @@ export const toQueueUnbounded = <R, E, A>(
   const trace = getCallTrace()
   return pipe(
     Effect.acquireRelease(Queue.unbounded<Take.Take<E, A>>(), (queue) => Queue.shutdown(queue)),
-    Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped)),
-    Effect.traced(trace)
-  )
+    Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+  ).traced(trace)
 }
 
 /** @internal */
