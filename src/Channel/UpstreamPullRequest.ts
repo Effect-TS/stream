@@ -2,7 +2,6 @@
  * @since 1.0.0
  */
 import * as internal from "@effect/stream/internal/channel/upstreamPullRequest"
-import type * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullRequest"
 
 /**
  * @since 1.0.0
@@ -42,7 +41,7 @@ export declare namespace UpstreamPullRequest {
  * @category models
  */
 export interface Pulled<A> extends UpstreamPullRequest.Variance<A> {
-  readonly op: OpCodes.OP_PULLED
+  readonly op: 0
   readonly value: A
 }
 
@@ -51,7 +50,7 @@ export interface Pulled<A> extends UpstreamPullRequest.Variance<A> {
  * @category models
  */
 export interface NoUpstream extends UpstreamPullRequest.Variance<never> {
-  readonly op: OpCodes.OP_NO_UPSTREAM
+  readonly op: 1
 }
 
 /**

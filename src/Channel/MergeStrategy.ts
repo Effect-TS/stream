@@ -2,7 +2,6 @@
  * @since 1.0.0
  */
 import * as internal from "@effect/stream/internal/channel/mergeStrategy"
-import type * as OpCodes from "@effect/stream/internal/opCodes/mergeStrategy"
 
 /**
  * @since 1.0.0
@@ -40,7 +39,7 @@ export declare namespace MergeStrategy {
  * @category models
  */
 export interface BackPressure extends MergeStrategy.Proto {
-  readonly op: OpCodes.OP_BACK_PRESSURE
+  readonly op: 0
 }
 
 /**
@@ -48,7 +47,7 @@ export interface BackPressure extends MergeStrategy.Proto {
  * @category models
  */
 export interface BufferSliding extends MergeStrategy.Proto {
-  readonly op: OpCodes.OP_BUFFER_SLIDING
+  readonly op: 1
 }
 
 /**

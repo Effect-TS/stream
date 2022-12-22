@@ -2,7 +2,6 @@
  * @since 1.0.0
  */
 import * as internal from "@effect/stream/internal/channel/childExecutorDecision"
-import type * as OpCodes from "@effect/stream/internal/opCodes/childExecutorDecision"
 
 /**
  * @since 1.0.0
@@ -42,7 +41,7 @@ export declare namespace ChildExecutorDecision {
  * @category models
  */
 export interface Continue extends ChildExecutorDecision.Proto {
-  readonly op: OpCodes.OP_CONTINUE
+  readonly op: 0
 }
 
 /**
@@ -53,7 +52,7 @@ export interface Continue extends ChildExecutorDecision.Proto {
  * @category models
  */
 export interface Close extends ChildExecutorDecision.Proto {
-  readonly op: OpCodes.OP_CLOSE
+  readonly op: 1
   readonly value: unknown
 }
 
@@ -65,7 +64,7 @@ export interface Close extends ChildExecutorDecision.Proto {
  * @category models
  */
 export interface Yield extends ChildExecutorDecision.Proto {
-  readonly op: OpCodes.OP_YIELD
+  readonly op: 2
 }
 
 /**

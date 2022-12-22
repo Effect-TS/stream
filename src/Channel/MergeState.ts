@@ -5,7 +5,6 @@ import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Fiber from "@effect/io/Fiber"
 import * as internal from "@effect/stream/internal/channel/mergeState"
-import type * as OpCodes from "@effect/stream/internal/opCodes/mergeState"
 import type * as Either from "@fp-ts/data/Either"
 
 /**
@@ -47,7 +46,7 @@ export declare namespace MergeState {
  * @category models
  */
 export interface BothRunning<_Env, Err, Err1, _Err2, Elem, Done, Done1, _Done2> extends MergeState.Proto {
-  readonly op: OpCodes.OP_BOTH_RUNNING
+  readonly op: 0
   readonly left: Fiber.Fiber<Err, Either.Either<Done, Elem>>
   readonly right: Fiber.Fiber<Err1, Either.Either<Done1, Elem>>
 }
@@ -57,7 +56,7 @@ export interface BothRunning<_Env, Err, Err1, _Err2, Elem, Done, Done1, _Done2> 
  * @category models
  */
 export interface LeftDone<Env, _Err, Err1, Err2, _Elem, _Done, Done1, Done2> extends MergeState.Proto {
-  readonly op: OpCodes.OP_LEFT_DONE
+  readonly op: 1
   readonly f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>
 }
 
@@ -66,7 +65,7 @@ export interface LeftDone<Env, _Err, Err1, Err2, _Elem, _Done, Done1, Done2> ext
  * @category models
  */
 export interface RightDone<Env, Err, _Err1, Err2, _Elem, Done, _Done1, Done2> extends MergeState.Proto {
-  readonly op: OpCodes.OP_RIGHT_DONE
+  readonly op: 2
   readonly f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>
 }
 
