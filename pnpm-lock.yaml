@@ -16,9 +16,9 @@ specifiers:
   '@changesets/cli': ^2.26.0
   '@effect-ts/build-utils': 0.40.3
   '@effect-ts/core': ^0.60.2
-  '@effect/io': ~0.0.40
+  '@effect/io': ~0.0.41
   '@effect/language-service': 0.0.15
-  '@effect/stm': ~0.0.3
+  '@effect/stm': ~0.0.4
   '@fp-ts/core': ~0.0.11
   '@fp-ts/data': ~0.0.28
   '@repo-tooling/eslint-plugin-dprint': ^0.0.4
@@ -59,8 +59,8 @@ specifiers:
   vitest: 0.26.2
 
 dependencies:
-  '@effect/io': 0.0.40
-  '@effect/stm': 0.0.3
+  '@effect/io': 0.0.41
+  '@effect/stm': 0.0.4
   '@fp-ts/core': 0.0.11
   '@fp-ts/data': 0.0.28
 
@@ -648,8 +648,8 @@ packages:
     resolution: {integrity: sha512-gGnOCvDv6829EeeC+NgTnwIt4XxclR0KqrG7BRemmNX5cm75cF0CKiuEB/o902wjAlt+MdrxTtFC+XsYdLnxzA==}
     dev: true
 
-  /@effect/io/0.0.40:
-    resolution: {integrity: sha512-DOjj7GWWPXMv2tqkAGXSWBapRYvXxBA6fFHfb9oFbPKrK+Y8MHggeYRMMBARQ6mo4tTWTtFnwuUBubGzq0jc7Q==}
+  /@effect/io/0.0.41:
+    resolution: {integrity: sha512-W3bsyouaBF3EUZ4WYucR5bnXd6i/rIcr0/jqx7491GyHxL3QbwHMYlu19YITAZGziHO7SEoUTsckgZlHIKz4Eg==}
     dependencies:
       '@fp-ts/core': 0.0.11
       '@fp-ts/data': 0.0.28
@@ -662,10 +662,10 @@ packages:
       '@fp-ts/data': 0.0.28
     dev: true
 
-  /@effect/stm/0.0.3:
-    resolution: {integrity: sha512-jDslezcHubjEOuKIjB1LW27hGP+6b1X9xU8rcQ08D6ebsQ1+hdPq+UIj3R3ffw+Mu7ompxXmjc6VXEMMLe1sOA==}
+  /@effect/stm/0.0.4:
+    resolution: {integrity: sha512-p32VWCdxbq2ZWmUQydWSt/ef7OkuyHg1ERPnR0ePGMEv7PbG4hzwuV7UR/EI8D0Fp4s+pXatLfouhVICj+b/lw==}
     dependencies:
-      '@effect/io': 0.0.40
+      '@effect/io': 0.0.41
       '@fp-ts/core': 0.0.11
       '@fp-ts/data': 0.0.28
     dev: false
