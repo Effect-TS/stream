@@ -3347,6 +3347,37 @@ export const provideLayer = <RIn, E2, ROut>(layer: Layer.Layer<RIn, E2, ROut>) =
 }
 
 /** @internal */
+export const provideService = <T>(tag: Context.Tag<T>) => {
+  return (resource: T) => {
+    return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<Exclude<R, T>, E, A> =>
+      pipe(self, provideServiceEffect(tag)(Effect.succeed(resource)))
+  }
+}
+
+/** @internal */
+export const provideServiceEffect = <T>(tag: Context.Tag<T>) => {
+  return <R2, E2>(effect: Effect.Effect<R2, E2, T>) => {
+    return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R2 | Exclude<R, T>, E2 | E, A> =>
+      pipe(self, provideServiceStream(tag)(fromEffect(effect)))
+  }
+}
+
+/** @internal */
+export const provideServiceStream = <T>(tag: Context.Tag<T>) => {
+  return <R2, E2>(stream: Stream.Stream<R2, E2, T>) => {
+    return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R2 | Exclude<R, T>, E2 | E, A> =>
+      environmentWithStream((env: Context.Context<R2 | Exclude<R, T>>) =>
+        pipe(
+          stream,
+          flatMap((service) =>
+            pipe(self, provideEnvironment(pipe(env, Context.add(tag)(service)) as Context.Context<R | R2>))
+          )
+        )
+      )
+  }
+}
+
+/** @internal */
 export const provideSomeEnvironment = <R0, R>(f: (env: Context.Context<R0>) => Context.Context<R>) => {
   return <E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R0, E, A> =>
     environmentWithStream((env) => pipe(self, provideEnvironment(f(env))))
