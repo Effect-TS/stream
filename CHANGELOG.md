@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.3
+
+### Patch Changes
+
+- [#10](https://github.com/Effect-TS/stream/pull/10) [`8466997`](https://github.com/Effect-TS/stream/commit/8466997ea5b17da5f580493274911b4a26ecfdad) Thanks [@IMax153](https://github.com/IMax153)! - add provideService\* combinators
+
 ## 0.0.2
 
 ### Patch Changes
