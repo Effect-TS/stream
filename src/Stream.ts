@@ -2468,6 +2468,42 @@ export const provideLayer: <RIn, E2, ROut>(
 ) => <E, A>(self: Stream<ROut, E, A>) => Stream<RIn, E2 | E, A> = internal.provideLayer
 
 /**
+ * Provides the stream with the single service it requires. If the stream
+ * requires more than one service use `Stream.provideEnvironment` instead.
+ *
+ * @since 1.0.0
+ * @category environment
+ */
+export const provideService: <T>(
+  tag: Context.Tag<T>
+) => (resource: T) => <R, E, A>(self: Stream<R, E, A>) => Stream<Exclude<R, T>, E, A> = internal.provideService
+
+/**
+ * Provides the stream with the single service it requires. If the stream
+ * requires more than one service use `Stream.provideEnvironment` instead.
+ *
+ * @since 1.0.0
+ * @category environment
+ */
+export const provideServiceEffect: <T>(
+  tag: Context.Tag<T>
+) => <R2, E2>(
+  effect: Effect.Effect<R2, E2, T>
+) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, T>, E2 | E, A> = internal.provideServiceEffect
+
+/**
+ * Provides the stream with the single service it requires. If the stream
+ * requires more than one service use `Stream.provideEnvironment` instead.
+ *
+ * @since 1.0.0
+ * @category environment
+ */
+export const provideServiceStream: <T>(
+  tag: Context.Tag<T>
+) => <R2, E2>(stream: Stream<R2, E2, T>) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, T>, E2 | E, A> =
+  internal.provideServiceStream
+
+/**
  * Transforms the environment being provided to the stream with the specified
  * function.
  *

@@ -126,6 +126,19 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
 
+  it.effect("provideServiceStream", () =>
+    Effect.gen(function*($) {
+      const stream = Stream.service(StringService)
+      const service = Stream.succeed<StringService>({ string: "test" })
+      const result = yield* $(pipe(
+        stream,
+        Stream.provideServiceStream(StringService)(service),
+        Stream.map((s) => s.string),
+        Stream.runCollect
+      ))
+      assert.deepStrictEqual(Array.from(result), ["test"])
+    }))
+
   it.effect("serviceWith", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
