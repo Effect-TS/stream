@@ -255,7 +255,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
                     Effect.zipRight(
                       pipe(
                         Deferred.await(deferred),
-                        Effect.foldCause(onError, Either.match(onDone, onElement))
+                        Effect.matchCause(onError, Either.match(onDone, onElement))
                       )
                     )
                   ),
@@ -266,7 +266,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
                 return [
                   pipe(
                     Deferred.await(deferred),
-                    Effect.foldCause(onError, Either.match(onDone, onElement))
+                    Effect.matchCause(onError, Either.match(onDone, onElement))
                   ),
                   stateEmit([...state.notifyConsumers, deferred])
                 ]

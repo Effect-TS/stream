@@ -5,7 +5,6 @@ import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
 import * as Ref from "@effect/io/Ref"
 import * as Scope from "@effect/io/Scope"
-import * as TSemaphore from "@effect/stm/TSemaphore"
 import * as Stream from "@effect/stream/Stream"
 import * as Take from "@effect/stream/Take"
 import * as it from "@effect/stream/test/utils/extend"
@@ -14,6 +13,19 @@ import * as Either from "@fp-ts/data/Either"
 import * as Equal from "@fp-ts/data/Equal"
 import { identity, pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
+
+const withPermitsScoped = (permits: number) =>
+  (semaphore: Effect.Semaphore) =>
+    Effect.gen(function*($) {
+      const p = yield* $(Deferred.make<never, void>())
+      const q = yield* $(Effect.acquireRelease(Deferred.make<never, void>(), (d) => Deferred.succeed<void>(void 0)(d)))
+      yield* $(Effect.forkScoped(
+        semaphore(permits)(Effect.gen(function*($) {
+          yield* $(Deferred.succeed<void>(void 0)(p))
+          yield* $(Deferred.await(q))
+        }))
+      ))
+    })
 
 describe.concurrent("Stream", () => {
   it.effect("branchAfter - switches streams", () =>
@@ -471,7 +483,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMapParSwitch - guarantee ordering no parallelism", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      const semaphore = yield* $(TSemaphore.make(1))
+      const semaphore = yield* $(Effect.makeSemaphore(1))
       yield* $(pipe(
         Stream.make(1, 2, 3, 4),
         Stream.flatMapParSwitch(1)((n) => {
@@ -482,20 +494,20 @@ describe.concurrent("Stream", () => {
             )
           }
           return pipe(
-            Stream.scoped(TSemaphore.withPermitScoped(semaphore)),
+            Stream.scoped(withPermitsScoped(1)(semaphore)),
             Stream.flatMap(() => Stream.never())
           )
         }),
         Stream.runDrain
       ))
-      const result = yield* $(TSemaphore.withPermit(semaphore)(Ref.get(ref)))
+      const result = yield* $(semaphore(1)(Ref.get(ref)))
       assert.isTrue(result)
     }))
 
   it.effect("flatMapParSwitch - guarantee ordering with parallelism", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const semaphore = yield* $(TSemaphore.make(4))
+      const semaphore = yield* $(Effect.makeSemaphore(4))
       yield* $(pipe(
         Stream.range(1, 13),
         Stream.flatMapParSwitch(4)((n) => {
@@ -509,7 +521,7 @@ describe.concurrent("Stream", () => {
             )
           }
           return pipe(
-            Stream.scoped(TSemaphore.withPermitScoped(semaphore)),
+            Stream.scoped(withPermitsScoped(1)(semaphore)),
             Stream.flatMap(() => Stream.never())
           )
         }),
@@ -517,7 +529,7 @@ describe.concurrent("Stream", () => {
       ))
       const result = yield* $(pipe(
         Ref.get(ref),
-        TSemaphore.withPermits(4)(semaphore)
+        semaphore(4)
       ))
       assert.strictEqual(result, 4)
     }))

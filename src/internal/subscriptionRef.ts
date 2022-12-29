@@ -5,7 +5,6 @@ import * as _circular from "@effect/io/internal/effect/circular"
 import * as _ref from "@effect/io/internal/ref"
 import * as Ref from "@effect/io/Ref"
 import * as Synchronized from "@effect/io/Ref/Synchronized"
-import * as TSemaphore from "@effect/stm/TSemaphore"
 import * as stream from "@effect/stream/internal/stream"
 import type { Stream } from "@effect/stream/Stream"
 import type * as SubscriptionRef from "@effect/stream/SubscriptionRef"
@@ -33,7 +32,7 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
   constructor(
     readonly ref: Ref.Ref<A>,
     readonly hub: Hub.Hub<A>,
-    readonly semaphore: TSemaphore.TSemaphore
+    readonly semaphore: Effect.Semaphore
   ) {
     Equal.considerByRef(this)
   }
@@ -51,7 +50,7 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
           )
         )
       ),
-      TSemaphore.withPermit(this.semaphore),
+      this.semaphore(1),
       stream.unwrapScoped
     )
   }
@@ -74,7 +73,7 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
           Effect.zipLeft(pipe(this.hub, Hub.publish(a)))
         )
       ),
-      TSemaphore.withPermit(this.semaphore)
+      this.semaphore(1)
     ).traced(trace)
   }
 }
@@ -92,7 +91,7 @@ export const make = <A>(value: A): Effect.Effect<never, never, SubscriptionRef.S
     Effect.tuple(
       Hub.unbounded<A>(),
       Ref.make(value),
-      TSemaphore.make(1)
+      Effect.makeSemaphore(1)
     ),
     Effect.map(([hub, ref, semaphore]) => new SubscriptionRefImpl(ref, hub, semaphore))
   ).traced(trace)
@@ -118,6 +117,6 @@ export const set = <A>(value: A) => {
       self.ref,
       Ref.set(value),
       Effect.zipLeft(pipe(self.hub, Hub.publish(value))),
-      TSemaphore.withPermit(self.semaphore)
+      self.semaphore(1)
     ).traced(trace)
 }
