@@ -11,7 +11,6 @@ import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
-import * as TSemaphore from "@effect/stm/TSemaphore"
 import type * as Channel from "@effect/stream/Channel"
 import type * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as channel from "@effect/stream/internal/channel"
@@ -315,7 +314,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
               (scheduleExit, _) =>
                 pipe(
                   Effect.done(scheduleExit),
-                  Effect.foldCauseEffect(
+                  Effect.matchCauseEffect(
                     (cause) =>
                       pipe(
                         Cause.failureOrCause(cause),
@@ -457,7 +456,7 @@ export const asyncEffect = <R, E, A>(
               const loop: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
                 Queue.take(output),
                 Effect.flatMap(_take.done),
-                Effect.fold(
+                Effect.match(
                   (maybeError) =>
                     pipe(
                       core.fromEffect(Queue.shutdown(output)),
@@ -517,7 +516,7 @@ export const asyncInterrupt = <R, E, A>(
                 const loop: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
                   Queue.take(output),
                   Effect.flatMap(_take.done),
-                  Effect.fold(
+                  Effect.match(
                     (maybeError) =>
                       pipe(
                         core.fromEffect(Queue.shutdown(output)),
@@ -1643,7 +1642,7 @@ export const distributedWithDynamic = <E, A, _>(
                           return pipe(
                             queue,
                             Queue.offer(Exit.succeed(a)),
-                            Effect.foldCauseEffect(
+                            Effect.matchCauseEffect(
                               (cause) =>
                                 // Ignore all downstream queues that were shut
                                 // down and remove them later
@@ -1676,7 +1675,7 @@ export const distributedWithDynamic = <E, A, _>(
               ),
               Effect.asUnit
             )
-          const queuesLock = yield* $(TSemaphore.make(1))
+          const queuesLock = yield* $(Effect.makeSemaphore(1))
           const newQueue = yield* $(
             Ref.make<Effect.Effect<never, never, readonly [number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>]>>(
               pipe(
@@ -1694,7 +1693,7 @@ export const distributedWithDynamic = <E, A, _>(
           )
           const finalize = (endTake: Exit.Exit<Option.Option<E>, never>): Effect.Effect<never, never, void> =>
             // Make sure that no queues are currently being added
-            TSemaphore.withPermit(queuesLock)(
+            queuesLock(1)(
               pipe(
                 newQueue,
                 Ref.set(
@@ -1738,13 +1737,13 @@ export const distributedWithDynamic = <E, A, _>(
           yield* $(pipe(
             self,
             runForEachScoped(offer),
-            Effect.foldCauseEffect(
+            Effect.matchCauseEffect(
               (cause) => finalize(Exit.failCause(pipe(cause, Cause.map(Option.some)))),
               () => finalize(Exit.fail(Option.none))
             ),
             Effect.forkScoped
           ))
-          return TSemaphore.withPermit(queuesLock)(
+          return queuesLock(1)(
             Effect.flatten(Ref.get(newQueue))
           )
         })
@@ -2256,7 +2255,7 @@ export const fromEffectOption = <R, E, A>(effect: Effect.Effect<R, Option.Option
   new StreamImpl(
     pipe(
       effect,
-      Effect.fold(Option.match(core.unit, core.fail), (a) => core.write(Chunk.singleton(a))),
+      Effect.match(Option.match(core.unit, core.fail), (a) => core.write(Chunk.singleton(a))),
       channel.unwrap
     )
   )
@@ -2456,7 +2455,7 @@ export const haltWhenDeferred = <E2, _>(deferred: Deferred.Deferred<E2, _>) => {
             core.fail,
             core.unit
           ),
-        (effect) => pipe(effect, Effect.fold(core.fail, core.unit), channel.unwrap)
+        (effect) => pipe(effect, Effect.match(core.fail, core.unit), channel.unwrap)
       )),
       channel.unwrap
     )
@@ -2780,7 +2779,7 @@ export const mapAccumEffect = <S, A, R2, E2, A2>(
                       f(s, a),
                       Effect.flatMap(([s, a]) => pipe(emit(a), Effect.as(s)))
                     )),
-                  Effect.fold(
+                  Effect.match(
                     (error) => {
                       if (outputs.length !== 0) {
                         return pipe(core.write(Chunk.unsafeFromArray(outputs)), channel.zipRight(core.fail(error)))
@@ -3656,7 +3655,7 @@ export const repeatWith = <R2, B, A, C>(
         const process = pipe(self, map(f)).channel
         const loop: Channel.Channel<R | R2, unknown, unknown, unknown, E, Chunk.Chunk<C>, void> = pipe(
           driver.next(void 0),
-          Effect.fold(
+          Effect.match(
             core.unit,
             () =>
               pipe(
@@ -3704,7 +3703,7 @@ export const repeatEffectWithSchedule = <R, E, A, R2, _>(
           unfoldEffect(a, (s) =>
             pipe(
               driver.next(s),
-              Effect.foldEffect(
+              Effect.matchEffect(
                 Effect.succeed,
                 () => pipe(effect, Effect.map((nextA) => Option.some([nextA, nextA] as const)))
               )
@@ -3725,7 +3724,7 @@ export const retry = <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>) => {
           catchAll((error) =>
             pipe(
               driver.next(error),
-              Effect.foldEffect(
+              Effect.matchEffect(
                 () => Effect.fail(error),
                 () => Effect.succeed(pipe(loop, tap(() => driver.reset())))
               ),
@@ -4047,7 +4046,7 @@ export const scheduleWith = <R2, A, B, C>(
       }
       return pipe(
         driver.next(next.value),
-        Effect.foldEffect(
+        Effect.matchEffect(
           () =>
             pipe(
               driver.last(),
@@ -4997,7 +4996,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
           case ZipAllState.OP_DRAIN_LEFT: {
             return pipe(
               pullLeft,
-              Effect.fold(
+              Effect.match(
                 Exit.fail,
                 (leftChunk) =>
                   Exit.succeed(
@@ -5012,7 +5011,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
           case ZipAllState.OP_DRAIN_RIGHT: {
             return pipe(
               pullRight,
-              Effect.fold(
+              Effect.match(
                 Exit.fail,
                 (rightChunk) =>
                   Exit.succeed(
@@ -5028,7 +5027,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
             return pipe(
               Effect.unsome(pullLeft),
               Effect.zipPar(Effect.unsome(pullRight)),
-              Effect.foldEffect(
+              Effect.matchEffect(
                 (error) => Effect.succeed(Exit.fail(Option.some(error))),
                 ([leftOption, rightOption]) => {
                   if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
@@ -5077,7 +5076,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
           case ZipAllState.OP_PULL_LEFT: {
             return pipe(
               pullLeft,
-              Effect.foldEffect(
+              Effect.matchEffect(
                 Option.match(
                   () =>
                     Effect.succeed(
@@ -5107,7 +5106,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
           case ZipAllState.OP_PULL_RIGHT: {
             return pipe(
               pullRight,
-              Effect.foldEffect(
+              Effect.matchEffect(
                 Option.match(
                   () =>
                     Effect.succeed(
@@ -5254,7 +5253,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
         case ZipAllState.OP_DRAIN_LEFT: {
           return pipe(
             pullLeft,
-            Effect.foldEffect(
+            Effect.matchEffect(
               (error) => Effect.succeed(Exit.fail(error)),
               (leftChunk) =>
                 Effect.succeed(Exit.succeed(
@@ -5269,7 +5268,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
         case ZipAllState.OP_DRAIN_RIGHT: {
           return pipe(
             pullRight,
-            Effect.foldEffect(
+            Effect.matchEffect(
               (error) => Effect.succeed(Exit.fail(error)),
               (rightChunk) =>
                 Effect.succeed(Exit.succeed(
@@ -5285,7 +5284,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
           return pipe(
             Effect.unsome(pullLeft),
             Effect.zipPar(Effect.unsome(pullRight)),
-            Effect.foldEffect(
+            Effect.matchEffect(
               (error) => Effect.succeed(Exit.fail(Option.some(error))),
               ([leftOption, rightOption]) => {
                 if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
@@ -5324,7 +5323,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
         case ZipAllState.OP_PULL_LEFT: {
           return pipe(
             pullLeft,
-            Effect.foldEffect(
+            Effect.matchEffect(
               Option.match(
                 () =>
                   Effect.succeed(Exit.succeed(
@@ -5355,7 +5354,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
         case ZipAllState.OP_PULL_RIGHT: {
           return pipe(
             pullRight,
-            Effect.foldEffect(
+            Effect.matchEffect(
               Option.match(
                 () =>
                   Effect.succeed(
@@ -5588,7 +5587,7 @@ export const zipWithChunks = <R2, E2, A2, A, A3>(
           return pipe(
             Effect.unsome(pullLeft),
             Effect.zipPar(Effect.unsome(pullRight)),
-            Effect.foldEffect(
+            Effect.matchEffect(
               (error) => Effect.succeed(Exit.fail(Option.some(error))),
               ([leftOption, rightOption]) => {
                 if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
@@ -5611,7 +5610,7 @@ export const zipWithChunks = <R2, E2, A2, A, A3>(
         case ZipChunksState.OP_PULL_LEFT: {
           return pipe(
             pullLeft,
-            Effect.foldEffect(
+            Effect.matchEffect(
               (error) => Effect.succeed(Exit.fail(error)),
               (leftChunk) => {
                 if (Chunk.isEmpty(leftChunk)) {
@@ -5628,7 +5627,7 @@ export const zipWithChunks = <R2, E2, A2, A, A3>(
         case ZipChunksState.OP_PULL_RIGHT: {
           return pipe(
             pullRight,
-            Effect.foldEffect(
+            Effect.matchEffect(
               (error) => Effect.succeed(Exit.fail(error)),
               (rightChunk) => {
                 if (Chunk.isEmpty(rightChunk)) {

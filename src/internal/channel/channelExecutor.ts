@@ -149,7 +149,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                           case ChannelStateOpCodes.OP_FROM_EFFECT: {
                             return pipe(
                               state.effect,
-                              Effect.foldCauseEffect(
+                              Effect.matchCauseEffect(
                                 (cause) => bridgeInput.error(cause),
                                 () => drainer
                               )
@@ -260,7 +260,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                 result = ChannelState.FromEffect(
                   pipe(
                     effect,
-                    Effect.foldCauseEffect(
+                    Effect.matchCauseEffect(
                       (cause) => {
                         const state = this.doneHalt(cause)
                         return state !== undefined && ChannelState.isFromEffect(state) ?
@@ -548,7 +548,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
   runBracketOut(bracketOut: core.BracketOut): ChannelState.ChannelState<Env, unknown> {
     const effect = pipe(
       this.provide(bracketOut.acquire() as Effect.Effect<Env, OutErr, OutDone>),
-      Effect.foldCauseEffect(
+      Effect.matchCauseEffect(
         (cause) =>
           Effect.sync(() => {
             this._currentChannel = core.failCause(cause) as core.Primitive
@@ -1072,7 +1072,7 @@ export const readUpstream = <R, E, E2, A>(
           }
           return pipe(
             emitEffect as Effect.Effect<never, never, void>,
-            Effect.foldCauseEffect(onFailure, onSuccess)
+            Effect.matchCauseEffect(onFailure, onSuccess)
           ).traced(trace)
         }
         if (emitEffect === undefined) {
@@ -1080,7 +1080,7 @@ export const readUpstream = <R, E, E2, A>(
         }
         return pipe(
           emitEffect as Effect.Effect<never, never, void>,
-          Effect.foldCauseEffect(onFailure, () => read())
+          Effect.matchCauseEffect(onFailure, () => read())
         ).traced(trace)
       }
 
@@ -1092,7 +1092,7 @@ export const readUpstream = <R, E, E2, A>(
           }
           return pipe(
             doneEffect as Effect.Effect<never, never, void>,
-            Effect.foldCauseEffect(onFailure, () => onSuccess())
+            Effect.matchCauseEffect(onFailure, () => onSuccess())
           ).traced(trace)
         }
         if (doneEffect === undefined) {
@@ -1100,7 +1100,7 @@ export const readUpstream = <R, E, E2, A>(
         }
         return pipe(
           doneEffect as Effect.Effect<never, never, void>,
-          Effect.foldCauseEffect(onFailure, () => read())
+          Effect.matchCauseEffect(onFailure, () => read())
         ).traced(trace)
       }
 
@@ -1114,7 +1114,7 @@ export const readUpstream = <R, E, E2, A>(
               return doneEffect === undefined ? Effect.unit() : doneEffect
             })
           ),
-          Effect.foldCauseEffect(onFailure, () => read())
+          Effect.matchCauseEffect(onFailure, () => read())
         ).traced(trace)
       }
 

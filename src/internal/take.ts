@@ -59,7 +59,7 @@ export const failCause = <E>(cause: Cause.Cause<E>): Take.Take<E, never> =>
 /** @internal */
 export const fromEffect = <R, E, A>(effect: Effect.Effect<R, E, A>): Effect.Effect<R, never, Take.Take<E, A>> => {
   const trace = getCallTrace()
-  return pipe(effect, Effect.foldCause(failCause, singleton)).traced(trace)
+  return pipe(effect, Effect.matchCause(failCause, singleton)).traced(trace)
 }
 
 /** @internal */
@@ -73,7 +73,7 @@ export const fromPull = <R, E, A>(
   const trace = getCallTrace()
   return pipe(
     pull,
-    Effect.foldCause((cause) =>
+    Effect.matchCause((cause) =>
       pipe(
         Cause.flipCauseOption(cause),
         Option.match(() => end, failCause)

@@ -9,7 +9,6 @@ import * as Layer from "@effect/io/Layer"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Scope from "@effect/io/Scope"
-import * as TSemaphore from "@effect/stm/TSemaphore"
 import type * as Channel from "@effect/stream/Channel"
 import type * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import type * as MergeState from "@effect/stream/Channel/MergeState"
@@ -760,19 +759,19 @@ export const mapOutEffectPar = (n: number) => {
             )
           )
           const errorSignal = yield* $(Deferred.make<OutErr1, never>())
-          const permits = yield* $(TSemaphore.make(n))
+          const permits = yield* $(Effect.makeSemaphore(n))
           const pull = yield* $(toPull(self))
           yield* $(
             pipe(
               pull,
-              Effect.foldCauseEffect(
+              Effect.matchCauseEffect(
                 (cause) => pipe(queue, Queue.offer(Effect.failCause(cause))),
                 (either) =>
                   pipe(
                     either,
                     Either.match(
                       (outDone) => {
-                        const lock = pipe(permits, TSemaphore.withPermits(n))
+                        const lock = permits(n)
                         return pipe(
                           lock(Effect.unit()),
                           Effect.interruptible,
@@ -812,7 +811,7 @@ export const mapOutEffectPar = (n: number) => {
                                   Effect.intoDeferred(deferred)
                                 )
                               ),
-                              TSemaphore.withPermit(permits),
+                              permits(1),
                               Effect.forkScoped
                             )
                           )
@@ -840,7 +839,7 @@ export const mapOutEffectPar = (n: number) => {
           > = pipe(
             Queue.take(queue),
             Effect.flatten,
-            Effect.foldCause(
+            Effect.matchCause(
               core.failCause,
               Either.match(
                 core.succeedNow,
@@ -1026,7 +1025,7 @@ export const mergeAllWith = (
         )
         const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none))
         const errorSignal = yield* $(Deferred.make<never, void>())
-        const permits = yield* $(TSemaphore.make(n))
+        const permits = yield* $(Effect.makeSemaphore(n))
         const pull = yield* $(toPull(channels))
         const evaluatePull = (
           pull: Effect.Effect<Env | Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem>>
@@ -1068,7 +1067,7 @@ export const mergeAllWith = (
         yield* $(
           pipe(
             pull,
-            Effect.foldCauseEffect(
+            Effect.matchCauseEffect(
               (cause) =>
                 pipe(
                   queue,
@@ -1080,7 +1079,7 @@ export const mergeAllWith = (
                   pipe(
                     Deferred.await(errorSignal),
                     Effect.raceWith(
-                      pipe(permits, TSemaphore.withPermits(n))(Effect.unit()),
+                      permits(n)(Effect.unit()),
                       (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
                       (_, failureAwait) =>
                         pipe(
@@ -1123,7 +1122,7 @@ export const mergeAllWith = (
                               latch,
                               Deferred.succeed<void>(void 0),
                               Effect.zipRight(raceEffects),
-                              TSemaphore.withPermit(permits),
+                              permits(1),
                               Effect.forkScoped
                             )
                           )
@@ -1161,7 +1160,7 @@ export const mergeAllWith = (
                             latch,
                             Deferred.succeed<void>(void 0),
                             Effect.zipRight(raceEffects),
-                            TSemaphore.withPermit(permits),
+                            permits(1),
                             Effect.forkScoped
                           ))
                           yield* $(Deferred.await(latch))
@@ -1190,7 +1189,7 @@ export const mergeAllWith = (
         > = pipe(
           Queue.take(queue),
           Effect.flatten,
-          Effect.foldCause(
+          Effect.matchCause(
             core.failCause,
             Either.match(
               core.succeedNow,

@@ -5,7 +5,6 @@ import type * as Effect from "@effect/io/Effect"
 import type * as Hub from "@effect/io/Hub"
 import * as Ref from "@effect/io/Ref"
 import * as Synchronized from "@effect/io/Ref/Synchronized"
-import type * as TSemaphore from "@effect/stm/TSemaphore"
 import * as internal from "@effect/stream/internal/subscriptionRef"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Option from "@fp-ts/data/Option"
@@ -35,7 +34,7 @@ export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchro
   /** @internal */
   readonly hub: Hub.Hub<A>
   /** @internal */
-  readonly semaphore: TSemaphore.TSemaphore
+  readonly semaphore: Effect.Semaphore
   /**
    * A stream containing the current value of the `Ref` as well as all changes
    * to that value.
