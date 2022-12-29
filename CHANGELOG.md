@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.4
+
+### Patch Changes
+
+- [#12](https://github.com/Effect-TS/stream/pull/12) [`91d483b`](https://github.com/Effect-TS/stream/commit/91d483ba6d309bed128a2aa315f841a95cda279f) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Update effect/io, detach from stm
+
 ## 0.0.3
 
 ### Patch Changes
