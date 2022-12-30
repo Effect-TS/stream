@@ -91,7 +91,17 @@ Added in v1.0.0
 - [models](#models)
   - [Channel (interface)](#channel-interface)
   - [ChannelException (interface)](#channelexception-interface)
-- [mutations](#mutations)
+- [refinements](#refinements)
+  - [isChannelException](#ischannelexception)
+- [sequencing](#sequencing)
+  - [flatMap](#flatmap)
+  - [flatten](#flatten)
+- [symbols](#symbols)
+  - [ChannelExceptionTypeId](#channelexceptiontypeid)
+  - [ChannelExceptionTypeId (type alias)](#channelexceptiontypeid-type-alias)
+  - [ChannelTypeId](#channeltypeid)
+  - [ChannelTypeId (type alias)](#channeltypeid-type-alias)
+- [utils](#utils)
   - [collect](#collect)
   - [concatMap](#concatmap)
   - [concatMapWith](#concatmapwith)
@@ -123,16 +133,6 @@ Added in v1.0.0
   - [pipeTo](#pipeto)
   - [pipeToOrFail](#pipetoorfail)
   - [repeated](#repeated)
-- [refinements](#refinements)
-  - [isChannelException](#ischannelexception)
-- [sequencing](#sequencing)
-  - [flatMap](#flatmap)
-  - [flatten](#flatten)
-- [symbols](#symbols)
-  - [ChannelExceptionTypeId](#channelexceptiontypeid)
-  - [ChannelExceptionTypeId (type alias)](#channelexceptiontypeid-type-alias)
-  - [ChannelTypeId](#channeltypeid)
-  - [ChannelTypeId (type alias)](#channeltypeid-type-alias)
 - [zipping](#zipping)
   - [zip](#zip)
   - [zipLeft](#zipleft)
@@ -1342,7 +1342,140 @@ export interface ChannelException<E> {
 
 Added in v1.0.0
 
-# mutations
+# refinements
+
+## isChannelException
+
+Returns `true` if the specified value is an `ChannelException`, `false`
+otherwise.
+
+**Signature**
+
+```ts
+export declare const isChannelException: (u: unknown) => u is ChannelException<unknown>
+```
+
+Added in v1.0.0
+
+# sequencing
+
+## flatMap
+
+Returns a new channel, which sequentially combines this channel, together
+with the provided factory function, which creates a second channel based on
+the terminal value of this channel. The result is a channel that will first
+perform the functions of this channel, before performing the functions of
+the created channel (including yielding its terminal value).
+
+**Signature**
+
+```ts
+export declare const flatMap: <OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
+  f: (d: OutDone) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
+) => <Env, InErr, InElem, InDone, OutErr, OutElem>(
+  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+) => Channel<
+  Env1 | Env,
+  InErr & InErr1,
+  InElem & InElem1,
+  InDone & InDone1,
+  OutErr1 | OutErr,
+  OutElem1 | OutElem,
+  OutDone2
+>
+```
+
+Added in v1.0.0
+
+## flatten
+
+Returns a new channel, which flattens the terminal value of this channel.
+This function may only be called if the terminal value of this channel is
+another channel of compatible types.
+
+**Signature**
+
+```ts
+export declare const flatten: <
+  Env,
+  InErr,
+  InElem,
+  InDone,
+  OutErr,
+  OutElem,
+  Env1,
+  InErr1,
+  InElem1,
+  InDone1,
+  OutErr1,
+  OutElem1,
+  OutDone2
+>(
+  self: Channel<
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
+  >
+) => Channel<
+  Env | Env1,
+  InErr & InErr1,
+  InElem & InElem1,
+  InDone & InDone1,
+  OutErr | OutErr1,
+  OutElem | OutElem1,
+  OutDone2
+>
+```
+
+Added in v1.0.0
+
+# symbols
+
+## ChannelExceptionTypeId
+
+**Signature**
+
+```ts
+export declare const ChannelExceptionTypeId: typeof ChannelExceptionTypeId
+```
+
+Added in v1.0.0
+
+## ChannelExceptionTypeId (type alias)
+
+**Signature**
+
+```ts
+export type ChannelExceptionTypeId = typeof ChannelExceptionTypeId
+```
+
+Added in v1.0.0
+
+## ChannelTypeId
+
+**Signature**
+
+```ts
+export declare const ChannelTypeId: typeof ChannelTypeId
+```
+
+Added in v1.0.0
+
+## ChannelTypeId (type alias)
+
+**Signature**
+
+```ts
+export type ChannelTypeId = typeof ChannelTypeId
+```
+
+Added in v1.0.0
+
+# utils
 
 ## collect
 
@@ -2068,139 +2201,6 @@ Creates a channel which repeatedly runs this channel.
 export declare const repeated: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-# refinements
-
-## isChannelException
-
-Returns `true` if the specified value is an `ChannelException`, `false`
-otherwise.
-
-**Signature**
-
-```ts
-export declare const isChannelException: (u: unknown) => u is ChannelException<unknown>
-```
-
-Added in v1.0.0
-
-# sequencing
-
-## flatMap
-
-Returns a new channel, which sequentially combines this channel, together
-with the provided factory function, which creates a second channel based on
-the terminal value of this channel. The result is a channel that will first
-perform the functions of this channel, before performing the functions of
-the created channel (including yielding its terminal value).
-
-**Signature**
-
-```ts
-export declare const flatMap: <OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
-  f: (d: OutDone) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  OutDone2
->
-```
-
-Added in v1.0.0
-
-## flatten
-
-Returns a new channel, which flattens the terminal value of this channel.
-This function may only be called if the terminal value of this channel is
-another channel of compatible types.
-
-**Signature**
-
-```ts
-export declare const flatten: <
-  Env,
-  InErr,
-  InElem,
-  InDone,
-  OutErr,
-  OutElem,
-  Env1,
-  InErr1,
-  InElem1,
-  InDone1,
-  OutErr1,
-  OutElem1,
-  OutDone2
->(
-  self: Channel<
-    Env,
-    InErr,
-    InElem,
-    InDone,
-    OutErr,
-    OutElem,
-    Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
-  >
-) => Channel<
-  Env | Env1,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr | OutErr1,
-  OutElem | OutElem1,
-  OutDone2
->
-```
-
-Added in v1.0.0
-
-# symbols
-
-## ChannelExceptionTypeId
-
-**Signature**
-
-```ts
-export declare const ChannelExceptionTypeId: typeof ChannelExceptionTypeId
-```
-
-Added in v1.0.0
-
-## ChannelExceptionTypeId (type alias)
-
-**Signature**
-
-```ts
-export type ChannelExceptionTypeId = typeof ChannelExceptionTypeId
-```
-
-Added in v1.0.0
-
-## ChannelTypeId
-
-**Signature**
-
-```ts
-export declare const ChannelTypeId: typeof ChannelTypeId
-```
-
-Added in v1.0.0
-
-## ChannelTypeId (type alias)
-
-**Signature**
-
-```ts
-export type ChannelTypeId = typeof ChannelTypeId
 ```
 
 Added in v1.0.0

@@ -126,6 +126,9 @@ Added in v1.0.0
   - [environmentWithStream](#environmentwithstream)
   - [provideEnvironment](#provideenvironment)
   - [provideLayer](#providelayer)
+  - [provideService](#provideservice)
+  - [provideServiceEffect](#provideserviceeffect)
+  - [provideServiceStream](#provideservicestream)
   - [provideSomeEnvironment](#providesomeenvironment)
   - [provideSomeLayer](#providesomelayer)
   - [service](#service)
@@ -195,7 +198,27 @@ Added in v1.0.0
   - [mapErrorCause](#maperrorcause)
 - [models](#models)
   - [Stream (interface)](#stream-interface)
-- [mutations](#mutations)
+- [sequencing](#sequencing)
+  - [branchAfter](#branchafter)
+  - [flatMap](#flatmap)
+  - [flatMapPar](#flatmappar)
+  - [flatMapParSwitch](#flatmapparswitch)
+  - [flatten](#flatten)
+  - [flattenChunks](#flattenchunks)
+  - [flattenEffect](#flatteneffect)
+  - [flattenExit](#flattenexit)
+  - [flattenExitOption](#flattenexitoption)
+  - [flattenIterables](#flatteniterables)
+  - [flattenPar](#flattenpar)
+  - [flattenParUnbounded](#flattenparunbounded)
+  - [flattenTake](#flattentake)
+  - [tap](#tap)
+  - [tapError](#taperror)
+  - [tapSink](#tapsink)
+- [symbols](#symbols)
+  - [StreamTypeId](#streamtypeid)
+  - [StreamTypeId (type alias)](#streamtypeid-type-alias)
+- [utils](#utils)
   - [absolve](#absolve)
   - [aggregate](#aggregate)
   - [aggregateWithin](#aggregatewithin)
@@ -275,6 +298,7 @@ Added in v1.0.0
   - [mergeRight](#mergeright)
   - [mergeWith](#mergewith)
   - [mkString](#mkstring)
+  - [onDone](#ondone)
   - [onError](#onerror)
   - [partition](#partition)
   - [partitionEither](#partitioneither)
@@ -322,26 +346,6 @@ Added in v1.0.0
   - [when](#when)
   - [whenCaseEffect](#whencaseeffect)
   - [whenEffect](#wheneffect)
-- [sequencing](#sequencing)
-  - [branchAfter](#branchafter)
-  - [flatMap](#flatmap)
-  - [flatMapPar](#flatmappar)
-  - [flatMapParSwitch](#flatmapparswitch)
-  - [flatten](#flatten)
-  - [flattenChunks](#flattenchunks)
-  - [flattenEffect](#flatteneffect)
-  - [flattenExit](#flattenexit)
-  - [flattenExitOption](#flattenexitoption)
-  - [flattenIterables](#flatteniterables)
-  - [flattenPar](#flattenpar)
-  - [flattenParUnbounded](#flattenparunbounded)
-  - [flattenTake](#flattentake)
-  - [tap](#tap)
-  - [tapError](#taperror)
-  - [tapSink](#tapsink)
-- [symbols](#symbols)
-  - [StreamTypeId](#streamtypeid)
-  - [StreamTypeId (type alias)](#streamtypeid-type-alias)
 - [zipping](#zipping)
   - [zip](#zip)
   - [zipAll](#zipall)
@@ -1934,6 +1938,53 @@ export declare const provideLayer: <RIn, E2, ROut>(
 
 Added in v1.0.0
 
+## provideService
+
+Provides the stream with the single service it requires. If the stream
+requires more than one service use `Stream.provideEnvironment` instead.
+
+**Signature**
+
+```ts
+export declare const provideService: <T>(
+  tag: Context.Tag<T>
+) => (resource: T) => <R, E, A>(self: Stream<R, E, A>) => Stream<Exclude<R, T>, E, A>
+```
+
+Added in v1.0.0
+
+## provideServiceEffect
+
+Provides the stream with the single service it requires. If the stream
+requires more than one service use `Stream.provideEnvironment` instead.
+
+**Signature**
+
+```ts
+export declare const provideServiceEffect: <T>(
+  tag: Context.Tag<T>
+) => <R2, E2>(
+  effect: Effect.Effect<R2, E2, T>
+) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, T>, E2 | E, A>
+```
+
+Added in v1.0.0
+
+## provideServiceStream
+
+Provides the stream with the single service it requires. If the stream
+requires more than one service use `Stream.provideEnvironment` instead.
+
+**Signature**
+
+```ts
+export declare const provideServiceStream: <T>(
+  tag: Context.Tag<T>
+) => <R2, E2>(stream: Stream<R2, E2, T>) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, T>, E2 | E, A>
+```
+
+Added in v1.0.0
+
 ## provideSomeEnvironment
 
 Transforms the environment being provided to the stream with the specified
@@ -2834,7 +2885,275 @@ export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
 
 Added in v1.0.0
 
-# mutations
+# sequencing
+
+## branchAfter
+
+Returns a `Stream` that first collects `n` elements from the input `Stream`,
+and then creates a new `Stream` using the specified function, and sends all
+the following elements through that.
+
+**Signature**
+
+```ts
+export declare const branchAfter: <A, R2, E2, A2>(
+  n: number,
+  f: (input: Chunk.Chunk<A>) => Stream<R2, E2, A2>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+```
+
+Added in v1.0.0
+
+## flatMap
+
+Returns a stream made of the concatenation in strict order of all the
+streams produced by passing each element of this stream to `f0`
+
+**Signature**
+
+```ts
+export declare const flatMap: <A, R2, E2, A2>(
+  f: (a: A) => Stream<R2, E2, A2>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+```
+
+Added in v1.0.0
+
+## flatMapPar
+
+Maps each element of this stream to another stream and returns the
+non-deterministic merge of those streams, executing up to `n` inner streams
+concurrently. Up to `bufferSize` elements of the produced streams may be
+buffered in memory by this operator.
+
+**Signature**
+
+```ts
+export declare const flatMapPar: (
+  n: number,
+  bufferSize?: number | undefined
+) => <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+```
+
+Added in v1.0.0
+
+## flatMapParSwitch
+
+Maps each element of this stream to another stream and returns the
+non-deterministic merge of those streams, executing up to `n` inner streams
+concurrently. When a new stream is created from an element of the source
+stream, the oldest executing stream is cancelled. Up to `bufferSize`
+elements of the produced streams may be buffered in memory by this
+operator.
+
+**Signature**
+
+```ts
+export declare const flatMapParSwitch: (
+  n: number,
+  bufferSize?: number | undefined
+) => <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+```
+
+Added in v1.0.0
+
+## flatten
+
+Flattens this stream-of-streams into a stream made of the concatenation in
+strict order of all the streams.
+
+**Signature**
+
+```ts
+export declare const flatten: <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenChunks
+
+Submerges the chunks carried by this stream into the stream's structure,
+while still preserving them.
+
+**Signature**
+
+```ts
+export declare const flattenChunks: <R, E, A>(self: Stream<R, E, Chunk.Chunk<A>>) => Stream<R, E, A>
+```
+
+Added in v1.0.0
+
+## flattenEffect
+
+Flattens `Effect` values into the stream's structure, preserving all
+information about the effect.
+
+**Signature**
+
+```ts
+export declare const flattenEffect: <R, E, R2, E2, A>(
+  self: Stream<R, E, Effect.Effect<R2, E2, A>>
+) => Stream<R | R2, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenExit
+
+Flattens `Exit` values. `Exit.Failure` values translate to stream
+failures while `Exit.Success` values translate to stream elements.
+
+**Signature**
+
+```ts
+export declare const flattenExit: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenExitOption
+
+Unwraps `Exit` values that also signify end-of-stream by failing with `None`.
+
+For `Exit` values that do not signal end-of-stream, prefer:
+
+```ts
+stream.mapZIO(ZIO.done(_))
+```
+
+**Signature**
+
+```ts
+export declare const flattenExitOption: <R, E, E2, A>(
+  self: Stream<R, E, Exit.Exit<Option.Option<E2>, A>>
+) => Stream<R, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenIterables
+
+Submerges the iterables carried by this stream into the stream's structure,
+while still preserving them.
+
+**Signature**
+
+```ts
+export declare const flattenIterables: <R, E, A>(self: Stream<R, E, Iterable<A>>) => Stream<R, E, A>
+```
+
+Added in v1.0.0
+
+## flattenPar
+
+Flattens a stream of streams into a stream by executing a non-deterministic
+concurrent merge. Up to `n` streams may be consumed in parallel and up to
+`outputBuffer` elements may be buffered by this operator.
+
+**Signature**
+
+```ts
+export declare const flattenPar: (
+  n: number,
+  bufferSize?: number | undefined
+) => <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenParUnbounded
+
+Like `Stream.flattenPar`, but executes all streams concurrently.
+
+**Signature**
+
+```ts
+export declare const flattenParUnbounded: (
+  bufferSize?: number | undefined
+) => <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenTake
+
+Unwraps `Exit` values and flatten chunks that also signify end-of-stream
+by failing with `None`.
+
+**Signature**
+
+```ts
+export declare const flattenTake: <R, E, E2, A>(self: Stream<R, E, Take.Take<E2, A>>) => Stream<R, E | E2, A>
+```
+
+Added in v1.0.0
+
+## tap
+
+Adds an effect to consumption of every element of the stream.
+
+**Signature**
+
+```ts
+export declare const tap: <A, R2, E2, _>(
+  f: (a: A) => Effect.Effect<R2, E2, _>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+```
+
+Added in v1.0.0
+
+## tapError
+
+Returns a stream that effectfully "peeks" at the failure of the stream.
+
+**Signature**
+
+```ts
+export declare const tapError: <E, R2, E2, _>(
+  f: (error: E) => Effect.Effect<R2, E2, _>
+) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
+```
+
+Added in v1.0.0
+
+## tapSink
+
+Sends all elements emitted by this stream to the specified sink in addition
+to emitting them.
+
+**Signature**
+
+```ts
+export declare const tapSink: <R2, E2, A>(
+  sink: Sink.Sink<R2, E2, A, unknown, unknown>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+```
+
+Added in v1.0.0
+
+# symbols
+
+## StreamTypeId
+
+**Signature**
+
+```ts
+export declare const StreamTypeId: typeof StreamTypeId
+```
+
+Added in v1.0.0
+
+## StreamTypeId (type alias)
+
+**Signature**
+
+```ts
+export type StreamTypeId = typeof StreamTypeId
+```
+
+Added in v1.0.0
+
+# utils
 
 ## absolve
 
@@ -4106,6 +4425,20 @@ export declare const mkString: <R, E>(self: Stream<R, E, string>) => Effect.Effe
 
 Added in v1.0.0
 
+## onDone
+
+Runs the specified effect if this stream ends.
+
+**Signature**
+
+```ts
+export declare const onDone: <R2, _>(
+  cleanup: () => Effect.Effect<R2, never, _>
+) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+```
+
+Added in v1.0.0
+
 ## onError
 
 Runs the specified effect if this stream fails, providing the error to the
@@ -4870,274 +5203,6 @@ returns an empty stream.
 export declare const whenEffect: <R2, E2>(
   effect: Effect.Effect<R2, E2, boolean>
 ) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-```
-
-Added in v1.0.0
-
-# sequencing
-
-## branchAfter
-
-Returns a `Stream` that first collects `n` elements from the input `Stream`,
-and then creates a new `Stream` using the specified function, and sends all
-the following elements through that.
-
-**Signature**
-
-```ts
-export declare const branchAfter: <A, R2, E2, A2>(
-  n: number,
-  f: (input: Chunk.Chunk<A>) => Stream<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
-## flatMap
-
-Returns a stream made of the concatenation in strict order of all the
-streams produced by passing each element of this stream to `f0`
-
-**Signature**
-
-```ts
-export declare const flatMap: <A, R2, E2, A2>(
-  f: (a: A) => Stream<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
-## flatMapPar
-
-Maps each element of this stream to another stream and returns the
-non-deterministic merge of those streams, executing up to `n` inner streams
-concurrently. Up to `bufferSize` elements of the produced streams may be
-buffered in memory by this operator.
-
-**Signature**
-
-```ts
-export declare const flatMapPar: (
-  n: number,
-  bufferSize?: number | undefined
-) => <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
-## flatMapParSwitch
-
-Maps each element of this stream to another stream and returns the
-non-deterministic merge of those streams, executing up to `n` inner streams
-concurrently. When a new stream is created from an element of the source
-stream, the oldest executing stream is cancelled. Up to `bufferSize`
-elements of the produced streams may be buffered in memory by this
-operator.
-
-**Signature**
-
-```ts
-export declare const flatMapParSwitch: (
-  n: number,
-  bufferSize?: number | undefined
-) => <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
-## flatten
-
-Flattens this stream-of-streams into a stream made of the concatenation in
-strict order of all the streams.
-
-**Signature**
-
-```ts
-export declare const flatten: <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenChunks
-
-Submerges the chunks carried by this stream into the stream's structure,
-while still preserving them.
-
-**Signature**
-
-```ts
-export declare const flattenChunks: <R, E, A>(self: Stream<R, E, Chunk.Chunk<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## flattenEffect
-
-Flattens `Effect` values into the stream's structure, preserving all
-information about the effect.
-
-**Signature**
-
-```ts
-export declare const flattenEffect: <R, E, R2, E2, A>(
-  self: Stream<R, E, Effect.Effect<R2, E2, A>>
-) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenExit
-
-Flattens `Exit` values. `Exit.Failure` values translate to stream
-failures while `Exit.Success` values translate to stream elements.
-
-**Signature**
-
-```ts
-export declare const flattenExit: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenExitOption
-
-Unwraps `Exit` values that also signify end-of-stream by failing with `None`.
-
-For `Exit` values that do not signal end-of-stream, prefer:
-
-```ts
-stream.mapZIO(ZIO.done(_))
-```
-
-**Signature**
-
-```ts
-export declare const flattenExitOption: <R, E, E2, A>(
-  self: Stream<R, E, Exit.Exit<Option.Option<E2>, A>>
-) => Stream<R, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenIterables
-
-Submerges the iterables carried by this stream into the stream's structure,
-while still preserving them.
-
-**Signature**
-
-```ts
-export declare const flattenIterables: <R, E, A>(self: Stream<R, E, Iterable<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## flattenPar
-
-Flattens a stream of streams into a stream by executing a non-deterministic
-concurrent merge. Up to `n` streams may be consumed in parallel and up to
-`outputBuffer` elements may be buffered by this operator.
-
-**Signature**
-
-```ts
-export declare const flattenPar: (
-  n: number,
-  bufferSize?: number | undefined
-) => <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenParUnbounded
-
-Like `Stream.flattenPar`, but executes all streams concurrently.
-
-**Signature**
-
-```ts
-export declare const flattenParUnbounded: (
-  bufferSize?: number | undefined
-) => <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenTake
-
-Unwraps `Exit` values and flatten chunks that also signify end-of-stream
-by failing with `None`.
-
-**Signature**
-
-```ts
-export declare const flattenTake: <R, E, E2, A>(self: Stream<R, E, Take.Take<E2, A>>) => Stream<R, E | E2, A>
-```
-
-Added in v1.0.0
-
-## tap
-
-Adds an effect to consumption of every element of the stream.
-
-**Signature**
-
-```ts
-export declare const tap: <A, R2, E2, _>(
-  f: (a: A) => Effect.Effect<R2, E2, _>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-```
-
-Added in v1.0.0
-
-## tapError
-
-Returns a stream that effectfully "peeks" at the failure of the stream.
-
-**Signature**
-
-```ts
-export declare const tapError: <E, R2, E2, _>(
-  f: (error: E) => Effect.Effect<R2, E2, _>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
-```
-
-Added in v1.0.0
-
-## tapSink
-
-Sends all elements emitted by this stream to the specified sink in addition
-to emitting them.
-
-**Signature**
-
-```ts
-export declare const tapSink: <R2, E2, A>(
-  sink: Sink.Sink<R2, E2, A, unknown, unknown>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-```
-
-Added in v1.0.0
-
-# symbols
-
-## StreamTypeId
-
-**Signature**
-
-```ts
-export declare const StreamTypeId: typeof StreamTypeId
-```
-
-Added in v1.0.0
-
-## StreamTypeId (type alias)
-
-**Signature**
-
-```ts
-export type StreamTypeId = typeof StreamTypeId
 ```
 
 Added in v1.0.0

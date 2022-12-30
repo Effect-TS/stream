@@ -18,7 +18,10 @@ Added in v1.0.0
   - [get](#get)
 - [models](#models)
   - [SubscriptionRef (interface)](#subscriptionref-interface)
-- [mutations](#mutations)
+- [symbols](#symbols)
+  - [SubscriptionRefTypeId](#subscriptionreftypeid)
+  - [SubscriptionRefTypeId (type alias)](#subscriptionreftypeid-type-alias)
+- [utils](#utils)
   - [getAndSet](#getandset)
   - [getAndUpdate](#getandupdate)
   - [getAndUpdateEffect](#getandupdateeffect)
@@ -38,9 +41,6 @@ Added in v1.0.0
   - [updateSomeAndGet](#updatesomeandget)
   - [updateSomeAndGetEffect](#updatesomeandgeteffect)
   - [updateSomeEffect](#updatesomeeffect)
-- [symbols](#symbols)
-  - [SubscriptionRefTypeId](#subscriptionreftypeid)
-  - [SubscriptionRefTypeId (type alias)](#subscriptionreftypeid-type-alias)
 
 ---
 
@@ -86,7 +86,7 @@ export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchro
   /** @internal */
   readonly hub: Hub.Hub<A>
   /** @internal */
-  readonly semaphore: TSemaphore.TSemaphore
+  readonly semaphore: Effect.Semaphore
   /**
    * A stream containing the current value of the `Ref` as well as all changes
    * to that value.
@@ -97,7 +97,29 @@ export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchro
 
 Added in v1.0.0
 
-# mutations
+# symbols
+
+## SubscriptionRefTypeId
+
+**Signature**
+
+```ts
+export declare const SubscriptionRefTypeId: typeof SubscriptionRefTypeId
+```
+
+Added in v1.0.0
+
+## SubscriptionRefTypeId (type alias)
+
+**Signature**
+
+```ts
+export type SubscriptionRefTypeId = typeof SubscriptionRefTypeId
+```
+
+Added in v1.0.0
+
+# utils
 
 ## getAndSet
 
@@ -313,28 +335,6 @@ Added in v1.0.0
 export declare const updateSomeEffect: <A, R, E>(
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
 ) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, void>
-```
-
-Added in v1.0.0
-
-# symbols
-
-## SubscriptionRefTypeId
-
-**Signature**
-
-```ts
-export declare const SubscriptionRefTypeId: typeof SubscriptionRefTypeId
-```
-
-Added in v1.0.0
-
-## SubscriptionRefTypeId (type alias)
-
-**Signature**
-
-```ts
-export type SubscriptionRefTypeId = typeof SubscriptionRefTypeId
 ```
 
 Added in v1.0.0
