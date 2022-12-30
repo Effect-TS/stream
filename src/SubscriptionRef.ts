@@ -67,14 +67,14 @@ export const get: <A>(self: SubscriptionRef<A>) => Effect.Effect<never, never, A
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const getAndSet: <A>(value: A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = Ref.getAndSet
 
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const getAndUpdate: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> =
   Ref.getAndUpdate
@@ -82,7 +82,7 @@ export const getAndUpdate: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => 
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const getAndUpdateEffect: <A, R, E>(
   f: (a: A) => Effect.Effect<R, E, A>
@@ -91,7 +91,7 @@ export const getAndUpdateEffect: <A, R, E>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const getAndUpdateSome: <A>(
   pf: (a: A) => Option.Option<A>
@@ -100,7 +100,7 @@ export const getAndUpdateSome: <A>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const getAndUpdateSomeEffect: <A, R, E>(
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
@@ -118,7 +118,7 @@ export const make: <A>(value: A) => Effect.Effect<never, never, SubscriptionRef<
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const modify: <A, B>(
   f: (a: A) => readonly [B, A]
@@ -127,7 +127,7 @@ export const modify: <A, B>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const modifyEffect: <A, R, E, B>(
   f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
@@ -136,7 +136,7 @@ export const modifyEffect: <A, R, E, B>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const modifySome: <A, B>(
   fallback: B,
@@ -146,7 +146,7 @@ export const modifySome: <A, B>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const modifySomeEffect: <B, A, R, E>(
   fallback: B,
@@ -156,28 +156,28 @@ export const modifySomeEffect: <B, A, R, E>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const set: <A>(value: A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, void> = internal.set
 
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const setAndGet: <A>(value: A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = Ref.setAndGet
 
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const update: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, void> = Ref.update
 
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateEffect: <A, R, E>(
   f: (a: A) => Effect.Effect<R, E, A>
@@ -186,7 +186,7 @@ export const updateEffect: <A, R, E>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateAndGet: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> =
   Ref.updateAndGet
@@ -194,7 +194,7 @@ export const updateAndGet: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => 
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateAndGetEffect: <A, R, E>(
   f: (a: A) => Effect.Effect<R, E, A>
@@ -203,7 +203,7 @@ export const updateAndGetEffect: <A, R, E>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateSome: <A>(
   f: (a: A) => Option.Option<A>
@@ -212,7 +212,7 @@ export const updateSome: <A>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateSomeEffect: <A, R, E>(
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
@@ -221,7 +221,7 @@ export const updateSomeEffect: <A, R, E>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateSomeAndGet: <A>(
   pf: (a: A) => Option.Option<A>
@@ -230,7 +230,7 @@ export const updateSomeAndGet: <A>(
 /**
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const updateSomeAndGetEffect: <A, R, E>(
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>

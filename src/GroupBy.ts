@@ -65,7 +65,7 @@ export const evaluate: <K, E, V, R2, E2, A>(
  * Filter the groups to be processed.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const filter: <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V> =
   internal.filter
@@ -74,7 +74,7 @@ export const filter: <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy<R, 
  * Only consider the first `n` groups found in the `Stream`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const first: (n: number) => <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V> = internal.first
 

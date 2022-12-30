@@ -108,7 +108,7 @@ export const DefaultChunkSize: number = internal.DefaultChunkSize
  * Submerges the error case of an `Either` into the `Stream`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const absolve: <R, E, A>(self: Stream<R, E, Either.Either<E, A>>) => Stream<R, E, A> = internal.absolve
 
@@ -138,7 +138,7 @@ export const acquireRelease: <R, E, A, R2, _>(
  * `Sink.foldUntilEffect` for sinks that cover the common usecases.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const aggregate: <R2, E2, A, A2, B>(
   sink: Sink.Sink<R2, E2, A | A2, A2, B>
@@ -150,7 +150,7 @@ export const aggregate: <R2, E2, A, A2, B>(
  * @param sink A `Sink` used to perform the aggregation.
  * @param schedule A `Schedule` used to signal when to stop the aggregation.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const aggregateWithin: <R2, E2, A, A2, B, R3, C>(
   sink: Sink.Sink<R2, E2, A | A2, A2, B>,
@@ -172,7 +172,7 @@ export const aggregateWithin: <R2, E2, A, A2, B, R3, C>(
  * @param sink A `Sink` used to perform the aggregation.
  * @param schedule A `Schedule` used to signal when to stop the aggregation.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const aggregateWithinEither: <R2, E2, A, A2, B, R3, C>(
   sink: Sink.Sink<R2, E2, A | A2, A2, B>,
@@ -279,7 +279,7 @@ export const branchAfter: <A, R2, E2, A2>(
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const broadcast: <N extends number>(
   n: N,
@@ -295,7 +295,7 @@ export const broadcast: <N extends number>(
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const broadcastDynamic: (
   maximumLag: number
@@ -311,7 +311,7 @@ export const broadcastDynamic: (
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const broadcastedQueues: <N extends number>(
   n: N,
@@ -330,7 +330,7 @@ export const broadcastedQueues: <N extends number>(
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const broadcastedQueuesDynamic: (
   maximumLag: number
@@ -347,7 +347,7 @@ export const broadcastedQueuesDynamic: (
  *       use rechunk afterwards. Additionally, prefer capacities that are powers
  *       of 2 for better performance.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const buffer: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.buffer
 
@@ -357,7 +357,7 @@ export const buffer: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => S
  *
  * @note Prefer capacities that are powers of 2 for better performance.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const bufferChunks: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.bufferChunks
@@ -368,7 +368,7 @@ export const bufferChunks: (capacity: number) => <R, E, A>(self: Stream<R, E, A>
  *
  * @note Prefer capacities that are powers of 2 for better performance.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const bufferChunksDropping: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.bufferChunksDropping
@@ -379,7 +379,7 @@ export const bufferChunksDropping: (capacity: number) => <R, E, A>(self: Stream<
  *
  * @note Prefer capacities that are powers of 2 for better performance.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const bufferChunksSliding: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.bufferChunksSliding
@@ -392,7 +392,7 @@ export const bufferChunksSliding: (capacity: number) => <R, E, A>(self: Stream<R
  *       use rechunk afterwards. Additionally, Prefer capacities that are
  *       powers of 2 for better performance.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const bufferDropping: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.bufferDropping
@@ -405,7 +405,7 @@ export const bufferDropping: (capacity: number) => <R, E, A>(self: Stream<R, E, 
  *       use rechunk afterwards. Additionally, Prefer capacities that are
  *       powers of 2 for better performance.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const bufferSliding: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.bufferSliding
@@ -415,7 +415,7 @@ export const bufferSliding: (capacity: number) => <R, E, A>(self: Stream<R, E, A
  * buffering chunks into an unbounded queue.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const bufferUnbounded: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.bufferUnbounded
 
@@ -471,7 +471,7 @@ export const catchSomeCause: <E, R2, E2, A2>(
  * elements are equal.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const changes: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.changes
 
@@ -481,7 +481,7 @@ export const changes: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = inte
  * two elements are equal.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const changesWith: <A>(f: (x: A, y: A) => boolean) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.changesWith
@@ -492,7 +492,7 @@ export const changesWith: <A>(f: (x: A, y: A) => boolean) => <R, E>(self: Stream
  * determine whether two elements are equal.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const changesWithEffect: <A, R2, E2>(
   f: (x: A, y: A) => Effect.Effect<R2, E2, boolean>
@@ -503,7 +503,7 @@ export const changesWithEffect: <A, R2, E2>(
  * elements.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const chunks: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>> = internal.chunks
 
@@ -512,7 +512,7 @@ export const chunks: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chun
  * the stream exposed.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const chunksWith: <R, E, A, R2, E2, A2>(
   f: (stream: Stream<R, E, Chunk.Chunk<A>>) => Stream<R2, E2, Chunk.Chunk<A2>>
@@ -522,7 +522,7 @@ export const chunksWith: <R, E, A, R2, E2, A2>(
  * Performs a filter and map in a single step.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collect: <A, B>(pf: (a: A) => Option.Option<B>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, B> =
   internal.collect
@@ -531,7 +531,7 @@ export const collect: <A, B>(pf: (a: A) => Option.Option<B>) => <R, E>(self: Str
  * Performs an effectful filter and map in a single step.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectEffect: <A, R2, E2, A2>(
   pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
@@ -541,7 +541,7 @@ export const collectEffect: <A, R2, E2, A2>(
  * Filters any `Right` values.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2> =
   internal.collectLeft
@@ -550,7 +550,7 @@ export const collectLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>
  * Filters any `Left` values.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A> =
   internal.collectRight
@@ -559,7 +559,7 @@ export const collectRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>
  * Filters any 'None' values.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A> = internal.collectSome
 
@@ -567,7 +567,7 @@ export const collectSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Str
  * Filters any `Exit.Failure` values.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A> =
   internal.collectSuccess
@@ -577,7 +577,7 @@ export const collectSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>)
  * function is defined.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectWhile: <A, A2>(
   pf: (a: A) => Option.Option<A2>
@@ -587,7 +587,7 @@ export const collectWhile: <A, A2>(
  * Terminates the stream when encountering the first `Right`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectWhileLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2> =
   internal.collectWhileLeft
@@ -596,7 +596,7 @@ export const collectWhileLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2
  * Terminates the stream when encountering the first `None`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectWhileSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A> =
   internal.collectWhileSome
@@ -605,7 +605,7 @@ export const collectWhileSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) =
  * Terminates the stream when encountering the first `Left`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectWhileRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A> =
   internal.collectWhileRight
@@ -614,7 +614,7 @@ export const collectWhileRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E
  * Terminates the stream when encountering the first `Exit.Failure`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectWhileSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A> =
   internal.collectWhileSuccess
@@ -624,7 +624,7 @@ export const collectWhileSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2,
  * specified partial function is defined.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectWhileEffect: <A, R2, E2, A2>(
   pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
@@ -641,7 +641,7 @@ export const collectWhileEffect: <A, R2, E2, A2>(
  * implementation.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const combine: <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
   that: Stream<R2, E2, A2>,
@@ -661,7 +661,7 @@ export const combine: <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
  * being specified by `s`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const combineChunks: <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
   that: Stream<R2, E2, A2>,
@@ -679,7 +679,7 @@ export const combineChunks: <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
  * specified stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const concat: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -701,7 +701,7 @@ export const concatAll: <R, E, A>(streams: Chunk.Chunk<Stream<R, E, A>>) => Stre
  * See also `Stream.zipLeft` for the more common point-wise variant.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const crossLeft: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -716,7 +716,7 @@ export const crossLeft: <R2, E2, A2>(
  * See also `Stream.zipRight` for the more common point-wise variant.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const crossRight: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -730,7 +730,7 @@ export const crossRight: <R2, E2, A2>(
  * See also `Stream.zip` for the more common point-wise variant.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const cross: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -744,7 +744,7 @@ export const cross: <R2, E2, A2>(
  * See also `Stream.zipWith` for the more common point-wise variant.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const crossWith: <R2, E2, B, A, C>(
   that: Stream<R2, E2, B>,
@@ -763,7 +763,7 @@ export const crossWith: <R2, E2, B, A, C>(
  * has paused typing so as to not prematurely recommend results.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const debounce: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.debounce
@@ -798,7 +798,7 @@ export const dieMessage: (message: string) => Stream<never, never, never> = inte
  * function will receive the indices of the queues in the resulting list.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const distributedWith: <N extends number, A>(
   n: N,
@@ -819,7 +819,7 @@ export const distributedWith: <N extends number, A>(
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const distributedWithDynamic: <E, A, _>(
   maximumLag: number,
@@ -846,7 +846,7 @@ export const done: <E, A>(exit: Exit.Exit<E, A>) => Stream<never, E, A> = intern
  * elements. Useful for sequencing effects using streams:
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const drain: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, never> = internal.drain
 
@@ -856,7 +856,7 @@ export const drain: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, never> = in
  * If `other` fails, this stream will fail with that error.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const drainFork: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -866,7 +866,7 @@ export const drainFork: <R2, E2, A2>(
  * Drops the specified number of elements from this stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const drop: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.drop
 
@@ -876,7 +876,7 @@ export const drop: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, 
  * @note This combinator keeps `n` elements in memory. Be careful with big
  *       numbers.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const dropRight: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.dropRight
 
@@ -885,7 +885,7 @@ export const dropRight: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Strea
  * `true`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const dropUntil: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.dropUntil
@@ -895,7 +895,7 @@ export const dropUntil: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E
  * evaluates to `true`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const dropUntilEffect: <A, R2, E2>(
   predicate: (a: A) => Effect.Effect<R2, E2, boolean>
@@ -906,7 +906,7 @@ export const dropUntilEffect: <A, R2, E2>(
  * evaluates to `true`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const dropWhile: <A>(f: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.dropWhile
 
@@ -915,7 +915,7 @@ export const dropWhile: <A>(f: Predicate<A>) => <R, E>(self: Stream<R, E, A>) =>
  * produces an effect that evalutates to `true`
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const dropWhileEffect: <A, R2, E2>(
   predicate: (a: A) => Effect.Effect<R2, E2, boolean>
@@ -929,7 +929,7 @@ export const dropWhileEffect: <A, R2, E2>(
  * @note The stream will end as soon as the first error occurs.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const either: <R, E, A>(self: Stream<R, E, A>) => Stream<R, never, Either.Either<E, A>> = internal.either
 
@@ -945,7 +945,7 @@ export const empty: Stream<never, never, never> = internal.empty
  * Executes the provided finalizer after this stream's finalizers run.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const ensuring: <R2, _>(
   finalizer: Effect.Effect<R2, never, _>
@@ -1228,7 +1228,7 @@ export const flattenTake: <R, E, E2, A>(
  * Repeats this stream forever.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const forever: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.forever
 
@@ -1509,7 +1509,7 @@ export const groupBy: <A, R2, E2, K, V>(
  * ```
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const groupByKey: <A, K>(
   f: (a: A) => K,
@@ -1520,7 +1520,7 @@ export const groupByKey: <A, K>(
  * Partitions the stream with specified `chunkSize`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const grouped: (chunkSize: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>> =
   internal.grouped
@@ -1530,7 +1530,7 @@ export const grouped: (chunkSize: number) => <R, E, A>(self: Stream<R, E, A>) =>
  * `duration` has passed, whichever is satisfied first.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const groupedWithin: (
   chunkSize: number,
@@ -1545,7 +1545,7 @@ export const groupedWithin: (
  * given duration completes. See `interruptAfter` for this behavior.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const haltAfter: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.haltAfter
@@ -1561,7 +1561,7 @@ export const haltAfter: (duration: Duration.Duration) => <R, E, A>(self: Stream<
  * If the effect completes with a failure, the stream will emit that failure.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const haltWhen: <R2, E2, _>(
   effect: Effect.Effect<R2, E2, _>
@@ -1573,7 +1573,7 @@ export const haltWhen: <R2, E2, _>(
  * If the promise completes with a failure, the stream will emit that failure.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const haltWhenDeferred: <E2, _>(
   deferred: Deferred.Deferred<E2, _>
@@ -1583,7 +1583,7 @@ export const haltWhenDeferred: <E2, _>(
  * The identity pipeline, which does not modify streams in any way.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const identity: <R, E, A>() => Stream<R, E, A> = internal.identityStream
 
@@ -1594,7 +1594,7 @@ export const identity: <R, E, A>() => Stream<R, E, A> = internal.identityStream
  * pulled.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interleave: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -1610,7 +1610,7 @@ export const interleave: <R2, E2, A2>(
  * ignored.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interleaveWith: <R2, E2, A2, R3, E3>(
   that: Stream<R2, E2, A2>,
@@ -1621,7 +1621,7 @@ export const interleaveWith: <R2, E2, A2, R3, E3>(
  * Intersperse stream with provided `element`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const intersperse: <A2>(element: A2) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A> =
   internal.intersperse
@@ -1630,7 +1630,7 @@ export const intersperse: <A2>(element: A2) => <R, E, A>(self: Stream<R, E, A>) 
  * Intersperse the specified element, also adding a prefix and a suffix.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const intersperseAffixes: <A2, A3, A4>(
   start: A2,
@@ -1643,7 +1643,7 @@ export const intersperseAffixes: <A2, A3, A4>(
  * evaluation of this stream after the given `Duration`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interruptAfter: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.interruptAfter
@@ -1658,7 +1658,7 @@ export const interruptAfter: (duration: Duration.Duration) => <R, E, A>(self: St
  * returned stream will emit that failure.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interruptWhen: <R2, E2, _>(
   effect: Effect.Effect<R2, E2, _>
@@ -1672,7 +1672,7 @@ export const interruptWhen: <R2, E2, _>(
  * If the promise completes with a failure, the stream will emit that failure.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interruptWhenDeferred: <E2, _>(
   deferred: Deferred.Deferred<E2, _>
@@ -1901,7 +1901,7 @@ export const mapAccumEffect: <S, A, R2, E2, A2>(
  * specified pair of functions, `f` and `g`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mapBoth: <E, E2, A, A2>(
   f: (e: E) => E2,
@@ -2055,7 +2055,7 @@ export const mapEffectParUnordered: (
  * no termination strategy is specified.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const merge: <R2, E2, A2>(
   that: Stream<R2, E2, A2>,
@@ -2068,7 +2068,7 @@ export const merge: <R2, E2, A2>(
  * buffered by this operator.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeAll: (
   n: number,
@@ -2079,7 +2079,7 @@ export const mergeAll: (
  * Like `Stream.mergeAll`, but runs all streams concurrently.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeAllUnbounded: (
   bufferSize?: number
@@ -2093,7 +2093,7 @@ export const mergeAllUnbounded: (
  * no termination strategy is specified.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeWith: <R2, E2, A2, A, A3, A4>(
   that: Stream<R2, E2, A2>,
@@ -2107,7 +2107,7 @@ export const mergeWith: <R2, E2, A2, A, A3, A4>(
  * will terminate when either stream terminates.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeHaltEither: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -2118,7 +2118,7 @@ export const mergeHaltEither: <R2, E2, A2>(
  * will terminate when this stream terminates.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeHaltLeft: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -2129,7 +2129,7 @@ export const mergeHaltLeft: <R2, E2, A2>(
  * will terminate when the specified stream terminates.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeHaltRight: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -2140,7 +2140,7 @@ export const mergeHaltRight: <R2, E2, A2>(
  * eithers.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeEither: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -2151,7 +2151,7 @@ export const mergeEither: <R2, E2, A2>(
  * from the right stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeLeft: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -2162,7 +2162,7 @@ export const mergeLeft: <R2, E2, A2>(
  * from the left stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeRight: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
@@ -2174,7 +2174,7 @@ export const mergeRight: <R2, E2, A2>(
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mkString: <R, E>(self: Stream<R, E, string>) => Effect.Effect<R, E, string> = internal.mkString
 
@@ -2194,11 +2194,21 @@ export const never: () => Stream<never, never, never> = internal.never
  * effect will not be interrupted.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const onError: <E, R2, _>(
   cleanup: (cause: Cause.Cause<E>) => Effect.Effect<R2, never, _>
 ) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A> = internal.onError
+
+/**
+ * Runs the specified effect if this stream ends.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const onDone: <R2, _>(
+  cleanup: () => Effect.Effect<R2, never, _>
+) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A> = internal.onDone
 
 /**
  * Translates any failure into a stream termination, making the stream
@@ -2363,7 +2373,7 @@ export const paginateEffect: <S, R, E, A>(
  * further than the slower one.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const partition: <A>(
   predicate: Predicate<A>,
@@ -2377,7 +2387,7 @@ export const partition: <A>(
  * up to buffer elements further than the slower one.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const partitionEither: <A, R2, E2, A2, A3>(
   predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
@@ -2395,7 +2405,7 @@ export const partitionEither: <A, R2, E2, A2, A3>(
  *
  * @macro traced
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const peel: <R2, E2, A, Z>(
   sink: Sink.Sink<R2, E2, A, A, Z>
@@ -2411,7 +2421,7 @@ export const peel: <R2, E2, A, Z>(
  * See also `Stream.transduce`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const pipeThrough: <R2, E2, A, L, Z>(
   sink: Sink.Sink<R2, E2, A, L, Z>
@@ -2421,7 +2431,7 @@ export const pipeThrough: <R2, E2, A, L, Z>(
  * Pipes all the values from this stream through the provided channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const pipeThroughChannel: <R2, E, E2, A, A2>(
   channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
@@ -2432,7 +2442,7 @@ export const pipeThroughChannel: <R2, E, E2, A, A2>(
  * through any error emitted by this stream unchanged.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const pipeThroughChannelOrFail: <R2, E, E2, A, A2>(
   channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
@@ -2442,7 +2452,7 @@ export const pipeThroughChannelOrFail: <R2, E, E2, A, A2>(
  * Emits the provided chunk before emitting any other value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const prepend: <A>(values: Chunk.Chunk<A>) => Stream<never, never, A> = internal.prepend
 
@@ -2539,7 +2549,7 @@ export const range: (min: number, max: number, chunkSize?: number) => Stream<nev
  * last chunk might contain less than `n` elements.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const rechunk: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.rechunk
 
@@ -2570,7 +2580,7 @@ export const refineOrDieWith: <E, E2>(
  * execute normally, and then repeat again according to the provided schedule.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeat: <R2, B>(
   schedule: Schedule.Schedule<R2, unknown, B>
@@ -2634,7 +2644,7 @@ export const repeatEffectWithSchedule: <R, E, A, R2, _>(
  * The schedule output will be emitted at the end of each repetition.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeatEither: <R2, B>(
   schedule: Schedule.Schedule<R2, unknown, B>
@@ -2648,7 +2658,7 @@ export const repeatEither: <R2, B>(
  * stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeatElements: <R2, B>(
   schedule: Schedule.Schedule<R2, unknown, B>
@@ -2663,7 +2673,7 @@ export const repeatElements: <R2, B>(
  * in the stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeatElementsEither: <R2, B>(
   schedule: Schedule.Schedule<R2, unknown, B>
@@ -2682,7 +2692,7 @@ export const repeatElementsEither: <R2, B>(
  * single type. For example, `Either` or similar data type.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeatElementsWith: <R2, B, A, C>(
   schedule: Schedule.Schedule<R2, unknown, B>,
@@ -2705,7 +2715,7 @@ export const repeatForever: <A>(value: A) => Stream<never, never, A> = internal.
  * be unified with the stream elements using the provided functions.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeatWith: <R2, B, A, C>(
   schedule: Schedule.Schedule<R2, unknown, B>,
@@ -2724,7 +2734,7 @@ export const repeatWith: <R2, B, A, C>(
  *
  * @param schedule A `Schedule` receiving as input the errors of the stream.
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const retry: <R2, E, _>(
   schedule: Schedule.Schedule<R2, E, _>
@@ -2734,7 +2744,7 @@ export const retry: <R2, E, _>(
  * Fails with the error `None` if value is `Left`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const right: <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, Option.Option<E>, A2> =
   internal.right
@@ -2743,7 +2753,7 @@ export const right: <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => S
  * Fails with given error 'e' if value is `Left`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const rightOrFail: <E2>(
   error: LazyArg<E2>
@@ -3069,7 +3079,7 @@ export const runSum: <R, E>(self: Stream<R, E, number>) => Effect.Effect<R, E, n
  * intermediate results of type `S` given an initial S.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const scan: <S, A>(s: S, f: (s: S, a: A) => S) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, S> =
   internal.scan
@@ -3079,7 +3089,7 @@ export const scan: <S, A>(s: S, f: (s: S, a: A) => S) => <R, E>(self: Stream<R, 
  * all intermediate results of type `S` given an initial S.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const scanEffect: <S, A, R2, E2>(
   s: S,
@@ -3093,7 +3103,7 @@ export const scanEffect: <S, A, R2, E2>(
  * See also `Stream.scan`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const scanReduce: <A2, A>(f: (a2: A2 | A, a: A) => A2) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2 | A> =
   internal.scanReduce
@@ -3105,7 +3115,7 @@ export const scanReduce: <A2, A>(f: (a2: A2 | A, a: A) => A2) => <R, E>(self: St
  * See also `Stream.scanEffect`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const scanReduceEffect: <A2, A, R2, E2>(
   f: (a2: A2 | A, a: A) => Effect.Effect<R2, E2, A2 | A>
@@ -3117,7 +3127,7 @@ export const scanReduceEffect: <A2, A, R2, E2>(
  * to align the stream and schedule outputs on the same type.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const scheduleWith: <R2, A, B, C>(
   schedule: Schedule.Schedule<R2, A, B>,
@@ -3189,7 +3199,7 @@ export const serviceWithStream: <T>(
  * ```
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const sliding: (
   chunkSize: number,
@@ -3200,7 +3210,7 @@ export const sliding: (
  * Converts an option on values into an option on errors.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const some: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, Option.Option<E>, A> = internal.some
 
@@ -3208,7 +3218,7 @@ export const some: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, 
  * Extracts the optional value, or returns the given 'default'.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const someOrElse: <A2>(
   fallback: LazyArg<A2>
@@ -3218,7 +3228,7 @@ export const someOrElse: <A2>(
  * Extracts the optional value, or fails with the given error 'e'.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const someOrFail: <E2>(
   error: LazyArg<E2>
@@ -3240,7 +3250,7 @@ export const someOrFail: <E2>(
  * ```
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const split: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>> =
   internal.split
@@ -3249,7 +3259,7 @@ export const split: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>
  * Splits elements on a delimiter and transforms the splits into desired output.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const splitOnChunk: <A>(
   delimiter: Chunk.Chunk<A>
@@ -3283,7 +3293,7 @@ export const suspend: <R, E, A>(stream: LazyArg<Stream<R, E, A>>) => Stream<R, E
  * Takes the specified number of elements from this stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const take: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.take
 
@@ -3291,7 +3301,7 @@ export const take: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, 
  * Takes the last specified number of elements from this stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const takeRight: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.takeRight
 
@@ -3300,7 +3310,7 @@ export const takeRight: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Strea
  * `true`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const takeUntil: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.takeUntil
@@ -3310,7 +3320,7 @@ export const takeUntil: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E
  * evaluates to `true`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const takeUntilEffect: <A, R2, E2>(
   predicate: (a: A) => Effect.Effect<R2, E2, boolean>
@@ -3321,7 +3331,7 @@ export const takeUntilEffect: <A, R2, E2>(
  * evaluates to `true`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const takeWhile: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.takeWhile
@@ -3351,7 +3361,7 @@ export const tapError: <E, R2, E2, _>(
  * stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const tapErrorCause: <E, R2, E2, _>(
   f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>
@@ -3377,7 +3387,7 @@ export const tapSink: <R2, E2, A>(
  * `costFn` function.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const throttleEnforce: (
   units: number,
@@ -3395,7 +3405,7 @@ export const throttleEnforce: (
  * `costFn` effectful function.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const throttleEnforceEffect: (
   units: number,
@@ -3413,7 +3423,7 @@ export const throttleEnforceEffect: (
  * the `costFn` function.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const throttleShape: (
   units: number,
@@ -3430,7 +3440,7 @@ export const throttleShape: (
  * the `costFn` effectful function.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const throttleShapeEffect: (
   units: number,
@@ -3452,7 +3462,7 @@ export const tick: (interval: Duration.Duration) => Stream<never, never, void> =
  * Ends the stream if it does not produce a value after the specified duration.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const timeout: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> =
   internal.timeout
@@ -3462,7 +3472,7 @@ export const timeout: (duration: Duration.Duration) => <R, E, A>(self: Stream<R,
  * duration.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const timeoutFail: <E2>(
   error: LazyArg<E2>,
@@ -3474,7 +3484,7 @@ export const timeoutFail: <E2>(
  * duration.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const timeoutFailCause: <E2>(
   cause: LazyArg<Cause.Cause<E2>>,
@@ -3486,7 +3496,7 @@ export const timeoutFailCause: <E2>(
  * duration.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const timeoutTo: <R2, E2, A2>(
   duration: Duration.Duration,
@@ -3590,7 +3600,7 @@ export const toQueueUnbounded: <R, E, A>(
  * Applies the transducer to the stream and emits its outputs.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const transduce: <R2, E2, A, Z>(
   sink: Sink.Sink<R2, E2, A, A, Z>
@@ -3680,7 +3690,7 @@ export const updateService = internal.updateService
  * returns an empty stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const when: (predicate: LazyArg<boolean>) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.when
 
@@ -3701,7 +3711,7 @@ export const whenCase: <A, R, E, A2>(
  * effectful value, otherwise returns an empty stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const whenCaseEffect: <A, R2, E2, A2>(
   pf: (a: A) => Option.Option<Stream<R2, E2, A2>>
@@ -3712,7 +3722,7 @@ export const whenCaseEffect: <A, R2, E2, A2>(
  * returns an empty stream.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const whenEffect: <R2, E2>(
   effect: Effect.Effect<R2, E2, boolean>

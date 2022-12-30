@@ -94,7 +94,7 @@ export const collectAllN: <In>(n: number) => Sink<never, never, In, In, Chunk.Ch
  * Repeatedly runs the sink and accumulates its results into a `Chunk`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectAllFrom: <R, E, In, L extends In, Z>(
   self: Sink<R, E, In, L, Z>
@@ -191,7 +191,7 @@ export const collectAllWhileEffect: <In, R, E>(
  * `p`. The sink's results will be accumulated using the stepping function `f`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectAllWhileWith: <Z, S>(
   z: S,
@@ -204,7 +204,7 @@ export const collectAllWhileWith: <Z, S>(
  * them as part of the sink's result.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collectLeftover: <R, E, In, L, Z>(
   self: Sink<R, E, In, L, Z>
@@ -915,7 +915,7 @@ export const head: <In>() => Sink<never, never, In, In, Option.Option<In>> = int
  * Drains the remaining elements from the stream after the sink finishes
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const ignoreLeftover: <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, never, Z> =
   internal.ignoreLeftover
@@ -1194,7 +1194,7 @@ export const provideEnvironment: <R>(
  * error from the one that finishes first.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const race: <R1, E1, In1, L1, Z1>(
   that: Sink<R1, E1, In1, L1, Z1>
@@ -1205,7 +1205,7 @@ export const race: <R1, E1, In1, L1, Z1>(
  * from the one that finishes first.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const raceBoth: <R1, E1, In1, L1, Z1>(
   that: Sink<R1, E1, In1, L1, Z1>,
@@ -1218,7 +1218,7 @@ export const raceBoth: <R1, E1, In1, L1, Z1>(
  * function as soon as one result or the other has been computed.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const raceWith: <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
   that: Sink<R2, E2, In2, L2, Z2>,
@@ -1298,7 +1298,7 @@ export const some: <In>(predicate: Predicate<In>) => Sink<never, never, In, In, 
  * predicate.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const splitWhere: <In>(
   f: Predicate<In>
@@ -1325,7 +1325,7 @@ export const sum: () => Sink<never, never, number, never, number> = internal.sum
  * it completes.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const summarized: <R2, E2, Z2, Z3>(
   summary: Effect.Effect<R2, E2, Z2>,
@@ -1398,7 +1398,7 @@ export const unwrapScoped: <R, E, In, L, Z>(
  * Returns the sink that executes this one and times its execution.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const withDuration: <R, E, In, L, Z>(
   self: Sink<R, E, In, L, Z>
