@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.5
+
+### Patch Changes
+
+- [#15](https://github.com/Effect-TS/stream/pull/15) [`5bdbeb2`](https://github.com/Effect-TS/stream/commit/5bdbeb2b90e19db148bc226409ce16c626846400) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Add Stream.onEnd and fix mistaken mutations category
+
 ## 0.0.4
 
 ### Patch Changes
