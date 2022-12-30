@@ -139,7 +139,12 @@ Added in v1.0.0
   - [mapLeftover](#mapleftover)
 - [models](#models)
   - [Sink (interface)](#sink-interface)
-- [mutations](#mutations)
+- [sequencing](#sequencing)
+  - [flatMap](#flatmap)
+- [symbols](#symbols)
+  - [SinkTypeId](#sinktypeid)
+  - [SinkTypeId (type alias)](#sinktypeid-type-alias)
+- [utils](#utils)
   - [collectAllFrom](#collectallfrom)
   - [collectAllWhileWith](#collectallwhilewith)
   - [collectLeftover](#collectleftover)
@@ -150,11 +155,6 @@ Added in v1.0.0
   - [splitWhere](#splitwhere)
   - [summarized](#summarized)
   - [withDuration](#withduration)
-- [sequencing](#sequencing)
-  - [flatMap](#flatmap)
-- [symbols](#symbols)
-  - [SinkTypeId](#sinktypeid)
-  - [SinkTypeId (type alias)](#sinktypeid-type-alias)
 - [zipping](#zipping)
   - [zip](#zip)
   - [zipLeft](#zipleft)
@@ -1856,7 +1856,49 @@ export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {
 
 Added in v1.0.0
 
-# mutations
+# sequencing
+
+## flatMap
+
+Runs this sink until it yields a result, then uses that result to create
+another sink from the provided function which will continue to run until it
+yields a result.
+
+This function essentially runs sinks in sequence.
+
+**Signature**
+
+```ts
+export declare const flatMap: <R1, E1, In, In1 extends In, L, L1, Z, Z1>(
+  f: (z: Z) => Sink<R1, E1, In1, L1, Z1>
+) => <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L | L1, Z1>
+```
+
+Added in v1.0.0
+
+# symbols
+
+## SinkTypeId
+
+**Signature**
+
+```ts
+export declare const SinkTypeId: typeof SinkTypeId
+```
+
+Added in v1.0.0
+
+## SinkTypeId (type alias)
+
+**Signature**
+
+```ts
+export type SinkTypeId = typeof SinkTypeId
+```
+
+Added in v1.0.0
+
+# utils
 
 ## collectAllFrom
 
@@ -2007,48 +2049,6 @@ Returns the sink that executes this one and times its execution.
 export declare const withDuration: <R, E, In, L, Z>(
   self: Sink<R, E, In, L, Z>
 ) => Sink<R, E, In, L, readonly [Z, Duration.Duration]>
-```
-
-Added in v1.0.0
-
-# sequencing
-
-## flatMap
-
-Runs this sink until it yields a result, then uses that result to create
-another sink from the provided function which will continue to run until it
-yields a result.
-
-This function essentially runs sinks in sequence.
-
-**Signature**
-
-```ts
-export declare const flatMap: <R1, E1, In, In1 extends In, L, L1, Z, Z1>(
-  f: (z: Z) => Sink<R1, E1, In1, L1, Z1>
-) => <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L | L1, Z1>
-```
-
-Added in v1.0.0
-
-# symbols
-
-## SinkTypeId
-
-**Signature**
-
-```ts
-export declare const SinkTypeId: typeof SinkTypeId
-```
-
-Added in v1.0.0
-
-## SinkTypeId (type alias)
-
-**Signature**
-
-```ts
-export type SinkTypeId = typeof SinkTypeId
 ```
 
 Added in v1.0.0

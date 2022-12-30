@@ -18,12 +18,12 @@ Added in v1.0.0
   - [evaluate](#evaluate)
 - [models](#models)
   - [GroupBy (interface)](#groupby-interface)
-- [mutations](#mutations)
-  - [filter](#filter)
-  - [first](#first)
 - [symbols](#symbols)
   - [GroupByTypeId](#groupbytypeid)
   - [GroupByTypeId (type alias)](#groupbytypeid-type-alias)
+- [utils](#utils)
+  - [filter](#filter)
+  - [first](#first)
 
 ---
 
@@ -79,7 +79,29 @@ export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V> {
 
 Added in v1.0.0
 
-# mutations
+# symbols
+
+## GroupByTypeId
+
+**Signature**
+
+```ts
+export declare const GroupByTypeId: typeof GroupByTypeId
+```
+
+Added in v1.0.0
+
+## GroupByTypeId (type alias)
+
+**Signature**
+
+```ts
+export type GroupByTypeId = typeof GroupByTypeId
+```
+
+Added in v1.0.0
+
+# utils
 
 ## filter
 
@@ -101,28 +123,6 @@ Only consider the first `n` groups found in the `Stream`.
 
 ```ts
 export declare const first: (n: number) => <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
-```
-
-Added in v1.0.0
-
-# symbols
-
-## GroupByTypeId
-
-**Signature**
-
-```ts
-export declare const GroupByTypeId: typeof GroupByTypeId
-```
-
-Added in v1.0.0
-
-## GroupByTypeId (type alias)
-
-**Signature**
-
-```ts
-export type GroupByTypeId = typeof GroupByTypeId
 ```
 
 Added in v1.0.0
