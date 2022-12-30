@@ -18,6 +18,8 @@ import { constTrue, constVoid, pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
+Stream.onError
+
 describe.concurrent("Stream", () => {
   it.effect("aggregate - simple example", () =>
     Effect.gen(function*($) {

@@ -278,7 +278,7 @@ export const concatAllWith: <
  * of the newly returned channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const concatMap: <OutElem, OutElem2, Env2, InErr2, InElem2, InDone2, OutErr2, _>(
   f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, _>
@@ -296,7 +296,7 @@ export const concatMap: <OutElem, OutElem2, Env2, InErr2, InElem2, InDone2, OutE
  * the returned channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const concatMapWith: <OutElem, OutElem2, OutDone, OutDone2, OutDone3, Env2, InErr2, InElem2, InDone2, OutErr2>(
   f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
@@ -316,7 +316,7 @@ export const concatMapWith: <OutElem, OutElem2, OutDone, OutDone2, OutDone3, Env
  * the returned channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const concatMapWithCustom: <
   OutElem,
@@ -347,7 +347,7 @@ export const concatMapWithCustom: <
  * are filtered and transformed by the specified partial function.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const collect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutElem2, OutDone>(
   pf: (o: OutElem) => Option.Option<OutElem2>
@@ -361,7 +361,7 @@ export const collect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutElem2, Ou
  * that output other channels.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const concatOut: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<
@@ -380,7 +380,7 @@ export const concatOut: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
  * function to the input channel's done value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const contramap: <InDone0, InDone>(
   f: (a: InDone0) => InDone
@@ -393,7 +393,7 @@ export const contramap: <InDone0, InDone>(
  * effectual function to the input channel's done value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const contramapEffect: <Env1, InErr, InDone0, InDone>(
   f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
@@ -406,7 +406,7 @@ export const contramapEffect: <Env1, InErr, InDone0, InDone>(
  * function to the input channel's error value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const contramapError: <InErr0, InErr>(
   f: (a: InErr0) => InErr
@@ -419,7 +419,7 @@ export const contramapError: <InErr0, InErr>(
  * effectual function to the input channel's error value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const contramapErrorEffect: <Env1, InErr0, InErr, InDone>(
   f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
@@ -432,7 +432,7 @@ export const contramapErrorEffect: <Env1, InErr0, InErr, InDone>(
  * function to the input channel's output elements.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const contramapIn: <InElem0, InElem>(
   f: (a: InElem0) => InElem
@@ -445,7 +445,7 @@ export const contramapIn: <InElem0, InElem>(
  * effectual function to the input channel's output elements.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const contramapInEffect: <Env1, InErr, InElem0, InElem>(
   f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
@@ -463,7 +463,7 @@ export const contramapInEffect: <Env1, InErr, InElem0, InElem>(
  * channels that output a large or unbounded number of values.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const doneCollect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
@@ -474,7 +474,7 @@ export const doneCollect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
  * channel and ignores them, then terminates with the upstream result value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const drain: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
@@ -485,7 +485,7 @@ export const drain: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
  * this channel's input.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const embedInput: <InErr, InElem, InDone>(
   input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
@@ -498,7 +498,7 @@ export const embedInput: <InErr, InElem, InDone>(
  * channel, which it then writes as output of the returned channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const emitCollect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
@@ -510,7 +510,7 @@ export const emitCollect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
  * regardless of whether or not it completes).
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const ensuring: <Env1, Z>(
   finalizer: Effect.Effect<Env1, never, Z>
@@ -524,7 +524,7 @@ export const ensuring: <Env1, Z>(
  * regardless of whether or not it completes).
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const ensuringWith: <Env2, OutErr, OutDone>(
   finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
@@ -679,7 +679,7 @@ export const flatten: <
  * Folds over the result of this channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const foldChannel: <
   Env1,
@@ -717,7 +717,7 @@ export const foldChannel: <
  * Folds over the result of this channel including any cause of termination.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const foldCauseChannel: <
   Env1,
@@ -837,7 +837,7 @@ export const identity: <Err, Elem, Done>() => Channel<never, Err, Elem, Done, Er
  * its terminal value.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interruptWhen: <Env1, OutErr1, OutDone1>(
   effect: Effect.Effect<Env1, OutErr1, OutDone1>
@@ -854,7 +854,7 @@ export const interruptWhen: <Env1, OutErr1, OutDone1>(
  * underlying channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const interruptWhenDeferred: <OutErr1, OutDone1>(
   deferred: Deferred.Deferred<OutErr1, OutDone1>
@@ -960,7 +960,7 @@ export const mapOutEffectPar: (
 
 /**
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeAll: (
   n: number,
@@ -981,7 +981,7 @@ export const mergeAll: (
 
 /**
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeAllUnbounded: <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
   channels: Channel<
@@ -998,7 +998,7 @@ export const mergeAllUnbounded: <Env, Env1, InErr, InErr1, InElem, InElem1, InDo
 
 /**
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeAllUnboundedWith: <
   Env,
@@ -1029,7 +1029,7 @@ export const mergeAllUnboundedWith: <
 
 /**
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeAllWith: (
   n: number,
@@ -1078,7 +1078,7 @@ export const mergeMap: (
  * channel using the back pressuring merge strategy. See `Channel.mergeAll`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeOut: (
   n: number
@@ -1102,7 +1102,7 @@ export const mergeOut: (
  * `Channel.mergeAll`.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeOutWith: <OutDone1>(
   n: number,
@@ -1127,7 +1127,7 @@ export const mergeOutWith: <OutDone1>(
  * decisions.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const mergeWith: <
   Env1,
@@ -1226,7 +1226,7 @@ export const orElse: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone
  * the specified channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const pipeTo: <Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
   that: Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
@@ -1240,7 +1240,7 @@ export const pipeTo: <Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone
  * them to the other channel for observation.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const pipeToOrFail: <Env2, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
   that: Channel<Env2, never, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
@@ -1399,7 +1399,7 @@ export const readWithCause: <
  * Creates a channel which repeatedly runs this channel.
  *
  * @since 1.0.0
- * @category mutations
+ * @category utils
  */
 export const repeated: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>

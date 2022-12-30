@@ -3005,6 +3005,14 @@ export const onError = <E, R2, _>(cleanup: (cause: Cause.Cause<E>) => Effect.Eff
 }
 
 /** @internal */
+export const onDone = <R2, _>(cleanup: () => Effect.Effect<R2, never, _>) => {
+  return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E, A> =>
+    new StreamImpl<R | R2, E, A>(
+      pipe(self.channel, core.ensuringWith((exit) => Exit.isSuccess(exit) ? cleanup() : Effect.unit()))
+    )
+}
+
+/** @internal */
 export const orDie = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, never, A> =>
   pipe(self, orDieWith(identity))
 
