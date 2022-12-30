@@ -168,4 +168,24 @@ describe.concurrent("Stream", () => {
       ))
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
+
+  it.effect("deep provide", () =>
+    Effect.gen(function*($) {
+      const messages: Array<string> = []
+      const effect = Effect.acquireRelease(
+        pipe(Effect.service(StringService), Effect.tap((s) => Effect.sync(() => messages.push(s.string)))),
+        () => pipe(Effect.service(StringService), Effect.tap((s) => Effect.sync(() => messages.push(s.string))))
+      )
+      const L0 = Layer.succeed(StringService)({ string: "test0" })
+      const L1 = Layer.succeed(StringService)({ string: "test1" })
+      const L2 = Layer.succeed(StringService)({ string: "test2" })
+      const stream = pipe(
+        Stream.scoped(effect),
+        Stream.provideSomeLayer(L1),
+        Stream.concat(pipe(Stream.scoped(effect), Stream.provideSomeLayer(L2))),
+        Stream.provideSomeLayer(L0)
+      )
+      yield* $(Stream.runDrain(stream))
+      assert.deepStrictEqual(messages, ["test1", "test1", "test2", "test2"])
+    }))
 })
