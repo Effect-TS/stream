@@ -1,11 +1,18 @@
 /// <reference types="vitest" />
+import { effectPlugin } from "@effect/vite-plugin"
 import path from "path"
 import { defineConfig } from "vite"
-import { tsPlugin } from "./plugins/vitePlugin"
 
 export default defineConfig({
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  plugins: [tsPlugin({})],
+  plugins: [
+    effectPlugin({
+      babel: {
+        plugins: [["annotate-pure-calls"]],
+        compact: false
+      },
+      tsconfig: "tsconfig.test.json"
+    })
+  ],
   test: {
     include: ["./test/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: ["./test/utils/**/*.ts", "./test/**/*.init.ts"],
