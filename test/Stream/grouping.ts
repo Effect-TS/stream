@@ -1,9 +1,15 @@
 import * as Effect from "@effect/io/Effect"
+import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Ref from "@effect/io/Ref"
 import * as GroupBy from "@effect/stream/GroupBy"
+import * as Handoff from "@effect/stream/internal/stream/handoff"
+import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
+import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Chunk from "@fp-ts/data/Chunk"
+import * as Duration from "@fp-ts/data/Duration"
 import * as Either from "@fp-ts/data/Either"
 import { identity, pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
@@ -154,79 +160,181 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [[1, 2, 3], [4, 5, 6], [7, 8]])
     }))
 
-  // TODO(Mike/Max): after `@effect/test`
-  // suite("groupedWithin")(
-  //   test("group based on time passed") {
-  //     assertWithChunkCoordination(List(Chunk(1, 2), Chunk(3, 4), Chunk.single(5))) { c =>
-  //       val stream = ZStream
-  //         .fromQueue(c.queue)
-  //         .collectWhileSuccess
-  //         .flattenChunks
-  //         .groupedWithin(10, 2.seconds)
-  //         .tap(_ => c.proceed)
+  it.effect("groupedWithin - group based on time passed", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.make(1, 2),
+        Chunk.make(3, 4),
+        Chunk.singleton(5)
+      ]))
+      const stream = pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.flattenChunks,
+        Stream.groupedWithin(10, Duration.seconds(2)),
+        Stream.tap(() => coordination.proceed)
+      )
+      const fiber = yield* $(Effect.fork(Stream.runCollect(stream)))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(2))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(2))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(coordination.offer)
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[1, 2], [3, 4], [5]]
+      )
+    }))
 
-  //       assertZIO(for {
-  //         f      <- stream.runCollect.fork
-  //         _      <- c.offer *> TestClock.adjust(2.seconds) *> c.awaitNext
-  //         _      <- c.offer *> TestClock.adjust(2.seconds) *> c.awaitNext
-  //         _      <- c.offer
-  //         result <- f.join
-  //       } yield result)(equalTo(Chunk(Chunk(1, 2), Chunk(3, 4), Chunk(5))))
-  //     }
-  //   } @@ timeout(10.seconds) @@ flaky,
-  //   test("group based on time passed (#5013)") {
-  //     val chunkResult = Chunk(
-  //       Chunk(1, 2, 3),
-  //       Chunk(4, 5, 6),
-  //       Chunk(7, 8, 9),
-  //       Chunk(10, 11, 12, 13, 14, 15, 16, 17, 18, 19),
-  //       Chunk(20, 21, 22, 23, 24, 25, 26, 27, 28, 29)
-  //     )
+  it.effect("groupedWithin - group based on time passed (ZIO Issue #5013)", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(pipe(
+        Chunk.range(1, 29),
+        Chunk.map(Chunk.singleton),
+        chunkCoordination
+      ))
+      const latch = yield* $(Handoff.make<void>())
+      const ref = yield* $(Ref.make(0))
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.flattenChunks,
+        Stream.tap(() => coordination.proceed),
+        Stream.groupedWithin(10, Duration.seconds(3)),
+        Stream.tap((chunk) =>
+          pipe(
+            ref,
+            Ref.update((n) => n + chunk.length),
+            Effect.zipRight(pipe(latch, Handoff.offer<void>(void 0)))
+          )
+        ),
+        Stream.run(Sink.take(5)),
+        Effect.fork
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      const result1 = yield* $(pipe(
+        Handoff.take(latch),
+        Effect.zipRight(Ref.get(ref))
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      const result2 = yield* $(pipe(
+        Handoff.take(latch),
+        Effect.zipRight(Ref.get(ref))
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      const result3 = yield* $(pipe(
+        Handoff.take(latch),
+        Effect.zipRight(Ref.get(ref))
+      ))
+      // This part is to make sure schedule clock is being restarted when the
+      // specified amount of elements has been reached.
+      yield* $(pipe(
+        TestClock.adjust(Duration.seconds(2)),
+        Effect.zipRight(
+          pipe(
+            coordination.offer,
+            Effect.zipRight(coordination.awaitNext),
+            Effect.repeatN(9)
+          )
+        )
+      ))
+      const result4 = yield* $(pipe(
+        Handoff.take(latch),
+        Effect.zipRight(Ref.get(ref))
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(coordination.awaitNext),
+        Effect.zipRight(TestClock.adjust(Duration.seconds(2))),
+        Effect.zipRight(
+          pipe(
+            coordination.offer,
+            Effect.zipRight(coordination.awaitNext),
+            Effect.repeatN(8)
+          )
+        )
+      ))
+      const result5 = yield* $(pipe(
+        Handoff.take(latch),
+        Effect.zipRight(Ref.get(ref))
+      ))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+          [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+          [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+        ]
+      )
+      assert.strictEqual(result1, 3)
+      assert.strictEqual(result2, 6)
+      assert.strictEqual(result3, 9)
+      assert.strictEqual(result4, 19)
+      assert.strictEqual(result5, 29)
+    }))
 
-  //     assertWithChunkCoordination((1 to 29).map(Chunk.single).toList) { c =>
-  //       for {
-  //         latch <- ZStream.Handoff.make[Unit]
-  //         ref   <- Ref.make(0)
-  //         fiber <- ZStream
-  //                    .fromQueue(c.queue)
-  //                    .collectWhileSuccess
-  //                    .flattenChunks
-  //                    .tap(_ => c.proceed)
-  //                    .groupedWithin(10, 3.seconds)
-  //                    .tap(chunk => ref.update(_ + chunk.size) *> latch.offer(()))
-  //                    .run(ZSink.take(5))
-  //                    .fork
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         result0 <- latch.take *> ref.get
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         result1 <- latch.take *> ref.get
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         _       <- c.offer *> TestClock.adjust(1.second) *> c.awaitNext
-  //         result2 <- latch.take *> ref.get
-  //         // This part is to make sure schedule clock is being restarted
-  //         // when the specified amount of elements has been reached
-  //         _       <- TestClock.adjust(2.second) *> (c.offer *> c.awaitNext).repeatN(9)
-  //         result3 <- latch.take *> ref.get
-  //         _       <- c.offer *> c.awaitNext *> TestClock.adjust(2.second) *> (c.offer *> c.awaitNext).repeatN(8)
-  //         result4 <- latch.take *> ref.get
-  //         result  <- fiber.join
-  //       } yield assert(result)(equalTo(chunkResult)) &&
-  //         assert(result0)(equalTo(3)) &&
-  //         assert(result1)(equalTo(6)) &&
-  //         assert(result2)(equalTo(9)) &&
-  //         assert(result3)(equalTo(19)) &&
-  //         assert(result4)(equalTo(29))
-  //     }
-  //   },
-  //   test("group immediately when chunk size is reached") {
-  //     assertZIO(ZStream(1, 2, 3, 4).groupedWithin(2, 10.seconds).runCollect)(
-  //       equalTo(Chunk(Chunk(1, 2), Chunk(3, 4)))
-  //     )
-  //   }
-  // ),
+  it.effect("groupedWithin - group immediately when chunk size is reached", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.make(1, 2, 3, 4),
+        Stream.groupedWithin(2, Duration.seconds(10)),
+        Stream.runCollect
+      ))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[1, 2], [3, 4]]
+      )
+    }))
 })

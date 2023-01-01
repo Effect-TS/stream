@@ -3,6 +3,8 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
+import * as Live from "@effect/io/internal/testing/live"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
@@ -146,34 +148,35 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  // TODO(Mike/Max): after @effect/test
-  //   test("zio-kafka issue") {
-  //     assertZIO(
-  //       for {
-  //         queue <- Queue.unbounded[Take[Nothing, Int]]
-  //         fiber <- ZStream
-  //                    .fromQueue(queue)
-  //                    .flattenTake
-  //                    .aggregateAsync(
-  //                      ZSink
-  //                        .foldLeft[Int, List[Int]](Nil) { case (l, n) => n :: l }
-  //                    )
-  //                    .runCollect
-  //                    .fork
-
-  //         _ <- ZIO.sleep(1.second)
-  //         _ <- queue.offer(Take.chunk(Chunk(1, 2, 3, 4, 5)))
-  //         _ <- ZIO.sleep(1.second)
-  //         _ <- queue.offer(Take.chunk(Chunk(6, 7, 8, 9, 10)))
-  //         _ <- ZIO.sleep(1.second)
-  //         _ <- queue.offer(Take.chunk(Chunk(11, 12, 13, 14, 15)))
-  //         _ <- queue.offer(Take.end)
-
-  //         result <- fiber.join
-  //       } yield result.filter(_.nonEmpty)
-  //     )(equalTo(Chunk(List(5, 4, 3, 2, 1), List(10, 9, 8, 7, 6), List(15, 14, 13, 12, 11))))
-  //   } @@ withLiveClock
-  // ),
+  // Explicitly uses live Clock
+  it.effect("issue from zio-kafka", () =>
+    Effect.gen(function*($) {
+      const queue = yield* $(Queue.unbounded<Take.Take<never, number>>())
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(queue),
+        Stream.flattenTake,
+        Stream.aggregate(
+          Sink.foldLeft(Chunk.empty<number>(), (acc, n) => pipe(acc, Chunk.append(n)))
+        ),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(Live.live(Effect.sleep(Duration.seconds(1))))
+      yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(1, 2, 3, 4, 5)))))
+      yield* $(Live.live(Effect.sleep(Duration.seconds(1))))
+      yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(6, 7, 8, 9, 10)))))
+      yield* $(Live.live(Effect.sleep(Duration.seconds(1))))
+      yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(11, 12, 13, 14, 15)))))
+      yield* $(pipe(queue, Queue.offer(Take.end)))
+      const result = yield* $(pipe(
+        Fiber.join(fiber),
+        Effect.map(Chunk.filter(Chunk.isNonEmpty))
+      ))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
+      )
+    }))
 
   it.effect("aggregateWithin - child fiber handling", () =>
     Effect.gen(function*($) {
@@ -190,7 +193,7 @@ describe.concurrent("Stream", () => {
           Stream.flattenTake,
           Stream.aggregateWithin(
             Sink.last<number>(),
-            Schedule.fixed(Duration.millis(20))
+            Schedule.fixed(Duration.millis(200))
           ),
           Stream.interruptWhen(Effect.never()),
           Stream.take(2),
@@ -201,8 +204,7 @@ describe.concurrent("Stream", () => {
       yield* $(
         pipe(
           coordination.offer,
-          // TODO(Mike/Max): swap out for TestClock
-          Effect.zipRight(Effect.sleep(Duration.millis(10))),
+          Effect.zipRight(TestClock.adjust(Duration.millis(100))),
           Effect.zipRight(coordination.awaitNext),
           Effect.repeatN(3)
         )
@@ -365,7 +367,7 @@ describe.concurrent("Stream", () => {
               (_, n) => n,
               (acc, curr) => acc.append(curr)
             ),
-            Schedule.spaced(Duration.millis(10))
+            Schedule.spaced(Duration.millis(100))
           ),
           Stream.collect((either) =>
             Either.isRight(either) ?
@@ -377,8 +379,7 @@ describe.concurrent("Stream", () => {
           Effect.fork
         )
       )
-      // TODO(Mike/Max): swap out with TestClock
-      yield* $(Effect.sleep(Duration.millis(100)))
+      yield* $(TestClock.adjust(Duration.minutes(31)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), input)
     }))

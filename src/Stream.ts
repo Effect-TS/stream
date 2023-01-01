@@ -695,6 +695,20 @@ export const concatAll: <R, E, A>(streams: Chunk.Chunk<Stream<R, E, A>>) => Stre
 
 /**
  * Composes this stream with the specified stream to create a cartesian
+ * product of elements. The `that` stream would be run multiple times, for
+ * every element in the `this` stream.
+ *
+ * See also `Stream.zip` for the more common point-wise variant.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const cross: <R2, E2, A2>(
+  that: Stream<R2, E2, A2>
+) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]> = internal.cross
+
+/**
+ * Composes this stream with the specified stream to create a cartesian
  * product of elements, but keeps only elements from this stream. The `that`
  * stream would be run multiple times, for every element in the `this` stream.
  *
@@ -721,20 +735,6 @@ export const crossLeft: <R2, E2, A2>(
 export const crossRight: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
 ) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2> = internal.crossRight
-
-/**
- * Composes this stream with the specified stream to create a cartesian
- * product of elements. The `that` stream would be run multiple times, for
- * every element in the `this` stream.
- *
- * See also `Stream.zip` for the more common point-wise variant.
- *
- * @since 1.0.0
- * @category utils
- */
-export const cross: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]> = internal.cross
 
 /**
  * Composes this stream with the specified stream to create a cartesian
@@ -1407,6 +1407,15 @@ export const fromIterable: <A>(iterable: Iterable<A>) => Stream<never, never, A>
  */
 export const fromIterableEffect: <R, E, A>(effect: Effect.Effect<R, E, Iterable<A>>) => Stream<R, E, A> =
   internal.fromIterableEffect
+
+/**
+ * Creates a stream from an iterator
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const fromIteratorSucceed: <A>(iterator: IterableIterator<A>, maxChunkSize?: number) => Stream<never, never, A> =
+  internal.fromIteratorSucceed
 
 /**
  * Creates a stream from an effect that pulls elements from another stream.
@@ -3122,6 +3131,27 @@ export const scanReduceEffect: <A2, A, R2, E2>(
 ) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A> = internal.scanReduceEffect
 
 /**
+ * Schedules the output of the stream using the provided `schedule`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const schedule: <R2, A>(
+  schedule: Schedule.Schedule<R2, A, unknown>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A> = internal.schedule
+
+/**
+ * Schedules the output of the stream using the provided `schedule` and emits
+ * its output at the end (if `schedule` is finite).
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const scheduleEither: <R2, A, B>(
+  schedule: Schedule.Schedule<R2, A, B>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>> = internal.scheduleEither
+
+/**
  * Schedules the output of the stream using the provided `schedule` and emits
  * its output at the end (if `schedule` is finite). Uses the provided function
  * to align the stream and schedule outputs on the same type.
@@ -3740,6 +3770,20 @@ export const whenEffect: <R2, E2>(
 export const zip: <R2, E2, A2>(
   that: Stream<R2, E2, A2>
 ) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]> = internal.zip
+
+/**
+ * Zips this stream with another point-wise and emits tuples of elements from
+ * both streams.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+export const zipFlatten: <R2, E2, A2>(
+  that: Stream<R2, E2, A2>
+) => <R, E, A extends ReadonlyArray<any>>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [...A, A2]> =
+  internal.zipFlatten
 
 /**
  * Zips this stream with another point-wise, creating a new stream of pairs of

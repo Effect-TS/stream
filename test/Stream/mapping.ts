@@ -3,6 +3,7 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
@@ -307,17 +308,16 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(result, Either.left("boom"))
     }))
 
-  // TODO(Mike/Max): swap out for TestClock after `@effect/test`
   it.effect("mapEffectPar - propagates the error of the original stream", () =>
     Effect.gen(function*($) {
       const fiber = yield* $(pipe(
         Stream.range(1, 11),
         Stream.concat(Stream.fail(Cause.RuntimeException("boom"))),
-        Stream.mapEffectPar(2)(() => Effect.sleep(Duration.millis(10))),
+        Stream.mapEffectPar(2)(() => Effect.sleep(Duration.seconds(1))),
         Stream.runDrain,
         Effect.fork
       ))
-      yield* $(Effect.sleep(Duration.millis(20)))
+      yield* $(TestClock.adjust(Duration.seconds(5)))
       const exit = yield* $(Fiber.await(fiber))
       assert.deepStrictEqual(Exit.unannotate(exit), Exit.fail(Cause.RuntimeException("boom")))
     }))

@@ -1,11 +1,14 @@
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
+import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Chunk from "@fp-ts/data/Chunk"
+import * as Duration from "@fp-ts/data/Duration"
 import * as Either from "@fp-ts/data/Either"
 import { pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
@@ -26,8 +29,8 @@ const grouped = <A>(arr: Array<A>, size: number): Array<Array<A>> => {
 }
 
 describe.concurrent("Stream", () => {
-  it.it("concatAll", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
+  it.it("concatAll", () =>
+    fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = pipe(
         Chunk.fromIterable(chunks),
         Chunk.map(Stream.fromChunk),
@@ -36,8 +39,7 @@ describe.concurrent("Stream", () => {
       const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
       const expected = Chunk.flatten(Chunk.fromIterable(chunks))
       assert.deepStrictEqual(Array.from(actual), Array.from(expected))
-    })
-  })
+    })))
 
   it.effect("finalizer - happy path", () =>
     Effect.gen(function*($) {
@@ -67,24 +69,22 @@ describe.concurrent("Stream", () => {
       assert.isFalse(result)
     }))
 
-  it.it("fromChunk", () => {
-    fc.asyncProperty(chunkArb(fc.integer()), async (chunk) => {
+  it.it("fromChunk", () =>
+    fc.assert(fc.asyncProperty(chunkArb(fc.integer()), async (chunk) => {
       const stream = Stream.fromChunk(chunk)
       const result = await Effect.unsafeRunPromise(Stream.runCollect(stream))
       assert.deepStrictEqual(Array.from(result), Array.from(chunk))
-    })
-  })
+    })))
 
-  it.it("fromChunks", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
+  it.it("fromChunks", () =>
+    fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
       const result = await Effect.unsafeRunPromise(Stream.runCollect(stream))
       assert.deepStrictEqual(
         Array.from(result),
         Array.from(Chunk.flatten(Chunk.fromIterable(chunks)))
       )
-    })
-  })
+    })))
 
   it.effect("fromChunks - discards empty chunks", () =>
     Effect.gen(function*($) {
@@ -145,18 +145,28 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
-  // TODO(Mike/Max): after `@effect/test`
-  // test("fromSchedule") {
-  //   val schedule = Schedule.exponential(1.second) <* Schedule.recurs(5)
-  //   val stream   = ZStream.fromSchedule(schedule)
-  //   val zio = for {
-  //     fiber <- stream.runCollect.fork
-  //     _     <- TestClock.adjust(62.seconds)
-  //     value <- fiber.join
-  //   } yield value
-  //   val expected = Chunk(1.seconds, 2.seconds, 4.seconds, 8.seconds, 16.seconds)
-  //   assertZIO(zio)(equalTo(expected))
-  // },
+  it.effect("fromSchedule", () =>
+    Effect.gen(function*($) {
+      const schedule = pipe(
+        Schedule.exponential(Duration.seconds(1)),
+        Schedule.zipLeft(Schedule.recurs(5))
+      )
+      const fiber = yield* $(pipe(
+        Stream.fromSchedule(schedule),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.seconds(62)))
+      const result = yield* $(Fiber.join(fiber))
+      const expected = [
+        Duration.seconds(1),
+        Duration.seconds(2),
+        Duration.seconds(4),
+        Duration.seconds(8),
+        Duration.seconds(16)
+      ]
+      assert.deepStrictEqual(Array.from(result), expected)
+    }))
 
   it.effect("fromQueue - emits queued elements", () =>
     Effect.gen(function*($) {
@@ -186,23 +196,6 @@ describe.concurrent("Stream", () => {
       ))
       assert.isTrue(Array.from(result).every((array) => array.length <= 2))
     }))
-
-  // TODO(Mike/Max): after `@effect/stm`
-  // test("fromTQueue") {
-  //   TQueue.bounded[Int](5).commit.flatMap { tqueue =>
-  //     ZIO.scoped {
-  //       ZStream.fromTQueue(tqueue).toQueueUnbounded.flatMap { queue =>
-  //         for {
-  //           _      <- tqueue.offerAll(List(1, 2, 3)).commit
-  //           first  <- ZStream.fromQueue(queue).take(3).runCollect
-  //           _      <- tqueue.offerAll(List(4, 5)).commit
-  //           second <- ZStream.fromQueue(queue).take(2).runCollect
-  //         } yield assert(first)(equalTo(Chunk(1, 2, 3).map(Take.single))) &&
-  //           assert(second)(equalTo(Chunk(4, 5).map(Take.single)))
-  //       }
-  //     }
-  //   }
-  // } @@ flaky,
 
   it.effect("iterate", () =>
     Effect.gen(function*($) {
@@ -267,21 +260,22 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.it("rechunk", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), fc.integer({ min: 1, max: 100 }), async (chunks, n) => {
-      const stream = pipe(
-        Stream.fromChunks(...chunks),
-        Stream.rechunk(n),
-        Stream.mapChunks(Chunk.singleton)
-      )
-      const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
-      const expected = chunks.map((chunk) => Array.from(chunk)).flat()
-      assert.deepStrictEqual(
-        Array.from(actual).map((chunk) => Array.from(chunk)),
-        grouped(expected, n)
-      )
-    })
-  })
+  it.it("rechunk", () =>
+    fc.assert(
+      fc.asyncProperty(fc.array(chunkArb(fc.integer())), fc.integer({ min: 1, max: 100 }), async (chunks, n) => {
+        const stream = pipe(
+          Stream.fromChunks(...chunks),
+          Stream.rechunk(n),
+          Stream.mapChunks(Chunk.singleton)
+        )
+        const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+        const expected = chunks.map((chunk) => Array.from(chunk)).flat()
+        assert.deepStrictEqual(
+          Array.from(actual).map((chunk) => Array.from(chunk)),
+          grouped(expected, n)
+        )
+      })
+    ))
 
   it.effect("unfold", () =>
     Effect.gen(function*($) {
