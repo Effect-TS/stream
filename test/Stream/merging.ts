@@ -1,6 +1,7 @@
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
@@ -22,7 +23,6 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [1])
     }))
 
-  // TODO(Mike/Max): swap out with TestClock after `@effect/test`
   it.effect("mergeHaltLeft - terminates as soon as the first stream terminates", () =>
     Effect.gen(function*($) {
       const queue1 = yield* $(Queue.unbounded<number>())
@@ -35,19 +35,18 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.fork
       ))
-      yield* $(pipe(queue1, Queue.offer(1), Effect.zipRight(Effect.sleep(Duration.millis(10)))))
-      yield* $(pipe(queue1, Queue.offer(2), Effect.zipRight(Effect.sleep(Duration.millis(10)))))
-      yield* $(pipe(Queue.shutdown(queue1), Effect.zipRight(Effect.sleep(Duration.millis(10)))))
+      yield* $(pipe(queue1, Queue.offer(1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(queue1, Queue.offer(2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(Queue.shutdown(queue1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
       yield* $(pipe(queue2, Queue.offer(3)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
-  // TODO(Mike/Max): swap out with TestClock after `@effect/test`
   it.effect("mergeHaltEither - interrupts pulling on finish", () =>
     Effect.gen(function*($) {
       const stream1 = Stream.make(1, 2, 3)
-      const stream2 = Stream.fromEffect(pipe(Effect.sleep(Duration.millis(10)), Effect.as(4)))
+      const stream2 = Stream.fromEffect(pipe(Effect.sleep(Duration.seconds(5)), Effect.as(4)))
       const result = yield* $(pipe(
         stream1,
         Stream.mergeHaltLeft(stream2),
@@ -56,7 +55,6 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
-  // TODO(Mike/Max): swap out with TestClock after `@effect/test`
   it.effect("mergeHaltRight - terminates as soon as the second stream terminates", () =>
     Effect.gen(function*($) {
       const queue1 = yield* $(Queue.unbounded<number>())
@@ -69,15 +67,14 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.fork
       ))
-      yield* $(pipe(queue2, Queue.offer(1), Effect.zipRight(Effect.sleep(Duration.millis(10)))))
-      yield* $(pipe(queue2, Queue.offer(2), Effect.zipRight(Effect.sleep(Duration.millis(10)))))
-      yield* $(pipe(Queue.shutdown(queue2), Effect.zipRight(Effect.sleep(Duration.millis(10)))))
+      yield* $(pipe(queue2, Queue.offer(1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(queue2, Queue.offer(2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(Queue.shutdown(queue2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
       yield* $(pipe(queue1, Queue.offer(3)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
-  // TODO(Mike/Max): swap out with TestClock after `@effect/test`
   it.effect("mergeHaltEither - terminates as soon as either stream terminates", () =>
     Effect.gen(function*($) {
       const queue1 = yield* $(Queue.unbounded<number>())
@@ -91,7 +88,7 @@ describe.concurrent("Stream", () => {
         Effect.fork
       ))
       yield* $(Queue.shutdown(queue1))
-      yield* $(Effect.sleep(Duration.millis(10)))
+      yield* $(TestClock.adjust(Duration.seconds(1)))
       yield* $(pipe(queue2, Queue.offer(1)))
       const result = yield* $(Fiber.join(fiber))
       assert.isTrue(Chunk.isEmpty(result))

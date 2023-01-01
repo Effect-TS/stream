@@ -1,8 +1,14 @@
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
+import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
+import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Chunk from "@fp-ts/data/Chunk"
+import * as Duration from "@fp-ts/data/Duration"
 import * as Either from "@fp-ts/data/Either"
 import { pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
@@ -73,41 +79,57 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
 
-  // TODO(Mike/Max): after `@effect/test`
-  // it.effect("haltAfter - halts after the given duration", () =>
-  //   Effect.gen(function*($) {
+  it.effect("haltAfter - halts after the given duration", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.singleton(1),
+        Chunk.singleton(2),
+        Chunk.singleton(3),
+        Chunk.singleton(4)
+      ]))
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.haltAfter(Duration.seconds(5)),
+        Stream.tap(() => coordination.proceed),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(coordination.offer)
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[1], [2], [3]]
+      )
+    }))
 
-  //   })
-  // )
-  // suite("haltAfter")(
-  //   test("halts after given duration") {
-  //     assertWithChunkCoordination(List(Chunk(1), Chunk(2), Chunk(3), Chunk(4))) { c =>
-  //       assertZIO(
-  //         for {
-  //           fiber <- ZStream
-  //                      .fromQueue(c.queue)
-  //                      .collectWhileSuccess
-  //                      .haltAfter(5.seconds)
-  //                      .tap(_ => c.proceed)
-  //                      .runCollect
-  //                      .fork
-  //           _      <- c.offer *> TestClock.adjust(3.seconds) *> c.awaitNext
-  //           _      <- c.offer *> TestClock.adjust(3.seconds) *> c.awaitNext
-  //           _      <- c.offer *> TestClock.adjust(3.seconds) *> c.awaitNext
-  //           _      <- c.offer
-  //           result <- fiber.join
-  //         } yield result
-  //       )(equalTo(Chunk(Chunk(1), Chunk(2), Chunk(3))))
-  //     }
-  //   },
-  //   test("will process first chunk") {
-  //     for {
-  //       queue  <- Queue.unbounded[Int]
-  //       fiber  <- ZStream.fromQueue(queue).haltAfter(5.seconds).runCollect.fork
-  //       _      <- TestClock.adjust(6.seconds)
-  //       _      <- queue.offer(1)
-  //       result <- fiber.join
-  //     } yield assert(result)(equalTo(Chunk(1)))
-  //   }
-  // ),
+  it.effect("haltAfter - will process first chunk", () =>
+    Effect.gen(function*($) {
+      const queue = yield* $(Queue.unbounded<number>())
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(queue),
+        Stream.haltAfter(Duration.seconds(5)),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.seconds(6)))
+      yield* $(pipe(queue, Queue.offer(1)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [1])
+    }))
 })

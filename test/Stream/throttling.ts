@@ -1,211 +1,313 @@
-describe.concurrent.skip("Stream", () => {
-  // TODO(Mike/Max): after `@effect/test`
-  // suite("throttleEnforce")(
-  //   test("free elements") {
-  //     assertZIO(
-  //       ZStream(1, 2, 3, 4)
-  //         .throttleEnforce(0, Duration.Infinity)(_ => 0)
-  //         .runCollect
-  //     )(equalTo(Chunk(1, 2, 3, 4)))
-  //   },
-  //   test("no bandwidth") {
-  //     assertZIO(
-  //       ZStream(1, 2, 3, 4)
-  //         .throttleEnforce(0, Duration.Infinity)(_ => 1)
-  //         .runCollect
-  //     )(equalTo(Chunk.empty))
-  //   }
-  // ),
-  // suite("throttleShape")(
-  //   test("throttleShape") {
-  //     for {
-  //       fiber <- Queue
-  //                  .bounded[Int](10)
-  //                  .flatMap { queue =>
-  //                    ZIO.scoped {
-  //                      ZStream
-  //                        .fromQueue(queue)
-  //                        .throttleShape(1, 1.second)(_.sum.toLong)
-  //                        .toPull
-  //                        .flatMap { pull =>
-  //                          for {
-  //                            _    <- queue.offer(1)
-  //                            res1 <- pull
-  //                            _    <- queue.offer(2)
-  //                            res2 <- pull
-  //                            _    <- Clock.sleep(4.seconds)
-  //                            _    <- queue.offer(3)
-  //                            res3 <- pull
-  //                          } yield assert(Chunk(res1, res2, res3))(
-  //                            equalTo(Chunk(Chunk(1), Chunk(2), Chunk(3)))
-  //                          )
-  //                        }
-  //                    }
-  //                  }
-  //                  .fork
-  //       _    <- TestClock.adjust(8.seconds)
-  //       test <- fiber.join
-  //     } yield test
-  //   },
-  //   test("infinite bandwidth") {
-  //     Queue.bounded[Int](10).flatMap { queue =>
-  //       ZIO.scoped {
-  //         ZStream.fromQueue(queue).throttleShape(1, 0.seconds)(_ => 100000L).toPull.flatMap { pull =>
-  //           for {
-  //             _       <- queue.offer(1)
-  //             res1    <- pull
-  //             _       <- queue.offer(2)
-  //             res2    <- pull
-  //             elapsed <- Clock.currentTime(TimeUnit.SECONDS)
-  //           } yield assert(elapsed)(equalTo(0L)) && assert(Chunk(res1, res2))(
-  //             equalTo(Chunk(Chunk(1), Chunk(2)))
-  //           )
-  //         }
-  //       }
-  //     }
-  //   },
-  //   test("with burst") {
-  //     for {
-  //       fiber <- Queue
-  //                  .bounded[Int](10)
-  //                  .flatMap { queue =>
-  //                    ZIO.scoped {
-  //                      ZStream
-  //                        .fromQueue(queue)
-  //                        .throttleShape(1, 1.second, 2)(_.sum.toLong)
-  //                        .toPull
-  //                        .flatMap { pull =>
-  //                          for {
-  //                            _    <- queue.offer(1)
-  //                            res1 <- pull
-  //                            _    <- TestClock.adjust(2.seconds)
-  //                            _    <- queue.offer(2)
-  //                            res2 <- pull
-  //                            _    <- TestClock.adjust(4.seconds)
-  //                            _    <- queue.offer(3)
-  //                            res3 <- pull
-  //                          } yield assert(Chunk(res1, res2, res3))(
-  //                            equalTo(Chunk(Chunk(1), Chunk(2), Chunk(3)))
-  //                          )
-  //                        }
-  //                    }
-  //                  }
-  //                  .fork
-  //       test <- fiber.join
-  //     } yield test
-  //   },
-  //   test("free elements") {
-  //     assertZIO(
-  //       ZStream(1, 2, 3, 4)
-  //         .throttleShape(1, Duration.Infinity)(_ => 0)
-  //         .runCollect
-  //     )(equalTo(Chunk(1, 2, 3, 4)))
-  //   }
-  // ),
-  // suite("debounce")(
-  //   test("should drop earlier chunks within waitTime") {
-  //     assertWithChunkCoordination(List(Chunk(1), Chunk(3, 4), Chunk(5), Chunk(6, 7))) { c =>
-  //       val stream = ZStream
-  //         .fromQueue(c.queue)
-  //         .collectWhileSuccess
-  //         .debounce(1.second)
-  //         .tap(_ => c.proceed)
+import * as Clock from "@effect/io/Clock"
+import * as Effect from "@effect/io/Effect"
+import * as Exit from "@effect/io/Exit"
+import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as Queue from "@effect/io/Queue"
+import * as Ref from "@effect/io/Ref"
+import * as Schedule from "@effect/io/Schedule"
+import * as Stream from "@effect/stream/Stream"
+import { chunkCoordination } from "@effect/stream/test/utils/coordination"
+import * as it from "@effect/stream/test/utils/extend"
+import * as Chunk from "@fp-ts/data/Chunk"
+import * as Duration from "@fp-ts/data/Duration"
+import { pipe } from "@fp-ts/data/Function"
+import * as Option from "@fp-ts/data/Option"
+import { assert, describe } from "vitest"
 
-  //       assertZIO(for {
-  //         fiber  <- stream.runCollect.fork
-  //         _      <- c.offer.fork
-  //         _      <- (Clock.sleep(500.millis) *> c.offer).fork
-  //         _      <- (Clock.sleep(2.seconds) *> c.offer).fork
-  //         _      <- (Clock.sleep(2500.millis) *> c.offer).fork
-  //         _      <- TestClock.adjust(3500.millis)
-  //         result <- fiber.join
-  //       } yield result)(equalTo(Chunk(Chunk(3, 4), Chunk(6, 7))))
-  //     }
-  //   },
-  //   test("should take latest chunk within waitTime") {
-  //     assertWithChunkCoordination(List(Chunk(1, 2), Chunk(3, 4), Chunk(5, 6))) { c =>
-  //       val stream = ZStream
-  //         .fromQueue(c.queue)
-  //         .collectWhileSuccess
-  //         .debounce(1.second)
-  //         .tap(_ => c.proceed)
+describe.concurrent("Stream", () => {
+  it.effect("throttleEnforce - free elements", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.make(1, 2, 3, 4),
+        Stream.throttleEnforce(0, Duration.infinity)(() => 0),
+        Stream.runCollect
+      ))
+      assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
+    }))
 
-  //       assertZIO(for {
-  //         fiber  <- stream.runCollect.fork
-  //         _      <- c.offer *> c.offer *> c.offer
-  //         _      <- TestClock.adjust(1.second)
-  //         result <- fiber.join
-  //       } yield result)(equalTo(Chunk(Chunk(5, 6))))
-  //     }
-  //   },
-  //   test("should work properly with parallelization") {
-  //     assertWithChunkCoordination(List(Chunk(1), Chunk(2), Chunk(3))) { c =>
-  //       val stream = ZStream
-  //         .fromQueue(c.queue)
-  //         .collectWhileSuccess
-  //         .debounce(1.second)
-  //         .tap(_ => c.proceed)
+  it.effect("throttleEnforce - no bandwidth", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.make(1, 2, 3, 4),
+        Stream.throttleEnforce(0, Duration.infinity)(() => 1),
+        Stream.runCollect
+      ))
+      assert.isTrue(Chunk.isEmpty(result))
+    }))
 
-  //       assertZIO(for {
-  //         fiber  <- stream.runCollect.fork
-  //         _      <- ZIO.collectAllParDiscard(List(c.offer, c.offer, c.offer))
-  //         _      <- TestClock.adjust(1.second)
-  //         result <- fiber.join
-  //       } yield result)(hasSize(equalTo(1)))
-  //     }
-  //   },
-  //   test("should handle empty chunks properly") {
-  //     for {
-  //       fiber  <- ZStream(1, 2, 3).schedule(Schedule.fixed(500.millis)).debounce(1.second).runCollect.fork
-  //       _      <- TestClock.adjust(3.seconds)
-  //       result <- fiber.join
-  //     } yield assert(result)(equalTo(Chunk(3)))
-  //   },
-  //   test("should fail immediately") {
-  //     val stream = ZStream.fromZIO(ZIO.fail(None)).debounce(Duration.Infinity)
-  //     assertZIO(stream.runCollect.either)(isLeft(equalTo(None)))
-  //   },
-  //   test("should work with empty streams") {
-  //     val stream = ZStream.empty.debounce(5.seconds)
-  //     assertZIO(stream.runCollect)(isEmpty)
-  //   },
-  //   test("should pick last element from every chunk") {
-  //     assertZIO(for {
-  //       fiber  <- ZStream(1, 2, 3).debounce(1.second).runCollect.fork
-  //       _      <- TestClock.adjust(1.second)
-  //       result <- fiber.join
-  //     } yield result)(equalTo(Chunk(3)))
-  //   },
-  //   test("should interrupt fibers properly") {
-  //     assertWithChunkCoordination(List(Chunk(1), Chunk(2), Chunk(3))) { c =>
-  //       for {
-  //         fib <- ZStream
-  //                  .fromQueue(c.queue)
-  //                  .tap(_ => c.proceed)
-  //                  .flatMap(ex => ZStream.fromZIOOption(ZIO.done(ex)))
-  //                  .flattenChunks
-  //                  .debounce(200.millis)
-  //                  .interruptWhen(ZIO.never)
-  //                  .take(1)
-  //                  .runCollect
-  //                  .fork
-  //         _       <- (c.offer *> TestClock.adjust(100.millis) *> c.awaitNext).repeatN(3)
-  //         _       <- TestClock.adjust(100.millis)
-  //         results <- fib.join
-  //       } yield assert(results)(equalTo(Chunk(3)))
-  //     }
-  //   },
-  //   test("should interrupt children fiber on stream interruption") {
-  //     for {
-  //       ref <- Ref.make(false)
-  //       fiber <- (ZStream.fromZIO(ZIO.unit) ++ ZStream.fromZIO(ZIO.never.onInterrupt(ref.set(true))))
-  //                  .debounce(800.millis)
-  //                  .runDrain
-  //                  .fork
-  //       _     <- TestClock.adjust(1.minute)
-  //       _     <- fiber.interrupt
-  //       value <- ref.get
-  //     } yield assert(value)(equalTo(true))
-  //   }
-  // ) @@ TestAspect.timeout(40.seconds),
+  it.effect("throttleShape", () =>
+    Effect.gen(function*($) {
+      const queue = yield* $(Queue.bounded<number>(10))
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(queue),
+        Stream.throttleShape(1, Duration.seconds(1))(Chunk.reduce(0, (x, y) => x + y)),
+        Stream.toPull,
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            yield* $(pipe(queue, Queue.offer(1)))
+            const result1 = yield* $(pull)
+            yield* $(pipe(queue, Queue.offer(2)))
+            const result2 = yield* $(pull)
+            yield* $(Effect.sleep(Duration.seconds(4)))
+            yield* $(pipe(queue, Queue.offer(3)))
+            const result3 = yield* $(pull)
+            return [Array.from(result1), Array.from(result2), Array.from(result3)] as const
+          })
+        ),
+        Effect.scoped,
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.seconds(8)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(result, [[1], [2], [3]])
+    }))
+
+  it.effect("throttleShape - infinite bandwidth", () =>
+    Effect.gen(function*($) {
+      const queue = yield* $(Queue.bounded<number>(10))
+      const result = yield* $(pipe(
+        Stream.fromQueue(queue),
+        Stream.throttleShape(1, Duration.zero)(() => 100_000),
+        Stream.toPull,
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            yield* $(pipe(queue, Queue.offer(1)))
+            const result1 = yield* $(pull)
+            yield* $(pipe(queue, Queue.offer(2)))
+            const result2 = yield* $(pull)
+            const elapsed = yield* $(Clock.currentTimeMillis())
+            return [Array.from(result1), Array.from(result2), elapsed] as const
+          })
+        ),
+        Effect.scoped
+      ))
+      assert.deepStrictEqual(result, [[1], [2], 0])
+    }))
+
+  it.effect("throttleShape - with burst", () =>
+    Effect.gen(function*($) {
+      const queue = yield* $(Queue.bounded<number>(10))
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(queue),
+        Stream.throttleShape(1, Duration.seconds(1), 2)(Chunk.reduce(0, (x, y) => x + y)),
+        Stream.toPull,
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            yield* $(pipe(queue, Queue.offer(1)))
+            const result1 = yield* $(pull)
+            yield* $(TestClock.adjust(Duration.seconds(2)))
+            yield* $(pipe(queue, Queue.offer(2)))
+            const result2 = yield* $(pull)
+            yield* $(TestClock.adjust(Duration.seconds(4)))
+            yield* $(pipe(queue, Queue.offer(3)))
+            const result3 = yield* $(pull)
+            return [Array.from(result1), Array.from(result2), Array.from(result3)] as const
+          })
+        ),
+        Effect.scoped,
+        Effect.fork
+      ))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(result, [[1], [2], [3]])
+    }))
+
+  it.effect("throttleShape - free elements", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.make(1, 2, 3, 4),
+        Stream.throttleShape(1, Duration.infinity)(() => 0),
+        Stream.runCollect
+      ))
+      assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
+    }))
+
+  it.effect("debounce - should drop earlier chunks within waitTime", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.singleton(1),
+        Chunk.make(3, 4),
+        Chunk.singleton(5),
+        Chunk.make(6, 7)
+      ]))
+      const stream = pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.debounce(Duration.seconds(1)),
+        Stream.tap(() => coordination.proceed)
+      )
+      const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
+      yield* $(Effect.fork(coordination.offer))
+      yield* $(pipe(
+        Effect.sleep(Duration.millis(500)),
+        Effect.zipRight(coordination.offer),
+        Effect.fork
+      ))
+      yield* $(pipe(
+        Effect.sleep(Duration.seconds(2)),
+        Effect.zipRight(coordination.offer),
+        Effect.fork
+      ))
+      yield* $(pipe(
+        Effect.sleep(Duration.millis(2500)),
+        Effect.zipRight(coordination.offer),
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.millis(3500)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[3, 4], [6, 7]]
+      )
+    }))
+
+  it.effect("debounce - should take latest chunk within waitTime", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.make(1, 2),
+        Chunk.make(3, 4),
+        Chunk.make(5, 6)
+      ]))
+      const stream = pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.debounce(Duration.seconds(1)),
+        Stream.tap(() => coordination.proceed)
+      )
+      const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(coordination.offer),
+        Effect.zipRight(coordination.offer)
+      ))
+      yield* $(TestClock.adjust(Duration.seconds(1)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[5, 6]]
+      )
+    }))
+
+  it.effect("debounce - should work properly with parallelization", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.singleton(1),
+        Chunk.singleton(2),
+        Chunk.singleton(3)
+      ]))
+      const stream = pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.debounce(Duration.seconds(1)),
+        Stream.tap(() => coordination.proceed)
+      )
+      const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
+      yield* $(Effect.collectAllParDiscard([
+        coordination.offer,
+        coordination.offer,
+        coordination.offer
+      ]))
+      yield* $(TestClock.adjust(Duration.seconds(1)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(
+        Array.from(result).map((chunk) => Array.from(chunk)),
+        [[3]]
+      )
+    }))
+
+  it.effect("debounce - should handle empty chunks properly", () =>
+    Effect.gen(function*($) {
+      const fiber = yield* $(pipe(
+        Stream.make(1, 2, 3),
+        Stream.schedule<never, number>(Schedule.fixed(Duration.millis(500))),
+        Stream.debounce(Duration.seconds(1)),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.seconds(3)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [3])
+    }))
+
+  it.effect("debounce - should fail immediately", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.fromEffect(Effect.fail(Option.none)),
+        Stream.debounce(Duration.infinity),
+        Stream.runCollect,
+        Effect.exit
+      ))
+      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(Option.none))
+    }))
+
+  it.effect("debounce - should work with empty streams", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.empty,
+        Stream.debounce(Duration.seconds(5)),
+        Stream.runCollect
+      ))
+      assert.isTrue(Chunk.isEmpty(result))
+    }))
+
+  it.effect("debounce - should pick last element from every chunk", () =>
+    Effect.gen(function*($) {
+      const fiber = yield* $(pipe(
+        Stream.make(1, 2, 3),
+        Stream.debounce(Duration.seconds(1)),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.seconds(1)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [3])
+    }))
+
+  it.effect("debounce - should interrupt fibers properly", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.singleton(1),
+        Chunk.singleton(2),
+        Chunk.singleton(3)
+      ]))
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.tap(() => coordination.proceed),
+        Stream.flatMap((exit) => Stream.fromEffectOption(Effect.done(exit))),
+        Stream.flattenChunks,
+        Stream.debounce(Duration.millis(200)),
+        Stream.interruptWhen(Effect.never()),
+        Stream.take(1),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.millis(100))),
+        Effect.zipRight(coordination.awaitNext),
+        Effect.repeatN(3)
+      ))
+      yield* $(TestClock.adjust(Duration.millis(100)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [3])
+    }))
+
+  it.effect("debounce - should interrupt children fiber on stream interruption", () =>
+    Effect.gen(function*($) {
+      const ref = yield* $(Ref.make(false))
+      const fiber = yield* $(pipe(
+        Stream.fromEffect(Effect.unit()),
+        Stream.concat(Stream.fromEffect(pipe(
+          Effect.never(),
+          Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+        ))),
+        Stream.debounce(Duration.millis(800)),
+        Stream.runDrain,
+        Effect.fork
+      ))
+      yield* $(TestClock.adjust(Duration.minutes(1)))
+      yield* $(Fiber.interrupt(fiber))
+      const result = yield* $(Ref.get(ref))
+      assert.isTrue(result)
+    }))
 })

@@ -1,7 +1,12 @@
 import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
+import * as Fiber from "@effect/io/Fiber"
+import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
+import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Chunk from "@fp-ts/data/Chunk"
 import * as Duration from "@fp-ts/data/Duration"
 import * as Either from "@fp-ts/data/Either"
 import { pipe } from "@fp-ts/data/Function"
@@ -78,53 +83,71 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3, 4])
     }))
 
-  // TODO(Mike/Max): after `@effect/test`
-  // it.effect("timeoutTo - should switch streams", () =>
-  //   Effect.gen(function*($) {
-  //     const coordination = yield* $(chunkCoordination([
-  //       Chunk.singleton(1),
-  //       Chunk.singleton(2),
-  //       Chunk.singleton(3)
-  //     ]))
-  //     const fiber = yield* $(pipe(
-  //       Stream.fromQueue(coordination.queue),
-  //       Stream.collectWhileSuccess,
-  //       Stream.flattenChunks,
-  //       Stream.timeoutTo(Duration.seconds(2), Stream.succeed(4)),
-  //       Stream.tap(() => coordination.proceed),
-  //       Stream.runCollect,
-  //       Effect.fork
-  //     ))
-  //     yield* $(pipe(
-  //       coordination.offer,
-  //       Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
-  //       Effect.zipRight(coordination.awaitNext)
-  //     ))
-  //     yield* $(pipe(
-  //       coordination.offer,
-  //       Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
-  //       Effect.zipRight(coordination.awaitNext)
-  //     ))
-  //     yield* $(coordination.offer)
-  //     const result = yield* $(Fiber.join(fiber))
-  //     assert.deepStrictEqual(Array.from(result), [1, 2, 4])
-  //   }))
+  it.effect("timeoutTo - should switch streams", () =>
+    Effect.gen(function*($) {
+      const coordination = yield* $(chunkCoordination([
+        Chunk.singleton(1),
+        Chunk.singleton(2),
+        Chunk.singleton(3)
+      ]))
+      const fiber = yield* $(pipe(
+        Stream.fromQueue(coordination.queue),
+        Stream.collectWhileSuccess,
+        Stream.flattenChunks,
+        Stream.timeoutTo(Duration.seconds(2), Stream.succeed(4)),
+        Stream.tap(() => coordination.proceed),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(pipe(
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
+        Effect.zipRight(coordination.awaitNext)
+      ))
+      yield* $(coordination.offer)
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [1, 2, 4])
+    }))
 
-  // TODO(Mike/Max): after `@effect/test`
-  //   test("should not apply timeout after switch") {
-  //     for {
-  //       queue1 <- Queue.unbounded[Int]
-  //       queue2 <- Queue.unbounded[Int]
-  //       stream1 = ZStream.fromQueue(queue1)
-  //       stream2 = ZStream.fromQueue(queue2)
-  //       fiber  <- stream1.timeoutTo(2.seconds)(stream2).runCollect.fork
-  //       _      <- queue1.offer(1) *> TestClock.adjust(1.second)
-  //       _      <- queue1.offer(2) *> TestClock.adjust(3.second)
-  //       _      <- queue1.offer(3)
-  //       _      <- queue2.offer(4) *> TestClock.adjust(3.second)
-  //       _      <- queue2.offer(5) *> queue2.shutdown
-  //       result <- fiber.join
-  //     } yield assert(result)(equalTo(Chunk(1, 2, 4, 5)))
-  //   }
-  // ),
+  it.effect("timeoutTo - should not apply timeout after switch", () =>
+    Effect.gen(function*($) {
+      const queue1 = yield* $(Queue.unbounded<number>())
+      const queue2 = yield* $(Queue.unbounded<number>())
+      const stream1 = Stream.fromQueue(queue1)
+      const stream2 = Stream.fromQueue(queue2)
+      const fiber = yield* $(pipe(
+        stream1,
+        Stream.timeoutTo(Duration.seconds(2), stream2),
+        Stream.runCollect,
+        Effect.fork
+      ))
+      yield* $(pipe(
+        queue1,
+        Queue.offer(1),
+        Effect.zipRight(TestClock.adjust(Duration.seconds(1)))
+      ))
+      yield* $(pipe(
+        queue1,
+        Queue.offer(2),
+        Effect.zipRight(TestClock.adjust(Duration.seconds(3)))
+      ))
+      yield* $(pipe(queue1, Queue.offer(3)))
+      yield* $(pipe(
+        queue2,
+        Queue.offer(4),
+        Effect.zipRight(TestClock.adjust(Duration.seconds(3)))
+      ))
+      yield* $(pipe(
+        queue2,
+        Queue.offer(5),
+        Effect.zipRight(Queue.shutdown(queue2))
+      ))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [1, 2, 4, 5])
+    }))
 })

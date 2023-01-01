@@ -19,7 +19,7 @@ import { assert, describe } from "vitest"
 const chunkArb = <A>(
   arb: fc.Arbitrary<A>,
   constraints?: fc.ArrayConstraints
-): fc.Arbitrary<Chunk.Chunk<A>> => fc.array(arb, constraints).map(Chunk.fromIterable)
+): fc.Arbitrary<Chunk.Chunk<A>> => fc.array(arb, constraints).map(Chunk.unsafeFromArray)
 
 const OrderByKey: Order.Order<readonly [number, number]> = pipe(
   Number.Order,
@@ -48,10 +48,10 @@ describe.concurrent("Stream", () => {
   it.it("zipAllSortedByKeyWith", () => {
     const intArb = fc.integer({ min: 1, max: 100 })
     const chunkArb = fc.array(fc.tuple(intArb, intArb)).map((entries) =>
-      pipe(Chunk.fromIterable(entries), Chunk.sort(OrderByKey))
+      pipe(Chunk.fromIterable(new Map(entries)), Chunk.sort(OrderByKey))
     )
     const chunksArb = chunkArb.chain((chunk) => splitChunks(Chunk.singleton(chunk)))
-    fc.asyncProperty(chunksArb, chunksArb, async (as, bs) => {
+    return fc.assert(fc.asyncProperty(chunksArb, chunksArb, async (as, bs) => {
       const left = Stream.fromChunks(...as)
       const right = Stream.fromChunks(...bs)
       const actual = pipe(
@@ -78,7 +78,7 @@ describe.concurrent("Stream", () => {
       )
       const result = await Effect.unsafeRunPromise(Stream.runCollect(actual))
       assert.deepStrictEqual(Array.from(result), Array.from(expected))
-    })
+    }))
   })
 
   it.effect("zip - does not pull too much when one of the streams is done", () =>
@@ -92,20 +92,21 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [[1, "a"], [2, "b"], [3, "c"]])
     }))
 
-  it.it("zip - equivalence with Chunk.zip", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), fc.array(chunkArb(fc.integer())), async (left, right) => {
-      const stream = pipe(
-        Stream.fromChunks(...left),
-        Stream.zip(Stream.fromChunks(...right))
-      )
-      const expected = pipe(
-        Chunk.flatten(Chunk.fromIterable(left)),
-        Chunk.zip(Chunk.flatten(Chunk.fromIterable(right)))
-      )
-      const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
-      assert.deepStrictEqual(Array.from(actual), Array.from(expected))
-    })
-  })
+  it.it("zip - equivalence with Chunk.zip", () =>
+    fc.assert(
+      fc.asyncProperty(fc.array(chunkArb(fc.integer())), fc.array(chunkArb(fc.integer())), async (left, right) => {
+        const stream = pipe(
+          Stream.fromChunks(...left),
+          Stream.zip(Stream.fromChunks(...right))
+        )
+        const expected = pipe(
+          Chunk.flatten(Chunk.unsafeFromArray(left)),
+          Chunk.zip(Chunk.flatten(Chunk.unsafeFromArray(right)))
+        )
+        const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+        assert.deepStrictEqual(Array.from(actual), Array.from(expected))
+      })
+    ))
 
   it.effect("zipWith - prioritizes failures", () =>
     Effect.gen(function*($) {
@@ -137,10 +138,10 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.it("zipAllWith", () => {
-    fc.asyncProperty(
-      fc.array(chunkArb(fc.integer())).filter((array) => array.length > 0),
-      fc.array(chunkArb(fc.integer())).filter((array) => array.length > 0),
+  it.it("zipAllWith", () =>
+    fc.assert(fc.asyncProperty(
+      fc.array(chunkArb(fc.integer()).filter((chunk) => chunk.length > 0)),
+      fc.array(chunkArb(fc.integer()).filter((chunk) => chunk.length > 0)),
       async (left, right) => {
         const stream = pipe(
           Stream.fromChunks(...left),
@@ -163,8 +164,7 @@ describe.concurrent("Stream", () => {
         )
         assert.deepStrictEqual(Array.from(actual), Array.from(expected))
       }
-    )
-  })
+    )))
 
   it.effect("zipAll - prioritizes failures", () =>
     Effect.gen(function*($) {
@@ -269,15 +269,16 @@ describe.concurrent("Stream", () => {
     }))
 
   it.it("zipLatestWith - preserves partial ordering of stream elements", () => {
-    const sortedChunkArb = chunkArb(fc.integer({ min: 1, max: 100 })).map(Chunk.sort(Number.Order))
+    const sortedChunkArb = chunkArb(fc.integer({ min: 1, max: 100 }))
+      .map(Chunk.sort(Number.Order))
     const sortedChunksArb = sortedChunkArb.chain((chunk) => splitChunks(Chunk.singleton(chunk)))
-    fc.asyncProperty(sortedChunksArb, sortedChunksArb, async (left, right) => {
+    return fc.assert(fc.asyncProperty(sortedChunksArb, sortedChunksArb, async (left, right) => {
       const stream = pipe(
         Stream.fromChunks(...left),
         Stream.zipLatestWith(Stream.fromChunks(...right), (l, r) => l + r)
       )
       const result = await Effect.unsafeRunPromise(Stream.runCollect(stream))
-      const [isSorted] = pipe(
+      const [isSorted] = Chunk.isEmpty(result) ? [true] : pipe(
         result,
         Chunk.drop(1),
         Chunk.reduce(
@@ -286,7 +287,7 @@ describe.concurrent("Stream", () => {
         )
       )
       assert.isTrue(isSorted)
-    })
+    }))
   })
 
   it.effect("zipWithNext", () =>
@@ -327,8 +328,8 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
-  it.it("zipWithNext - should output the same values as zipping with the tail plus the last element", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
+  it.it("zipWithNext - should output the same values as zipping with the tail plus the last element", () =>
+    fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
       const { result1, result2 } = await Effect.unsafeRunPromise(Effect.struct({
         result1: pipe(
@@ -343,8 +344,7 @@ describe.concurrent("Stream", () => {
         )
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
-    })
-  })
+    })))
 
   it.effect("zipWithPrevious - should zip with previous element for a single chunk", () =>
     Effect.gen(function*($) {
@@ -384,8 +384,8 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
-  it.it("zipWithPrevious - should output same values as first element plus zipping with init", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
+  it.it("zipWithPrevious - should output same values as first element plus zipping with init", () =>
+    fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
       const { result1, result2 } = await Effect.unsafeRunPromise(Effect.struct({
         result1: pipe(
@@ -395,13 +395,13 @@ describe.concurrent("Stream", () => {
         ),
         result2: pipe(
           Stream.make(Option.none),
-          Stream.concat(pipe(stream, Stream.map(Option.some), Stream.zip(stream))),
+          Stream.concat(pipe(stream, Stream.map(Option.some))),
+          Stream.zip(stream),
           Stream.runCollect
         )
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
-    })
-  })
+    })))
 
   it.effect("zipWithPreviousAndNext", () =>
     Effect.gen(function*($) {
@@ -417,38 +417,35 @@ describe.concurrent("Stream", () => {
       ])
     }))
 
-  it.it("zipWithPreviousAndNext - should output same values as zipping with both previous and next element", () => {
-    fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
+  it.it("zipWithPreviousAndNext - should output same values as zipping with both previous and next element", () =>
+    fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer()), { minLength: 0, maxLength: 5 }), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
-      const { result1, result2 } = await Effect.unsafeRunPromise(Effect.struct({
-        result1: pipe(
-          stream,
-          Stream.zipWithPreviousAndNext,
-          Stream.runCollect
-        ),
-        result2: pipe(
-          Stream.make(Option.none),
-          Stream.concat(pipe(stream, Stream.map(Option.some))),
-          Stream.zip(stream),
-          Stream.zip(
-            pipe(
-              stream,
-              Stream.drop(1),
-              Stream.map(Option.some),
-              Stream.concat(Stream.make(Option.none))
-            )
+      const previous = pipe(
+        Stream.make(Option.none),
+        Stream.concat(pipe(stream, Stream.map(Option.some)))
+      )
+      const next = pipe(
+        stream,
+        Stream.drop(1),
+        Stream.map(Option.some),
+        Stream.concat(Stream.make(Option.none))
+      )
+      const { result1, result2 } = await pipe(
+        Effect.struct({
+          result1: pipe(
+            stream,
+            Stream.zipWithPreviousAndNext,
+            Stream.runCollect
           ),
-          Stream.map(([[previous, current], next]) =>
-            [
-              previous as Option.Option<number>,
-              current,
-              next as Option.Option<number>
-            ] as const
-          ),
-          Stream.runCollect
-        )
-      }))
+          result2: pipe(
+            previous,
+            Stream.zip(stream),
+            Stream.zipFlatten(next),
+            Stream.runCollect
+          )
+        }),
+        Effect.unsafeRunPromise
+      )
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
-    })
-  })
+    })))
 })

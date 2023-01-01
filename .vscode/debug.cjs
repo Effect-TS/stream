@@ -5,4 +5,4 @@ require("ts-node").register({
   project: "tsconfig.examples.json",
 });
 
-require("../examples/subscription");
+require("../examples/zip");

@@ -47,9 +47,6 @@ import { constTrue, identity, pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 import type { Predicate, Refinement } from "@fp-ts/data/Predicate"
 
-// TODO:
-// - fromTQueue
-
 /** @internal */
 const StreamSymbolKey = "@effect/stream/Stream"
 
@@ -1276,28 +1273,30 @@ export const combineChunks = <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
         )
       )
     return new StreamImpl(
-      channel.unwrapScoped(
-        Effect.gen(function*($) {
-          const left = yield* $(Handoff.make<Take.Take<E, A>>())
-          const right = yield* $(Handoff.make<Take.Take<E2, A2>>())
-          const latchL = yield* $(Handoff.make<void>())
-          const latchR = yield* $(Handoff.make<void>())
-          yield* $(
-            pipe(
-              self.channel,
-              core.pipeTo(producer(left, latchL)),
-              channelExecutor.runScoped,
-              Effect.forkScoped
-            )
+      pipe(
+        Effect.tuple(
+          Handoff.make<Take.Take<E, A>>(),
+          Handoff.make<Take.Take<E2, A2>>(),
+          Handoff.make<void>(),
+          Handoff.make<void>()
+        ),
+        Effect.tap(([left, _, latchL]) =>
+          pipe(
+            self.channel,
+            core.pipeTo(producer(left, latchL)),
+            channelExecutor.runScoped,
+            Effect.forkScoped
           )
-          yield* $(
-            pipe(
-              that.channel,
-              core.pipeTo(producer(right, latchR)),
-              channelExecutor.runScoped,
-              Effect.forkScoped
-            )
+        ),
+        Effect.tap(([_, right, __, latchR]) =>
+          pipe(
+            that.channel,
+            core.pipeTo(producer(right, latchR)),
+            channelExecutor.runScoped,
+            Effect.forkScoped
           )
+        ),
+        Effect.map(([left, right, latchL, latchR]) => {
           const pullLeft = pipe(
             latchL,
             Handoff.offer<void>(void 0),
@@ -1323,7 +1322,8 @@ export const combineChunks = <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
               f(s, pullLeft, pullRight),
               Effect.flatMap((exit) => Effect.unsome(Effect.done(exit)))
             )).channel
-        })
+        }),
+        channel.unwrapScoped
       )
     )
   }
@@ -1385,7 +1385,7 @@ export const debounce = (duration: Duration.Duration) => {
                   grafter,
                   Effect.map((fiber) => consumer(DebounceState.previous(fiber)))
                 )
-              const producer: Channel.Channel<never, never, Chunk.Chunk<A>, unknown, never, never, unknown> = core
+              const producer: Channel.Channel<never, E, Chunk.Chunk<A>, unknown, E, never, unknown> = core
                 .readWithCause(
                   (input: Chunk.Chunk<A>) =>
                     pipe(
@@ -1505,15 +1505,19 @@ export const debounce = (duration: Duration.Duration) => {
                   }
                 }
               }
-              const debounceChannel = pipe(
-                channel.fromInput(input),
-                core.pipeTo(producer),
-                channelExecutor.run,
-                Effect.forkScoped,
-                Effect.as(pipe(consumer(DebounceState.notStarted), core.embedInput(input))),
-                channel.unwrapScoped
-              )
-              return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(debounceChannel)))
+              const debounceChannel: Channel.Channel<never, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<A>, unknown> =
+                pipe(
+                  channel.fromInput(input),
+                  core.pipeTo(producer),
+                  channelExecutor.run,
+                  Effect.forkScoped,
+                  Effect.as(pipe(
+                    consumer(DebounceState.notStarted),
+                    core.embedInput<E, Chunk.Chunk<A>, unknown>(input)
+                  )),
+                  channel.unwrapScoped
+                )
+              return new StreamImpl(pipe(self.channel, core.pipeTo(debounceChannel)))
             })
           )
         )
@@ -2303,12 +2307,62 @@ export const fromHubScopedWithShutdown = <A>(
 
 /** @internal */
 export const fromIterable = <A>(iterable: Iterable<A>): Stream.Stream<never, never, A> =>
-  fromChunk(Chunk.fromIterable(iterable))
+  suspend(() =>
+    Chunk.isChunk(iterable) ?
+      fromChunk(iterable) :
+      fromIteratorSucceed(iterable[Symbol.iterator]())
+  )
 
 /** @internal */
 export const fromIterableEffect = <R, E, A>(
   effect: Effect.Effect<R, E, Iterable<A>>
 ): Stream.Stream<R, E, A> => pipe(effect, Effect.map(fromIterable), unwrap)
+
+/** @internal */
+export const fromIteratorSucceed = <A>(
+  iterator: Iterator<A>,
+  maxChunkSize = DefaultChunkSize
+): Stream.Stream<never, never, A> => {
+  return pipe(
+    Effect.sync(() => {
+      let builder: Array<A> = []
+      const loop = (
+        iterator: Iterator<A>
+      ): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown> =>
+        pipe(
+          Effect.sync(() => {
+            let next: IteratorResult<A, any> = iterator.next()
+            if (maxChunkSize === 1) {
+              if (next.done) {
+                return core.unit()
+              }
+              return pipe(
+                core.write(Chunk.singleton(next.value)),
+                core.flatMap(() => loop(iterator))
+              )
+            }
+            builder = []
+            let count = 0
+            while (count < maxChunkSize && !next.done) {
+              builder.push(next.value)
+              next = iterator.next()
+              count = count + 1
+            }
+            if (count > 0) {
+              return pipe(
+                core.write(Chunk.unsafeFromArray(builder)),
+                core.flatMap(() => loop(iterator))
+              )
+            }
+            return core.unit()
+          }),
+          channel.unwrap
+        )
+      return new StreamImpl(loop(iterator))
+    }),
+    unwrap
+  )
+}
 
 /** @internal */
 export const fromPull = <R, R2, E, A>(
@@ -4034,6 +4088,18 @@ export const scanReduceEffect = <A2, A, R2, E2>(f: (a2: A | A2, a: A) => Effect.
 }
 
 /** @internal */
+export const schedule = <R2, A>(schedule: Schedule.Schedule<R2, A, unknown>) => {
+  return <R, E>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E, A> =>
+    pipe(self, scheduleEither(schedule), collectRight)
+}
+
+/** @internal */
+export const scheduleEither = <R2, A, B>(schedule: Schedule.Schedule<R2, A, B>) => {
+  return <R, E>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E, Either.Either<B, A>> =>
+    pipe(self, scheduleWith(schedule, (a): Either.Either<B, A> => Either.right(a), Either.left))
+}
+
+/** @internal */
 export const scheduleWith = <R2, A, B, C>(
   schedule: Schedule.Schedule<R2, A, B>,
   f: (a: A) => C,
@@ -4819,18 +4885,19 @@ export const unfoldChunk = <S, A>(
 export const unfoldChunkEffect = <R, E, A, S>(
   s: S,
   f: (s: S) => Effect.Effect<R, E, Option.Option<readonly [Chunk.Chunk<A>, S]>>
-): Stream.Stream<R, E, A> => {
-  const loop = (s: S): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> =>
-    pipe(
-      f(s),
-      Effect.map(Option.match(
-        core.unit,
-        ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))
-      )),
-      channel.unwrap
-    )
-  return new StreamImpl(core.suspend(() => loop(s)))
-}
+): Stream.Stream<R, E, A> =>
+  suspend(() => {
+    const loop = (s: S): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> =>
+      pipe(
+        f(s),
+        Effect.map(Option.match(
+          core.unit,
+          ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))
+        )),
+        channel.unwrap
+      )
+    return new StreamImpl(loop(s))
+  })
 
 /** @internal */
 export const unfoldEffect = <S, R, E, A>(
@@ -4899,6 +4966,13 @@ export const whenEffect = <R2, E2>(effect: Effect.Effect<R2, E2, boolean>) => {
 export const zip = <R2, E2, A2>(that: Stream.Stream<R2, E2, A2>) => {
   return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E | E2, readonly [A, A2]> =>
     pipe(self, zipWith(that, (a, a2) => [a, a2]))
+}
+
+/** @internal */
+export const zipFlatten = <R2, E2, A2>(that: Stream.Stream<R2, E2, A2>) => {
+  return <R, E, A extends ReadonlyArray<any>>(
+    self: Stream.Stream<R, E, A>
+  ): Stream.Stream<R | R2, E | E2, readonly [...A, A2]> => pipe(self, zipWith(that, (a, a2) => [...a, a2]))
 }
 
 /** @internal */
@@ -5206,8 +5280,8 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
                 rightIndex = rightIndex + 1
                 rightTuple = pipe(rightChunk, Chunk.unsafeGet(rightIndex))
                 rightBuilder.push(rightTuple)
-                state = ZipAllState.PullLeft(Chunk.unsafeFromArray(rightBuilder))
               }
+              state = ZipAllState.PullLeft(Chunk.unsafeFromArray(rightBuilder))
               loop = false
             }
           } else {
@@ -5224,8 +5298,8 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
                 leftIndex = leftIndex + 1
                 leftTuple = pipe(leftChunk, Chunk.unsafeGet(leftIndex))
                 leftBuilder.push(leftTuple)
-                state = ZipAllState.PullRight(Chunk.unsafeFromArray(leftBuilder))
               }
+              state = ZipAllState.PullRight(Chunk.unsafeFromArray(leftBuilder))
               loop = false
             }
           }
@@ -5407,7 +5481,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
       rightChunk: Chunk.Chunk<A2>,
       f: (a: A, a2: A2) => A3
     ): readonly [Chunk.Chunk<A3>, ZipAllState.ZipAllState<A, A2>] => {
-      const [output, either] = zipChunks(f)(leftChunk, rightChunk)
+      const [output, either] = zipChunks(leftChunk, rightChunk, f)
       switch (either._tag) {
         case "Left": {
           if (Chunk.isEmpty(either.left)) {
@@ -5425,7 +5499,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
     }
     return pipe(
       self,
-      combineChunks(that, ZipAllState.PullBoth, /* as State<A, A2> */ pull)
+      combineChunks(that, ZipAllState.PullBoth, pull)
     )
   }
 }
@@ -5569,7 +5643,7 @@ export const zipWith = <R2, E2, A2, A, A3>(
   f: (a: A, a2: A2) => A3
 ) => {
   return <R, E>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E | E2, A3> =>
-    pipe(self, zipWithChunks(that, zipChunks(f)))
+    pipe(self, zipWithChunks(that, (leftChunk, rightChunk) => zipChunks(leftChunk, rightChunk, f)))
 }
 
 /** @internal */
@@ -5747,22 +5821,21 @@ export const zipWithPreviousAndNext = <R, E, A>(
   )
 
 /** @internal */
-const zipChunks = <A, B, C>(f: (a: A, b: B) => C) => {
-  return (
-    left: Chunk.Chunk<A>,
-    right: Chunk.Chunk<B>
-  ): readonly [Chunk.Chunk<C>, Either.Either<Chunk.Chunk<A>, Chunk.Chunk<B>>] => {
-    if (left.length > right.length) {
-      return [
-        pipe(left, Chunk.take(right.length), Chunk.zipWith(right, f)),
-        Either.left(pipe(left, Chunk.drop(right.length)))
-      ] as const
-    }
+const zipChunks = <A, B, C>(
+  left: Chunk.Chunk<A>,
+  right: Chunk.Chunk<B>,
+  f: (a: A, b: B) => C
+): readonly [Chunk.Chunk<C>, Either.Either<Chunk.Chunk<A>, Chunk.Chunk<B>>] => {
+  if (left.length > right.length) {
     return [
-      pipe(left, Chunk.zipWith(pipe(right, Chunk.take(left.length)), f)),
-      Either.right(pipe(right, Chunk.drop(left.length)))
+      pipe(left, Chunk.take(right.length), Chunk.zipWith(right, f)),
+      Either.left(pipe(left, Chunk.drop(right.length)))
     ] as const
   }
+  return [
+    pipe(left, Chunk.zipWith(pipe(right, Chunk.take(left.length)), f)),
+    Either.right(pipe(right, Chunk.drop(left.length)))
+  ] as const
 }
 
 // Circular with Channel
