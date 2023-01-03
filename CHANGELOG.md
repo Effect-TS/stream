@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.6
+
+### Patch Changes
+
+- [#17](https://github.com/Effect-TS/stream/pull/17) [`729fa3c`](https://github.com/Effect-TS/stream/commit/729fa3c552b66121b1a512b972e7c5a4ce0f8027) Thanks [@IMax153](https://github.com/IMax153)! - add Stream.schedule, Stream.scheduleEither, and Stream.zipFlatten
+
 ## 0.0.5
 
 ### Patch Changes
