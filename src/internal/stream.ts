@@ -167,7 +167,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
               return pipe(
                 Handoff.take(handoff),
                 Effect.map((signal) => {
-                  switch (signal.op) {
+                  switch (signal._tag) {
                     case HandoffSignal.OP_EMIT: {
                       return pipe(
                         core.fromEffect(pipe(consumed, Ref.set(true))),
@@ -180,7 +180,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                       return core.failCause(signal.cause)
                     }
                     case HandoffSignal.OP_END: {
-                      if (signal.reason.op === SinkEndReason.OP_SCHEDULE_END) {
+                      if (signal.reason._tag === SinkEndReason.OP_SCHEDULE_END) {
                         return pipe(
                           Ref.get(consumed),
                           Effect.map((bool) =>
@@ -252,7 +252,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                 pipe(
                   Ref.get(sinkEndReason),
                   Effect.map((reason) => {
-                    switch (reason.op) {
+                    switch (reason._tag) {
                       case SinkEndReason.OP_SCHEDULE_END: {
                         return pipe(
                           Effect.tuple(
@@ -1421,12 +1421,12 @@ export const debounce = (duration: Duration.Duration) => {
               const consumer = (
                 state: DebounceState.DebounceState<never, A>
               ): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown> => {
-                switch (state.op) {
+                switch (state._tag) {
                   case DebounceState.OP_NOT_STARTED: {
                     return pipe(
                       Handoff.take(handoff),
                       Effect.map((signal) => {
-                        switch (signal.op) {
+                        switch (signal._tag) {
                           case HandoffSignal.OP_EMIT: {
                             return channel.unwrap(enqueue(signal.elements))
                           }
@@ -1463,7 +1463,7 @@ export const debounce = (duration: Duration.Duration) => {
                             Exit.match(
                               (cause) => pipe(Fiber.interrupt(previous), Effect.as(core.failCause(cause))),
                               (signal) => {
-                                switch (signal.op) {
+                                switch (signal._tag) {
                                   case HandoffSignal.OP_EMIT: {
                                     return pipe(Fiber.interrupt(previous), Effect.zipRight(enqueue(signal.elements)))
                                   }
@@ -1488,7 +1488,7 @@ export const debounce = (duration: Duration.Duration) => {
                     return pipe(
                       Fiber.join(state.fiber),
                       Effect.map((signal) => {
-                        switch (signal.op) {
+                        switch (signal._tag) {
                           case HandoffSignal.OP_EMIT: {
                             return channel.unwrap(enqueue(signal.elements))
                           }
@@ -3198,22 +3198,22 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
   ): Effect.Effect<R | R2 | Scope.Scope, E2 | E, readonly [Z, Stream.Stream<never, E, A>]> => {
     const trace = getCallTrace()
     type Signal = Emit | Halt | End
-    const OP_EMIT = 0 as const
+    const OP_EMIT = "Emit" as const
     type OP_EMIT = typeof OP_EMIT
-    const OP_HALT = 1 as const
+    const OP_HALT = "Halt" as const
     type OP_HALT = typeof OP_HALT
-    const OP_END = 2 as const
+    const OP_END = "End" as const
     type OP_END = typeof OP_END
     interface Emit {
-      readonly op: OP_EMIT
+      readonly _tag: OP_EMIT
       readonly elements: Chunk.Chunk<A>
     }
     interface Halt {
-      readonly op: OP_HALT
+      readonly _tag: OP_HALT
       readonly cause: Cause.Cause<E>
     }
     interface End {
-      readonly op: OP_END
+      readonly _tag: OP_END
     }
     return pipe(
       Deferred.make<E | E2, Z>(),
@@ -3245,19 +3245,19 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
                           core.fromEffect(
                             pipe(
                               handoff,
-                              Handoff.offer<Signal>({ op: OP_EMIT, elements })
+                              Handoff.offer<Signal>({ _tag: OP_EMIT, elements })
                             )
                           ),
                           core.flatMap(() => loop)
                         ),
                       (cause) =>
                         pipe(
-                          core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ op: OP_HALT, cause }))),
+                          core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_HALT, cause }))),
                           channel.zipRight(core.failCause(cause))
                         ),
                       (_) =>
                         pipe(
-                          core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ op: OP_END }))),
+                          core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_END }))),
                           channel.zipRight(core.unit())
                         )
                     )
@@ -3267,7 +3267,7 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
                       channel.zipRight(core.fromEffect(
                         pipe(
                           handoff,
-                          Handoff.offer<Signal>({ op: OP_EMIT, elements: leftovers })
+                          Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
                         )
                       )),
                       channel.zipRight(loop)
@@ -3280,7 +3280,7 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
             const producer: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
               Handoff.take(handoff),
               Effect.map((signal) => {
-                switch (signal.op) {
+                switch (signal._tag) {
                   case OP_EMIT: {
                     return pipe(core.write(signal.elements), core.flatMap(() => producer))
                   }
@@ -5074,7 +5074,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
           ]
         >
       > => {
-        switch (state.op) {
+        switch (state._tag) {
           case ZipAllState.OP_DRAIN_LEFT: {
             return pipe(
               pullLeft,
@@ -5331,7 +5331,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
       never,
       Exit.Exit<Option.Option<E | E2>, readonly [Chunk.Chunk<A3>, ZipAllState.ZipAllState<A, A2>]>
     > => {
-      switch (state.op) {
+      switch (state._tag) {
         case ZipAllState.OP_DRAIN_LEFT: {
           return pipe(
             pullLeft,
@@ -5664,7 +5664,7 @@ export const zipWithChunks = <R2, E2, A2, A, A3>(
       never,
       Exit.Exit<Option.Option<E | E2>, readonly [Chunk.Chunk<A3>, ZipChunksState.ZipChunksState<A, A2>]>
     > => {
-      switch (state.op) {
+      switch (state._tag) {
         case ZipChunksState.OP_PULL_BOTH: {
           return pipe(
             Effect.unsome(pullLeft),

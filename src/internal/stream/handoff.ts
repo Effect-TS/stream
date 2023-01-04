@@ -23,13 +23,13 @@ export interface Handoff<A> extends Handoff.Variance<A> {
 }
 
 /** @internal */
-export const OP_HANDOFF_STATE_EMPTY = 0 as const
+export const OP_HANDOFF_STATE_EMPTY = "Empty" as const
 
 /** @internal */
 export type OP_HANDOFF_STATE_EMPTY = typeof OP_HANDOFF_STATE_EMPTY
 
 /** @internal */
-export const OP_HANDOFF_STATE_FULL = 1 as const
+export const OP_HANDOFF_STATE_FULL = "Full" as const
 
 /** @internal */
 export type OP_HANDOFF_STATE_FULL = typeof OP_HANDOFF_STATE_FULL
@@ -48,13 +48,13 @@ export declare namespace Handoff {
 
   /** @internal */
   export interface Empty {
-    readonly op: OP_HANDOFF_STATE_EMPTY
+    readonly _tag: OP_HANDOFF_STATE_EMPTY
     readonly notifyConsumer: Deferred.Deferred<never, void>
   }
 
   /** @internal */
   export interface Full<A> {
-    readonly op: OP_HANDOFF_STATE_FULL
+    readonly _tag: OP_HANDOFF_STATE_FULL
     readonly value: A
     readonly notifyProducer: Deferred.Deferred<never, void>
   }
@@ -62,13 +62,13 @@ export declare namespace Handoff {
 
 /** @internal */
 const handoffStateEmpty = (notifyConsumer: Deferred.Deferred<never, void>): Handoff.State<never> => ({
-  op: OP_HANDOFF_STATE_EMPTY,
+  _tag: OP_HANDOFF_STATE_EMPTY,
   notifyConsumer
 })
 
 /** @internal */
 const handoffStateFull = <A>(value: A, notifyProducer: Deferred.Deferred<never, void>): Handoff.State<A> => ({
-  op: OP_HANDOFF_STATE_FULL,
+  _tag: OP_HANDOFF_STATE_FULL,
   value,
   notifyProducer
 })
@@ -79,7 +79,7 @@ const handoffStateMatch = <A, Z>(
   onFull: (value: A, notifyProducer: Deferred.Deferred<never, void>) => Z
 ) => {
   return (self: Handoff.State<A>): Z => {
-    switch (self.op) {
+    switch (self._tag) {
       case OP_HANDOFF_STATE_EMPTY: {
         return onEmpty(self.notifyConsumer)
       }

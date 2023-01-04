@@ -14,7 +14,7 @@ export type HaltStrategy = Left | Right | Both | Either
  * @category models
  */
 export interface Left {
-  readonly op: 0
+  readonly _tag: "Left"
 }
 
 /**
@@ -22,7 +22,7 @@ export interface Left {
  * @category models
  */
 export interface Right {
-  readonly op: 1
+  readonly _tag: "Right"
 }
 
 /**
@@ -30,7 +30,7 @@ export interface Right {
  * @category models
  */
 export interface Both {
-  readonly op: 2
+  readonly _tag: "Both"
 }
 
 /**
@@ -38,7 +38,7 @@ export interface Both {
  * @category models
  */
 export interface Either {
-  readonly op: 3
+  readonly _tag: "Either"
 }
 
 /**
