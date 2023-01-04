@@ -16,31 +16,19 @@ const proto = {
 
 /** @internal */
 export const Continue: ChildExecutorDecision.ChildExecutorDecision = Object.create(proto, {
-  op: {
-    value: OpCodes.OP_CONTINUE,
-    enumerable: true
-  }
+  _tag: { value: OpCodes.OP_CONTINUE }
 })
 
 /** @internal */
 export const Close = (value: unknown): ChildExecutorDecision.ChildExecutorDecision =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_CLOSE,
-      enumerable: true
-    },
-    value: {
-      value,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_CLOSE },
+    value: { value }
   })
 
 /** @internal */
 export const Yield: ChildExecutorDecision.ChildExecutorDecision = Object.create(proto, {
-  "op": {
-    value: OpCodes.OP_YIELD,
-    enumerable: true
-  }
+  _tag: { value: OpCodes.OP_YIELD }
 })
 
 /** @internal */
@@ -52,21 +40,21 @@ export const isChildExecutorDecision = (u: unknown): u is ChildExecutorDecision.
 export const isContinue = (
   self: ChildExecutorDecision.ChildExecutorDecision
 ): self is ChildExecutorDecision.Continue => {
-  return self.op === OpCodes.OP_CONTINUE
+  return self._tag === OpCodes.OP_CONTINUE
 }
 
 /** @internal */
 export const isClose = (
   self: ChildExecutorDecision.ChildExecutorDecision
 ): self is ChildExecutorDecision.Close => {
-  return self.op === OpCodes.OP_CLOSE
+  return self._tag === OpCodes.OP_CLOSE
 }
 
 /** @internal */
 export const isYield = (
   self: ChildExecutorDecision.ChildExecutorDecision
 ): self is ChildExecutorDecision.Yield => {
-  return self.op === OpCodes.OP_YIELD
+  return self._tag === OpCodes.OP_YIELD
 }
 
 /** @internal */
@@ -76,7 +64,7 @@ export const match = <A>(
   onYield: () => A
 ) => {
   return (self: ChildExecutorDecision.ChildExecutorDecision): A => {
-    switch (self.op) {
+    switch (self._tag) {
       case OpCodes.OP_CONTINUE: {
         return onContinue()
       }

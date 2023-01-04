@@ -16,18 +16,12 @@ const proto = {
 
 /** @internal */
 export const BackPressure: MergeStrategy.MergeStrategy = Object.create(proto, {
-  op: {
-    value: OpCodes.OP_BACK_PRESSURE,
-    enumerable: true
-  }
+  _tag: { value: OpCodes.OP_BACK_PRESSURE }
 })
 
 /** @internal */
 export const BufferSliding: MergeStrategy.MergeStrategy = Object.create(proto, {
-  op: {
-    value: OpCodes.OP_BUFFER_SLIDING,
-    enumerable: true
-  }
+  _tag: { value: OpCodes.OP_BUFFER_SLIDING }
 })
 
 /** @internal */
@@ -37,12 +31,12 @@ export const isMergeStrategy = (u: unknown): u is MergeStrategy.MergeStrategy =>
 
 /** @internal */
 export const isBackPressure = (self: MergeStrategy.MergeStrategy): self is MergeStrategy.BackPressure => {
-  return self.op === OpCodes.OP_BACK_PRESSURE
+  return self._tag === OpCodes.OP_BACK_PRESSURE
 }
 
 /** @internal */
 export const isBufferSliding = (self: MergeStrategy.MergeStrategy): self is MergeStrategy.BufferSliding => {
-  return self.op === OpCodes.OP_BUFFER_SLIDING
+  return self._tag === OpCodes.OP_BUFFER_SLIDING
 }
 
 /** @internal */
@@ -51,7 +45,7 @@ export const match = <A>(
   onBufferSliding: () => A
 ) => {
   return (self: MergeStrategy.MergeStrategy): A => {
-    switch (self.op) {
+    switch (self._tag) {
       case OpCodes.OP_BACK_PRESSURE: {
         return onBackPressure()
       }

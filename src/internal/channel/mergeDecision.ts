@@ -28,11 +28,11 @@ export type Primitive =
   | Await
 
 /** @internal */
-export type Op<OpCode extends number, Body = {}> =
+export type Op<Tag extends string, Body = {}> =
   & MergeDecision.MergeDecision<never, unknown, unknown, never, never>
   & Body
   & {
-    readonly op: OpCode
+    readonly _tag: Tag
   }
 
 /** @internal */
@@ -52,14 +52,8 @@ export interface Await extends
 /** @internal */
 export const Done = <R, E, Z>(effect: Effect.Effect<R, E, Z>): MergeDecision.MergeDecision<R, unknown, unknown, E, Z> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_DONE,
-      enumerable: true
-    },
-    effect: {
-      value: effect,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_DONE },
+    effect: { value: effect }
   })
 
 /** @internal */
@@ -67,14 +61,8 @@ export const Await = <R, E0, Z0, E, Z>(
   f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>
 ): MergeDecision.MergeDecision<R, E0, Z0, E, Z> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_AWAIT,
-      enumerable: true
-    },
-    f: {
-      value: f,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_AWAIT },
+    f: { value: f }
   })
 
 /** @internal */
@@ -96,7 +84,7 @@ export const match = <R, E0, Z0, E, Z, Z2>(
 ) => {
   return (self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>): Z2 => {
     const op = self as Primitive
-    switch (op.op) {
+    switch (op._tag) {
       case OpCodes.OP_DONE: {
         return onDone(op.effect)
       }

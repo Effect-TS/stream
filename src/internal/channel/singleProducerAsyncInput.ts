@@ -18,56 +18,56 @@ type State<Err, Elem, _Done> =
   | Done<_Done>
 
 /** @internal */
-const OP_STATE_EMPTY = 0 as const
+const OP_STATE_EMPTY = "Empty" as const
 
 /** @internal */
 type OP_STATE_EMPTY = typeof OP_STATE_EMPTY
 
 /** @internal */
-const OP_STATE_EMIT = 1 as const
+const OP_STATE_EMIT = "Emit" as const
 
 /** @internal */
 type OP_STATE_EMIT = typeof OP_STATE_EMIT
 
 /** @internal */
-const OP_STATE_ERROR = 2 as const
+const OP_STATE_ERROR = "Error" as const
 
 /** @internal */
 type OP_STATE_ERROR = typeof OP_STATE_ERROR
 
 /** @internal */
-const OP_STATE_DONE = 3 as const
+const OP_STATE_DONE = "Done" as const
 
 /** @internal */
 type OP_STATE_DONE = typeof OP_STATE_DONE
 
 /** @internal */
 interface Empty {
-  readonly op: OP_STATE_EMPTY
+  readonly _tag: OP_STATE_EMPTY
   readonly notifyProducer: Deferred.Deferred<never, void>
 }
 
 /** @internal */
 interface Emit<Err, Elem, Done> {
-  readonly op: OP_STATE_EMIT
+  readonly _tag: OP_STATE_EMIT
   readonly notifyConsumers: ReadonlyArray<Deferred.Deferred<Err, Either.Either<Done, Elem>>>
 }
 
 /** @internal */
 interface Error<Err> {
-  readonly op: OP_STATE_ERROR
+  readonly _tag: OP_STATE_ERROR
   readonly cause: Cause.Cause<Err>
 }
 
 /** @internal */
 interface Done<_Done> {
-  readonly op: OP_STATE_DONE
+  readonly _tag: OP_STATE_DONE
   readonly done: _Done
 }
 
 /** @internal */
 const stateEmpty = (notifyProducer: Deferred.Deferred<never, void>): State<never, never, never> => ({
-  op: OP_STATE_EMPTY,
+  _tag: OP_STATE_EMPTY,
   notifyProducer
 })
 
@@ -75,19 +75,19 @@ const stateEmpty = (notifyProducer: Deferred.Deferred<never, void>): State<never
 const stateEmit = <Err, Elem, Done>(
   notifyConsumers: ReadonlyArray<Deferred.Deferred<Err, Either.Either<Done, Elem>>>
 ): State<Err, Elem, Done> => ({
-  op: OP_STATE_EMIT,
+  _tag: OP_STATE_EMIT,
   notifyConsumers
 })
 
 /** @internal */
 const stateError = <Err>(cause: Cause.Cause<Err>): State<Err, never, never> => ({
-  op: OP_STATE_ERROR,
+  _tag: OP_STATE_ERROR,
   cause
 })
 
 /** @internal */
 const stateDone = <Done>(done: Done): State<never, never, Done> => ({
-  op: OP_STATE_DONE,
+  _tag: OP_STATE_DONE,
   done
 })
 
@@ -104,8 +104,8 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
     return pipe(
       this.ref,
       Ref.modify((state) =>
-        state.op === OP_STATE_EMPTY ?
-          [Deferred.await(state.notifyProducer), state] :
+        state._tag === OP_STATE_EMPTY ?
+          [Deferred.await(state.notifyProducer), state as State<Err, Elem, Done>] :
           [Effect.unit(), state]
       ),
       Effect.flatten
@@ -124,7 +124,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
     return pipe(
       this.ref,
       Ref.modify((state) => {
-        switch (state.op) {
+        switch (state._tag) {
           case OP_STATE_EMPTY: {
             return [Deferred.await(state.notifyProducer), state]
           }
@@ -159,7 +159,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
         pipe(
           this.ref,
           Ref.modify((state) => {
-            switch (state.op) {
+            switch (state._tag) {
               case OP_STATE_EMPTY: {
                 return [Deferred.await(state.notifyProducer), state]
               }
@@ -200,7 +200,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
     return pipe(
       this.ref,
       Ref.modify((state) => {
-        switch (state.op) {
+        switch (state._tag) {
           case OP_STATE_EMPTY: {
             return [Deferred.await(state.notifyProducer), state]
           }
@@ -246,7 +246,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
         pipe(
           this.ref,
           Ref.modify((state) => {
-            switch (state.op) {
+            switch (state._tag) {
               case OP_STATE_EMPTY: {
                 return [
                   pipe(

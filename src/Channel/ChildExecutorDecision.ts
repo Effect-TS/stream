@@ -41,7 +41,7 @@ export declare namespace ChildExecutorDecision {
  * @category models
  */
 export interface Continue extends ChildExecutorDecision.Proto {
-  readonly op: 0
+  readonly _tag: "Continue"
 }
 
 /**
@@ -52,7 +52,7 @@ export interface Continue extends ChildExecutorDecision.Proto {
  * @category models
  */
 export interface Close extends ChildExecutorDecision.Proto {
-  readonly op: 1
+  readonly _tag: "Close"
   readonly value: unknown
 }
 
@@ -64,7 +64,7 @@ export interface Close extends ChildExecutorDecision.Proto {
  * @category models
  */
 export interface Yield extends ChildExecutorDecision.Proto {
-  readonly op: 2
+  readonly _tag: "Yield"
 }
 
 /**

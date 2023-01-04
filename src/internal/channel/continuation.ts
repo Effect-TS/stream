@@ -77,7 +77,7 @@ export interface ContinuationK<
     OutDone2
   >
 {
-  readonly op: OpCodes.OP_CONTINUATION_K
+  readonly _tag: OpCodes.OP_CONTINUATION_K
   readonly onSuccess: (
     o: OutDone
   ) => Channel.Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone2>
@@ -103,7 +103,7 @@ export interface ContinuationFinalizer<Env, OutErr, OutDone> extends
     never
   >
 {
-  readonly op: OpCodes.OP_CONTINUATION_FINALIZER
+  readonly _tag: OpCodes.OP_CONTINUATION_FINALIZER
   readonly finalizer: (exit: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env, never, unknown>
 }
 
@@ -145,7 +145,7 @@ export class ContinuationKImpl<
     OutDone2
   >
 {
-  readonly op = OpCodes.OP_CONTINUATION_K
+  readonly _tag = OpCodes.OP_CONTINUATION_K
   readonly [ContinuationTypeId] = continuationVariance
   constructor(
     readonly onSuccess: (
@@ -166,7 +166,7 @@ export class ContinuationKImpl<
 
 /** @internal */
 export class ContinuationFinalizerImpl<Env, OutErr, OutDone> implements ContinuationFinalizer<Env, OutErr, OutDone> {
-  readonly op = OpCodes.OP_CONTINUATION_FINALIZER
+  readonly _tag = OpCodes.OP_CONTINUATION_FINALIZER
   readonly [ContinuationTypeId] = continuationVariance
   constructor(readonly finalizer: (exit: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env, never, unknown>) {
     Equal.considerByRef(this)

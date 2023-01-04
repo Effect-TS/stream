@@ -130,7 +130,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                     Effect.flatMap(() =>
                       Effect.suspendSucceed(() => {
                         const state = inputExecutor.run() as ChannelState.Primitive
-                        switch (state.op) {
+                        switch (state._tag) {
                           case ChannelStateOpCodes.OP_DONE: {
                             return pipe(
                               inputExecutor.getDone(),
@@ -383,7 +383,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     let effect: Effect.Effect<Env, never, Exit.Exit<unknown, unknown>> = Effect.succeed(Exit.unit())
     while (this._doneStack.length !== 0) {
       const cont = this._doneStack.shift() as Continuation.Primitive
-      if (cont.op === ContinuationOpCodes.OP_CONTINUATION_FINALIZER) {
+      if (cont._tag === ContinuationOpCodes.OP_CONTINUATION_FINALIZER) {
         effect = pipe(
           effect,
           Effect.flatMap(() => Effect.exit(cont.finalizer(exit)))
@@ -398,7 +398,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     const builder: Array<Continuation.ContinuationFinalizer<Env, unknown, unknown>> = []
     while (this._doneStack.length !== 0) {
       const cont = this._doneStack[0] as Continuation.Primitive
-      if (cont.op === ContinuationOpCodes.OP_CONTINUATION_K) {
+      if (cont._tag === ContinuationOpCodes.OP_CONTINUATION_K) {
         return builder
       }
       builder.push(cont as Continuation.ContinuationFinalizer<Env, unknown, unknown>)
@@ -476,7 +476,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     }
 
     const head = this._doneStack[0] as Continuation.Primitive
-    if (head.op === ContinuationOpCodes.OP_CONTINUATION_K) {
+    if (head._tag === ContinuationOpCodes.OP_CONTINUATION_K) {
       this._doneStack.shift()
       this._currentChannel = head.onSuccess(value) as core.Primitive
       return undefined
@@ -511,7 +511,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     }
 
     const head = this._doneStack[0] as Continuation.Primitive
-    if (head.op === ContinuationOpCodes.OP_CONTINUATION_K) {
+    if (head._tag === ContinuationOpCodes.OP_CONTINUATION_K) {
       this._doneStack.shift()
       this._currentChannel = head.onHalt(cause) as core.Primitive
       return undefined
@@ -584,7 +584,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
   runSubexecutor(): ChannelState.ChannelState<Env, unknown> | undefined {
     const subexecutor = this._activeSubexecutor as Subexecutor.Primitive<Env>
-    switch (subexecutor.op) {
+    switch (subexecutor._tag) {
       case Subexecutor.OP_PULL_FROM_CHILD: {
         return this.pullFromChild(
           subexecutor.childExecutor,
@@ -659,7 +659,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     queue: ReadonlyArray<Subexecutor.PullFromChild<Env> | undefined>,
     strategy: UpstreamPullStrategy.UpstreamPullStrategy<unknown>
   ): readonly [Option.Option<unknown>, ReadonlyArray<Subexecutor.PullFromChild<Env> | undefined>] {
-    switch (strategy.op) {
+    switch (strategy._tag) {
       case UpstreamPullStrategyOpCodes.OP_PULL_AFTER_NEXT: {
         const shouldPrepend = !upstreamFinished || queue.some((subexecutor) => subexecutor !== undefined)
         return [strategy.emitSeparator, shouldPrepend ? [undefined, ...queue] : queue]
@@ -682,7 +682,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       identity,
       (emitted) => {
         const childExecutorDecision = onEmitted(emitted)
-        switch (childExecutorDecision.op) {
+        switch (childExecutorDecision._tag) {
           case ChildExecutorDecisionOpCodes.OP_CONTINUE: {
             break
           }
@@ -720,7 +720,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     doneValue: unknown
   ): void {
     const subexecutor = parentSubexecutor as Subexecutor.Primitive<Env>
-    switch (subexecutor.op) {
+    switch (subexecutor._tag) {
       case Subexecutor.OP_PULL_FROM_UPSTREAM: {
         const modifiedParent = new Subexecutor.PullFromUpstream(
           subexecutor.upstreamExecutor,
@@ -1063,7 +1063,7 @@ export const readUpstream = <R, E, E2, A>(
       return Effect.dieMessage("Unexpected end of input for channel execution")
     }
     const state = current.upstream.run() as ChannelState.Primitive
-    switch (state.op) {
+    switch (state._tag) {
       case ChannelStateOpCodes.OP_EMIT: {
         const emitEffect = current.onEmit(current.upstream.getEmit())
         if (readStack.length === 0) {
@@ -1160,7 +1160,7 @@ const runScopedInterpret = <Env, InErr, InDone, OutErr, OutDone>(
   exec: ChannelExecutor<Env, InErr, unknown, InDone, OutErr, never, OutDone>
 ): Effect.Effect<Env, OutErr, OutDone> => {
   const op = channelState as ChannelState.Primitive
-  switch (op.op) {
+  switch (op._tag) {
     case ChannelStateOpCodes.OP_FROM_EFFECT: {
       return pipe(
         op.effect as Effect.Effect<Env, OutErr, OutDone>,
