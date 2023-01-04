@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.0.8
+
+### Patch Changes
+
+- [#23](https://github.com/Effect-TS/stream/pull/23) [`d229de9`](https://github.com/Effect-TS/stream/commit/d229de90ed964b730bdc25bd551faee7bd2d78e9) Thanks [@IMax153](https://github.com/IMax153)! - use \_tag over op for Channel
+
+- [#23](https://github.com/Effect-TS/stream/pull/23) [`6ec72d1`](https://github.com/Effect-TS/stream/commit/6ec72d1cc588ff5bf4119f5410364c0d141218ea) Thanks [@IMax153](https://github.com/IMax153)! - use \_tag over op for Channel helper types
+
+- [#23](https://github.com/Effect-TS/stream/pull/23) [`df474c0`](https://github.com/Effect-TS/stream/commit/df474c0dcdc2403e6325bb24506b164446fc9396) Thanks [@IMax153](https://github.com/IMax153)! - use \_tag over op for Stream types
+
 ## 0.0.7
 
 ### Patch Changes
