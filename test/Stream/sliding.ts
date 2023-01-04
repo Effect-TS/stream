@@ -116,7 +116,7 @@ describe.concurrent("Stream", () => {
       const streamChunks = Stream.fromChunks(
         Chunk.range(1, 4),
         Chunk.range(5, 7),
-        Chunk.singleton(8)
+        Chunk.of(8)
       )
       const stream = pipe(
         streamChunks,

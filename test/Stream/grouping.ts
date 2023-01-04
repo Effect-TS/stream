@@ -143,7 +143,7 @@ describe.concurrent("Stream", () => {
   it.effect("grouped - emits elements properly when a failure occurs", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<Array<number>>()))
-      const streamChunks = Stream.fromChunks(Chunk.range(1, 4), Chunk.range(5, 7), Chunk.singleton(8))
+      const streamChunks = Stream.fromChunks(Chunk.range(1, 4), Chunk.range(5, 7), Chunk.of(8))
       const stream = pipe(
         streamChunks,
         Stream.concat(Stream.fail("Ouch")),
@@ -165,7 +165,7 @@ describe.concurrent("Stream", () => {
       const coordination = yield* $(chunkCoordination([
         Chunk.make(1, 2),
         Chunk.make(3, 4),
-        Chunk.singleton(5)
+        Chunk.of(5)
       ]))
       const stream = pipe(
         Stream.fromQueue(coordination.queue),
@@ -197,7 +197,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const coordination = yield* $(pipe(
         Chunk.range(1, 29),
-        Chunk.map(Chunk.singleton),
+        Chunk.map(Chunk.of),
         chunkCoordination
       ))
       const latch = yield* $(Handoff.make<void>())

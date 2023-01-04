@@ -903,7 +903,7 @@ export const foldWeighted = <S, In>(
   max: number,
   costFn: (s: S, input: In) => number,
   f: (s: S, input: In) => S
-): Sink.Sink<never, never, In, In, S> => foldWeightedDecompose(s, max, costFn, Chunk.singleton, f)
+): Sink.Sink<never, never, In, In, S> => foldWeightedDecompose(s, max, costFn, Chunk.of, f)
 
 /** @internal */
 export const foldWeightedDecompose = <S, In>(
@@ -1009,7 +1009,7 @@ export const foldWeightedEffect = <S, In, R, E, R2, E2>(
     s,
     max,
     costFn,
-    (input) => Effect.succeed(Chunk.singleton(input)),
+    (input) => Effect.succeed(Chunk.of(input)),
     f
   )
 

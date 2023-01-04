@@ -13,7 +13,7 @@ describe.concurrent("Stream", () => {
         Chunk.range(3, 4),
         Chunk.range(5, 6),
         Chunk.make(7, 8, 9),
-        Chunk.singleton(10)
+        Chunk.of(10)
       )
       const { result1, result2 } = yield* $(Effect.struct({
         result1: pipe(
@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
         result1: pipe(stream, Stream.split((n) => n % 11 === 0), Stream.runCollect),
         result2: pipe(
           Stream.runCollect(stream),
-          Effect.map((chunk) => pipe(Chunk.singleton(chunk), Chunk.filter(Chunk.isNonEmpty)))
+          Effect.map((chunk) => pipe(Chunk.of(chunk), Chunk.filter(Chunk.isNonEmpty)))
         )
       }))
       assert.deepStrictEqual(
@@ -71,7 +71,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const input = Stream.make(
         Chunk.make(1, 2),
-        Chunk.singleton(1),
+        Chunk.of(1),
         Chunk.make(2, 1, 2, 3, 1, 2),
         Chunk.make(1, 2)
       )
@@ -102,7 +102,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const splitSequence = Chunk.make(0, 1)
       const result = yield* $(pipe(
-        Stream.fromChunks(Chunk.make(1, 0, 2, 0, 1, 2), Chunk.singleton(2)),
+        Stream.fromChunks(Chunk.make(1, 0, 2, 0, 1, 2), Chunk.of(2)),
         Stream.splitOnChunk(splitSequence),
         Stream.runCollect
       ))

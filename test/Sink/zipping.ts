@@ -77,8 +77,8 @@ describe.concurrent("Sink", () => {
       const success2 = yield* $(Random.nextBoolean())
       const chunk = pipe(
         ints,
-        Chunk.concat(success1 ? Chunk.singleton(20) : Chunk.empty<number>()),
-        Chunk.concat(success2 ? Chunk.singleton(40) : Chunk.empty<number>())
+        Chunk.concat(success1 ? Chunk.of(20) : Chunk.empty<number>()),
+        Chunk.concat(success2 ? Chunk.of(40) : Chunk.empty<number>())
       )
       const result = yield* $(
         zipParLaw(

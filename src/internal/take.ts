@@ -64,7 +64,7 @@ export const fromEffect = <R, E, A>(effect: Effect.Effect<R, E, A>): Effect.Effe
 
 /** @internal */
 export const fromExit = <E, A>(exit: Exit.Exit<E, A>): Take.Take<E, A> =>
-  new TakeImpl(pipe(exit, Exit.mapBoth(Option.some, Chunk.singleton)))
+  new TakeImpl(pipe(exit, Exit.mapBoth(Option.some, Chunk.of)))
 
 /** @internal */
 export const fromPull = <R, E, A>(
@@ -152,7 +152,7 @@ export const map = <A, B>(f: (a: A) => B) => {
 }
 
 /** @internal */
-export const singleton = <A>(value: A): Take.Take<never, A> => new TakeImpl(Exit.succeed(Chunk.singleton(value)))
+export const singleton = <A>(value: A): Take.Take<never, A> => new TakeImpl(Exit.succeed(Chunk.of(value)))
 
 /** @internal */
 export const tap = <A, R, E2, _>(f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>) => {

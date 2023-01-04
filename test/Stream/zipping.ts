@@ -35,8 +35,8 @@ export const splitChunks = <A>(chunks: Chunk.Chunk<Chunk.Chunk<A>>): fc.Arbitrar
         return pipe(
           chunks,
           Chunk.take(i),
-          Chunk.concat(Chunk.singleton(left)),
-          Chunk.concat(Chunk.singleton(right)),
+          Chunk.concat(Chunk.of(left)),
+          Chunk.concat(Chunk.of(right)),
           Chunk.concat(pipe(chunks, Chunk.drop(i + 1)))
         )
       })
@@ -50,7 +50,7 @@ describe.concurrent("Stream", () => {
     const chunkArb = fc.array(fc.tuple(intArb, intArb)).map((entries) =>
       pipe(Chunk.fromIterable(new Map(entries)), Chunk.sort(OrderByKey))
     )
-    const chunksArb = chunkArb.chain((chunk) => splitChunks(Chunk.singleton(chunk)))
+    const chunksArb = chunkArb.chain((chunk) => splitChunks(Chunk.of(chunk)))
     return fc.assert(fc.asyncProperty(chunksArb, chunksArb, async (as, bs) => {
       const left = Stream.fromChunks(...as)
       const right = Stream.fromChunks(...bs)
@@ -84,10 +84,10 @@ describe.concurrent("Stream", () => {
   it.effect("zip - does not pull too much when one of the streams is done", () =>
     Effect.gen(function*($) {
       const left = pipe(
-        Stream.fromChunks(Chunk.make(1, 2), Chunk.make(3, 4), Chunk.singleton(5)),
+        Stream.fromChunks(Chunk.make(1, 2), Chunk.make(3, 4), Chunk.of(5)),
         Stream.concat(Stream.fail("boom"))
       )
-      const right = Stream.fromChunks(Chunk.make("a", "b"), Chunk.singleton("c"))
+      const right = Stream.fromChunks(Chunk.make("a", "b"), Chunk.of("c"))
       const result = yield* $(pipe(left, Stream.zip(right), Stream.runCollect))
       assert.deepStrictEqual(Array.from(result), [[1, "a"], [2, "b"], [3, "c"]])
     }))
@@ -255,7 +255,7 @@ describe.concurrent("Stream", () => {
         Stream.unfold(0, (n) =>
           Option.some(
             [
-              n < 3 ? Chunk.empty<number>() : Chunk.singleton(2),
+              n < 3 ? Chunk.empty<number>() : Chunk.of(2),
               n + 1
             ] as const
           )),
@@ -271,7 +271,7 @@ describe.concurrent("Stream", () => {
   it.it("zipLatestWith - preserves partial ordering of stream elements", () => {
     const sortedChunkArb = chunkArb(fc.integer({ min: 1, max: 100 }))
       .map(Chunk.sort(Number.Order))
-    const sortedChunksArb = sortedChunkArb.chain((chunk) => splitChunks(Chunk.singleton(chunk)))
+    const sortedChunksArb = sortedChunkArb.chain((chunk) => splitChunks(Chunk.of(chunk)))
     return fc.assert(fc.asyncProperty(sortedChunksArb, sortedChunksArb, async (left, right) => {
       const stream = pipe(
         Stream.fromChunks(...left),
@@ -307,7 +307,7 @@ describe.concurrent("Stream", () => {
   it.effect("zipWithNext - should work with multiple chunks", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.fromChunks(Chunk.singleton(1), Chunk.singleton(2), Chunk.singleton(3)),
+        Stream.fromChunks(Chunk.of(1), Chunk.of(2), Chunk.of(3)),
         Stream.zipWithNext,
         Stream.runCollect
       ))
@@ -363,7 +363,7 @@ describe.concurrent("Stream", () => {
   it.effect("zipWithPrevious - should work with multiple chunks", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.fromChunks(Chunk.singleton(1), Chunk.singleton(2), Chunk.singleton(3)),
+        Stream.fromChunks(Chunk.of(1), Chunk.of(2), Chunk.of(3)),
         Stream.zipWithPrevious,
         Stream.runCollect
       ))

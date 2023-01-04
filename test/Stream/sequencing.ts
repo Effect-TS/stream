@@ -159,7 +159,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       const push = (message: string) => pipe(ref, Ref.update(Chunk.append(message)))
-      const chunks = Chunk.make(Chunk.singleton(void 0), Chunk.singleton(void 0))
+      const chunks = Chunk.make(Chunk.of(void 0), Chunk.of(void 0))
       yield* $(pipe(
         Stream.acquireRelease(push("open 1"), () => push("close 1")),
         Stream.flatMap(() =>
@@ -207,7 +207,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       const push = (message: string) => pipe(ref, Ref.update(Chunk.append(message)))
-      const chunks = Chunk.make(Chunk.singleton(1), Chunk.singleton(2))
+      const chunks = Chunk.make(Chunk.of(1), Chunk.of(2))
       yield* $(pipe(
         Stream.fromChunks(...chunks),
         Stream.tap(() => push("use 1")),
@@ -783,7 +783,7 @@ describe.concurrent("Stream", () => {
       const chunks = Chunk.make(Chunk.range(0, 3), Chunk.range(4, 8))
       const result = yield* $(pipe(
         Stream.fromChunks(...chunks),
-        Stream.mapChunks((chunk) => Chunk.singleton(Take.chunk(chunk))),
+        Stream.mapChunks((chunk) => Chunk.of(Take.chunk(chunk))),
         Stream.flattenTake,
         Stream.runCollect
       ))

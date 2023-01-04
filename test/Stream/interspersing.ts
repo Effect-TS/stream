@@ -65,7 +65,7 @@ describe.concurrent("Stream", () => {
   it.effect("intersperse - several from repeat effect chunk single element (ZIO #3729)", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.repeatEffectChunk(Effect.succeed(Chunk.singleton(42))),
+        Stream.repeatEffectChunk(Effect.succeed(Chunk.of(42))),
         Stream.map(String),
         Stream.intersperse("."),
         Stream.take(4),

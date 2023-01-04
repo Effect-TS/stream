@@ -132,11 +132,11 @@ describe.concurrent("Stream", () => {
   it.effect("takeWhile - does not stop when hitting an empty chunk (ZIO #4272)", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.fromChunks(Chunk.singleton(1), Chunk.singleton(2), Chunk.singleton(3)),
+        Stream.fromChunks(Chunk.of(1), Chunk.of(2), Chunk.of(3)),
         Stream.mapChunks(Chunk.flatMap((n) =>
           n === 2 ?
             Chunk.empty<number>() :
-            Chunk.singleton(n)
+            Chunk.of(n)
         )),
         Stream.takeWhile((n) => n !== 4),
         Stream.runCollect

@@ -160,7 +160,7 @@ describe.concurrent("Sink", () => {
             0,
             1_000,
             (_, n) => n,
-            Chunk.singleton,
+            Chunk.of,
             (acc, curr) => acc + curr
           )),
           Stream.runCollect
@@ -178,7 +178,7 @@ describe.concurrent("Sink", () => {
             Chunk.empty<number>(),
             4,
             (_, n) => n,
-            (n) => n > 1 ? Chunk.make(n - 1, 1) : Chunk.singleton(n),
+            (n) => n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n),
             (acc, curr) => pipe(acc, Chunk.append(curr))
           )),
           Stream.runCollect
@@ -219,7 +219,7 @@ describe.concurrent("Sink", () => {
             0,
             1_000,
             (_, n) => Effect.succeed(n),
-            (input) => Effect.succeed(Chunk.singleton(input)),
+            (input) => Effect.succeed(Chunk.of(input)),
             (acc, curr) => Effect.succeed(acc + curr)
           )),
           Stream.runCollect
@@ -237,7 +237,7 @@ describe.concurrent("Sink", () => {
             Chunk.empty<number>(),
             4,
             (_, n) => Effect.succeed(n),
-            (n) => Effect.succeed(n > 1 ? Chunk.make(n - 1, 1) : Chunk.singleton(n)),
+            (n) => Effect.succeed(n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n)),
             (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
           )),
           Stream.runCollect

@@ -151,7 +151,7 @@ export const groupBy = <A, R2, E2, K, V>(
                                     mapDequeue(queue, (exit) =>
                                       new take.TakeImpl(pipe(
                                         exit,
-                                        Exit.map((tuple) => Chunk.singleton(tuple[1]))
+                                        Exit.map((tuple) => Chunk.of(tuple[1]))
                                       )))
                                   ] as const
                                 )),

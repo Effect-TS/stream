@@ -24,7 +24,7 @@ export const chunkCoordination = <A>(
       pipe(
         chunks,
         Chunk.dropRight(1),
-        Chunk.map((chunk) => Chunk.singleton(Exit.succeed(chunk))),
+        Chunk.map((chunk) => Chunk.of(Exit.succeed(chunk))),
         Chunk.concat(
           pipe(
             Chunk.last(chunks),
@@ -36,7 +36,7 @@ export const chunkCoordination = <A>(
             ),
             Option.match(
               () => Chunk.empty<Chunk.Chunk<Exit.Exit<Option.Option<never>, Chunk.Chunk<A>>>>(),
-              Chunk.singleton
+              Chunk.of
             )
           )
         )
