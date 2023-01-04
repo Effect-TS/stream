@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.0.7
+
+### Patch Changes
+
+- [#19](https://github.com/Effect-TS/stream/pull/19) [`3c138d6`](https://github.com/Effect-TS/stream/commit/3c138d60b18d2bcaf3f0b9ee89cfeb752239a60e) Thanks [@IMax153](https://github.com/IMax153)! - upgrade dependencies
+
+- [#21](https://github.com/Effect-TS/stream/pull/21) [`9658ad9`](https://github.com/Effect-TS/stream/commit/9658ad93291ec65fab96dedcff9d206ea7215823) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Align naming of singleton to of
+
 ## 0.0.6
 
 ### Patch Changes
