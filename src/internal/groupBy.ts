@@ -267,7 +267,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                           Effect.zipRight(
                             pipe(
                               outerQueue,
-                              Queue.offer(take.singleton([key, innerQueue] as const))
+                              Queue.offer(take.of([key, innerQueue] as const))
                             )
                           ),
                           Effect.zipRight(

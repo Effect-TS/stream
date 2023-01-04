@@ -2542,7 +2542,7 @@ export const interleaveWith = <R2, E2, A2, R3, E3>(
         (value: A | A2) =>
           pipe(
             handoff,
-            Handoff.offer<Take.Take<E | E2 | E3, A | A2>>(_take.singleton(value)),
+            Handoff.offer<Take.Take<E | E2 | E3, A | A2>>(_take.of(value)),
             core.fromEffect,
             core.flatMap(() => producer(handoff))
           ),

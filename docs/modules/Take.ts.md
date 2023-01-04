@@ -23,7 +23,7 @@ Added in v1.0.0
   - [fromExit](#fromexit)
   - [fromPull](#frompull)
   - [make](#make)
-  - [singleton](#singleton)
+  - [of](#of)
 - [destructors](#destructors)
   - [done](#done)
   - [match](#match)
@@ -122,7 +122,7 @@ Added in v1.0.0
 
 Creates an effect from `Effect<R, E, A>` that does not fail, but succeeds with
 the `Take<E, A>`. Error from stream when pulling is converted to
-`Take.failCause`. Creates a singleton chunk.
+`Take.failCause`. Creates a single value chunk.
 
 **Signature**
 
@@ -172,14 +172,14 @@ export declare const make: <E, A>(exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<
 
 Added in v1.0.0
 
-## singleton
+## of
 
-Creates a `Take` with a singleton chunk.
+Creates a `Take` with a single value chunk.
 
 **Signature**
 
 ```ts
-export declare const singleton: <A>(value: A) => Take<never, A>
+export declare const of: <A>(value: A) => Take<never, A>
 ```
 
 Added in v1.0.0

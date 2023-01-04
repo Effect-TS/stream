@@ -109,7 +109,7 @@ export const failCause: <E>(cause: Cause.Cause<E>) => Take<E, never> = internal.
 /**
  * Creates an effect from `Effect<R, E, A>` that does not fail, but succeeds with
  * the `Take<E, A>`. Error from stream when pulling is converted to
- * `Take.failCause`. Creates a singleton chunk.
+ * `Take.failCause`. Creates a single value chunk.
  *
  * @macro traced
  * @since 1.0.0
@@ -209,12 +209,12 @@ export const matchEffect: <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
 ) => (self: Take<E, A>) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3> = internal.matchEffect
 
 /**
- * Creates a `Take` with a singleton chunk.
+ * Creates a `Take` with a single value chunk.
  *
  * @since 1.0.0
  * @category constructors
  */
-export const singleton: <A>(value: A) => Take<never, A> = internal.singleton
+export const of: <A>(value: A) => Take<never, A> = internal.of
 
 /**
  * Returns an effect that effectfully "peeks" at the success of this take.
