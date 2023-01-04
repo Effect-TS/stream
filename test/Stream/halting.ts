@@ -82,10 +82,10 @@ describe.concurrent("Stream", () => {
   it.effect("haltAfter - halts after the given duration", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
-        Chunk.singleton(1),
-        Chunk.singleton(2),
-        Chunk.singleton(3),
-        Chunk.singleton(4)
+        Chunk.of(1),
+        Chunk.of(2),
+        Chunk.of(3),
+        Chunk.of(4)
       ]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),

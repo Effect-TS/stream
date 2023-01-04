@@ -181,9 +181,9 @@ describe.concurrent("Stream", () => {
   it.effect("aggregateWithin - child fiber handling", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
-        Chunk.singleton(1),
-        Chunk.singleton(2),
-        Chunk.singleton(3)
+        Chunk.of(1),
+        Chunk.of(2),
+        Chunk.of(3)
       ]))
       const fiber = yield* $(
         pipe(

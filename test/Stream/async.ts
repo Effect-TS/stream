@@ -20,7 +20,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.async<never, never, number>((emit) => {
           array.forEach((n) => {
-            emit(Effect.succeed(Chunk.singleton(n)))
+            emit(Effect.succeed(Chunk.of(n)))
           })
         }),
         Stream.take(array.length),
@@ -36,7 +36,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(pipe(
         Stream.asyncEffect<never, never, number>((emit) => {
           array.forEach((n) => {
-            emit(Effect.succeed(Chunk.singleton(n)))
+            emit(Effect.succeed(Chunk.of(n)))
           })
           return pipe(
             latch,
@@ -104,7 +104,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 refCount,
                 Ref.set(n),
-                Effect.zipRight(Effect.succeed(Chunk.singleton(1)))
+                Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
           )
@@ -133,7 +133,7 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const fiber = yield* $(pipe(
         Stream.asyncInterrupt<never, never, void>((emit) => {
-          emit.chunk(Chunk.singleton(void 0))
+          emit.chunk(Chunk.of(void 0))
           return Either.left(pipe(ref, Ref.set(true)))
         }),
         Stream.tap(() => pipe(latch, Deferred.succeed<void>(void 0))),
@@ -207,7 +207,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 refCount,
                 Ref.set(n),
-                Effect.zipRight(Effect.succeed(Chunk.singleton(1)))
+                Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
           )
@@ -258,7 +258,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncOption<never, never, number>((emit) => {
           array.forEach((n) => {
-            emit(Effect.succeed(Chunk.singleton(n)))
+            emit(Effect.succeed(Chunk.of(n)))
           })
           return Option.none
         }),
@@ -307,7 +307,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 refCount,
                 Ref.set(n),
-                Effect.zipRight(Effect.succeed(Chunk.singleton(1)))
+                Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
           )
@@ -337,7 +337,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(pipe(
         Stream.asyncScoped<never, never, number>((cb) => {
           array.forEach((n) => {
-            cb(Effect.succeed(Chunk.singleton(n)))
+            cb(Effect.succeed(Chunk.of(n)))
           })
           return pipe(
             latch,
@@ -405,7 +405,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 refCount,
                 Ref.set(n),
-                Effect.zipRight(Effect.succeed(Chunk.singleton(1)))
+                Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
           )

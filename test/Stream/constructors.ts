@@ -88,7 +88,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("fromChunks - discards empty chunks", () =>
     Effect.gen(function*($) {
-      const chunks = [Chunk.singleton(1), Chunk.empty<number>(), Chunk.singleton(1)]
+      const chunks = [Chunk.of(1), Chunk.empty<number>(), Chunk.of(1)]
       const result = yield* $(pipe(
         Stream.fromChunks(...chunks),
         Stream.toPull,
@@ -190,7 +190,7 @@ describe.concurrent("Stream", () => {
       yield* $(pipe(queue, Queue.offerAll([1, 2, 3, 4, 5, 6, 7])))
       const result = yield* $(pipe(
         Stream.fromQueue(queue, 2),
-        Stream.mapChunks((chunk) => Chunk.singleton(Array.from(chunk))),
+        Stream.mapChunks((chunk) => Chunk.of(Array.from(chunk))),
         Stream.take(3),
         Stream.runCollect
       ))
@@ -266,7 +266,7 @@ describe.concurrent("Stream", () => {
         const stream = pipe(
           Stream.fromChunks(...chunks),
           Stream.rechunk(n),
-          Stream.mapChunks(Chunk.singleton)
+          Stream.mapChunks(Chunk.of)
         )
         const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
         const expected = chunks.map((chunk) => Array.from(chunk)).flat()

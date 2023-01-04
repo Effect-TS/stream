@@ -77,7 +77,7 @@ describe.concurrent("Stream", () => {
   it.effect("mapConcat", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const f = (n: number) => Chunk.singleton(n)
+      const f = (n: number) => Chunk.of(n)
       const { result1, result2 } = yield* $(Effect.struct({
         result1: pipe(stream, Stream.mapConcat(f), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
@@ -88,7 +88,7 @@ describe.concurrent("Stream", () => {
   it.effect("mapConcatChunk", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const f = (n: number) => Chunk.singleton(n)
+      const f = (n: number) => Chunk.of(n)
       const { result1, result2 } = yield* $(Effect.struct({
         result1: pipe(stream, Stream.mapConcatChunk(f), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
@@ -99,7 +99,7 @@ describe.concurrent("Stream", () => {
   it.effect("mapConcatChunkEffect - happy path", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const f = (n: number) => Chunk.singleton(n)
+      const f = (n: number) => Chunk.of(n)
       const { result1, result2 } = yield* $(Effect.struct({
         result1: pipe(stream, Stream.mapConcatChunkEffect((n) => Effect.succeed(f(n))), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
@@ -121,7 +121,7 @@ describe.concurrent("Stream", () => {
   it.effect("mapConcatEffect - happy path", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const f = (n: number) => Chunk.singleton(n)
+      const f = (n: number) => Chunk.of(n)
       const { result1, result2 } = yield* $(Effect.struct({
         result1: pipe(stream, Stream.mapConcatEffect((n) => Effect.succeed(f(n))), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))

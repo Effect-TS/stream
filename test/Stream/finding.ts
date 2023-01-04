@@ -18,7 +18,7 @@ describe.concurrent("Stream", () => {
           stream,
           Stream.runCollect,
           Effect.map(Chunk.findFirst(f)),
-          Effect.map(Option.match(() => Chunk.empty<number>(), Chunk.singleton))
+          Effect.map(Option.match(() => Chunk.empty<number>(), Chunk.of))
         )
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
@@ -37,7 +37,7 @@ describe.concurrent("Stream", () => {
             pipe(
               chunk,
               Effect.find(f),
-              Effect.map(Option.match(() => Chunk.empty<number>(), Chunk.singleton))
+              Effect.map(Option.match(() => Chunk.empty<number>(), Chunk.of))
             )
           )
         )

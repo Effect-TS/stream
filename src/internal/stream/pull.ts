@@ -17,7 +17,7 @@ export interface Pull<R, E, A> extends Effect.Effect<R, Option.Option<E>, Chunk.
  */
 export const emit = <A>(value: A): Effect.Effect<never, never, Chunk.Chunk<A>> => {
   const trace = getCallTrace()
-  return Effect.succeed(Chunk.singleton(value)).traced(trace)
+  return Effect.succeed(Chunk.of(value)).traced(trace)
 }
 
 /**

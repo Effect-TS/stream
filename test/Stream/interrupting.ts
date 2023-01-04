@@ -19,10 +19,10 @@ describe.concurrent("Stream", () => {
       const deferred = yield* $(Deferred.make<never, void>())
       const queue1 = yield* $(Queue.unbounded<Chunk.Chunk<number>>())
       const queue2 = yield* $(Queue.unbounded<Chunk.Chunk<number>>())
-      yield* $(pipe(queue1, Queue.offer(Chunk.singleton(1))))
-      yield* $(pipe(queue2, Queue.offer(Chunk.singleton(2))))
-      yield* $(pipe(queue1, Queue.offer(Chunk.singleton(3)), Effect.fork))
-      yield* $(pipe(queue2, Queue.offer(Chunk.singleton(4)), Effect.fork))
+      yield* $(pipe(queue1, Queue.offer(Chunk.of(1))))
+      yield* $(pipe(queue2, Queue.offer(Chunk.of(2))))
+      yield* $(pipe(queue1, Queue.offer(Chunk.of(3)), Effect.fork))
+      yield* $(pipe(queue2, Queue.offer(Chunk.of(4)), Effect.fork))
       const stream1 = Stream.fromChunkQueue(queue1)
       const stream2 = Stream.fromChunkQueue(queue2)
       const stream = pipe(
@@ -116,10 +116,10 @@ describe.concurrent("Stream", () => {
   it.effect("interruptAfter - halts after the given duration", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
-        Chunk.singleton(1),
-        Chunk.singleton(2),
-        Chunk.singleton(3),
-        Chunk.singleton(4)
+        Chunk.of(1),
+        Chunk.of(2),
+        Chunk.of(3),
+        Chunk.of(4)
       ]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),

@@ -36,7 +36,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("paginateChunk", () =>
     Effect.gen(function*($) {
-      const s: readonly [Chunk.Chunk<number>, Array<number>] = [Chunk.singleton(0), [1, 2, 3, 4, 5]]
+      const s: readonly [Chunk.Chunk<number>, Array<number>] = [Chunk.of(0), [1, 2, 3, 4, 5]]
       const pageSize = 2
       const result = yield* $(pipe(
         Stream.paginateChunk(s, ([chunk, nums]) =>
@@ -58,7 +58,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("paginateChunkEffect", () =>
     Effect.gen(function*($) {
-      const s: readonly [Chunk.Chunk<number>, Array<number>] = [Chunk.singleton(0), [1, 2, 3, 4, 5]]
+      const s: readonly [Chunk.Chunk<number>, Array<number>] = [Chunk.of(0), [1, 2, 3, 4, 5]]
       const pageSize = 2
       const result = yield* $(pipe(
         Stream.paginateChunkEffect(s, ([chunk, nums]) =>

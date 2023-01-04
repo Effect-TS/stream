@@ -264,7 +264,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                             const toWrite = pipe(
                               c,
                               Option.match(
-                                (): Chunk.Chunk<Either.Either<C, B>> => Chunk.singleton(Either.right(b)),
+                                (): Chunk.Chunk<Either.Either<C, B>> => Chunk.of(Either.right(b)),
                                 (c): Chunk.Chunk<Either.Either<C, B>> => Chunk.make(Either.right(b), Either.left(c))
                               )
                             )
@@ -284,7 +284,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                           Ref.get(consumed),
                           Effect.map((wasConsumed) =>
                             wasConsumed ?
-                              core.write(Chunk.singleton<Either.Either<C, B>>(Either.right(b))) :
+                              core.write(Chunk.of<Either.Either<C, B>>(Either.right(b))) :
                               core.unit()
                           ),
                           channel.unwrap
@@ -716,7 +716,7 @@ export const buffer = (capacity: number) => {
                   Cause.flipCauseOption(cause),
                   Option.match(core.unit, core.failCause)
                 ),
-              (value) => pipe(core.write(Chunk.singleton(value)), core.flatMap(() => process))
+              (value) => pipe(core.write(Chunk.of(value)), core.flatMap(() => process))
             ))
           )
           return process
@@ -1014,7 +1014,7 @@ export const changesWithEffect = <A, R2, E2>(f: (x: A, y: A) => Effect.Effect<R2
 
 /** @internal */
 export const chunks = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, Chunk.Chunk<A>> =>
-  pipe(self, mapChunks(Chunk.singleton))
+  pipe(self, mapChunks(Chunk.of))
 
 /** @internal */
 export const chunksWith = <R, E, A, R2, E2, A2>(
@@ -1047,7 +1047,7 @@ export const collectEffect = <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.
             pf(next.value),
             Option.match(
               () => Effect.sync(() => loop(iterator)),
-              Effect.map((a2) => pipe(core.write(Chunk.singleton(a2)), core.flatMap(() => loop(iterator))))
+              Effect.map((a2) => pipe(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator))))
             ),
             channel.unwrap
           )
@@ -1130,7 +1130,7 @@ export const collectWhileEffect = <A, R2, E2, A2>(pf: (a: A) => Option.Option<Ef
             pf(next.value),
             Option.match(
               () => Effect.succeed(core.unit()),
-              Effect.map((a2) => pipe(core.write(Chunk.singleton(a2)), core.flatMap(() => loop(iterator))))
+              Effect.map((a2) => pipe(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator))))
             ),
             channel.unwrap
           )
@@ -1398,7 +1398,7 @@ export const debounce = (duration: Duration.Duration) => {
                               pipe(
                                 handoff,
                                 Handoff.offer<HandoffSignal.HandoffSignal<E, A>>(
-                                  HandoffSignal.emit(Chunk.singleton(last))
+                                  HandoffSignal.emit(Chunk.of(last))
                                 )
                               )
                             ),
@@ -1988,7 +1988,7 @@ export const filterEffect = <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boole
           f(next.value),
           Effect.map((bool) =>
             bool ?
-              pipe(core.write(Chunk.singleton(next.value)), core.flatMap(() => loop(iterator))) :
+              pipe(core.write(Chunk.of(next.value)), core.flatMap(() => loop(iterator))) :
               loop(iterator)
           ),
           channel.unwrap
@@ -2018,7 +2018,7 @@ export const find: {
           Chunk.findFirst(predicate),
           Option.match(
             () => loop,
-            (n) => core.write(Chunk.singleton(n))
+            (n) => core.write(Chunk.of(n))
           )
         ),
       core.fail,
@@ -2038,7 +2038,7 @@ export const findEffect = <A, R2, E2>(predicate: (a: A) => Effect.Effect<R2, E2,
           Effect.find(predicate),
           Effect.map(Option.match(
             () => loop,
-            (n) => core.write(Chunk.singleton(n))
+            (n) => core.write(Chunk.of(n))
           )),
           channel.unwrap
         ),
@@ -2259,7 +2259,7 @@ export const fromEffectOption = <R, E, A>(effect: Effect.Effect<R, Option.Option
   new StreamImpl(
     pipe(
       effect,
-      Effect.match(Option.match(core.unit, core.fail), (a) => core.write(Chunk.singleton(a))),
+      Effect.match(Option.match(core.unit, core.fail), (a) => core.write(Chunk.of(a))),
       channel.unwrap
     )
   )
@@ -2337,7 +2337,7 @@ export const fromIteratorSucceed = <A>(
                 return core.unit()
               }
               return pipe(
-                core.write(Chunk.singleton(next.value)),
+                core.write(Chunk.of(next.value)),
                 core.flatMap(() => loop(iterator))
               )
             }
@@ -2427,10 +2427,10 @@ export const groupAdjacentBy = <A, K>(f: (a: A) => K) => {
             }
             return [
               pipe(outputs, Chunk.append(option.value)),
-              Option.some([key2, Chunk.singleton(a)] as const)
+              Option.some([key2, Chunk.of(a)] as const)
             ] as const
           }
-          return [outputs, Option.some([f(a), Chunk.singleton(a)] as const)] as const
+          return [outputs, Option.some([f(a), Chunk.of(a)] as const)] as const
         })
       )
     const chunkAdjacent = (
@@ -2442,7 +2442,7 @@ export const groupAdjacentBy = <A, K>(f: (a: A) => K) => {
           return pipe(core.write(outputs), core.flatMap(() => chunkAdjacent(newBuffer)))
         },
         core.failCause,
-        () => pipe(buffer, Option.match(core.unit, (output) => core.write(Chunk.singleton(output))))
+        () => pipe(buffer, Option.match(core.unit, (output) => core.write(Chunk.of(output))))
       )
     return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(chunkAdjacent(Option.none))))
   }
@@ -2912,7 +2912,7 @@ export const mapEffect = <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>)
             f(next.value),
             Effect.map((a2) =>
               pipe(
-                core.write(Chunk.singleton(a2)),
+                core.write(Chunk.of(a2)),
                 core.flatMap(() => loop(iterator))
               )
             ),
@@ -2936,7 +2936,7 @@ export const mapEffectPar = (n: number) => {
           self.channel,
           channel.concatMap(channel.writeChunk),
           channel.mapOutEffectPar(n)(f),
-          channel.mapOut(Chunk.singleton)
+          channel.mapOut(Chunk.of)
         )
       )
   }
@@ -3096,7 +3096,7 @@ export const orElseFail = <E2>(error: LazyArg<E2>) => {
 /** @internal */
 export const orElseIfEmpty = <A2>(element: LazyArg<A2>) => {
   return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A | A2> =>
-    pipe(self, orElseIfEmptyChunk(() => Chunk.singleton(element())))
+    pipe(self, orElseIfEmptyChunk(() => Chunk.of(element())))
 }
 
 /** @internal */
@@ -3141,7 +3141,7 @@ export const orElseSucceed = <A2>(value: LazyArg<A2>) => {
 export const paginate = <S, A>(s: S, f: (s: S) => readonly [A, Option.Option<S>]): Stream.Stream<never, never, A> =>
   paginateChunk(s, (s) => {
     const page = f(s)
-    return [Chunk.singleton(page[0]), page[1]] as const
+    return [Chunk.of(page[0]), page[1]] as const
   })
 
 /** @internal */
@@ -3189,7 +3189,7 @@ export const paginateEffect = <S, R, E, A>(
   s: S,
   f: (s: S) => Effect.Effect<R, E, readonly [A, Option.Option<S>]>
 ): Stream.Stream<R, E, A> =>
-  paginateChunkEffect(s, (s) => pipe(f(s), Effect.map(([a, s]) => [Chunk.singleton(a), s] as const)))
+  paginateChunkEffect(s, (s) => pipe(f(s), Effect.map(([a, s]) => [Chunk.of(a), s] as const)))
 
 /** @internal */
 export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
@@ -3611,7 +3611,7 @@ export const repeatEffectChunkOption = <R, E, A>(
 
 /** @internal */
 export const repeatEffectOption = <R, E, A>(effect: Effect.Effect<R, Option.Option<E>, A>): Stream.Stream<R, E, A> =>
-  repeatEffectChunkOption(pipe(effect, Effect.map(Chunk.singleton)))
+  repeatEffectChunkOption(pipe(effect, Effect.map(Chunk.of)))
 
 /** @internal */
 export const repeatEither = <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>) => {
@@ -3650,7 +3650,7 @@ export const repeatElementsWith = <R2, B, A, C>(
               () => loop,
               (a) =>
                 pipe(
-                  core.write(Chunk.singleton(f(a))),
+                  core.write(Chunk.of(f(a))),
                   channel.zipRight(step(pipe(input, Chunk.drop(1)), a))
                 )
             )
@@ -3661,7 +3661,7 @@ export const repeatElementsWith = <R2, B, A, C>(
         ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<C>, void> => {
           const advance = pipe(
             driver.next(a),
-            Effect.as(pipe(core.write(Chunk.singleton(f(a))), core.flatMap(() => step(input, a))))
+            Effect.as(pipe(core.write(Chunk.of(f(a))), core.flatMap(() => step(input, a))))
           )
           const reset: Effect.Effect<
             R2,
@@ -3675,7 +3675,7 @@ export const repeatElementsWith = <R2, B, A, C>(
                 driver.reset(),
                 Effect.map(() =>
                   pipe(
-                    core.write(Chunk.singleton(g(b))),
+                    core.write(Chunk.of(g(b))),
                     channel.zipRight(feed(input))
                   )
                 )
@@ -3700,7 +3700,7 @@ export const repeatElementsWith = <R2, B, A, C>(
 /** @internal */
 export const repeatForever = <A>(value: A): Stream.Stream<never, never, A> =>
   new StreamImpl(
-    channel.repeated(core.write(Chunk.singleton(value)))
+    channel.repeated(core.write(Chunk.of(value)))
   )
 
 /** @internal */
@@ -3725,7 +3725,7 @@ export const repeatWith = <R2, B, A, C>(
                 channel.zipRight(
                   pipe(
                     scheduleOutput,
-                    Effect.map((c) => pipe(core.write(Chunk.singleton(c)), core.flatMap(() => loop))),
+                    Effect.map((c) => pipe(core.write(Chunk.of(c)), core.flatMap(() => loop))),
                     channel.unwrap
                   )
                 )
@@ -4135,7 +4135,7 @@ export const scheduleWith = <R2, A, B, C>(
             ),
           () =>
             Effect.succeed(pipe(
-              core.write(Chunk.singleton(f(next.value))),
+              core.write(Chunk.of(f(next.value))),
               core.flatMap(() => loop(driver, iterator))
             ))
         ),
@@ -4161,7 +4161,7 @@ export const scanEffect = <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<
   return <R, E>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E | E2, S> =>
     new StreamImpl(
       pipe(
-        core.write(Chunk.singleton(s)),
+        core.write(Chunk.of(s)),
         core.flatMap(() =>
           pipe(
             self,
@@ -4176,7 +4176,7 @@ export const scanEffect = <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<
 export const scoped = <R, E, A>(
   effect: Effect.Effect<R | Scope.Scope, E, A>
 ): Stream.Stream<Exclude<R | Scope.Scope, Scope.Scope>, E, A> =>
-  new StreamImpl(channel.scoped(pipe(effect, Effect.map(Chunk.singleton))))
+  new StreamImpl(channel.scoped(pipe(effect, Effect.map(Chunk.of))))
 
 /** @internal */
 export const service = <T>(tag: Context.Tag<T>): Stream.Stream<T, never, T> => serviceWith(tag)(identity)
@@ -4230,7 +4230,7 @@ export const sliding = (chunkSize: number, stepSize = 1) => {
       ) => {
         if (queueSize < chunkSize) {
           const items = queue.toChunk()
-          const result = Chunk.isEmpty(items) ? Chunk.empty<Chunk.Chunk<A>>() : Chunk.singleton(items)
+          const result = Chunk.isEmpty(items) ? Chunk.empty<Chunk.Chunk<A>>() : Chunk.of(items)
           return pipe(core.write(result), core.flatMap(() => channelEnd))
         }
         const lastEmitIndex = queueSize - (queueSize - chunkSize) % stepSize
@@ -4239,7 +4239,7 @@ export const sliding = (chunkSize: number, stepSize = 1) => {
         }
         const leftovers = queueSize - (lastEmitIndex - chunkSize + stepSize)
         const lastItems = pipe(queue.toChunk(), Chunk.takeRight(leftovers))
-        const result = Chunk.isEmpty(lastItems) ? Chunk.empty<Chunk.Chunk<A>>() : Chunk.singleton(lastItems)
+        const result = Chunk.isEmpty(lastItems) ? Chunk.empty<Chunk.Chunk<A>>() : Chunk.of(lastItems)
         return pipe(core.write(result), core.flatMap(() => channelEnd))
       }
       const reader = (
@@ -4283,7 +4283,7 @@ export const split = <A>(predicate: Predicate<A>) => {
         return loop(pipe(chunk, Chunk.concat(pipe(remaining, Chunk.drop(1)))))
       }
       return pipe(
-        core.write(Chunk.singleton(chunk)),
+        core.write(Chunk.of(chunk)),
         core.flatMap(() => split(Chunk.empty(), pipe(remaining, Chunk.drop(1))))
       )
     }
@@ -4298,7 +4298,7 @@ export const split = <A>(predicate: Predicate<A>) => {
             return core.unit()
           }
           if (Option.isNone(pipe(leftovers, Chunk.findFirst(predicate)))) {
-            return pipe(core.write(Chunk.singleton(leftovers)), channel.zipRight(core.unit()))
+            return pipe(core.write(Chunk.of(leftovers)), channel.zipRight(core.unit()))
           }
           return pipe(split(Chunk.empty(), leftovers), channel.zipRight(core.unit()))
         }
@@ -4351,7 +4351,7 @@ export const splitOnChunk = <A>(delimiter: Chunk.Chunk<A>) => {
             leftover,
             Option.match(
               () => core.failCause(cause),
-              (chunk) => pipe(core.write(Chunk.singleton(chunk)), channel.zipRight(core.failCause(cause)))
+              (chunk) => pipe(core.write(Chunk.of(chunk)), channel.zipRight(core.failCause(cause)))
             )
           ),
         (done) =>
@@ -4359,7 +4359,7 @@ export const splitOnChunk = <A>(delimiter: Chunk.Chunk<A>) => {
             leftover,
             Option.match(
               () => core.succeed(done),
-              (chunk) => pipe(core.write(Chunk.singleton(chunk)), channel.zipRight(core.succeed(done)))
+              (chunk) => pipe(core.write(Chunk.of(chunk)), channel.zipRight(core.succeed(done)))
             )
           )
       )
@@ -4368,11 +4368,11 @@ export const splitOnChunk = <A>(delimiter: Chunk.Chunk<A>) => {
 }
 
 /** @internal */
-export const succeed = <A>(value: A): Stream.Stream<never, never, A> => fromChunk(Chunk.singleton(value))
+export const succeed = <A>(value: A): Stream.Stream<never, never, A> => fromChunk(Chunk.of(value))
 
 /** @internal */
 export const sync = <A>(evaluate: LazyArg<A>): Stream.Stream<never, never, A> =>
-  suspend(() => fromChunk(Chunk.singleton(evaluate())))
+  suspend(() => fromChunk(Chunk.of(evaluate())))
 
 /** @internal */
 export const suspend = <R, E, A>(stream: LazyArg<Stream.Stream<R, E, A>>): Stream.Stream<R, E, A> =>
@@ -4472,9 +4472,9 @@ export const takeUntilEffect = <A, R2, E2>(predicate: (a: A) => Effect.Effect<R2
         predicate(next.value),
         Effect.map((bool) =>
           bool ?
-            core.write(Chunk.singleton(next.value)) :
+            core.write(Chunk.of(next.value)) :
             pipe(
-              core.write(Chunk.singleton(next.value)),
+              core.write(Chunk.of(next.value)),
               core.flatMap(() => loop(iterator))
             )
         ),
@@ -4851,7 +4851,7 @@ export const transduce = <R2, E2, A, Z>(
               const nextChannel = done && Chunk.isEmpty(newLeftovers) ?
                 core.unit() :
                 transducer
-              return pipe(core.write(Chunk.singleton(z)), core.flatMap(() => nextChannel))
+              return pipe(core.write(Chunk.of(z)), core.flatMap(() => nextChannel))
             })
           )
         )
@@ -4869,7 +4869,7 @@ export const transduce = <R2, E2, A, Z>(
 
 /** @internal */
 export const unfold = <S, A>(s: S, f: (s: S) => Option.Option<readonly [A, S]>): Stream.Stream<never, never, A> =>
-  unfoldChunk(s, (s) => pipe(f(s), Option.map(([a, s]) => [Chunk.singleton(a), s])))
+  unfoldChunk(s, (s) => pipe(f(s), Option.map(([a, s]) => [Chunk.of(a), s])))
 
 /** @internal */
 export const unfoldChunk = <S, A>(
@@ -4904,7 +4904,7 @@ export const unfoldEffect = <S, R, E, A>(
   s: S,
   f: (s: S) => Effect.Effect<R, E, Option.Option<readonly [A, S]>>
 ): Stream.Stream<R, E, A> =>
-  unfoldChunkEffect(s, (s) => pipe(f(s), Effect.map(Option.map(([a, s]) => [Chunk.singleton(a), s]))))
+  unfoldChunkEffect(s, (s) => pipe(f(s), Effect.map(Option.map(([a, s]) => [Chunk.of(a), s]))))
 
 /** @internal */
 export const unit = (): Stream.Stream<never, never, void> => succeed(void 0)
@@ -5790,7 +5790,7 @@ export const zipWithNext = <R, E, A>(
             core.unit,
             (value) =>
               pipe(
-                core.write(Chunk.singleton<readonly [A, Option.Option<A>]>([value, Option.none])),
+                core.write(Chunk.of<readonly [A, Option.Option<A>]>([value, Option.none])),
                 channel.zipRight(core.unit())
               )
           )

@@ -125,9 +125,9 @@ describe.concurrent("Stream", () => {
   it.effect("debounce - should drop earlier chunks within waitTime", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
-        Chunk.singleton(1),
+        Chunk.of(1),
         Chunk.make(3, 4),
-        Chunk.singleton(5),
+        Chunk.of(5),
         Chunk.make(6, 7)
       ]))
       const stream = pipe(
@@ -191,9 +191,9 @@ describe.concurrent("Stream", () => {
   it.effect("debounce - should work properly with parallelization", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
-        Chunk.singleton(1),
-        Chunk.singleton(2),
-        Chunk.singleton(3)
+        Chunk.of(1),
+        Chunk.of(2),
+        Chunk.of(3)
       ]))
       const stream = pipe(
         Stream.fromQueue(coordination.queue),
@@ -266,9 +266,9 @@ describe.concurrent("Stream", () => {
   it.effect("debounce - should interrupt fibers properly", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
-        Chunk.singleton(1),
-        Chunk.singleton(2),
-        Chunk.singleton(3)
+        Chunk.of(1),
+        Chunk.of(2),
+        Chunk.of(3)
       ]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
