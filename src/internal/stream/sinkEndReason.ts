@@ -2,29 +2,29 @@
 export type SinkEndReason = ScheduleEnd | UpstreamEnd
 
 /** @internal */
-export const OP_SCHEDULE_END = 0 as const
+export const OP_SCHEDULE_END = "ScheduleEnd" as const
 
 /** @internal */
 export type OP_SCHEDULE_END = typeof OP_SCHEDULE_END
 
 /** @internal */
-export const OP_UPSTREAM_END = 1 as const
+export const OP_UPSTREAM_END = "UpstreamEnd" as const
 
 /** @internal */
 export type OP_UPSTREAM_END = typeof OP_UPSTREAM_END
 
 /** @internal */
 export interface ScheduleEnd {
-  readonly op: OP_SCHEDULE_END
+  readonly _tag: OP_SCHEDULE_END
 }
 
 /** @internal */
 export interface UpstreamEnd {
-  readonly op: OP_UPSTREAM_END
+  readonly _tag: OP_UPSTREAM_END
 }
 
 /** @internal */
-export const SchedulEnd: SinkEndReason = { op: OP_SCHEDULE_END }
+export const SchedulEnd: SinkEndReason = { _tag: OP_SCHEDULE_END }
 
 /** @internal */
-export const UpstreamEnd: SinkEndReason = { op: OP_UPSTREAM_END }
+export const UpstreamEnd: SinkEndReason = { _tag: OP_UPSTREAM_END }

@@ -3,35 +3,36 @@ import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 
 /** @internal */
 export const Left: HaltStrategy.HaltStrategy = {
-  op: OpCodes.OP_LEFT
+  _tag: OpCodes.OP_LEFT
 }
 
 /** @internal */
 export const Right: HaltStrategy.HaltStrategy = {
-  op: OpCodes.OP_RIGHT
+  _tag: OpCodes.OP_RIGHT
 }
 
 /** @internal */
 export const Both: HaltStrategy.HaltStrategy = {
-  op: OpCodes.OP_BOTH
+  _tag: OpCodes.OP_BOTH
 }
 
 /** @internal */
 export const Either: HaltStrategy.HaltStrategy = {
-  op: OpCodes.OP_EITHER
+  _tag: OpCodes.OP_EITHER
 }
 
 /** @internal */
-export const isLeft = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Left => self.op === OpCodes.OP_LEFT
+export const isLeft = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Left => self._tag === OpCodes.OP_LEFT
 
 /** @internal */
-export const isRight = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Right => self.op === OpCodes.OP_RIGHT
+export const isRight = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Right => self._tag === OpCodes.OP_RIGHT
 
 /** @internal */
-export const isBoth = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Both => self.op === OpCodes.OP_BOTH
+export const isBoth = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Both => self._tag === OpCodes.OP_BOTH
 
 /** @internal */
-export const isEither = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Either => self.op === OpCodes.OP_EITHER
+export const isEither = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Either =>
+  self._tag === OpCodes.OP_EITHER
 
 /** @internal */
 export const match = <Z>(
@@ -41,7 +42,7 @@ export const match = <Z>(
   onEither: () => Z
 ) => {
   return (self: HaltStrategy.HaltStrategy): Z => {
-    switch (self.op) {
+    switch (self._tag) {
       case OpCodes.OP_LEFT: {
         return onLeft()
       }
