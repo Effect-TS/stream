@@ -107,7 +107,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
           if (this._currentChannel === undefined) {
             result = ChannelState.Done
           } else {
-            switch (this._currentChannel.op) {
+            switch (this._currentChannel._tag) {
               case ChannelOpCodes.OP_BRACKET_OUT: {
                 result = this.runBracketOut(this._currentChannel)
                 break

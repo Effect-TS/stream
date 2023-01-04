@@ -46,10 +46,10 @@ const proto = {
 type ErasedChannel = Channel.Channel<never, unknown, unknown, unknown, never, never, never>
 
 /** @internal */
-export type Op<OpCode extends number, Body = {}> =
+export type Op<Tag extends string, Body = {}> =
   & ErasedChannel
   & Body
-  & { readonly op: OpCode }
+  & { readonly _tag: Tag }
 
 export type Primitive =
   | BracketOut
@@ -188,18 +188,9 @@ export const acquireReleaseOut = <R, R2, E, Z>(
   release: (z: Z, e: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, unknown>
 ): Channel.Channel<R | R2, unknown, unknown, unknown, E, Z, void> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_BRACKET_OUT,
-      enumerable: true
-    },
-    acquire: {
-      value: () => self,
-      enumerable: true
-    },
-    finalizer: {
-      value: release,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_BRACKET_OUT },
+    acquire: { value: () => self },
+    finalizer: { value: release }
   })
 
 /** @internal */
@@ -227,18 +218,9 @@ export const catchAllCause = <
     OutDone | OutDone1
   > =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_FOLD,
-        enumerable: true
-      },
-      channel: {
-        value: self,
-        enumerable: true
-      },
-      k: {
-        value: new ContinuationKImpl(succeed, f),
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_FOLD },
+      channel: { value: self },
+      k: { value: new ContinuationKImpl(succeed, f) }
     })
 }
 
@@ -334,34 +316,13 @@ export const concatAllWith = <
   OutDone3
 > =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_CONCAT_ALL,
-      enumerable: true
-    },
-    combineInners: {
-      value: f,
-      enumerable: true
-    },
-    combineAll: {
-      value: g,
-      enumerable: true
-    },
-    onPull: {
-      value: () => upstreamPullStrategy.PullAfterNext(Option.none),
-      enumerable: true
-    },
-    onEmit: {
-      value: () => childExecutorDecision.Continue,
-      enumerable: true
-    },
-    value: {
-      value: () => channels,
-      enumerable: true
-    },
-    k: {
-      value: identity,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_CONCAT_ALL },
+    combineInners: { value: f },
+    combineAll: { value: g },
+    onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none) },
+    onEmit: { value: () => childExecutorDecision.Continue },
+    value: { value: () => channels },
+    k: { value: identity }
   })
 
 /** @internal */
@@ -395,34 +356,13 @@ export const concatMapWith = <
     OutDone3
   > =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_CONCAT_ALL,
-        enumerable: true
-      },
-      combineInners: {
-        value: g,
-        enumerable: true
-      },
-      combineAll: {
-        value: h,
-        enumerable: true
-      },
-      onPull: {
-        value: () => upstreamPullStrategy.PullAfterNext(Option.none),
-        enumerable: true
-      },
-      onEmit: {
-        value: () => childExecutorDecision.Continue,
-        enumerable: true
-      },
-      value: {
-        value: () => self,
-        enumerable: true
-      },
-      k: {
-        value: f,
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_CONCAT_ALL },
+      combineInners: { value: g },
+      combineAll: { value: h },
+      onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none) },
+      onEmit: { value: () => childExecutorDecision.Continue },
+      value: { value: () => self },
+      k: { value: f }
     })
 }
 
@@ -461,34 +401,13 @@ export const concatMapWithCustom = <
     OutDone3
   > =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_CONCAT_ALL,
-        enumerable: true
-      },
-      combineInners: {
-        value: g,
-        enumerable: true
-      },
-      combineAll: {
-        value: h,
-        enumerable: true
-      },
-      onPull: {
-        value: onPull,
-        enumerable: true
-      },
-      onEmit: {
-        value: onEmit,
-        enumerable: true
-      },
-      value: {
-        value: () => self,
-        enumerable: true
-      },
-      k: {
-        value: f,
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_CONCAT_ALL },
+      combineInners: { value: g },
+      combineAll: { value: h },
+      onPull: { value: onPull },
+      onEmit: { value: onEmit },
+      value: { value: () => self },
+      k: { value: f }
     })
 }
 
@@ -500,18 +419,9 @@ export const embedInput = <InErr, InElem, InDone>(
     self: Channel.Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>
   ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_BRIDGE,
-        enumerable: true
-      },
-      input: {
-        value: input,
-        enumerable: true
-      },
-      channel: {
-        value: self,
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_BRIDGE },
+      input: { value: input },
+      channel: { value: self }
     })
 }
 
@@ -523,18 +433,9 @@ export const ensuringWith = <Env2, OutErr, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_ENSURING,
-        enumerable: true
-      },
-      channel: {
-        value: self,
-        enumerable: true
-      },
-      finalizer: {
-        value: finalizer,
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_ENSURING },
+      channel: { value: self },
+      finalizer: { value: finalizer }
     })
 }
 
@@ -562,14 +463,8 @@ export const failCauseSync = <E>(
   evaluate: LazyArg<Cause.Cause<E>>
 ): Channel.Channel<never, unknown, unknown, unknown, E, never, never> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_FAIL,
-      enumerable: true
-    },
-    error: {
-      value: evaluate,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_FAIL },
+    error: { value: evaluate }
   })
 
 export const flatMap = <
@@ -594,18 +489,9 @@ export const flatMap = <
     OutDone2
   > =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_FOLD,
-        enumerable: true
-      },
-      channel: {
-        value: self,
-        enumerable: true
-      },
-      k: {
-        value: new ContinuationKImpl(f, failCause),
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_FOLD },
+      channel: { value: self },
+      k: { value: new ContinuationKImpl(f, failCause) }
     })
 }
 
@@ -647,18 +533,9 @@ export const foldCauseChannel = <
     OutDone2 | OutDone3
   > =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_FOLD,
-        enumerable: true
-      },
-      channel: {
-        value: self,
-        enumerable: true
-      },
-      k: {
-        value: new ContinuationKImpl(onSuccess, onError as any),
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_FOLD },
+      channel: { value: self },
+      k: { value: new ContinuationKImpl(onSuccess, onError as any) }
     })
 }
 
@@ -667,14 +544,8 @@ export const fromEffect = <R, E, A>(
   effect: Effect.Effect<R, E, A>
 ): Channel.Channel<R, unknown, unknown, unknown, E, never, A> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_FROM_EFFECT,
-      enumerable: true
-    },
-    effect: {
-      value: () => effect,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_FROM_EFFECT },
+    effect: { value: () => effect }
   })
 
 /** @internal */
@@ -691,18 +562,9 @@ export const pipeTo = <
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_PIPE_TO,
-        enumerable: true
-      },
-      left: {
-        value: () => self,
-        enumerable: true
-      },
-      right: {
-        value: () => that,
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_PIPE_TO },
+      left: { value: () => self },
+      right: { value: () => that }
     })
 }
 
@@ -712,18 +574,9 @@ export const provideEnvironment = <Env>(env: Context.Context<Env>) => {
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
     Object.create(proto, {
-      op: {
-        value: OpCodes.OP_PROVIDE,
-        enumerable: true
-      },
-      environment: {
-        value: () => env,
-        enumerable: true
-      },
-      inner: {
-        value: self,
-        enumerable: true
-      }
+      _tag: { value: OpCodes.OP_PROVIDE },
+      environment: { value: () => env },
+      inner: { value: self }
     })
 }
 
@@ -732,18 +585,9 @@ export const readOrFail = <In, E>(
   error: E
 ): Channel.Channel<never, unknown, In, unknown, E, never, In> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_READ,
-      enumerable: true
-    },
-    more: {
-      value: succeed,
-      enumerable: true
-    },
-    done: {
-      value: new ContinuationKImpl(() => fail(error), () => fail(error)),
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_READ },
+    more: { value: succeed },
+    done: { value: new ContinuationKImpl(() => fail(error), () => fail(error)) }
   })
 
 /** @internal */
@@ -810,18 +654,9 @@ export const readWithCause = <
   OutDone | OutDone2 | OutDone3
 > =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_READ,
-      enumerable: true
-    },
-    more: {
-      value: input,
-      enumerable: true
-    },
-    done: {
-      value: new ContinuationKImpl(done, halt as any),
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_READ },
+    more: { value: input },
+    done: { value: new ContinuationKImpl(done, halt as any) }
   })
 
 /** @internal */
@@ -836,14 +671,8 @@ export const succeedNow = <OutDone>(
   result: OutDone
 ): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_SUCCEED_NOW,
-      enumerable: true
-    },
-    terminal: {
-      value: result,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_SUCCEED_NOW },
+    terminal: { value: result }
   })
 
 /** @internal */
@@ -851,28 +680,16 @@ export const suspend = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   evaluate: LazyArg<Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
 ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_SUSPEND,
-      enumerable: true
-    },
-    channel: {
-      value: evaluate,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_SUSPEND },
+    channel: { value: evaluate }
   })
 
 export const sync = <OutDone>(
   evaluate: LazyArg<OutDone>
 ): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_SUCCEED,
-      enumerable: true
-    },
-    evaluate: {
-      value: evaluate,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_SUCCEED },
+    evaluate: { value: evaluate }
   })
 
 /** @internal */
@@ -881,12 +698,6 @@ export const unit = (): Channel.Channel<never, unknown, unknown, unknown, never,
 /** @internal */
 export const write = <OutElem>(out: OutElem): Channel.Channel<never, unknown, unknown, unknown, never, OutElem, void> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_EMIT,
-      enumerable: true
-    },
-    out: {
-      value: out,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_EMIT },
+    out: { value: out }
   })
