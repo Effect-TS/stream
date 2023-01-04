@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.9
+
+### Patch Changes
+
+- [#25](https://github.com/Effect-TS/stream/pull/25) [`63c24d0`](https://github.com/Effect-TS/stream/commit/63c24d010eab7041f5dccb98427cc146aa49d311) Thanks [@IMax153](https://github.com/IMax153)! - fix Channel.UpstreamPullRequest
+
 ## 0.0.8
 
 ### Patch Changes
