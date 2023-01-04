@@ -59,7 +59,7 @@ export const failCause = <E>(cause: Cause.Cause<E>): Take.Take<E, never> =>
 /** @internal */
 export const fromEffect = <R, E, A>(effect: Effect.Effect<R, E, A>): Effect.Effect<R, never, Take.Take<E, A>> => {
   const trace = getCallTrace()
-  return pipe(effect, Effect.matchCause(failCause, singleton)).traced(trace)
+  return pipe(effect, Effect.matchCause(failCause, of)).traced(trace)
 }
 
 /** @internal */
@@ -152,7 +152,7 @@ export const map = <A, B>(f: (a: A) => B) => {
 }
 
 /** @internal */
-export const singleton = <A>(value: A): Take.Take<never, A> => new TakeImpl(Exit.succeed(Chunk.of(value)))
+export const of = <A>(value: A): Take.Take<never, A> => new TakeImpl(Exit.succeed(Chunk.of(value)))
 
 /** @internal */
 export const tap = <A, R, E2, _>(f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>) => {

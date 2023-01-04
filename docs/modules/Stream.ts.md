@@ -50,6 +50,7 @@ Added in v1.0.0
   - [fromHubWithShutdown](#fromhubwithshutdown)
   - [fromIterable](#fromiterable)
   - [fromIterableEffect](#fromiterableeffect)
+  - [fromIteratorSucceed](#fromiteratorsucceed)
   - [fromPull](#frompull)
   - [fromQueue](#fromqueue)
   - [fromQueueWithShutdown](#fromqueuewithshutdown)
@@ -321,6 +322,8 @@ Added in v1.0.0
   - [scanEffect](#scaneffect)
   - [scanReduce](#scanreduce)
   - [scanReduceEffect](#scanreduceeffect)
+  - [schedule](#schedule)
+  - [scheduleEither](#scheduleeither)
   - [scheduleWith](#schedulewith)
   - [sliding](#sliding)
   - [some](#some)
@@ -356,6 +359,7 @@ Added in v1.0.0
   - [zipAllSortedByKeyRight](#zipallsortedbykeyright)
   - [zipAllSortedByKeyWith](#zipallsortedbykeywith)
   - [zipAllWith](#zipallwith)
+  - [zipFlatten](#zipflatten)
   - [zipLatest](#ziplatest)
   - [zipLatestWith](#ziplatestwith)
   - [zipLeft](#zipleft)
@@ -873,6 +877,21 @@ Creates a stream from an effect producing a value of type `Iterable<A>`.
 
 ```ts
 export declare const fromIterableEffect: <R, E, A>(effect: Effect.Effect<R, E, Iterable<A>>) => Stream<R, E, A>
+```
+
+Added in v1.0.0
+
+## fromIteratorSucceed
+
+Creates a stream from an iterator
+
+**Signature**
+
+```ts
+export declare const fromIteratorSucceed: <A>(
+  iterator: IterableIterator<A>,
+  maxChunkSize?: number | undefined
+) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -4803,6 +4822,35 @@ export declare const scanReduceEffect: <A2, A, R2, E2>(
 
 Added in v1.0.0
 
+## schedule
+
+Schedules the output of the stream using the provided `schedule`.
+
+**Signature**
+
+```ts
+export declare const schedule: <R2, A>(
+  schedule: Schedule.Schedule<R2, A, unknown>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+```
+
+Added in v1.0.0
+
+## scheduleEither
+
+Schedules the output of the stream using the provided `schedule` and emits
+its output at the end (if `schedule` is finite).
+
+**Signature**
+
+```ts
+export declare const scheduleEither: <R2, A, B>(
+  schedule: Schedule.Schedule<R2, A, B>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>>
+```
+
+Added in v1.0.0
+
 ## scheduleWith
 
 Schedules the output of the stream using the provided `schedule` and emits
@@ -5402,6 +5450,23 @@ export declare const zipAllWith: <R2, E2, A2, A, A3>(
   right: (a2: A2) => A3,
   both: (a: A, a2: A2) => A3
 ) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+```
+
+Added in v1.0.0
+
+## zipFlatten
+
+Zips this stream with another point-wise and emits tuples of elements from
+both streams.
+
+The new stream will end when one of the sides ends.
+
+**Signature**
+
+```ts
+export declare const zipFlatten: <R2, E2, A2>(
+  that: Stream<R2, E2, A2>
+) => <R, E, A extends readonly any[]>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [...A, A2]>
 ```
 
 Added in v1.0.0

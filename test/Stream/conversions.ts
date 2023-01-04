@@ -31,7 +31,7 @@ describe.concurrent("Stream", () => {
       ))
       const expected = pipe(
         chunk,
-        Chunk.map(Take.singleton),
+        Chunk.map(Take.of),
         Chunk.append(Take.end)
       )
       assert.deepStrictEqual(Array.from(result), Array.from(expected))
@@ -57,7 +57,7 @@ describe.concurrent("Stream", () => {
       ))
       const expected = pipe(
         chunk,
-        Chunk.map(Take.singleton),
+        Chunk.map(Take.of),
         Chunk.append(Take.end)
       )
       assert.deepStrictEqual(Array.from(result), Array.from(expected))

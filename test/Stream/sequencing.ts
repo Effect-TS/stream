@@ -795,7 +795,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(
           Take.chunk(Chunk.make(1, 2)),
-          Take.singleton(3),
+          Take.of(3),
           Take.end
         ),
         Stream.flattenTake,
