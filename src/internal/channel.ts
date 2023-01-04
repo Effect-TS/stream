@@ -1418,7 +1418,7 @@ export const mergeWith = <
               >
             > => {
               const op = decision as mergeDecision.Primitive
-              if (op.op === MergeDecisionOpCodes.OP_DONE) {
+              if (op._tag === MergeDecisionOpCodes.OP_DONE) {
                 return Effect.succeed(
                   core.fromEffect(
                     pipe(
@@ -1490,7 +1490,7 @@ export const mergeWith = <
           OutElem | OutElem1,
           OutDone2 | OutDone3
         > => {
-          switch (state.op) {
+          switch (state._tag) {
             case MergeStateOpCodes.OP_BOTH_RUNNING: {
               const leftJoin = Effect.interruptible(Fiber.join(state.left))
               const rightJoin = Effect.interruptible(Fiber.join(state.right))
@@ -1865,7 +1865,7 @@ const interpretToPull = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   exec: executor.ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ): Effect.Effect<Env, OutErr, Either.Either<OutDone, OutElem>> => {
   const state = channelState as ChannelState.Primitive
-  switch (state.op) {
+  switch (state._tag) {
     case ChannelStateOpCodes.OP_DONE: {
       return pipe(
         exec.getDone(),

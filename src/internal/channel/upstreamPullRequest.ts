@@ -22,27 +22,15 @@ const proto = {
 /** @internal */
 export const Pulled = <A>(value: A): UpstreamPullRequest.UpstreamPullRequest<A> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_PULLED,
-      enumerable: true
-    },
-    value: {
-      value,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_PULLED },
+    value: { value }
   })
 
 /** @internal */
 export const NoUpstream = (activeDownstreamCount: number): UpstreamPullRequest.UpstreamPullRequest<never> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_NO_UPSTREAM,
-      enumerable: true
-    },
-    activeDownstreamCount: {
-      value: activeDownstreamCount,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_NO_UPSTREAM },
+    activeDownstreamCount: { value: activeDownstreamCount }
   })
 
 /** @internal */
@@ -54,14 +42,14 @@ export const isUpstreamPullRequest = (u: unknown): u is UpstreamPullRequest.Upst
 export const isPulled = <A>(
   self: UpstreamPullRequest.UpstreamPullRequest<A>
 ): self is UpstreamPullRequest.Pulled<A> => {
-  return self.op === OpCodes.OP_PULLED
+  return self._tag === OpCodes.OP_PULLED
 }
 
 /** @internal */
 export const isNoUpstream = <A>(
   self: UpstreamPullRequest.UpstreamPullRequest<A>
 ): self is UpstreamPullRequest.NoUpstream => {
-  return self.op === OpCodes.OP_NO_UPSTREAM
+  return self._tag === OpCodes.OP_NO_UPSTREAM
 }
 
 /** @internal */
@@ -70,7 +58,7 @@ export const match = <A, Z>(
   onNoUpstream: () => Z
 ) => {
   return (self: UpstreamPullRequest.UpstreamPullRequest<A>): Z => {
-    switch (self.op) {
+    switch (self._tag) {
       case OpCodes.OP_PULLED: {
         return onPulled(self.value)
       }

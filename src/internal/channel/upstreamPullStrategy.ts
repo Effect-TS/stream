@@ -23,14 +23,8 @@ const proto = {
 /** @internal */
 export const PullAfterNext = <A>(emitSeparator: Option.Option<A>): UpstreamPullStrategy.UpstreamPullStrategy<A> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_PULL_AFTER_NEXT,
-      enumerable: true
-    },
-    emitSeparator: {
-      value: emitSeparator,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_PULL_AFTER_NEXT },
+    emitSeparator: { value: emitSeparator }
   })
 
 /** @internal */
@@ -38,14 +32,8 @@ export const PullAfterAllEnqueued = <A>(
   emitSeparator: Option.Option<A>
 ): UpstreamPullStrategy.UpstreamPullStrategy<A> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_PULL_AFTER_ALL_ENQUEUED,
-      enumerable: true
-    },
-    emitSeparator: {
-      value: emitSeparator,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_PULL_AFTER_ALL_ENQUEUED },
+    emitSeparator: { value: emitSeparator }
   })
 
 /** @internal */
@@ -57,14 +45,14 @@ export const isUpstreamPullStrategy = (u: unknown): u is UpstreamPullStrategy.Up
 export const isPullAfterNext = <A>(
   self: UpstreamPullStrategy.UpstreamPullStrategy<A>
 ): self is UpstreamPullStrategy.PullAfterNext<A> => {
-  return self.op === OpCodes.OP_PULL_AFTER_NEXT
+  return self._tag === OpCodes.OP_PULL_AFTER_NEXT
 }
 
 /** @internal */
 export const isPullAfterAllEnqueued = <A>(
   self: UpstreamPullStrategy.UpstreamPullStrategy<A>
 ): self is UpstreamPullStrategy.PullAfterAllEnqueued<A> => {
-  return self.op === OpCodes.OP_PULL_AFTER_ALL_ENQUEUED
+  return self._tag === OpCodes.OP_PULL_AFTER_ALL_ENQUEUED
 }
 
 /** @internal */
@@ -73,7 +61,7 @@ export const match = <A, Z>(
   onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
 ) => {
   return (self: UpstreamPullStrategy.UpstreamPullStrategy<A>): Z => {
-    switch (self.op) {
+    switch (self._tag) {
       case OpCodes.OP_PULL_AFTER_NEXT: {
         return onPullAfterNext(self.emitSeparator)
       }

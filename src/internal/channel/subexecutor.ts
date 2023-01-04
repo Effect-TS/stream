@@ -21,25 +21,25 @@ export interface Subexecutor<R> {
 export type Primitive<Env> = PullFromChild<Env> | PullFromUpstream<Env> | DrainChildExecutors<Env> | Emit<Env>
 
 /** @internal */
-export const OP_PULL_FROM_CHILD = 0 as const
+export const OP_PULL_FROM_CHILD = "PullFromChild" as const
 
 /** @internal */
 export type OP_PULL_FROM_CHILD = typeof OP_PULL_FROM_CHILD
 
 /** @internal */
-export const OP_PULL_FROM_UPSTREAM = 1 as const
+export const OP_PULL_FROM_UPSTREAM = "PullFromUpstream" as const
 
 /** @internal */
 export type OP_PULL_FROM_UPSTREAM = typeof OP_PULL_FROM_UPSTREAM
 
 /** @internal */
-export const OP_DRAIN_CHILD_EXECUTORS = 2 as const
+export const OP_DRAIN_CHILD_EXECUTORS = "DrainChildExecutors" as const
 
 /** @internal */
 export type OP_DRAIN_CHILD_EXECUTORS = typeof OP_DRAIN_CHILD_EXECUTORS
 
 /** @internal */
-export const OP_EMIT = 3 as const
+export const OP_EMIT = "Emit" as const
 
 /** @internal */
 export type OP_EMIT = typeof OP_EMIT
@@ -51,7 +51,7 @@ export type OP_EMIT = typeof OP_EMIT
  * @internal
  */
 export class PullFromChild<R> implements Subexecutor<R> {
-  readonly op: OP_PULL_FROM_CHILD = OP_PULL_FROM_CHILD
+  readonly _tag: OP_PULL_FROM_CHILD = OP_PULL_FROM_CHILD
 
   constructor(
     readonly childExecutor: ErasedExecutor<R>,
@@ -91,7 +91,7 @@ export class PullFromChild<R> implements Subexecutor<R> {
  * @internal
  */
 export class PullFromUpstream<R> implements Subexecutor<R> {
-  readonly op: OP_PULL_FROM_UPSTREAM = OP_PULL_FROM_UPSTREAM
+  readonly _tag: OP_PULL_FROM_UPSTREAM = OP_PULL_FROM_UPSTREAM
 
   constructor(
     readonly upstreamExecutor: ErasedExecutor<R>,
@@ -163,7 +163,7 @@ export class PullFromUpstream<R> implements Subexecutor<R> {
  * @internal
  */
 export class DrainChildExecutors<R> implements Subexecutor<R> {
-  readonly op: OP_DRAIN_CHILD_EXECUTORS = OP_DRAIN_CHILD_EXECUTORS
+  readonly _tag: OP_DRAIN_CHILD_EXECUTORS = OP_DRAIN_CHILD_EXECUTORS
 
   constructor(
     readonly upstreamExecutor: ErasedExecutor<R>,
@@ -224,7 +224,7 @@ export class DrainChildExecutors<R> implements Subexecutor<R> {
 
 /** @internal */
 export class Emit<R> implements Subexecutor<R> {
-  readonly op: OP_EMIT = OP_EMIT
+  readonly _tag: OP_EMIT = OP_EMIT
 
   constructor(readonly value: unknown, readonly next: Subexecutor<R>) {
     Equal.considerByRef(this)

@@ -39,7 +39,7 @@ export declare namespace MergeStrategy {
  * @category models
  */
 export interface BackPressure extends MergeStrategy.Proto {
-  readonly op: 0
+  readonly _tag: "BackPressure"
 }
 
 /**
@@ -47,7 +47,7 @@ export interface BackPressure extends MergeStrategy.Proto {
  * @category models
  */
 export interface BufferSliding extends MergeStrategy.Proto {
-  readonly op: 1
+  readonly _tag: "BufferSliding"
 }
 
 /**

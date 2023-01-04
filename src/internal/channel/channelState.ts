@@ -41,8 +41,8 @@ export type Primitive =
   | Read
 
 /** @internal */
-export type Op<OpCode extends number, Body = {}> = ChannelState<never, never> & Body & {
-  readonly op: OpCode
+export type Op<Tag extends string, Body = {}> = ChannelState<never, never> & Body & {
+  readonly _tag: Tag
 }
 
 /** @internal */
@@ -70,31 +70,19 @@ export interface Read extends
 
 /** @internal */
 export const Done: ChannelState<never, never> = Object.create(proto, {
-  op: {
-    value: OpCodes.OP_DONE,
-    enumerable: true
-  }
+  _tag: { value: OpCodes.OP_DONE }
 })
 
 /** @internal */
 export const Emit: ChannelState<never, never> = Object.create(proto, {
-  op: {
-    value: OpCodes.OP_EMIT,
-    enumerable: true
-  }
+  _tag: { value: OpCodes.OP_EMIT }
 })
 
 /** @internal */
 export const FromEffect = <R, E, _>(effect: Effect.Effect<R, E, _>): ChannelState<R, E> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_FROM_EFFECT,
-      enumerable: true
-    },
-    effect: {
-      value: effect,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_FROM_EFFECT },
+    effect: { value: effect }
   })
 
 /** @internal */
@@ -105,26 +93,11 @@ export const Read = <R>(
   onDone: (exit: Exit.Exit<unknown, unknown>) => Effect.Effect<R, never, void> | undefined
 ): ChannelState<R, never> =>
   Object.create(proto, {
-    op: {
-      value: OpCodes.OP_READ,
-      enumerable: true
-    },
-    upstream: {
-      value: upstream,
-      enumerable: true
-    },
-    onEffect: {
-      value: onEffect,
-      enumerable: true
-    },
-    onEmit: {
-      value: onEmit,
-      enumerable: true
-    },
-    onDone: {
-      value: onDone,
-      enumerable: true
-    }
+    _tag: { value: OpCodes.OP_READ },
+    upstream: { value: upstream },
+    onEffect: { value: onEffect },
+    onEmit: { value: onEmit },
+    onDone: { value: onDone }
   })
 
 /** @internal */
@@ -134,22 +107,22 @@ export const isChannelState = (u: unknown): u is ChannelState<unknown, unknown> 
 
 /** @internal */
 export const isDone = <R, E>(self: ChannelState<R, E>): self is Done => {
-  return (self as Primitive).op === OpCodes.OP_DONE
+  return (self as Primitive)._tag === OpCodes.OP_DONE
 }
 
 /** @internal */
 export const isEmit = <R, E>(self: ChannelState<R, E>): self is Emit => {
-  return (self as Primitive).op === OpCodes.OP_EMIT
+  return (self as Primitive)._tag === OpCodes.OP_EMIT
 }
 
 /** @internal */
 export const isFromEffect = <R, E>(self: ChannelState<R, E>): self is FromEffect => {
-  return (self as Primitive).op === OpCodes.OP_FROM_EFFECT
+  return (self as Primitive)._tag === OpCodes.OP_FROM_EFFECT
 }
 
 /** @internal */
 export const isRead = <R, E>(self: ChannelState<R, E>): self is Read => {
-  return (self as Primitive).op === OpCodes.OP_READ
+  return (self as Primitive)._tag === OpCodes.OP_READ
 }
 
 /** @internal */
