@@ -55,7 +55,7 @@ export const isNoUpstream = <A>(
 /** @internal */
 export const match = <A, Z>(
   onPulled: (value: A) => Z,
-  onNoUpstream: () => Z
+  onNoUpstream: (activeDownstreamCount: number) => Z
 ) => {
   return (self: UpstreamPullRequest.UpstreamPullRequest<A>): Z => {
     switch (self._tag) {
@@ -63,7 +63,7 @@ export const match = <A, Z>(
         return onPulled(self.value)
       }
       case OpCodes.OP_NO_UPSTREAM: {
-        return onNoUpstream()
+        return onNoUpstream(self.activeDownstreamCount)
       }
     }
   }

@@ -51,6 +51,7 @@ export interface Pulled<A> extends UpstreamPullRequest.Variance<A> {
  */
 export interface NoUpstream extends UpstreamPullRequest.Variance<never> {
   readonly _tag: "NoUpstream"
+  readonly activeDownstreamCount: number
 }
 
 /**
@@ -100,5 +101,5 @@ export const isNoUpstream: <A>(self: UpstreamPullRequest<A>) => self is NoUpstre
  */
 export const match: <A, Z>(
   onPulled: (value: A) => Z,
-  onNoUpstream: () => Z
+  onNoUpstream: (activeDownstreamCount: number) => Z
 ) => (self: UpstreamPullRequest<A>) => Z = internal.match
