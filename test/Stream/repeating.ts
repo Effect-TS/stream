@@ -182,7 +182,7 @@ describe.concurrent("Stream", () => {
         const stream = Stream.repeatEffectWithSchedule(effect, schedule)
         return yield* $(pipe(
           Stream.runCollect(stream),
-          Effect.provideLayer(TestEnvironment.TestEnvironment)
+          Effect.provideLayer(TestEnvironment.testEnvironment())
         ))
       })
       const result = await Effect.unsafeRunPromise(effect)

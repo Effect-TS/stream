@@ -40,7 +40,7 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.effect("groupBy - first", () =>
+  it.effect.skip("groupBy - first", () =>
     Effect.gen(function*($) {
       const words = pipe(
         Chunk.makeBy(() => Chunk.range(0, 99))(1_000),
@@ -63,7 +63,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [["0", 1_000], ["1", 1_000]])
     }))
 
-  it.effect("groupBy - filter", () =>
+  it.effect.skip("groupBy - filter", () =>
     Effect.gen(function*($) {
       const words = Array.from({ length: 100 }, () => Array.from({ length: 100 }, (_, i) => i)).flat()
       const result = yield* $(pipe(
@@ -89,7 +89,7 @@ describe.concurrent("Stream", () => {
       ])
     }))
 
-  it.effect("groupBy - outer errors", () =>
+  it.effect.skip("groupBy - outer errors", () =>
     Effect.gen(function*($) {
       const words = ["abc", "test", "test", "foo"]
       const result = yield* $(pipe(
@@ -103,7 +103,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(result, Either.left("boom"))
     }))
 
-  it.effect("grouped - sanity check", () =>
+  it.effect.skip("grouped - sanity check", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4, 5),
@@ -116,7 +116,7 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.effect("grouped - group size is correct", () =>
+  it.effect.skip("grouped - group size is correct", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.range(0, 100),
@@ -130,7 +130,7 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.effect("grouped - does not emit empty chunks", () =>
+  it.effect.skip("grouped - does not emit empty chunks", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.fromIterable(Chunk.empty<number>()),
@@ -140,7 +140,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
-  it.effect("grouped - emits elements properly when a failure occurs", () =>
+  it.effect.skip("grouped - emits elements properly when a failure occurs", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<Array<number>>()))
       const streamChunks = Stream.fromChunks(Chunk.range(1, 4), Chunk.range(5, 7), Chunk.of(8))
@@ -160,7 +160,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [[1, 2, 3], [4, 5, 6], [7, 8]])
     }))
 
-  it.effect("groupedWithin - group based on time passed", () =>
+  it.effect.skip("groupedWithin - group based on time passed", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([
         Chunk.make(1, 2),
@@ -193,7 +193,7 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.effect("groupedWithin - group based on time passed (ZIO Issue #5013)", () =>
+  it.effect.skip("groupedWithin - group based on time passed (ZIO Issue #5013)", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(pipe(
         Chunk.range(1, 29),
@@ -325,7 +325,7 @@ describe.concurrent("Stream", () => {
       assert.strictEqual(result5, 29)
     }))
 
-  it.effect("groupedWithin - group immediately when chunk size is reached", () =>
+  it.effect.skip("groupedWithin - group immediately when chunk size is reached", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),

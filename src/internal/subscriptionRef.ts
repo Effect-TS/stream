@@ -50,7 +50,7 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
           )
         )
       ),
-      this.semaphore(1),
+      this.semaphore.withPermits(1),
       stream.unwrapScoped
     )
   }
@@ -73,7 +73,7 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
           Effect.zipLeft(pipe(this.hub, Hub.publish(a)))
         )
       ),
-      this.semaphore(1)
+      this.semaphore.withPermits(1)
     ).traced(trace)
   }
 }
@@ -117,6 +117,6 @@ export const set = <A>(value: A) => {
       self.ref,
       Ref.set(value),
       Effect.zipLeft(pipe(self.hub, Hub.publish(value))),
-      self.semaphore(1)
+      self.semaphore.withPermits(1)
     ).traced(trace)
 }

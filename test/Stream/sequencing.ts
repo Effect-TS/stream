@@ -16,16 +16,10 @@ import { assert, describe } from "vitest"
 
 const withPermitsScoped = (permits: number) =>
   (semaphore: Effect.Semaphore) =>
-    Effect.gen(function*($) {
-      const p = yield* $(Deferred.make<never, void>())
-      const q = yield* $(Effect.acquireRelease(Deferred.make<never, void>(), (d) => Deferred.succeed<void>(void 0)(d)))
-      yield* $(Effect.forkScoped(
-        semaphore(permits)(Effect.gen(function*($) {
-          yield* $(Deferred.succeed<void>(void 0)(p))
-          yield* $(Deferred.await(q))
-        }))
-      ))
-    })
+    Effect.acquireRelease(
+      semaphore.take(permits),
+      (n) => semaphore.release(n)
+    )
 
 describe.concurrent("Stream", () => {
   it.effect("branchAfter - switches streams", () =>
@@ -500,7 +494,7 @@ describe.concurrent("Stream", () => {
         }),
         Stream.runDrain
       ))
-      const result = yield* $(semaphore(1)(Ref.get(ref)))
+      const result = yield* $(semaphore.withPermits(1)(Ref.get(ref)))
       assert.isTrue(result)
     }))
 
@@ -529,7 +523,7 @@ describe.concurrent("Stream", () => {
       ))
       const result = yield* $(pipe(
         Ref.get(ref),
-        semaphore(4)
+        semaphore.withPermits(4)
       ))
       assert.strictEqual(result, 4)
     }))

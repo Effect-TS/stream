@@ -759,7 +759,9 @@ export const mapOutEffectPar = (n: number) => {
             )
           )
           const errorSignal = yield* $(Deferred.make<OutErr1, never>())
-          const permits = yield* $(Effect.makeSemaphore(n))
+          const withPermits = n === Number.POSITIVE_INFINITY ?
+            ((_: number) => identity) :
+            (yield* $(Effect.makeSemaphore(n))).withPermits
           const pull = yield* $(toPull(self))
           yield* $(
             pipe(
@@ -771,7 +773,7 @@ export const mapOutEffectPar = (n: number) => {
                     either,
                     Either.match(
                       (outDone) => {
-                        const lock = permits(n)
+                        const lock = withPermits(n)
                         return pipe(
                           lock(Effect.unit()),
                           Effect.interruptible,
@@ -811,7 +813,7 @@ export const mapOutEffectPar = (n: number) => {
                                   Effect.intoDeferred(deferred)
                                 )
                               ),
-                              permits(1),
+                              withPermits(1),
                               Effect.forkScoped
                             )
                           )
@@ -1025,7 +1027,9 @@ export const mergeAllWith = (
         )
         const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none))
         const errorSignal = yield* $(Deferred.make<never, void>())
-        const permits = yield* $(Effect.makeSemaphore(n))
+        const withPermits = n === Number.POSITIVE_INFINITY ?
+          ((_: number) => identity) :
+          (yield* $(Effect.makeSemaphore(n))).withPermits
         const pull = yield* $(toPull(channels))
         const evaluatePull = (
           pull: Effect.Effect<Env | Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem>>
@@ -1079,7 +1083,7 @@ export const mergeAllWith = (
                   pipe(
                     Deferred.await(errorSignal),
                     Effect.raceWith(
-                      permits(n)(Effect.unit()),
+                      withPermits(n)(Effect.unit()),
                       (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
                       (_, failureAwait) =>
                         pipe(
@@ -1122,7 +1126,7 @@ export const mergeAllWith = (
                               latch,
                               Deferred.succeed<void>(void 0),
                               Effect.zipRight(raceEffects),
-                              permits(1),
+                              withPermits(1),
                               Effect.forkScoped
                             )
                           )
@@ -1160,7 +1164,7 @@ export const mergeAllWith = (
                             latch,
                             Deferred.succeed<void>(void 0),
                             Effect.zipRight(raceEffects),
-                            permits(1),
+                            withPermits(1),
                             Effect.forkScoped
                           ))
                           yield* $(Deferred.await(latch))

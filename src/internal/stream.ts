@@ -1697,7 +1697,7 @@ export const distributedWithDynamic = <E, A, _>(
           )
           const finalize = (endTake: Exit.Exit<Option.Option<E>, never>): Effect.Effect<never, never, void> =>
             // Make sure that no queues are currently being added
-            queuesLock(1)(
+            queuesLock.withPermits(1)(
               pipe(
                 newQueue,
                 Ref.set(
@@ -1747,7 +1747,7 @@ export const distributedWithDynamic = <E, A, _>(
             ),
             Effect.forkScoped
           ))
-          return queuesLock(1)(
+          return queuesLock.withPermits(1)(
             Effect.flatten(Ref.get(newQueue))
           )
         })
