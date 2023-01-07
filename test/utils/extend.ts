@@ -14,7 +14,7 @@ export const it: API = V.it
 export const effect = (() => {
   const f = <E, A>(
     name: string,
-    self: () => Effect.Effect<TestEnvironment.TestEnvironment, E, A>,
+    self: () => Effect.Effect<never, E, A>,
     timeout = 5_000
   ) => {
     return it(
@@ -22,7 +22,7 @@ export const effect = (() => {
       () =>
         pipe(
           Effect.suspendSucceed(self),
-          Effect.provideLayer(TestEnvironment.TestEnvironment),
+          Effect.provideLayer(TestEnvironment.testEnvironment()),
           Effect.unsafeRunPromise
         ),
       timeout
@@ -31,7 +31,7 @@ export const effect = (() => {
   return Object.assign(f, {
     skip: <E, A>(
       name: string,
-      self: () => Effect.Effect<TestEnvironment.TestEnvironment, E, A>,
+      self: () => Effect.Effect<never, E, A>,
       timeout = 5_000
     ) => {
       return it.skip(
@@ -39,7 +39,7 @@ export const effect = (() => {
         () =>
           pipe(
             Effect.suspendSucceed(self),
-            Effect.provideLayer(TestEnvironment.TestEnvironment),
+            Effect.provideLayer(TestEnvironment.testEnvironment()),
             Effect.unsafeRunPromise
           ),
         timeout
@@ -47,7 +47,7 @@ export const effect = (() => {
     },
     only: <E, A>(
       name: string,
-      self: () => Effect.Effect<TestEnvironment.TestEnvironment, E, A>,
+      self: () => Effect.Effect<never, E, A>,
       timeout = 5_000
     ) => {
       return it.only(
@@ -55,7 +55,7 @@ export const effect = (() => {
         () =>
           pipe(
             Effect.suspendSucceed(self),
-            Effect.provideLayer(TestEnvironment.TestEnvironment),
+            Effect.provideLayer(TestEnvironment.testEnvironment()),
             Effect.unsafeRunPromise
           ),
         timeout
@@ -99,7 +99,7 @@ export const flakyTest = <R, E, A>(
 
 export const scoped = <E, A>(
   name: string,
-  self: () => Effect.Effect<Scope.Scope | TestEnvironment.TestEnvironment, E, A>,
+  self: () => Effect.Effect<Scope.Scope, E, A>,
   timeout = 5_000
 ) => {
   return it(
@@ -108,7 +108,7 @@ export const scoped = <E, A>(
       pipe(
         Effect.suspendSucceed(self),
         Effect.scoped,
-        Effect.provideLayer(TestEnvironment.TestEnvironment),
+        Effect.provideLayer(TestEnvironment.testEnvironment()),
         Effect.unsafeRunPromise
       ),
     timeout

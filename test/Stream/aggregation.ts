@@ -3,8 +3,8 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as Live from "@effect/io/internal/testing/live"
 import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestServices from "@effect/io/internal/testing/testServices"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
@@ -161,11 +161,11 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.fork
       ))
-      yield* $(Live.live(Effect.sleep(Duration.seconds(1))))
+      yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
       yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(1, 2, 3, 4, 5)))))
-      yield* $(Live.live(Effect.sleep(Duration.seconds(1))))
+      yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
       yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(6, 7, 8, 9, 10)))))
-      yield* $(Live.live(Effect.sleep(Duration.seconds(1))))
+      yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
       yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(11, 12, 13, 14, 15)))))
       yield* $(pipe(queue, Queue.offer(Take.end)))
       const result = yield* $(pipe(
