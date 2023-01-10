@@ -75,7 +75,7 @@ Added in v1.0.0
 
 ```ts
 export interface BackPressure extends MergeStrategy.Proto {
-  readonly op: 0
+  readonly _tag: 'BackPressure'
 }
 ```
 
@@ -87,7 +87,7 @@ Added in v1.0.0
 
 ```ts
 export interface BufferSliding extends MergeStrategy.Proto {
-  readonly op: 1
+  readonly _tag: 'BufferSliding'
 }
 ```
 

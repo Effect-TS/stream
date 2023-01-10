@@ -64,7 +64,7 @@ Folds an `UpstreamPullRequest<A>` into a value of type `Z`.
 ```ts
 export declare const match: <A, Z>(
   onPulled: (value: A) => Z,
-  onNoUpstream: () => Z
+  onNoUpstream: (activeDownstreamCount: number) => Z
 ) => (self: UpstreamPullRequest<A>) => Z
 ```
 
@@ -78,7 +78,8 @@ Added in v1.0.0
 
 ```ts
 export interface NoUpstream extends UpstreamPullRequest.Variance<never> {
-  readonly op: 1
+  readonly _tag: 'NoUpstream'
+  readonly activeDownstreamCount: number
 }
 ```
 
@@ -90,7 +91,7 @@ Added in v1.0.0
 
 ```ts
 export interface Pulled<A> extends UpstreamPullRequest.Variance<A> {
-  readonly op: 0
+  readonly _tag: 'Pulled'
   readonly value: A
 }
 ```
