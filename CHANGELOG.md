@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.11
+
+### Patch Changes
+
+- [#29](https://github.com/Effect-TS/stream/pull/29) [`e2db3a0`](https://github.com/Effect-TS/stream/commit/e2db3a08f16987fc951595e4627ca7b097aebd45) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - update effect/io
+
 ## 0.0.10
 
 ### Patch Changes
