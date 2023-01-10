@@ -105,7 +105,7 @@ next substream
 
 ```ts
 export interface Close extends ChildExecutorDecision.Proto {
-  readonly op: 1
+  readonly _tag: 'Close'
   readonly value: unknown
 }
 ```
@@ -120,7 +120,7 @@ Continue executing the current substream
 
 ```ts
 export interface Continue extends ChildExecutorDecision.Proto {
-  readonly op: 0
+  readonly _tag: 'Continue'
 }
 ```
 
@@ -135,7 +135,7 @@ from upstream, or yields to an already created active substream.
 
 ```ts
 export interface Yield extends ChildExecutorDecision.Proto {
-  readonly op: 2
+  readonly _tag: 'Yield'
 }
 ```
 

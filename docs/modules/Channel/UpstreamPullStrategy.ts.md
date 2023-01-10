@@ -78,7 +78,7 @@ Added in v1.0.0
 
 ```ts
 export interface PullAfterAllEnqueued<A> extends UpstreamPullStrategy.Variance<A> {
-  readonly op: 1
+  readonly _tag: 'PullAfterAllEnqueued'
   readonly emitSeparator: Option.Option<A>
 }
 ```
@@ -91,7 +91,7 @@ Added in v1.0.0
 
 ```ts
 export interface PullAfterNext<A> extends UpstreamPullStrategy.Variance<A> {
-  readonly op: 0
+  readonly _tag: 'PullAfterNext'
   readonly emitSeparator: Option.Option<A>
 }
 ```

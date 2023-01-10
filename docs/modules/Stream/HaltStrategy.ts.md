@@ -100,7 +100,7 @@ Added in v1.0.0
 
 ```ts
 export interface Both {
-  readonly op: 2
+  readonly _tag: 'Both'
 }
 ```
 
@@ -112,7 +112,7 @@ Added in v1.0.0
 
 ```ts
 export interface Either {
-  readonly op: 3
+  readonly _tag: 'Either'
 }
 ```
 
@@ -134,7 +134,7 @@ Added in v1.0.0
 
 ```ts
 export interface Left {
-  readonly op: 0
+  readonly _tag: 'Left'
 }
 ```
 
@@ -146,7 +146,7 @@ Added in v1.0.0
 
 ```ts
 export interface Right {
-  readonly op: 1
+  readonly _tag: 'Right'
 }
 ```
 
