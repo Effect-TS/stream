@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.0.12
+
+### Patch Changes
+
+- [#31](https://github.com/Effect-TS/stream/pull/31) [`34db20e`](https://github.com/Effect-TS/stream/commit/34db20e6daecb22e863d928c7fc500767b52d60f) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Update build scripts
+
 ## 0.0.11
 
 ### Patch Changes
