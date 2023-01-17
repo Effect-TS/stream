@@ -112,6 +112,7 @@ export type ChannelExceptionTypeId = typeof ChannelExceptionTypeId
  * @category models
  */
 export interface ChannelException<E> {
+  readonly _tag: "ChannelException"
   readonly [ChannelExceptionTypeId]: ChannelExceptionTypeId
   readonly error: E
 }

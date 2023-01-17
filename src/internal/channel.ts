@@ -2123,6 +2123,7 @@ export const ChannelExceptionTypeId: Channel.ChannelExceptionTypeId = Symbol.for
 
 /** @internal */
 export const ChannelException = <E>(error: E): Channel.ChannelException<E> => ({
+  _tag: "ChannelException",
   [ChannelExceptionTypeId]: ChannelExceptionTypeId,
   error
 })
