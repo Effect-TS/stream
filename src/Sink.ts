@@ -409,41 +409,41 @@ export const ensuringWith: <E, Z, R2, _>(
 ) => <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E, In, L, Z> = internal.ensuringWith
 
 /**
- * Accesses the whole environment of the sink.
+ * Accesses the whole context of the sink.
  *
  * @since 1.0.0
  * @category constructors
  */
-export const environment: <R>() => Sink<R, never, unknown, never, Context.Context<R>> = internal.environment
+export const context: <R>() => Sink<R, never, unknown, never, Context.Context<R>> = internal.context
 
 /**
- * Accesses the environment of the sink.
+ * Accesses the context of the sink.
  *
  * @since 1.0.0
  * @category constructors
  */
-export const environmentWith: <R, Z>(f: (environment: Context.Context<R>) => Z) => Sink<R, never, unknown, never, Z> =
-  internal.environmentWith
+export const contextWith: <R, Z>(f: (context: Context.Context<R>) => Z) => Sink<R, never, unknown, never, Z> =
+  internal.contextWith
 
 /**
- * Accesses the environment of the sink in the context of an effect.
+ * Accesses the context of the sink in the context of an effect.
  *
  * @since 1.0.0
  * @category constructors
  */
-export const environmentWithEffect: <R, R2, E, Z>(
-  f: (environment: Context.Context<R>) => Effect.Effect<R2, E, Z>
-) => Sink<R | R2, E, unknown, never, Z> = internal.environmentWithEffect
+export const contextWithEffect: <R, R2, E, Z>(
+  f: (context: Context.Context<R>) => Effect.Effect<R2, E, Z>
+) => Sink<R | R2, E, unknown, never, Z> = internal.contextWithEffect
 
 /**
- * Accesses the environment of the sink in the context of a sink.
+ * Accesses the context of the sink in the context of a sink.
  *
  * @since 1.0.0
  * @category constructors
  */
-export const environmentWithSink: <R0, R, E, In, L, Z>(
-  f: (environment: Context.Context<R0>) => Sink<R, E, In, L, Z>
-) => Sink<R0 | R, E, In, L, Z> = internal.environmentWithSink
+export const contextWithSink: <R0, R, E, In, L, Z>(
+  f: (context: Context.Context<R0>) => Sink<R, E, In, L, Z>
+) => Sink<R0 | R, E, In, L, Z> = internal.contextWithSink
 
 /**
  * A sink that returns whether all elements satisfy the specified predicate.
@@ -1179,15 +1179,15 @@ export const orElse: <R2, E2, In2, L2, Z2>(
 ) => <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z2 | Z> = internal.orElse
 
 /**
- * Provides the sink with its required environment, which eliminates its
+ * Provides the sink with its required context, which eliminates its
  * dependency on `R`.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const provideEnvironment: <R>(
-  environment: Context.Context<R>
-) => <E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<never, E, In, L, Z> = internal.provideEnvironment
+export const provideContext: <R>(
+  context: Context.Context<R>
+) => <E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<never, E, In, L, Z> = internal.provideContext
 
 /**
  * Runs both sinks in parallel on the input, , returning the result or the
@@ -1245,28 +1245,28 @@ export const refineOrDieWith: <E, E2>(
 ) => <R, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E2, In, L, Z> = internal.refineOrDieWith
 
 /**
- * Accesses the specified service in the environment of the effect.
+ * Accesses the specified service in the context of the effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const service: <T>(tag: Context.Tag<T>) => Sink<T, never, unknown, never, T> = internal.service
 
 /**
- * Accesses the specified service in the environment of the sink.
+ * Accesses the specified service in the context of the sink.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWith: <T>(tag: Context.Tag<T>) => <Z>(f: (service: T) => Z) => Sink<T, never, unknown, never, Z> =
   internal.serviceWith
 
 /**
- * Accesses the specified service in the environment of the sink in the
+ * Accesses the specified service in the context of the sink in the
  * context of an effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWithEffect: <T>(
   tag: Context.Tag<T>
@@ -1274,11 +1274,11 @@ export const serviceWithEffect: <T>(
   internal.serviceWithEffect
 
 /**
- * Accesses the specified service in the environment of the sink in the
+ * Accesses the specified service in the context of the sink in the
  * context of a sink.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWithSink: <T>(
   tag: Context.Tag<T>

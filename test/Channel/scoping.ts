@@ -13,8 +13,8 @@ describe.concurrent("Channel", () => {
     const latch = Deferred.unsafeMake<never, void>(FiberId.none)
     const program = Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const acquire = pipe(ref, Ref.update((n) => n + 1), Effect.zipRight(Effect.yieldNow()))
-      const release = pipe(ref, Ref.update((n) => n - 1))
+      const acquire = pipe(Ref.update(ref, (n) => n + 1), Effect.zipRight(Effect.yieldNow()))
+      const release = Ref.update(ref, (n) => n - 1)
       yield* $(
         pipe(
           Channel.acquireReleaseOut(acquire, () => release),
@@ -28,7 +28,7 @@ describe.concurrent("Channel", () => {
       return yield* $(Ref.get(ref))
     })
     const result = await Effect.unsafeRunPromise(program)
-    await Effect.unsafeRunPromise(pipe(latch, Deferred.succeed<void>(void 0)))
+    await Effect.unsafeRunPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
   }, 20_000)
 
@@ -36,8 +36,8 @@ describe.concurrent("Channel", () => {
     const latch = Deferred.unsafeMake<never, void>(FiberId.none)
     const program = Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const acquire = pipe(ref, Ref.update((n) => n + 1), Effect.zipRight(Effect.yieldNow()))
-      const release = pipe(ref, Ref.update((n) => n - 1))
+      const acquire = pipe(Ref.update(ref, (n) => n + 1), Effect.zipRight(Effect.yieldNow()))
+      const release = Ref.update(ref, (n) => n - 1)
       const scoped = Effect.acquireRelease(acquire, () => release)
       yield* $(pipe(
         Channel.unwrapScoped(pipe(scoped, Effect.as(Channel.fromEffect(Deferred.await(latch))))),
@@ -49,7 +49,7 @@ describe.concurrent("Channel", () => {
       return yield* $(Ref.get(ref))
     })
     const result = await Effect.unsafeRunPromise(program)
-    await Effect.unsafeRunPromise(pipe(latch, Deferred.succeed<void>(void 0)))
+    await Effect.unsafeRunPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
   }, 20_000)
 })

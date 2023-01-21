@@ -24,7 +24,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const stream = pipe(
         Stream.make(1),
-        Stream.concat(Stream.drain(Stream.fromEffect(pipe(ref, Ref.set(true))))),
+        Stream.concat(Stream.drain(Stream.fromEffect(Ref.set(ref, true)))),
         Stream.take(0)
       )
       yield* $(Stream.runDrain(stream))

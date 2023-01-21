@@ -42,7 +42,7 @@ export type StreamTypeId = typeof StreamTypeId
 /**
  * A `Stream<R, E, A>` is a description of a program that, when evaluated, may
  * emit zero or more values of type `A`, may fail with errors of type `E`, and
- * uses an environment of type `R`. One way to think of `Stream` is as a
+ * uses an context of type `R`. One way to think of `Stream` is as a
  * `Effect` program that could emit multiple values.
  *
  * `Stream` is a purely functional *pull* based stream. Pull based streams offer
@@ -952,41 +952,40 @@ export const ensuring: <R2, _>(
 ) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A> = internal.ensuring
 
 /**
- * Accesses the whole environment of the stream.
+ * Accesses the whole context of the stream.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environment: <R>() => Stream<R, never, Context.Context<R>> = internal.environment
+export const context: <R>() => Stream<R, never, Context.Context<R>> = internal.context
 
 /**
- * Accesses the environment of the stream.
+ * Accesses the context of the stream.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environmentWith: <R, A>(f: (env: Context.Context<R>) => A) => Stream<R, never, A> =
-  internal.environmentWith
+export const contextWith: <R, A>(f: (env: Context.Context<R>) => A) => Stream<R, never, A> = internal.contextWith
 
 /**
- * Accesses the environment of the stream in the context of an effect.
+ * Accesses the context of the stream in the context of an effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environmentWithEffect: <R0, R, E, A>(
+export const contextWithEffect: <R0, R, E, A>(
   f: (env: Context.Context<R0>) => Effect.Effect<R, E, A>
-) => Stream<R0 | R, E, A> = internal.environmentWithEffect
+) => Stream<R0 | R, E, A> = internal.contextWithEffect
 
 /**
- * Accesses the environment of the stream in the context of a stream.
+ * Accesses the context of the stream in the context of a stream.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environmentWithStream: <R0, R, E, A>(
+export const contextWithStream: <R0, R, E, A>(
   f: (env: Context.Context<R0>) => Stream<R, E, A>
-) => Stream<R0 | R, E, A> = internal.environmentWithStream
+) => Stream<R0 | R, E, A> = internal.contextWithStream
 
 /**
  * Creates a stream that executes the specified effect but emits no elements.
@@ -2466,21 +2465,21 @@ export const pipeThroughChannelOrFail: <R2, E, E2, A, A2>(
 export const prepend: <A>(values: Chunk.Chunk<A>) => Stream<never, never, A> = internal.prepend
 
 /**
- * Provides the stream with its required environment, which eliminates its
+ * Provides the stream with its required context, which eliminates its
  * dependency on `R`.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const provideEnvironment: <R>(
-  environment: Context.Context<R>
-) => <E, A>(self: Stream<R, E, A>) => Stream<never, E, A> = internal.provideEnvironment
+export const provideContext: <R>(
+  context: Context.Context<R>
+) => <E, A>(self: Stream<R, E, A>) => Stream<never, E, A> = internal.provideContext
 
 /**
  * Provides a `Layer` to the stream, which translates it to another level.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideLayer: <RIn, E2, ROut>(
   layer: Layer.Layer<RIn, E2, ROut>
@@ -2488,10 +2487,10 @@ export const provideLayer: <RIn, E2, ROut>(
 
 /**
  * Provides the stream with the single service it requires. If the stream
- * requires more than one service use `Stream.provideEnvironment` instead.
+ * requires more than one service use `Stream.provideContext` instead.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideService: <T>(
   tag: Context.Tag<T>
@@ -2499,10 +2498,10 @@ export const provideService: <T>(
 
 /**
  * Provides the stream with the single service it requires. If the stream
- * requires more than one service use `Stream.provideEnvironment` instead.
+ * requires more than one service use `Stream.provideContext` instead.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideServiceEffect: <T>(
   tag: Context.Tag<T>
@@ -2512,10 +2511,10 @@ export const provideServiceEffect: <T>(
 
 /**
  * Provides the stream with the single service it requires. If the stream
- * requires more than one service use `Stream.provideEnvironment` instead.
+ * requires more than one service use `Stream.provideContext` instead.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideServiceStream: <T>(
   tag: Context.Tag<T>
@@ -2523,22 +2522,22 @@ export const provideServiceStream: <T>(
   internal.provideServiceStream
 
 /**
- * Transforms the environment being provided to the stream with the specified
+ * Transforms the context being provided to the stream with the specified
  * function.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const provideSomeEnvironment: <R0, R>(
+export const contramapContext: <R0, R>(
   f: (env: Context.Context<R0>) => Context.Context<R>
-) => <E, A>(self: Stream<R, E, A>) => Stream<R0, E, A> = internal.provideSomeEnvironment
+) => <E, A>(self: Stream<R, E, A>) => Stream<R0, E, A> = internal.contramapContext
 
 /**
- * Splits the environment into two parts, providing one part using the
+ * Splits the context into two parts, providing one part using the
  * specified layer and leaving the remainder `R0`.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideSomeLayer: <RIn, E2, ROut>(
   layer: Layer.Layer<RIn, E2, ROut>
@@ -3175,39 +3174,39 @@ export const scoped: <R, E, A>(effect: Effect.Effect<Scope.Scope | R, E, A>) => 
   internal.scoped
 
 /**
- * Accesses the specified service in the environment of the effect.
+ * Accesses the specified service in the context of the effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const service: <T>(tag: Context.Tag<T>) => Stream<T, never, T> = internal.service
 
 /**
- * Accesses the specified service in the environment of the stream.
+ * Accesses the specified service in the context of the stream.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWith: <T>(tag: Context.Tag<T>) => <A>(f: (service: T) => A) => Stream<T, never, A> =
   internal.serviceWith
 
 /**
- * Accesses the specified service in the environment of the stream in the
+ * Accesses the specified service in the context of the stream in the
  * context of an effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWithEffect: <T>(
   tag: Context.Tag<T>
 ) => <R, E, A>(f: (service: T) => Effect.Effect<R, E, A>) => Stream<T | R, E, A> = internal.serviceWithEffect
 
 /**
- * Accesses the specified service in the environment of the stream in the
+ * Accesses the specified service in the context of the stream in the
  * context of a stream.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWithStream: <T>(
   tag: Context.Tag<T>
@@ -3708,10 +3707,10 @@ export const unwrapScoped: <R, E, R2, E2, A>(
 ) => Stream<Exclude<R | Scope.Scope, Scope.Scope> | R2, E | E2, A> = internal.unwrapScoped
 
 /**
- * Updates the specified service within the environment of the `Stream`.
+ * Updates the specified service within the context of the `Stream`.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const updateService = internal.updateService
 

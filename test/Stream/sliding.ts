@@ -125,7 +125,7 @@ describe.concurrent("Stream", () => {
       )
       const either = yield* $(pipe(
         stream,
-        Stream.mapEffect((chunk) => pipe(ref, Ref.update(Chunk.append(chunk)))),
+        Stream.mapEffect((chunk) => Ref.update(ref, Chunk.append(chunk))),
         Stream.runCollect,
         Effect.either
       ))

@@ -7,12 +7,12 @@ import { pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Sink", () => {
-  it.effect("environmentWithSink", () =>
+  it.effect("contextWithSink", () =>
     Effect.gen(function*($) {
       const tag = Context.Tag<string>()
       const sink = pipe(
-        Sink.environmentWithSink((env: Context.Context<string>) => Sink.succeed(pipe(env, Context.get(tag)))),
-        Sink.provideEnvironment(pipe(Context.empty(), Context.add(tag)("use this")))
+        Sink.contextWithSink((env: Context.Context<string>) => Sink.succeed(pipe(env, Context.get(tag)))),
+        Sink.provideContext(pipe(Context.empty(), Context.add(tag)("use this")))
       )
       const result = yield* $(pipe(Stream.make("ignore this"), Stream.run(sink)))
       assert.strictEqual(result, "use this")

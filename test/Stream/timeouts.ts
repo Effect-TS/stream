@@ -127,24 +127,20 @@ describe.concurrent("Stream", () => {
         Effect.fork
       ))
       yield* $(pipe(
-        queue1,
-        Queue.offer(1),
+        Queue.offer(queue1, 1),
         Effect.zipRight(TestClock.adjust(Duration.seconds(1)))
       ))
       yield* $(pipe(
-        queue1,
-        Queue.offer(2),
+        Queue.offer(queue1, 2),
         Effect.zipRight(TestClock.adjust(Duration.seconds(3)))
       ))
-      yield* $(pipe(queue1, Queue.offer(3)))
+      yield* $(Queue.offer(queue1, 3))
       yield* $(pipe(
-        queue2,
-        Queue.offer(4),
+        Queue.offer(queue2, 4),
         Effect.zipRight(TestClock.adjust(Duration.seconds(3)))
       ))
       yield* $(pipe(
-        queue2,
-        Queue.offer(5),
+        Queue.offer(queue2, 5),
         Effect.zipRight(Queue.shutdown(queue2))
       ))
       const result = yield* $(Fiber.join(fiber))

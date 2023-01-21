@@ -68,7 +68,6 @@ export class StreamImpl<R, E, A> implements Stream.Stream<R, E, A> {
   constructor(
     readonly channel: Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
   ) {
-    Equal.considerByRef(this)
   }
 }
 
@@ -151,13 +150,11 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
           )
         const handoffConsumer: Channel.Channel<never, unknown, unknown, unknown, E | E2, Chunk.Chunk<A | A2>, void> =
           pipe(
-            sinkLeftovers,
-            Ref.getAndSet(Chunk.empty()),
+            Ref.getAndSet(sinkLeftovers, Chunk.empty()),
             Effect.flatMap((leftovers) => {
               if (Chunk.isNonEmpty(leftovers)) {
                 return pipe(
-                  consumed,
-                  Ref.set(true),
+                  Ref.set(consumed, true),
                   Effect.zipRight(Effect.succeed(pipe(
                     core.write(leftovers),
                     core.flatMap(() => handoffConsumer)
@@ -170,7 +167,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                   switch (signal._tag) {
                     case HandoffSignal.OP_EMIT: {
                       return pipe(
-                        core.fromEffect(pipe(consumed, Ref.set(true))),
+                        core.fromEffect(Ref.set(consumed, true)),
                         channel.zipRight(core.write(signal.elements)),
                         channel.zipRight(core.fromEffect(Ref.get(endAfterEmit))),
                         core.flatMap((bool) => bool ? core.unit() : handoffConsumer)
@@ -187,17 +184,15 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                             bool ?
                               core.fromEffect(
                                 pipe(
-                                  sinkEndReason,
-                                  Ref.set(SinkEndReason.SchedulEnd),
-                                  Effect.zipRight(pipe(endAfterEmit, Ref.set(true)))
+                                  Ref.set(sinkEndReason, SinkEndReason.SchedulEnd),
+                                  Effect.zipRight(Ref.set(endAfterEmit, true))
                                 )
                               ) :
                               pipe(
                                 core.fromEffect(
                                   pipe(
-                                    sinkEndReason,
-                                    Ref.set(SinkEndReason.SchedulEnd),
-                                    Effect.zipRight(pipe(endAfterEmit, Ref.set(true)))
+                                    Ref.set(sinkEndReason, SinkEndReason.SchedulEnd),
+                                    Effect.zipRight(Ref.set(endAfterEmit, true))
                                   )
                                 ),
                                 core.flatMap(() => handoffConsumer)
@@ -207,9 +202,8 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                         )
                       }
                       return pipe(
-                        sinkEndReason,
-                        Ref.set<SinkEndReason.SinkEndReason>(signal.reason),
-                        Effect.zipRight(pipe(endAfterEmit, Ref.set(true))),
+                        Ref.set<SinkEndReason.SinkEndReason>(sinkEndReason, signal.reason),
+                        Effect.zipRight(Ref.set(endAfterEmit, true)),
                         core.fromEffect
                       )
                     }
@@ -227,9 +221,8 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
           scope: Scope.Scope
         ): Channel.Channel<R2 | R3, unknown, unknown, unknown, E | E2, Chunk.Chunk<Either.Either<C, B>>, unknown> => {
           const forkSink = pipe(
-            consumed,
-            Ref.set(false),
-            Effect.zipRight(pipe(endAfterEmit, Ref.set(false))),
+            Ref.set(consumed, false),
+            Effect.zipRight(Ref.set(endAfterEmit, false)),
             Effect.zipRight(
               pipe(
                 handoffConsumer,
@@ -246,8 +239,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
             c: Option.Option<C>
           ): Channel.Channel<R2 | R3, unknown, unknown, unknown, E | E2, Chunk.Chunk<Either.Either<C, B>>, unknown> =>
             pipe(
-              sinkLeftovers,
-              Ref.set(Chunk.flatten(leftovers)),
+              Ref.set(sinkLeftovers, Chunk.flatten(leftovers)),
               Effect.zipRight(
                 pipe(
                   Ref.get(sinkEndReason),
@@ -437,7 +429,7 @@ export const asyncEffect = <R, E, A>(
               emit.make((k) =>
                 pipe(
                   _take.fromPull(k),
-                  Effect.flatMap((take) => pipe(output, Queue.offer(take))),
+                  Effect.flatMap((take) => Queue.offer(output, take)),
                   Effect.asUnit,
                   runtime.unsafeRunPromiseExit
                 ).then((exit) => {
@@ -495,7 +487,7 @@ export const asyncInterrupt = <R, E, A>(
                 emit.make((k) =>
                   pipe(
                     _take.fromPull(k),
-                    Effect.flatMap((take) => pipe(output, Queue.offer(take))),
+                    Effect.flatMap((take) => Queue.offer(output, take)),
                     Effect.asUnit,
                     runtime.unsafeRunPromiseExit
                   ).then((exit) => {
@@ -565,7 +557,7 @@ export const asyncScoped = <R, E, A>(
               emit.make((k) =>
                 pipe(
                   _take.fromPull(k),
-                  Effect.flatMap((take) => pipe(output, Queue.offer(take))),
+                  Effect.flatMap((take) => Queue.offer(output, take)),
                   Effect.asUnit,
                   runtime.unsafeRunPromiseExit
                 ).then((exit) => {
@@ -589,8 +581,7 @@ export const asyncScoped = <R, E, A>(
                       Effect.flatMap(_take.done),
                       Effect.onError(() =>
                         pipe(
-                          ref,
-                          Ref.set(true),
+                          Ref.set(ref, true),
                           Effect.zipRight(Queue.shutdown(output))
                         )
                       )
@@ -833,9 +824,8 @@ const bufferSignal = <R, E, A>(
         Effect.zipRight(Deferred.make<never, void>()),
         Effect.flatMap((deferred) =>
           pipe(
-            queue,
-            Queue.offer([take, deferred] as const),
-            Effect.zipRight(pipe(ref, Ref.set(deferred))),
+            Queue.offer(queue, [take, deferred] as const),
+            Effect.zipRight(Ref.set(ref, deferred)),
             Effect.zipRight(Deferred.await(deferred))
           )
         ),
@@ -848,9 +838,8 @@ const bufferSignal = <R, E, A>(
           Deferred.make<never, void>(),
           Effect.flatMap((deferred) =>
             pipe(
-              queue,
-              Queue.offer([_take.chunk(input), deferred] as const),
-              Effect.flatMap((added) => pipe(ref, Ref.set(deferred), Effect.when(() => added)))
+              Queue.offer(queue, [_take.chunk(input), deferred] as const),
+              Effect.flatMap((added) => pipe(Ref.set(ref, deferred), Effect.when(() => added)))
             )
           ),
           Effect.asUnit,
@@ -868,7 +857,7 @@ const bufferSignal = <R, E, A>(
       core.fromEffect(Queue.take(queue)),
       core.flatMap(([take, deferred]) =>
         pipe(
-          core.fromEffect(pipe(deferred, Deferred.succeed<void>(void 0))),
+          core.fromEffect(Deferred.succeed<never, void>(deferred, void 0)),
           channel.zipRight(
             pipe(
               take,
@@ -890,7 +879,7 @@ const bufferSignal = <R, E, A>(
       Effect.flatMap((queue) =>
         pipe(
           Deferred.make<never, void>(),
-          Effect.tap((start) => pipe(start, Deferred.succeed<void>(void 0))),
+          Effect.tap((start) => Deferred.succeed<never, void>(start, void 0)),
           Effect.flatMap((start) =>
             pipe(
               Ref.make(start),
@@ -1558,7 +1547,7 @@ export const distributedWith = <N extends number, A>(
           distributedWithDynamic(
             maximumLag,
             (a) => pipe(Deferred.await(deferred), Effect.flatMap((f) => f(a))),
-            Effect.unit
+            () => Effect.unit()
           ),
           Effect.flatMap((next) =>
             pipe(
@@ -1581,13 +1570,11 @@ export const distributedWith = <N extends number, A>(
                   )
                 )
                 return pipe(
-                  deferred,
-                  Deferred.succeed((a: A) =>
+                  Deferred.succeed(deferred, (a: A) =>
                     pipe(
                       decide(a),
                       Effect.map((f) => (key: number) => pipe(f(mappings.get(key)!)))
-                    )
-                  ),
+                    )),
                   Effect.as(
                     Array.from(queues) as Stream.Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>
                   )
@@ -1644,8 +1631,7 @@ export const distributedWithDynamic = <E, A, _>(
                       Effect.reduce(Chunk.empty<number>(), (acc, [id, queue]) => {
                         if (shouldProcess(id)) {
                           return pipe(
-                            queue,
-                            Queue.offer(Exit.succeed(a)),
+                            Queue.offer(queue, Exit.succeed(a)),
                             Effect.matchCauseEffect(
                               (cause) =>
                                 // Ignore all downstream queues that were shut
@@ -1662,8 +1648,7 @@ export const distributedWithDynamic = <E, A, _>(
                       Effect.flatMap((ids) => {
                         if (Chunk.isNonEmpty(ids)) {
                           return pipe(
-                            queuesRef,
-                            Ref.update((map) => {
+                            Ref.update(queuesRef, (map) => {
                               for (const id of ids) {
                                 map.delete(id)
                               }
@@ -1687,8 +1672,7 @@ export const distributedWithDynamic = <E, A, _>(
                 Effect.flatMap((queue) => {
                   const id = newDistributedWithDynamicId()
                   return pipe(
-                    queuesRef,
-                    Ref.update((map) => map.set(id, queue)),
+                    Ref.update(queuesRef, (map) => map.set(id, queue)),
                     Effect.as([id, queue] as const)
                   )
                 })
@@ -1699,17 +1683,16 @@ export const distributedWithDynamic = <E, A, _>(
             // Make sure that no queues are currently being added
             queuesLock.withPermits(1)(
               pipe(
-                newQueue,
                 Ref.set(
+                  newQueue,
                   pipe(
                     // All newly created queues should end immediately
                     Queue.bounded<Exit.Exit<Option.Option<E>, A>>(1),
-                    Effect.tap((queue) => pipe(queue, Queue.offer(endTake))),
+                    Effect.tap((queue) => Queue.offer(queue, endTake)),
                     Effect.flatMap((queue) => {
                       const id = newDistributedWithDynamicId()
                       return pipe(
-                        queuesRef,
-                        Ref.update((map) => map.set(id, queue)),
+                        Ref.update(queuesRef, (map) => map.set(id, queue)),
                         Effect.as([id, queue] as const)
                       )
                     })
@@ -1723,8 +1706,7 @@ export const distributedWithDynamic = <E, A, _>(
                         Chunk.fromIterable(map.values()),
                         Effect.forEach((queue) =>
                           pipe(
-                            queue,
-                            Queue.offer(endTake),
+                            Queue.offer(queue, endTake),
                             Effect.catchSomeCause((cause) =>
                               Cause.isInterrupted(cause) ? Option.some(Effect.unit()) : Option.none
                             )
@@ -1772,8 +1754,8 @@ export const drainFork = <R2, E2, A2>(that: Stream.Stream<R2, E2, A2>) => {
           scoped(
             pipe(
               that,
-              runForEachScoped(Effect.unit),
-              Effect.catchAllCause((cause) => pipe(backgroundDied, Deferred.failCause(cause))),
+              runForEachScoped(() => Effect.unit()),
+              Effect.catchAllCause((cause) => Deferred.failCause(backgroundDied, cause)),
               Effect.forkScoped
             )
           ),
@@ -1927,21 +1909,21 @@ export const ensuring = <R2, _>(finalizer: Effect.Effect<R2, never, _>) => {
 }
 
 /** @internal */
-export const environment = <R>(): Stream.Stream<R, never, Context.Context<R>> => fromEffect(Effect.environment<R>())
+export const context = <R>(): Stream.Stream<R, never, Context.Context<R>> => fromEffect(Effect.context<R>())
 
 /** @internal */
-export const environmentWith = <R, A>(f: (env: Context.Context<R>) => A): Stream.Stream<R, never, A> =>
-  pipe(environment<R>(), map(f))
+export const contextWith = <R, A>(f: (env: Context.Context<R>) => A): Stream.Stream<R, never, A> =>
+  pipe(context<R>(), map(f))
 
 /** @internal */
-export const environmentWithEffect = <R0, R, E, A>(
+export const contextWithEffect = <R0, R, E, A>(
   f: (env: Context.Context<R0>) => Effect.Effect<R, E, A>
-): Stream.Stream<R0 | R, E, A> => pipe(environment<R0>(), mapEffect(f))
+): Stream.Stream<R0 | R, E, A> => pipe(context<R0>(), mapEffect(f))
 
 /** @internal */
-export const environmentWithStream = <R0, R, E, A>(
+export const contextWithStream = <R0, R, E, A>(
   f: (env: Context.Context<R0>) => Stream.Stream<R, E, A>
-): Stream.Stream<R0 | R, E, A> => pipe(environment<R0>(), flatMap(f))
+): Stream.Stream<R0 | R, E, A> => pipe(context<R0>(), flatMap(f))
 
 /** @internal */
 export const execute = <R, E, _>(effect: Effect.Effect<R, E, _>): Stream.Stream<R, E, never> =>
@@ -2375,8 +2357,7 @@ export const fromQueue = <A>(
   maxChunkSize = DefaultChunkSize
 ): Stream.Stream<never, never, A> =>
   pipe(
-    queue,
-    Queue.takeBetween(1, maxChunkSize),
+    Queue.takeBetween(queue, 1, maxChunkSize),
     Effect.catchAllCause((cause) =>
       pipe(
         Queue.isShutdown(queue),
@@ -3226,7 +3207,7 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
               _sink.foldSink(
                 (error) =>
                   pipe(
-                    _sink.fromEffect(pipe(deferred, Deferred.fail<E | E2>(error))),
+                    _sink.fromEffect(Deferred.fail(deferred, error)),
                     _sink.zipRight(_sink.fail(error))
                   ),
                 ([z, leftovers]) => {
@@ -3263,7 +3244,7 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
                     )
                   return _sink.fromChannel(
                     pipe(
-                      core.fromEffect(pipe(deferred, Deferred.succeed(z))),
+                      core.fromEffect(Deferred.succeed(deferred, z)),
                       channel.zipRight(core.fromEffect(
                         pipe(
                           handoff,
@@ -3297,7 +3278,7 @@ export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
 
             return pipe(
               self,
-              tapErrorCause((cause) => pipe(deferred, Deferred.failCause<E | E2>(cause))),
+              tapErrorCause((cause) => Deferred.failCause(deferred, cause)),
               run(consumer),
               Effect.forkScoped,
               Effect.zipRight(Deferred.await(deferred)),
@@ -3391,9 +3372,9 @@ export const prepend = <A>(values: Chunk.Chunk<A>): Stream.Stream<never, never, 
   ))
 
 /** @internal */
-export const provideEnvironment = <R>(environment: Context.Context<R>) => {
+export const provideContext = <R>(context: Context.Context<R>) => {
   return <E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<never, E, A> =>
-    new StreamImpl(pipe(self.channel, core.provideEnvironment(environment)))
+    new StreamImpl(pipe(self.channel, core.provideContext(context)))
 }
 
 /** @internal */
@@ -3402,7 +3383,7 @@ export const provideLayer = <RIn, E2, ROut>(layer: Layer.Layer<RIn, E2, ROut>) =
     new StreamImpl(
       channel.unwrapScoped(pipe(
         Layer.build(layer),
-        Effect.map((env) => pipe(self.channel, core.provideEnvironment(env)))
+        Effect.map((env) => pipe(self.channel, core.provideContext(env)))
       ))
     )
 }
@@ -3427,11 +3408,11 @@ export const provideServiceEffect = <T>(tag: Context.Tag<T>) => {
 export const provideServiceStream = <T>(tag: Context.Tag<T>) => {
   return <R2, E2>(stream: Stream.Stream<R2, E2, T>) => {
     return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R2 | Exclude<R, T>, E2 | E, A> =>
-      environmentWithStream((env: Context.Context<R2 | Exclude<R, T>>) =>
+      contextWithStream((env: Context.Context<R2 | Exclude<R, T>>) =>
         pipe(
           stream,
           flatMap((service) =>
-            pipe(self, provideEnvironment(pipe(env, Context.add(tag)(service)) as Context.Context<R | R2>))
+            pipe(self, provideContext(pipe(env, Context.add(tag)(service)) as Context.Context<R | R2>))
           )
         )
       )
@@ -3439,9 +3420,9 @@ export const provideServiceStream = <T>(tag: Context.Tag<T>) => {
 }
 
 /** @internal */
-export const provideSomeEnvironment = <R0, R>(f: (env: Context.Context<R0>) => Context.Context<R>) => {
+export const contramapContext = <R0, R>(f: (env: Context.Context<R0>) => Context.Context<R>) => {
   return <E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R0, E, A> =>
-    environmentWithStream((env) => pipe(self, provideEnvironment(f(env))))
+    contextWithStream((env) => pipe(self, provideContext(f(env))))
 }
 
 /** @internal */
@@ -3450,7 +3431,7 @@ export const provideSomeLayer = <RIn, E2, ROut>(layer: Layer.Layer<RIn, E2, ROut
     // @ts-expect-error
     pipe(
       self,
-      provideLayer(pipe(Layer.environment(), Layer.merge(layer)))
+      provideLayer(pipe(Layer.context(), Layer.merge(layer)))
     )
 }
 
@@ -3525,7 +3506,6 @@ class StreamRechunker<E, A> {
   private pos = 0
 
   constructor(readonly n: number) {
-    Equal.considerByRef(this)
   }
 
   isEmpty(): boolean {
@@ -4002,7 +3982,7 @@ export const runIntoQueueElementsScoped = <E, A>(queue: Queue.Enqueue<Exit.Exit<
     return pipe(
       self.channel,
       core.pipeTo(writer),
-      channel.mapOutEffect((exit) => pipe(queue, Queue.offer(exit))),
+      channel.mapOutEffect((exit) => pipe(Queue.offer(queue, exit))),
       channel.drain,
       channelExecutor.runScoped,
       Effect.asUnit
@@ -4022,7 +4002,7 @@ export const runIntoQueueScoped = <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) 
     return pipe(
       self.channel,
       core.pipeTo(writer),
-      channel.mapOutEffect((take) => pipe(queue, Queue.offer(take))),
+      channel.mapOutEffect((take) => pipe(Queue.offer(queue, take))),
       channel.drain,
       channelExecutor.runScoped,
       Effect.asUnit
@@ -4183,13 +4163,13 @@ export const service = <T>(tag: Context.Tag<T>): Stream.Stream<T, never, T> => s
 
 /** @internal */
 export const serviceWith = <T>(tag: Context.Tag<T>) => {
-  return <A>(f: (service: T) => A): Stream.Stream<T, never, A> => fromEffect(Effect.serviceWith(tag)(f))
+  return <A>(f: (service: T) => A): Stream.Stream<T, never, A> => fromEffect(Effect.serviceWith(tag, f))
 }
 
 /** @internal */
 export const serviceWithEffect = <T>(tag: Context.Tag<T>) => {
   return <R, E, A>(f: (service: T) => Effect.Effect<R, E, A>): Stream.Stream<R | T, E, A> =>
-    fromEffect(Effect.serviceWithEffect(tag)(f))
+    fromEffect(Effect.serviceWithEffect(tag, f))
 }
 
 /** @internal */
@@ -4536,12 +4516,12 @@ export const tapSink = <R2, E2, A>(sink: Sink.Sink<R2, E2, A, unknown, unknown>)
           .readWithCause(
             (chunk: Chunk.Chunk<A>) =>
               pipe(
-                core.fromEffect(pipe(queue, Queue.offer(_take.chunk(chunk)))),
+                core.fromEffect(pipe(Queue.offer(queue, _take.chunk(chunk)))),
                 channel.zipRight(core.write(chunk)),
                 core.flatMap(() => loop)
               ),
-            (cause) => core.fromEffect(pipe(queue, Queue.offer(_take.failCause(cause)))),
-            () => core.fromEffect(pipe(queue, Queue.offer(_take.end)))
+            (cause) => core.fromEffect(pipe(Queue.offer(queue, _take.failCause(cause)))),
+            () => core.fromEffect(pipe(Queue.offer(queue, _take.end)))
           )
         return pipe(
           new StreamImpl(pipe(self.channel, core.pipeTo(loop))),
@@ -4925,7 +4905,7 @@ export const updateService = <T>(tag: Context.Tag<T>) => {
     return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R | T, E, A> =>
       pipe(
         self,
-        provideSomeEnvironment((context) =>
+        contramapContext((context) =>
           pipe(
             context,
             Context.add(tag)(f(pipe(context, Context.unsafeGet(tag))))
@@ -5563,23 +5543,19 @@ export const zipLatestWith = <R2, E2, A2, A, A3>(
                       mapEffect(Either.match(
                         (leftChunk) =>
                           pipe(
-                            latest,
-                            Ref.modify(([_, rightLatest]) =>
+                            Ref.modify(latest, ([_, rightLatest]) =>
                               [
                                 pipe(leftChunk, Chunk.map((a) => f(a, rightLatest))),
                                 [Chunk.unsafeLast(leftChunk), rightLatest] as const
-                              ] as const
-                            )
+                              ] as const)
                           ),
                         (rightChunk) =>
                           pipe(
-                            latest,
-                            Ref.modify(([leftLatest, _]) =>
+                            Ref.modify(latest, ([leftLatest, _]) =>
                               [
                                 pipe(rightChunk, Chunk.map((a2) => f(leftLatest, a2))),
                                 [leftLatest, Chunk.unsafeLast(rightChunk)] as const
-                              ] as const
-                            )
+                              ] as const)
                           )
                       )),
                       flatMap(fromChunk)

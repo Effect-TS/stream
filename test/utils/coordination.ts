@@ -45,17 +45,16 @@ export const chunkCoordination = <A>(
     return {
       queue,
       offer: pipe(
-        ref,
-        Ref.modify((chunk) => {
+        Ref.modify(ref, (chunk) => {
           if (Chunk.isEmpty(chunk)) {
             return [Chunk.empty(), Chunk.empty()]
           }
           return [Chunk.unsafeHead(chunk), Chunk.drop(1)(chunk)]
         }),
-        Effect.flatMap((chunks) => pipe(queue, Queue.offerAll(chunks))),
+        Effect.flatMap((chunks) => pipe(Queue.offerAll(queue, chunks))),
         Effect.asUnit
       ),
-      proceed: pipe(ps, Queue.offer(void 0), Effect.asUnit),
+      proceed: pipe(Queue.offer(ps, void 0), Effect.asUnit),
       awaitNext: Queue.take(ps)
     }
   })

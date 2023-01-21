@@ -13,7 +13,7 @@ describe.concurrent("Sink", () => {
       yield* $(
         pipe(
           Stream.make(1, 2, 3, 4, 5),
-          Stream.run(pipe(Sink.drain(), Sink.ensuring(pipe(ref, Ref.set(true)))))
+          Stream.run(pipe(Sink.drain(), Sink.ensuring(Ref.set(ref, true))))
         )
       )
       const result = yield* $(Ref.get(ref))
@@ -26,7 +26,7 @@ describe.concurrent("Sink", () => {
       yield* $(
         pipe(
           Stream.fail("boom!"),
-          Stream.run(pipe(Sink.drain(), Sink.ensuring(pipe(ref, Ref.set(true))))),
+          Stream.run(pipe(Sink.drain(), Sink.ensuring(Ref.set(ref, true)))),
           Effect.ignore
         )
       )

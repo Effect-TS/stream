@@ -198,15 +198,15 @@ describe.concurrent("Stream", () => {
         Stream.runIntoQueue(output),
         Effect.fork
       ))
-      yield* $(pipe(left, Queue.offer(Chunk.make(0))))
-      yield* $(pipe(right, Queue.offerAll([Chunk.make(0), Chunk.make(1)])))
+      yield* $(Queue.offer(left, Chunk.make(0)))
+      yield* $(Queue.offerAll(right, [Chunk.make(0), Chunk.make(1)]))
       const chunk1 = yield* $(pipe(
         Queue.take(output),
         Effect.flatMap(Take.done),
         Effect.replicateEffect(2),
         Effect.map(Chunk.flatten)
       ))
-      yield* $(pipe(left, Queue.offerAll([Chunk.make(1), Chunk.make(2)])))
+      yield* $(Queue.offerAll(left, [Chunk.make(1), Chunk.make(2)]))
       const chunk2 = yield* $(pipe(
         Queue.take(output),
         Effect.flatMap(Take.done),
@@ -234,7 +234,7 @@ describe.concurrent("Stream", () => {
         Stream.zipLatestWith(
           pipe(
             Stream.make(1, 1),
-            Stream.ensuring(pipe(latch, Deferred.succeed<void>(void 0))),
+            Stream.ensuring(Deferred.succeed<never, void>(latch, void 0)),
             Stream.concat(stream1)
           ),
           (_, n) => n
@@ -244,7 +244,7 @@ describe.concurrent("Stream", () => {
         Effect.fork
       ))
       yield* $(Deferred.await(latch))
-      yield* $(pipe(deferred, Deferred.succeed(2)))
+      yield* $(Deferred.succeed(deferred, 2))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 1, 1])
     }))

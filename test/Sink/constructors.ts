@@ -61,8 +61,7 @@ describe.concurrent("Sink", () => {
           Hub.subscribe(hub),
           Effect.flatMap((subscription) =>
             pipe(
-              deferred1,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(deferred1, void 0),
               Effect.zipRight(Deferred.await(deferred2)),
               Effect.zipRight(Queue.takeAll(subscription))
             )
@@ -73,7 +72,7 @@ describe.concurrent("Sink", () => {
       )
       yield* $(Deferred.await(deferred1))
       yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromHub(hub))))
-      yield* $(pipe(deferred2, Deferred.succeed<void>(void 0)))
+      yield* $(Deferred.succeed<never, void>(deferred2, void 0))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
@@ -108,11 +107,11 @@ class QueueSpy<A> implements Queue.Queue<A> {
   }
 
   offer(a: A) {
-    return pipe(this.backingQueue, Queue.offer(a))
+    return Queue.offer(this.backingQueue, a)
   }
 
   offerAll(elements: Iterable<A>) {
-    return pipe(this.backingQueue, Queue.offerAll(elements))
+    return Queue.offerAll(this.backingQueue, elements)
   }
 
   capacity(): number {
@@ -154,15 +153,15 @@ class QueueSpy<A> implements Queue.Queue<A> {
   }
 
   takeUpTo(max: number): Effect.Effect<never, never, Chunk.Chunk<A>> {
-    return pipe(this.backingQueue, Queue.takeUpTo(max))
+    return Queue.takeUpTo(this.backingQueue, max)
   }
 
   takeBetween(min: number, max: number): Effect.Effect<never, never, Chunk.Chunk<A>> {
-    return pipe(this.backingQueue, Queue.takeBetween(min, max))
+    return Queue.takeBetween(this.backingQueue, min, max)
   }
 
   takeN(n: number): Effect.Effect<never, never, Chunk.Chunk<A>> {
-    return pipe(this.backingQueue, Queue.takeN(n))
+    return Queue.takeN(this.backingQueue, n)
   }
 
   poll(): Effect.Effect<never, never, Option.Option<A>> {

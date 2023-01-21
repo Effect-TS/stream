@@ -8,7 +8,6 @@ import * as Synchronized from "@effect/io/Ref/Synchronized"
 import * as stream from "@effect/stream/internal/stream"
 import type { Stream } from "@effect/stream/Stream"
 import type * as SubscriptionRef from "@effect/stream/SubscriptionRef"
-import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
 
 /** @internal */
@@ -34,7 +33,6 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
     readonly hub: Hub.Hub<A>,
     readonly semaphore: Effect.Semaphore
   ) {
-    Equal.considerByRef(this)
   }
   get changes(): Stream<never, never, A> {
     return pipe(
@@ -67,10 +65,9 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
       Effect.flatMap(f),
       Effect.flatMap(([b, a]) =>
         pipe(
-          this.ref,
-          Ref.set(a),
+          Ref.set(this.ref, a),
           Effect.as(b),
-          Effect.zipLeft(pipe(this.hub, Hub.publish(a)))
+          Effect.zipLeft(Hub.publish(this.hub, a))
         )
       ),
       this.semaphore.withPermits(1)
@@ -114,9 +111,8 @@ export const set = <A>(value: A) => {
   const trace = getCallTrace()
   return (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, void> =>
     pipe(
-      self.ref,
-      Ref.set(value),
-      Effect.zipLeft(pipe(self.hub, Hub.publish(value))),
+      Ref.set(self.ref, value),
+      Effect.zipLeft(Hub.publish(self.hub, value)),
       self.semaphore.withPermits(1)
     ).traced(trace)
 }

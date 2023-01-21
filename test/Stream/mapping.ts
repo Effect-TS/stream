@@ -210,7 +210,7 @@ describe.concurrent("Stream", () => {
       const queue = yield* $(Queue.unbounded<number>())
       yield* $(pipe(
         Stream.range(0, 9),
-        Stream.mapEffectPar(1)((n) => pipe(queue, Queue.offer(n))),
+        Stream.mapEffectPar(1)((n) => pipe(Queue.offer(queue, n))),
         Stream.runDrain
       ))
       const result = yield* $(Queue.takeAll(queue))
@@ -225,10 +225,9 @@ describe.concurrent("Stream", () => {
         Stream.make(void 0),
         Stream.mapEffectPar(1)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+            Effect.onInterrupt(() => Ref.set(ref, true))
           )
         ),
         Stream.runDrain,
@@ -274,17 +273,15 @@ describe.concurrent("Stream", () => {
         Stream.mapEffectPar(3)((n) =>
           n === 1 ?
             pipe(
-              latch1,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch1, void 0),
               Effect.zipRight(Effect.never()),
-              Effect.onInterrupt(() => pipe(ref, Ref.update((n) => n + 1)))
+              Effect.onInterrupt(() => Ref.update(ref, (n) => n + 1))
             ) :
             n === 2 ?
             pipe(
-              latch2,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch2, void 0),
               Effect.zipRight(Effect.never()),
-              Effect.onInterrupt(() => pipe(ref, Ref.update((n) => n + 1)))
+              Effect.onInterrupt(() => Ref.update(ref, (n) => n + 1))
             ) :
             pipe(Deferred.await(latch1), Effect.zipRight(Deferred.await(latch1)), Effect.zipRight(Effect.fail("boom")))
         ),

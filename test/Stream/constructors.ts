@@ -46,11 +46,11 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       yield* $(pipe(
         Stream.acquireRelease(
-          pipe(ref, Ref.update(Chunk.append("Acquire"))),
-          () => pipe(ref, Ref.update(Chunk.append("Release")))
+          Ref.update(ref, Chunk.append("Acquire")),
+          () => Ref.update(ref, Chunk.append("Release"))
         ),
-        Stream.flatMap(() => Stream.finalizer(pipe(ref, Ref.update(Chunk.append("Use"))))),
-        Stream.ensuring(pipe(ref, Ref.update(Chunk.append("Ensuring")))),
+        Stream.flatMap(() => Stream.finalizer(Ref.update(ref, Chunk.append("Use")))),
+        Stream.ensuring(Ref.update(ref, Chunk.append("Ensuring"))),
         Stream.runDrain
       ))
       const result = yield* $(Ref.get(ref))
@@ -61,7 +61,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       yield* $(pipe(
-        Stream.finalizer(pipe(ref, Ref.set(true))),
+        Stream.finalizer(Ref.set(ref, true)),
         Stream.toPull,
         Effect.scoped
       ))
@@ -187,7 +187,7 @@ describe.concurrent("Stream", () => {
   it.effect("fromQueue - chunks up to the max chunk size", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
-      yield* $(pipe(queue, Queue.offerAll([1, 2, 3, 4, 5, 6, 7])))
+      yield* $(pipe(Queue.offerAll(queue, [1, 2, 3, 4, 5, 6, 7])))
       const result = yield* $(pipe(
         Stream.fromQueue(queue, 2),
         Stream.mapChunks((chunk) => Chunk.of(Array.from(chunk))),

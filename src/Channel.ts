@@ -534,43 +534,43 @@ export const ensuringWith: <Env2, OutErr, OutDone>(
 ) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> = core.ensuringWith
 
 /**
- * Accesses the whole environment of the channel.
+ * Accesses the whole context of the channel.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environment: <Env>() => Channel<Env, unknown, unknown, unknown, never, never, Context.Context<Env>> =
-  channel.environment
+export const context: <Env>() => Channel<Env, unknown, unknown, unknown, never, never, Context.Context<Env>> =
+  channel.context
 
 /**
- * Accesses the environment of the channel with the specified function.
+ * Accesses the context of the channel with the specified function.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environmentWith: <Env, OutDone>(
+export const contextWith: <Env, OutDone>(
   f: (env: Context.Context<Env>) => OutDone
-) => Channel<Env, unknown, unknown, unknown, never, never, OutDone> = channel.environmentWith
+) => Channel<Env, unknown, unknown, unknown, never, never, OutDone> = channel.contextWith
 
 /**
- * Accesses the environment of the channel in the context of a channel.
+ * Accesses the context of the channel in the context of a channel.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environmentWithChannel: <Env, Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+export const contextWithChannel: <Env, Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   f: (env: Context.Context<Env>) => Channel<Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env | Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone> = channel.environmentWithChannel
+) => Channel<Env | Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone> = channel.contextWithChannel
 
 /**
- * Accesses the environment of the channel in the context of an effect.
+ * Accesses the context of the channel in the context of an effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const environmentWithEffect: <Env, Env1, OutErr, OutDone>(
+export const contextWithEffect: <Env, Env1, OutErr, OutDone>(
   f: (env: Context.Context<Env>) => Effect.Effect<Env1, OutErr, OutDone>
-) => Channel<Env | Env1, unknown, unknown, unknown, OutErr, never, OutDone> = channel.environmentWithEffect
+) => Channel<Env | Env1, unknown, unknown, unknown, OutErr, never, OutDone> = channel.contextWithEffect
 
 /**
  * Constructs a channel that fails immediately with the specified error.
@@ -1250,23 +1250,23 @@ export const pipeToOrFail: <Env2, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
 ) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr | OutErr2, OutElem2, OutDone2> = channel.pipeToOrFail
 
 /**
- * Provides the channel with its required environment, which eliminates its
+ * Provides the channel with its required context, which eliminates its
  * dependency on `Env`.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const provideEnvironment: <Env>(
+export const provideContext: <Env>(
   env: Context.Context<Env>
 ) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> = core.provideEnvironment
+) => Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> = core.provideContext
 
 /**
  * Provides a layer to the channel, which translates it to another level.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideLayer: <R0, R, OutErr2>(
   layer: Layer.Layer<R0, OutErr2, R>
@@ -1275,24 +1275,24 @@ export const provideLayer: <R0, R, OutErr2>(
 ) => Channel<R0, InErr, InElem, InDone, OutErr2 | OutErr, OutElem, OutDone> = channel.provideLayer
 
 /**
- * Transforms the environment being provided to the channel with the specified
+ * Transforms the context being provided to the channel with the specified
  * function.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
-export const provideSomeEnvironment: <Env0, Env>(
+export const contramapContext: <Env0, Env>(
   f: (env: Context.Context<Env0>) => Context.Context<Env>
 ) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone> = channel.provideSomeEnvironment
+) => Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone> = channel.contramapContext
 
 /**
- * Splits the environment into two parts, providing one part using the
+ * Splits the context into two parts, providing one part using the
  * specified layer and leaving the remainder `Env0`.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideSomeLayer: <Env0, Env2, OutErr2>(
   layer: Layer.Layer<Env0, OutErr2, Env2>
@@ -1303,10 +1303,10 @@ export const provideSomeLayer: <Env0, Env2, OutErr2>(
 
 /**
  * Provides the effect with the single service it requires. If the effect
- * requires more than one service use `provideEnvironment` instead.
+ * requires more than one service use `provideContext` instead.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const provideService: <T>(
   tag: Context.Tag<T>
@@ -1453,19 +1453,19 @@ export const scoped: <R, E, A>(
 ) => Channel<Exclude<R, Scope.Scope>, unknown, unknown, unknown, E, A, unknown> = channel.scoped
 
 /**
- * Accesses the specified service in the environment of the channel.
+ * Accesses the specified service in the context of the channel.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const service: <T>(tag: Context.Tag<T>) => Channel<T, unknown, unknown, unknown, never, never, T> =
   channel.service
 
 /**
- * Accesses the specified service in the environment of the channel.
+ * Accesses the specified service in the context of the channel.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWith: <T>(
   tag: Context.Tag<T>
@@ -1473,11 +1473,11 @@ export const serviceWith: <T>(
   channel.serviceWith
 
 /**
- * Accesses the specified service in the environment of the channel in the
+ * Accesses the specified service in the context of the channel in the
  * context of a channel.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWithChannel: <T>(
   tag: Context.Tag<T>
@@ -1486,11 +1486,11 @@ export const serviceWithChannel: <T>(
 ) => Channel<T | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> = channel.serviceWithChannel
 
 /**
- * Accesses the specified service in the environment of the channel in the
+ * Accesses the specified service in the context of the channel in the
  * context of an effect.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const serviceWithEffect: <T>(
   tag: Context.Tag<T>
@@ -1596,10 +1596,10 @@ export const unwrapScoped: <R, E, Env, InErr, InElem, InDone, OutErr, OutElem, O
 ) => Channel<Env | Exclude<R, Scope.Scope>, InErr, InElem, InDone, E | OutErr, OutElem, OutDone> = channel.unwrapScoped
 
 /**
- * Updates a service in the environment of this channel.
+ * Updates a service in the context of this channel.
  *
  * @since 1.0.0
- * @category environment
+ * @category context
  */
 export const updateService: <T>(
   tag: Context.Tag<T>

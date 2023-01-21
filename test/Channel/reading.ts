@@ -7,6 +7,7 @@ import * as it from "@effect/stream/test/utils/extend"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
+import * as Hash from "@fp-ts/data/Hash"
 import * as HashSet from "@fp-ts/data/HashSet"
 import * as Option from "@fp-ts/data/Option"
 import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray"
@@ -32,7 +33,7 @@ export const refWriter = <A>(
   return Channel.readWith(
     (a: A) =>
       pipe(
-        Channel.fromEffect(pipe(ref, Ref.update(ReadonlyArray.prepend(a)), Effect.asUnit)),
+        Channel.fromEffect(pipe(Ref.update(ref, ReadonlyArray.prepend(a)), Effect.asUnit)),
         Channel.flatMap(() => refWriter(ref))
       ),
     Channel.unit,
@@ -45,15 +46,12 @@ export const refReader = <A>(
 ): Channel.Channel<never, unknown, unknown, unknown, never, A, void> => {
   return pipe(
     Channel.fromEffect(
-      pipe(
-        ref,
-        Ref.modify((array) => {
-          if (ReadonlyArray.isEmpty(array)) {
-            return [Option.none, ReadonlyArray.empty<A>()] as const
-          }
-          return [Option.some(array[0]!), array.slice(1)] as const
-        })
-      )
+      Ref.modify(ref, (array) => {
+        if (ReadonlyArray.isEmpty(array)) {
+          return [Option.none, ReadonlyArray.empty<A>()] as const
+        }
+        return [Option.some(array[0]!), array.slice(1)] as const
+      })
     ),
     Channel.flatMap(Option.match(Channel.unit, (i) => pipe(Channel.write(i), Channel.flatMap(() => refReader(ref)))))
   )
@@ -64,10 +62,10 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       class Whatever implements Equal.Equal {
         constructor(readonly i: number) {}
-        [Equal.symbolHash](): number {
-          return Equal.hash(this.i)
+        [Hash.symbol](): number {
+          return Hash.hash(this.i)
         }
-        [Equal.symbolEqual](u: unknown): boolean {
+        [Equal.symbol](u: unknown): boolean {
           return u instanceof Whatever && u.i === this.i
         }
       }
@@ -108,7 +106,7 @@ describe.concurrent("Channel", () => {
             Channel.readWith(
               (input: number) =>
                 pipe(
-                  Channel.fromEffect(pipe(ref, Ref.update((array) => [...array, input]))),
+                  Channel.fromEffect(Ref.update(ref, (array) => [...array, input])),
                   Channel.zipRight(Channel.write(input)),
                   Channel.flatMap(inner)
                 ),
@@ -163,8 +161,8 @@ describe.concurrent("Channel", () => {
       ): Channel.Channel<never, unknown, number, unknown, unknown, never, void> =>
         Channel.readWith(
           (input: number) => sum(label, n + input),
-          () => Channel.fromEffect(pipe(ref, Ref.update((array) => [...array, n]))),
-          () => Channel.fromEffect(pipe(ref, Ref.update((array) => [...array, n])))
+          () => Channel.fromEffect(Ref.update(ref, (array) => [...array, n])),
+          () => Channel.fromEffect(Ref.update(ref, (array) => [...array, n]))
         )
 
       const channel = pipe(
@@ -185,7 +183,7 @@ describe.concurrent("Channel", () => {
   it.effect("reading with resources", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
-      const event = (label: string) => pipe(ref, Ref.update((array) => [...array, label]))
+      const event = (label: string) => Ref.update(ref, (array) => [...array, label])
       const left = pipe(
         Channel.acquireReleaseOut(
           event("Acquire outer"),

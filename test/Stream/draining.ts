@@ -16,7 +16,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       yield* $(pipe(
         Stream.range(0, 10),
-        Stream.mapEffect((n) => pipe(ref, Ref.update(Chunk.append(n)))),
+        Stream.mapEffect((n) => Ref.update(ref, Chunk.append(n))),
         Stream.drain,
         Stream.runDrain
       ))
@@ -29,7 +29,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const result1 = yield* $(pipe(
         Stream.make(1),
-        Stream.tap((n) => pipe(ref, Ref.set(n))),
+        Stream.tap((n) => Ref.set(ref, n)),
         Stream.concat(Stream.fail("fail")),
         Stream.runDrain,
         Effect.either
@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const result = yield* $(pipe(
         Stream.fromEffect(Deferred.await(latch)),
-        Stream.drainFork(Stream.fromEffect(pipe(latch, Deferred.succeed<void>(void 0)))),
+        Stream.drainFork(Stream.fromEffect(Deferred.succeed<never, void>(latch, void 0))),
         Stream.runDrain
       ))
       assert.isUndefined(result)
@@ -59,10 +59,9 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.drain(Stream.fromEffect(Deferred.await(latch)))),
         Stream.drainFork(
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),

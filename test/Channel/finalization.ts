@@ -23,7 +23,7 @@ describe.concurrent("Channel", () => {
   it.effect("ensuring - prompt closure between continuations", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
-      const event = (label: string) => pipe(ref, Ref.update((array) => [...array, label]))
+      const event = (label: string) => Ref.update(ref, (array) => [...array, label])
       const channel = pipe(
         Channel.fromEffect(event("Acquire1")),
         Channel.ensuring(event("Release11")),
@@ -49,7 +49,7 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
       function event(label: string) {
-        return pipe(ref, Ref.update((array) => [...array, label]))
+        return Ref.update(ref, (array) => [...array, label])
       }
       const channel = pipe(
         Channel.fromEffect(event("Acquire1")),
@@ -88,7 +88,7 @@ describe.concurrent("Channel", () => {
   it.effect("ensuring - mixture of concatMap and ensuring", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
-      const event = (label: string) => pipe(ref, Ref.update((array) => [...array, label]))
+      const event = (label: string) => Ref.update(ref, (array) => [...array, label])
       const channel = pipe(
         Channel.writeAll(1, 2, 3),
         Channel.ensuring(event("Inner")),
@@ -134,7 +134,7 @@ describe.concurrent("Channel", () => {
   it.effect("ensuring - finalizer ordering 2", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
-      const event = (label: string) => pipe(ref, Ref.update((array) => [...array, label]))
+      const event = (label: string) => Ref.update(ref, (array) => [...array, label])
       const channel = pipe(
         Channel.writeAll(1, 2),
         Channel.mapOutEffect((n) => pipe(event(`pulled ${n}`), Effect.as(n))),

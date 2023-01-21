@@ -108,12 +108,12 @@ describe.concurrent("Stream", () => {
       const stream1 = pipe(
         Stream.make(1, 2),
         Stream.concat(Stream.fail("boom")),
-        Stream.ensuring(pipe(ref, Ref.update(Chunk.append("s1"))))
+        Stream.ensuring(Ref.update(ref, Chunk.append("s1")))
       )
       const stream2 = pipe(
         Stream.make(1, 2),
         Stream.concat(Stream.fail("boom")),
-        Stream.ensuring(pipe(ref, Ref.update(Chunk.append("s2"))))
+        Stream.ensuring(Ref.update(ref, Chunk.append("s2")))
       )
       yield* $(pipe(
         stream1,
@@ -129,9 +129,9 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const stream = pipe(
-        Stream.finalizer(pipe(ref, Ref.update(Chunk.append(1)))),
-        Stream.crossRight(Stream.finalizer(pipe(ref, Ref.update(Chunk.append(2))))),
-        Stream.crossRight(Stream.finalizer(pipe(ref, Ref.update(Chunk.append(3))))),
+        Stream.finalizer(Ref.update(ref, Chunk.append(1))),
+        Stream.crossRight(Stream.finalizer(Ref.update(ref, Chunk.append(2)))),
+        Stream.crossRight(Stream.finalizer(Ref.update(ref, Chunk.append(3)))),
         Stream.crossRight(Stream.fail("boom"))
       )
       const result = yield* $(pipe(
@@ -148,7 +148,7 @@ describe.concurrent("Stream", () => {
       yield* $(pipe(
         Stream.acquireRelease(
           Effect.unit(),
-          (_, exit) => pipe(ref, Ref.set(exit))
+          (_, exit) => Ref.set(ref, exit)
         ),
         Stream.flatMap(() => Stream.fail("boom")),
         Stream.either,
@@ -234,7 +234,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const exit = yield* $(pipe(
         Stream.fail("boom"),
-        Stream.onError(() => pipe(ref, Ref.set(true))),
+        Stream.onError(() => Ref.set(ref, true)),
         Stream.runDrain,
         Effect.exit
       ))

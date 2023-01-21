@@ -148,7 +148,7 @@ export interface PipeTo extends
 /** @internal */
 export interface Provide extends
   Op<OpCodes.OP_PROVIDE, {
-    readonly environment: LazyArg<Context.Context<unknown>>
+    readonly context: LazyArg<Context.Context<unknown>>
     readonly inner: ErasedChannel
   }>
 {}
@@ -569,13 +569,13 @@ export const pipeTo = <
 }
 
 /** @internal */
-export const provideEnvironment = <Env>(env: Context.Context<Env>) => {
+export const provideContext = <Env>(env: Context.Context<Env>) => {
   return <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
     Object.create(proto, {
       _tag: { value: OpCodes.OP_PROVIDE },
-      environment: { value: () => env },
+      context: { value: () => env },
       inner: { value: self }
     })
 }

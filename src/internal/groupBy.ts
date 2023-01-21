@@ -14,7 +14,6 @@ import * as take from "@effect/stream/internal/take"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Take from "@effect/stream/Take"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 import type { Predicate } from "@fp-ts/data/Predicate"
@@ -123,14 +122,13 @@ export const groupBy = <A, R2, E2, K, V>(
               stream.distributedWithDynamic(
                 bufferSize,
                 ([key, value]) => pipe(Deferred.await(decider), Effect.flatMap((f) => f(key, value))),
-                (exit) => pipe(output, Queue.offer(exit))
+                (exit) => Queue.offer(output, exit)
               )
             )
           )
           yield* $(
             pipe(
-              decider,
-              Deferred.succeed((key, _) =>
+              Deferred.succeed(decider, (key, _) =>
                 pipe(
                   Ref.get(ref),
                   Effect.map((map) => Option.fromNullable(map.get(key))),
@@ -140,21 +138,22 @@ export const groupBy = <A, R2, E2, K, V>(
                         add,
                         Effect.flatMap(([index, queue]) =>
                           pipe(
-                            ref,
-                            Ref.update((map) => map.set(key, index)),
+                            Ref.update(ref, (map) => map.set(key, index)),
                             Effect.zipRight(
                               pipe(
-                                output,
-                                Queue.offer(Exit.succeed(
-                                  [
-                                    key,
-                                    mapDequeue(queue, (exit) =>
-                                      new take.TakeImpl(pipe(
-                                        exit,
-                                        Exit.map((tuple) => Chunk.of(tuple[1]))
-                                      )))
-                                  ] as const
-                                )),
+                                Queue.offer(
+                                  output,
+                                  Exit.succeed(
+                                    [
+                                      key,
+                                      mapDequeue(queue, (exit) =>
+                                        new take.TakeImpl(pipe(
+                                          exit,
+                                          Exit.map((tuple) => Chunk.of(tuple[1]))
+                                        )))
+                                    ] as const
+                                  )
+                                ),
                                 Effect.as<Predicate<number>>((n: number) => n === index)
                               )
                             )
@@ -163,8 +162,7 @@ export const groupBy = <A, R2, E2, K, V>(
                       ),
                     (index) => Effect.succeed<Predicate<number>>((n: number) => n === index)
                   ))
-                )
-              )
+                ))
             )
           )
           return stream.flattenExitOption(stream.fromQueueWithShutdown(output))
@@ -184,7 +182,6 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
     readonly dequeue: Queue.Dequeue<A>,
     readonly f: (a: A) => B
   ) {
-    Equal.considerByRef(this)
   }
 
   capacity(): number {
@@ -224,15 +221,15 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
   }
 
   takeUpTo(max: number): Effect.Effect<never, never, Chunk.Chunk<B>> {
-    return pipe(this.dequeue, Queue.takeUpTo(max), Effect.map(Chunk.map((a) => this.f(a))))
+    return pipe(Queue.takeUpTo(this.dequeue, max), Effect.map(Chunk.map((a) => this.f(a))))
   }
 
   takeBetween(min: number, max: number): Effect.Effect<never, never, Chunk.Chunk<B>> {
-    return pipe(this.dequeue, Queue.takeBetween(min, max), Effect.map(Chunk.map((a) => this.f(a))))
+    return pipe(Queue.takeBetween(this.dequeue, min, max), Effect.map(Chunk.map((a) => this.f(a))))
   }
 
   takeN(n: number): Effect.Effect<never, never, Chunk.Chunk<B>> {
-    return pipe(this.dequeue, Queue.takeN(n), Effect.map(Chunk.map((a) => this.f(a))))
+    return pipe(Queue.takeN(this.dequeue, n), Effect.map(Chunk.map((a) => this.f(a))))
   }
 
   poll(): Effect.Effect<never, never, Option.Option<B>> {
@@ -265,15 +262,11 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                             map.set(key, innerQueue)
                           }),
                           Effect.zipRight(
-                            pipe(
-                              outerQueue,
-                              Queue.offer(take.of([key, innerQueue] as const))
-                            )
+                            Queue.offer(outerQueue, take.of([key, innerQueue] as const))
                           ),
                           Effect.zipRight(
                             pipe(
-                              innerQueue,
-                              Queue.offer(take.chunk(values)),
+                              Queue.offer(innerQueue, take.chunk(values)),
                               Effect.catchSomeCause((cause) =>
                                 Cause.isInterruptedOnly(cause) ?
                                   Option.some(Effect.unit()) :
@@ -286,8 +279,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                     )
                   }
                   return pipe(
-                    innerQueue,
-                    Queue.offer(take.chunk(values)),
+                    Queue.offer(innerQueue, take.chunk(values)),
                     Effect.catchSomeCause((cause) =>
                       Cause.isInterruptedOnly(cause) ?
                         Option.some(Effect.unit()) :
@@ -299,7 +291,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
             ),
             core.flatMap(() => loop(map, outerQueue))
           ),
-        (cause) => core.fromEffect(pipe(outerQueue, Queue.offer(take.failCause(cause)))),
+        (cause) => core.fromEffect(Queue.offer(outerQueue, take.failCause(cause))),
         () =>
           pipe(
             core.fromEffect(
@@ -307,8 +299,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                 map.entries(),
                 Effect.forEachDiscard(([_, innerQueue]) =>
                   pipe(
-                    innerQueue,
-                    Queue.offer(take.end),
+                    Queue.offer(innerQueue, take.end),
                     Effect.catchSomeCause((cause) =>
                       Cause.isInterruptedOnly(cause) ?
                         Option.some(Effect.unit()) :
@@ -316,7 +307,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                     )
                   )
                 ),
-                Effect.zipRight(pipe(outerQueue, Queue.offer(take.end)))
+                Effect.zipRight(Queue.offer(outerQueue, take.end))
               )
             )
           )

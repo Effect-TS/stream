@@ -56,7 +56,7 @@ export const acquireUseRelease = <
         core.fromEffect(
           pipe(
             acquire,
-            Effect.tap((a) => pipe(ref, Ref.set((exit) => release(a, exit)))),
+            Effect.tap((a) => Ref.set(ref, (exit) => release(a, exit))),
             Effect.uninterruptible
           )
         ),
@@ -92,8 +92,7 @@ export const buffer = <InErr, InElem, InDone>(
       ref: Ref.Ref<InElem>
     ): Channel.Channel<never, InErr, InElem, InDone, InErr, InElem, InDone> =>
       pipe(
-        ref,
-        Ref.modify((inElem) =>
+        Ref.modify(ref, (inElem) =>
           isEmpty(inElem) ?
             [
               core.readWith(
@@ -113,8 +112,7 @@ export const buffer = <InErr, InElem, InDone>(
                 core.flatMap(() => doBuffer<InErr, InElem, InDone>(empty, isEmpty, ref))
               ),
               empty
-            ] as const
-        ),
+            ] as const),
         unwrap
       )
     return doBuffer(empty, isEmpty, ref)
@@ -418,7 +416,7 @@ export const ensuring = <Env1, Z>(finalizer: Effect.Effect<Env1, never, Z>) => {
 }
 
 /** @internal */
-export const environment = <Env>(): Channel.Channel<
+export const context = <Env>(): Channel.Channel<
   Env,
   unknown,
   unknown,
@@ -427,18 +425,18 @@ export const environment = <Env>(): Channel.Channel<
   never,
   Context.Context<Env>
 > => {
-  return core.fromEffect(Effect.environment<Env>())
+  return core.fromEffect(Effect.context<Env>())
 }
 
 /** @internal */
-export const environmentWith = <Env, OutDone>(
+export const contextWith = <Env, OutDone>(
   f: (env: Context.Context<Env>) => OutDone
 ): Channel.Channel<Env, unknown, unknown, unknown, never, never, OutDone> => {
-  return pipe(environment<Env>(), map(f))
+  return pipe(context<Env>(), map(f))
 }
 
 /** @internal */
-export function environmentWithChannel<
+export function contextWithChannel<
   Env,
   Env1,
   InErr,
@@ -450,14 +448,14 @@ export function environmentWithChannel<
 >(
   f: (env: Context.Context<Env>) => Channel.Channel<Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ): Channel.Channel<Env | Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone> {
-  return pipe(environment<Env>(), core.flatMap(f))
+  return pipe(context<Env>(), core.flatMap(f))
 }
 
 /** @internal */
-export const environmentWithEffect = <Env, Env1, OutErr, OutDone>(
+export const contextWithEffect = <Env, Env1, OutErr, OutDone>(
   f: (env: Context.Context<Env>) => Effect.Effect<Env1, OutErr, OutDone>
 ): Channel.Channel<Env | Env1, unknown, unknown, unknown, OutErr, never, OutDone> => {
-  return pipe(environment<Env>(), mapEffect(f))
+  return pipe(context<Env>(), mapEffect(f))
 }
 
 /** @internal */
@@ -767,7 +765,7 @@ export const mapOutEffectPar = (n: number) => {
             pipe(
               pull,
               Effect.matchCauseEffect(
-                (cause) => pipe(queue, Queue.offer(Effect.failCause(cause))),
+                (cause) => Queue.offer(queue, Effect.failCause(cause)),
                 (either) =>
                   pipe(
                     either,
@@ -778,8 +776,7 @@ export const mapOutEffectPar = (n: number) => {
                           lock(Effect.unit()),
                           Effect.interruptible,
                           Effect.zipRight(pipe(
-                            queue,
-                            Queue.offer(Effect.succeed(Either.left(outDone))),
+                            Queue.offer(queue, Effect.succeed(Either.left(outDone))),
                             Effect.asUnit
                           ))
                         )
@@ -790,15 +787,13 @@ export const mapOutEffectPar = (n: number) => {
                           const latch = yield* $(Deferred.make<never, void>())
                           yield* $(
                             pipe(
-                              queue,
-                              Queue.offer(pipe(Deferred.await(deferred), Effect.map(Either.right))),
+                              Queue.offer(queue, pipe(Deferred.await(deferred), Effect.map(Either.right))),
                               Effect.asUnit
                             )
                           )
                           yield* $(
                             pipe(
-                              latch,
-                              Deferred.succeed<void>(void 0),
+                              Deferred.succeed<never, void>(latch, void 0),
                               Effect.zipRight(
                                 pipe(
                                   Effect.uninterruptibleMask((restore) =>
@@ -809,7 +804,7 @@ export const mapOutEffectPar = (n: number) => {
                                       Effect.flatMap(Effect.done)
                                     )
                                   ),
-                                  Effect.tapErrorCause((cause) => pipe(errorSignal, Deferred.failCause(cause))),
+                                  Effect.tapErrorCause((cause) => Deferred.failCause(errorSignal, cause)),
                                   Effect.intoDeferred(deferred)
                                 )
                               ),
@@ -1038,31 +1033,27 @@ export const mergeAllWith = (
             pull,
             Effect.flatMap(Either.match(
               (done) => Effect.succeed(Option.some(done)),
-              (outElem) => pipe(queue, Queue.offer(Effect.succeed(Either.right(outElem))), Effect.as(Option.none))
+              (outElem) => pipe(Queue.offer(queue, Effect.succeed(Either.right(outElem))), Effect.as(Option.none))
             )),
             Effect.repeatUntil(Option.isSome),
             Effect.flatMap(Option.match(
               () => Effect.unit(),
               (outDone) =>
-                pipe(
+                Ref.update(
                   lastDone,
-                  Ref.update(Option.match(
+                  Option.match(
                     () => Option.some(outDone),
                     (lastDone) => Option.some(f(lastDone, outDone))
-                  ))
+                  )
                 )
             )),
             Effect.catchAllCause((cause) =>
               Cause.isInterrupted(cause) ?
                 Effect.failCause(cause) :
                 pipe(
-                  queue,
-                  Queue.offer(Effect.failCause(cause)),
+                  Queue.offer(queue, Effect.failCause(cause)),
                   Effect.zipRight(
-                    pipe(
-                      errorSignal,
-                      Deferred.succeed<void>(void 0)
-                    )
+                    Deferred.succeed<never, void>(errorSignal, void 0)
                   ),
                   Effect.asUnit
                 )
@@ -1074,8 +1065,7 @@ export const mergeAllWith = (
             Effect.matchCauseEffect(
               (cause) =>
                 pipe(
-                  queue,
-                  Queue.offer(Effect.failCause(cause)),
+                  Queue.offer(queue, Effect.failCause(cause)),
                   Effect.zipRight(Effect.succeed(false))
                 ),
               Either.match(
@@ -1092,9 +1082,8 @@ export const mergeAllWith = (
                             pipe(
                               Ref.get(lastDone),
                               Effect.flatMap(Option.match(
-                                () => pipe(queue, Queue.offer(Effect.succeed(Either.left(outDone)))),
-                                (lastDone) =>
-                                  pipe(queue, Queue.offer(Effect.succeed(Either.left(f(lastDone, outDone)))))
+                                () => Queue.offer(queue, Effect.succeed(Either.left(outDone))),
+                                (lastDone) => Queue.offer(queue, Effect.succeed(Either.left(f(lastDone, outDone))))
                               )),
                               Effect.as(false)
                             )
@@ -1123,8 +1112,7 @@ export const mergeAllWith = (
                           )
                           yield* $(
                             pipe(
-                              latch,
-                              Deferred.succeed<void>(void 0),
+                              Deferred.succeed<never, void>(latch, void 0),
                               Effect.zipRight(raceEffects),
                               withPermits(1),
                               Effect.forkScoped
@@ -1142,11 +1130,11 @@ export const mergeAllWith = (
                           yield* $(
                             pipe(
                               Queue.take(cancelers),
-                              Effect.flatMap(Deferred.succeed<void>(void 0)),
+                              Effect.flatMap((_) => Deferred.succeed<never, void>(_, void 0)),
                               Effect.when(() => size >= n)
                             )
                           )
-                          yield* $(pipe(cancelers, Queue.offer(canceler)))
+                          yield* $(Queue.offer(cancelers, canceler))
                           const raceEffects: Effect.Effect<Env | Env1, OutErr | OutErr1, void> = pipe(
                             queueReader,
                             core.pipeTo(channel),
@@ -1161,8 +1149,7 @@ export const mergeAllWith = (
                             Effect.scoped
                           )
                           yield* $(pipe(
-                            latch,
-                            Deferred.succeed<void>(void 0),
+                            Deferred.succeed<never, void>(latch, void 0),
                             Effect.zipRight(raceEffects),
                             withPermits(1),
                             Effect.forkScoped
@@ -1696,11 +1683,11 @@ export const provideService = <T>(tag: Context.Tag<T>) =>
       self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
     ): Channel.Channel<Exclude<Env, T>, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
       return pipe(
-        environment<any>(),
+        context<any>(),
         core.flatMap((context) =>
           pipe(
             self,
-            core.provideEnvironment(
+            core.provideContext(
               pipe(context, Context.add(tag)(service))
             )
           )
@@ -1713,15 +1700,15 @@ export const provideLayer = <Env0, Env, OutErr2>(layer: Layer.Layer<Env0, OutErr
   return <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<Env0, InErr, InElem, InDone, OutErr | OutErr2, OutElem, OutDone> =>
-    unwrapScoped(pipe(Layer.build(layer), Effect.map((env) => pipe(self, core.provideEnvironment(env)))))
+    unwrapScoped(pipe(Layer.build(layer), Effect.map((env) => pipe(self, core.provideContext(env)))))
 }
 
 /** @internal */
-export const provideSomeEnvironment = <Env0, Env>(f: (env: Context.Context<Env0>) => Context.Context<Env>) => {
+export const contramapContext = <Env0, Env>(f: (env: Context.Context<Env0>) => Context.Context<Env>) => {
   return <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
-    environmentWithChannel((context: Context.Context<Env0>) => pipe(self, core.provideEnvironment(f(context))))
+    contextWithChannel((context: Context.Context<Env0>) => pipe(self, core.provideContext(f(context))))
 }
 
 /** @internal */
@@ -1732,7 +1719,7 @@ export const provideSomeLayer = <Env0, Env2, OutErr2>(layer: Layer.Layer<Env0, O
     pipe(
       self,
       // @ts-expect-error
-      provideLayer(pipe(Layer.environment<Exclude<R, Env2>>(), Layer.merge(layer)))
+      provideLayer(pipe(Layer.context<Exclude<R, Env2>>(), Layer.merge(layer)))
     )
 }
 
@@ -1789,15 +1776,10 @@ export const scoped = <R, E, A>(
         Effect.map((scope) =>
           core.acquireReleaseOut(
             pipe(
-              restore(pipe(scope, Scope.extend(effect))),
-              Effect.tapErrorCause((cause) =>
-                pipe(
-                  scope,
-                  Scope.close(Exit.failCause(cause))
-                )
-              )
+              restore(Scope.extend(scope)(effect)),
+              Effect.tapErrorCause((cause) => Scope.close(scope, Exit.failCause(cause)))
             ),
-            (_, exit) => pipe(scope, Scope.close(exit))
+            (_, exit) => Scope.close(scope, exit)
           )
         )
       )
@@ -1912,11 +1894,11 @@ const toQueueInternal = <Err, Done, Elem>(
   return core.readWithCause(
     (elem) =>
       pipe(
-        core.fromEffect(pipe(queue, Queue.offer(Either.right(elem)))),
+        core.fromEffect(Queue.offer(queue, Either.right(elem))),
         core.flatMap(() => toQueueInternal(queue))
       ),
-    (cause) => core.fromEffect(pipe(queue, Queue.offer(Either.left(Exit.failCause(cause))))),
-    (done) => core.fromEffect(pipe(queue, Queue.offer(Either.left(Exit.succeed(done)))))
+    (cause) => core.fromEffect(pipe(Queue.offer(queue, Either.left(Exit.failCause(cause))))),
+    (done) => core.fromEffect(pipe(Queue.offer(queue, Either.left(Exit.succeed(done)))))
   )
 }
 
@@ -1968,7 +1950,7 @@ export const updateService = <T>(tag: Context.Tag<T>) => {
     ): Channel.Channel<R | T, InErr, unknown, InDone, OutErr, OutElem, OutDone> =>
       pipe(
         self,
-        provideSomeEnvironment((context) =>
+        contramapContext((context) =>
           pipe(
             context,
             Context.merge(pipe(Context.empty(), Context.add(tag)(f(pipe(context, Context.unsafeGet(tag))))))

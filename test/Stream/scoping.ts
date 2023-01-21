@@ -20,7 +20,7 @@ describe.concurrent("Stream", () => {
       const stream = pipe(
         Stream.acquireRelease(
           Effect.succeed(Chunk.range(0, 2)),
-          () => pipe(ref, Ref.set(true))
+          () => Ref.set(ref, true)
         ),
         Stream.flatMap(Stream.fromIterable)
       )
@@ -36,7 +36,7 @@ describe.concurrent("Stream", () => {
       const stream = pipe(
         Stream.acquireRelease(
           Effect.succeed(Chunk.range(0, 2)),
-          () => pipe(ref, Ref.set(true))
+          () => Ref.set(ref, true)
         ),
         Stream.flatMap(Stream.fromIterable),
         Stream.take(2)
@@ -52,7 +52,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const stream = pipe(
         Stream.make(1),
-        Stream.concat(Stream.acquireRelease(pipe(ref, Ref.set(true)), Effect.unit)),
+        Stream.concat(Stream.acquireRelease(Ref.set(ref, true), Effect.unit)),
         Stream.take(0)
       )
       yield* $(Stream.runDrain(stream))
@@ -65,7 +65,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       yield* $(
         pipe(
-          Stream.acquireRelease(Effect.unit(), () => pipe(ref, Ref.set(true))),
+          Stream.acquireRelease(Effect.unit(), () => Ref.set(ref, true)),
           Stream.flatMap(() => Stream.fromEffect(Effect.dieMessage("boom"))),
           Stream.runDrain,
           Effect.exit
@@ -79,7 +79,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const leftAssoc = yield* $(
         pipe(
-          Stream.acquireRelease(Ref.make(true), (ref) => pipe(ref, Ref.set(false))),
+          Stream.acquireRelease(Ref.make(true), (ref) => Ref.set(ref, false)),
           Stream.flatMap(Stream.succeed),
           Stream.flatMap((ref) => Stream.fromEffect(Ref.get(ref))),
           Stream.runCollect,
@@ -89,7 +89,7 @@ describe.concurrent("Stream", () => {
       const rightAssoc = yield* $(
         pipe(
           pipe(
-            Stream.acquireRelease(Ref.make(true), (ref) => pipe(ref, Ref.set(false))),
+            Stream.acquireRelease(Ref.make(true), (ref) => Ref.set(ref, false)),
             Stream.flatMap((ref) =>
               pipe(
                 Stream.succeed(ref),
@@ -122,11 +122,11 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       yield* $(pipe(
         Stream.acquireRelease(
-          pipe(ref, Ref.update(Chunk.append("Acquire"))),
-          () => pipe(ref, Ref.update(Chunk.append("Release")))
+          Ref.update(ref, Chunk.append("Acquire")),
+          () => Ref.update(ref, Chunk.append("Release"))
         ),
-        Stream.crossRight(Stream.fromEffect(pipe(ref, Ref.update(Chunk.append("Use"))))),
-        Stream.ensuring(pipe(ref, Ref.update(Chunk.append("Ensuring")))),
+        Stream.crossRight(Stream.fromEffect(Ref.update(ref, Chunk.append("Use")))),
+        Stream.ensuring(Ref.update(ref, Chunk.append("Ensuring"))),
         Stream.runDrain
       ))
       const result = yield* $(Ref.get(ref))
@@ -163,13 +163,10 @@ describe.concurrent("Stream", () => {
       const stream = (deferred: Deferred.Deferred<never, void>, ref: Ref.Ref<ReadonlyArray<string>>) =>
         pipe(
           Effect.acquireRelease(
-            pipe(ref, Ref.update((array) => [...array, "acquire outer"])),
-            () => pipe(ref, Ref.update((array) => [...array, "release outer"]))
+            Ref.update(ref, (array) => [...array, "acquire outer"]),
+            () => Ref.update(ref, (array) => [...array, "release outer"])
           ),
-          Effect.zipRight(pipe(
-            deferred,
-            Deferred.succeed<void>(void 0)
-          )),
+          Effect.zipRight(Deferred.succeed<never, void>(deferred, void 0)),
           Effect.zipRight(Deferred.await(awaiter)),
           Effect.zipRight(Effect.succeed(Stream.make(1, 2, 3))),
           Stream.unwrapScoped
@@ -182,7 +179,7 @@ describe.concurrent("Stream", () => {
       return yield* $(Ref.get(ref))
     })
     const result = await Effect.unsafeRunPromise(program)
-    await Effect.unsafeRunPromise(pipe(awaiter, Deferred.succeed<void>(void 0)))
+    await Effect.unsafeRunPromise(Deferred.succeed<never, void>(awaiter, void 0))
     assert.deepStrictEqual(result, ["acquire outer", "release outer"])
   })
 })

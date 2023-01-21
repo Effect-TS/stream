@@ -20,22 +20,22 @@ describe.concurrent("SubscriptionRef", () => {
       const deferred2 = yield* $(Deferred.make<never, void>())
       const subscriber1 = yield* $(pipe(
         subscriptionRef.changes,
-        Stream.tap(() => pipe(deferred1, Deferred.succeed<void>(void 0))),
+        Stream.tap(() => Deferred.succeed<never, void>(deferred1, void 0)),
         Stream.take(3),
         Stream.runCollect,
         Effect.fork
       ))
       yield* $(Deferred.await(deferred1))
-      yield* $(pipe(subscriptionRef, SubscriptionRef.update((n) => n + 1)))
+      yield* $(SubscriptionRef.update(subscriptionRef, (n) => n + 1))
       const subscriber2 = yield* $(pipe(
         subscriptionRef.changes,
-        Stream.tap(() => pipe(deferred2, Deferred.succeed<void>(void 0))),
+        Stream.tap(() => Deferred.succeed<never, void>(deferred2, void 0)),
         Stream.take(2),
         Stream.runCollect,
         Effect.fork
       ))
       yield* $(Deferred.await(deferred2))
-      yield* $(pipe(subscriptionRef, SubscriptionRef.update((n) => n + 1)))
+      yield* $(SubscriptionRef.update(subscriptionRef, (n) => n + 1))
       const result1 = yield* $(Fiber.join(subscriber1))
       const result2 = yield* $(Fiber.join(subscriber2))
       assert.deepStrictEqual(Array.from(result1), [0, 1, 2])
@@ -49,22 +49,22 @@ describe.concurrent("SubscriptionRef", () => {
       const deferred2 = yield* $(Deferred.make<never, void>())
       const subscriber1 = yield* $(pipe(
         subscriptionRef.changes,
-        Stream.tap(() => pipe(deferred1, Deferred.succeed<void>(void 0))),
+        Stream.tap(() => Deferred.succeed<never, void>(deferred1, void 0)),
         Stream.take(5),
         Stream.runCollect,
         Effect.fork
       ))
       yield* $(Deferred.await(deferred1))
-      yield* $(pipe(subscriptionRef, SubscriptionRef.update((n) => n + 1)))
+      yield* $(SubscriptionRef.update(subscriptionRef, (n) => n + 1))
       const subscriber2 = yield* $(pipe(
         subscriptionRef.changes,
-        Stream.tap(() => pipe(deferred2, Deferred.succeed<void>(void 0))),
+        Stream.tap(() => Deferred.succeed<never, void>(deferred2, void 0)),
         Stream.take(2),
         Stream.runCollect,
         Effect.fork
       ))
       yield* $(Deferred.await(deferred2))
-      yield* $(pipe(subscriptionRef, SubscriptionRef.update((n) => n + 1)))
+      yield* $(SubscriptionRef.update(subscriptionRef, (n) => n + 1))
       const result1 = yield* $(Fiber.interrupt(subscriber1))
       const result2 = yield* $(Fiber.join(subscriber2))
       assert.isTrue(Exit.isInterrupted(result1))
@@ -86,8 +86,7 @@ describe.concurrent("SubscriptionRef", () => {
         )
       const subscriptionRef = yield* $(SubscriptionRef.make(0))
       const fiber = yield* $(pipe(
-        subscriptionRef,
-        SubscriptionRef.update((n) => n + 1),
+        SubscriptionRef.update(subscriptionRef, (n) => n + 1),
         Effect.forever,
         Effect.fork
       ))
