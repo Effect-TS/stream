@@ -29,15 +29,14 @@ describe.concurrent("Channel", () => {
       const deferred = yield* $(Deferred.make<never, void>())
       const ref = yield* $(Ref.make<Exit.Exit<never, void>>(Exit.unit()))
       const effect = pipe(
-        deferred,
-        Deferred.succeed<void>(void 0),
+        Deferred.succeed<never, void>(deferred, void 0),
         Effect.zipRight(Effect.never())
       )
       yield* $(
         pipe(
           Channel.fromEffect(effect),
           Channel.runDrain,
-          Effect.onExit((exit) => pipe(ref, Ref.set(exit as Exit.Exit<never, void>))),
+          Effect.onExit((exit) => Ref.set(ref, exit as Exit.Exit<never, void>)),
           Effect.raceEither(Deferred.await(deferred))
         )
       )

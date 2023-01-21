@@ -16,7 +16,6 @@ import * as Chunk from "@fp-ts/data/Chunk"
 import type * as Context from "@fp-ts/data/Context"
 import * as Duration from "@fp-ts/data/Duration"
 import * as Either from "@fp-ts/data/Either"
-import * as Equal from "@fp-ts/data/Equal"
 import type { LazyArg } from "@fp-ts/data/Function"
 import { constTrue, identity, pipe } from "@fp-ts/data/Function"
 import * as HashMap from "@fp-ts/data/HashMap"
@@ -48,7 +47,6 @@ export class SinkImpl<R, E, In, L, Z> implements Sink.Sink<R, E, In, L, Z> {
   constructor(
     readonly channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
   ) {
-    Equal.considerByRef(this)
   }
 }
 
@@ -232,7 +230,7 @@ export const collectAllWhileWith = <Z, S>(z: S, p: Predicate<Z>, f: (s: S, z: Z)
           core.readWith(
             (input) => pipe(core.write(input), core.flatMap(() => upstreamMarker)),
             core.fail,
-            (done) => pipe(core.fromEffect(pipe(upstreamDoneRef, Ref.set(true))), channel.as(done))
+            (done) => pipe(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done))
           )
         return pipe(
           upstreamMarker,
@@ -262,10 +260,9 @@ const collectAllWhileWithLoop = <R, E, In, L extends In, Z, S>(
       ([leftovers, doneValue]) =>
         p(doneValue)
           ? pipe(
-            core.fromEffect(pipe(
-              leftoversRef,
-              Ref.set(Chunk.flatten(leftovers as Chunk.Chunk<Chunk.Chunk<In>>))
-            )),
+            core.fromEffect(
+              Ref.set(leftoversRef, Chunk.flatten(leftovers as Chunk.Chunk<Chunk.Chunk<In>>))
+            ),
             core.flatMap(() =>
               pipe(
                 core.fromEffect(Ref.get(upstreamDoneRef)),
@@ -498,24 +495,23 @@ export const ensuringWith = <E, Z, R2, _>(finalizer: (exit: Exit.Exit<E, Z>) => 
 }
 
 /** @internal */
-export const environment = <R>(): Sink.Sink<R, never, unknown, never, Context.Context<R>> =>
-  fromEffect(Effect.environment<R>())
+export const context = <R>(): Sink.Sink<R, never, unknown, never, Context.Context<R>> => fromEffect(Effect.context<R>())
 
 /** @internal */
-export const environmentWith = <R, Z>(
-  f: (environment: Context.Context<R>) => Z
-): Sink.Sink<R, never, unknown, never, Z> => pipe(environment<R>(), map(f))
+export const contextWith = <R, Z>(
+  f: (context: Context.Context<R>) => Z
+): Sink.Sink<R, never, unknown, never, Z> => pipe(context<R>(), map(f))
 
 /** @internal */
-export const environmentWithEffect = <R0, R, E, Z>(
-  f: (environment: Context.Context<R0>) => Effect.Effect<R, E, Z>
-): Sink.Sink<R0 | R, E, unknown, never, Z> => pipe(environment<R0>(), mapEffect(f))
+export const contextWithEffect = <R0, R, E, Z>(
+  f: (context: Context.Context<R0>) => Effect.Effect<R, E, Z>
+): Sink.Sink<R0 | R, E, unknown, never, Z> => pipe(context<R0>(), mapEffect(f))
 
 /** @internal */
-export const environmentWithSink = <R0, R, E, In, L, Z>(
-  f: (environment: Context.Context<R0>) => Sink.Sink<R, E, In, L, Z>
+export const contextWithSink = <R0, R, E, In, L, Z>(
+  f: (context: Context.Context<R0>) => Sink.Sink<R, E, In, L, Z>
 ): Sink.Sink<R0 | R, E, In, L, Z> =>
-  new SinkImpl(channel.unwrap(pipe(Effect.environmentWith((context) => f(context).channel))))
+  new SinkImpl(channel.unwrap(pipe(Effect.contextWith((context) => f(context).channel))))
 
 /** @internal */
 export const every = <In>(predicate: Predicate<In>): Sink.Sink<never, never, In, In, boolean> =>
@@ -570,7 +566,7 @@ export const findEffect = <Z, R2, E2>(f: (z: Z) => Effect.Effect<R2, E2, boolean
           core.readWith(
             (input) => pipe(core.write(input), core.flatMap(() => upstreamMarker)),
             core.fail,
-            (done) => pipe(core.fromEffect(pipe(upstreamDoneRef, Ref.set(true))), channel.as(done))
+            (done) => pipe(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done))
           )
         const loop: Channel.Channel<R | R2, never, Chunk.Chunk<In>, unknown, E | E2, Chunk.Chunk<L>, Option.Option<Z>> =
           pipe(
@@ -582,7 +578,7 @@ export const findEffect = <Z, R2, E2>(f: (z: Z) => Effect.Effect<R2, E2, boolean
                   core.fromEffect(f(doneValue)),
                   core.flatMap((satisfied) =>
                     pipe(
-                      core.fromEffect(pipe(leftoversRef, Ref.set(Chunk.flatten(leftovers) as Chunk.Chunk<In>))),
+                      core.fromEffect(Ref.set(leftoversRef, Chunk.flatten(leftovers))),
                       channel.zipRight(
                         pipe(
                           core.fromEffect(Ref.get(upstreamDoneRef)),
@@ -1250,7 +1246,7 @@ const fromPushPull = <R, E, In, L, Z>(
 
 /** @internal */
 export const fromQueue = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
-  forEachChunk((input: Chunk.Chunk<In>) => pipe(queue, Queue.offerAll(input)))
+  forEachChunk((input: Chunk.Chunk<In>) => pipe(Queue.offerAll(queue, input)))
 
 /** @internal */
 export const fromQueueWithShutdown = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
@@ -1420,9 +1416,9 @@ export const orElse = <R2, E2, In2, L2, Z2>(
 }
 
 /** @internal */
-export const provideEnvironment = <R>(environment: Context.Context<R>) => {
+export const provideContext = <R>(context: Context.Context<R>) => {
   return <E, In, L, Z>(self: Sink.Sink<R, E, In, L, Z>): Sink.Sink<never, E, In, L, Z> =>
-    new SinkImpl(pipe(self.channel, core.provideEnvironment(environment)))
+    new SinkImpl(pipe(self.channel, core.provideContext(context)))
 }
 
 /** @internal */
@@ -1526,19 +1522,19 @@ export const service = <T>(tag: Context.Tag<T>): Sink.Sink<T, never, unknown, ne
 
 /** @internal */
 export const serviceWith = <T>(tag: Context.Tag<T>) => {
-  return <Z>(f: (service: T) => Z): Sink.Sink<T, never, unknown, never, Z> => fromEffect(Effect.serviceWith(tag)(f))
+  return <Z>(f: (service: T) => Z): Sink.Sink<T, never, unknown, never, Z> => fromEffect(Effect.serviceWith(tag, f))
 }
 
 /** @internal */
 export const serviceWithEffect = <T>(tag: Context.Tag<T>) => {
   return <R, E, Z>(f: (service: T) => Effect.Effect<R, E, Z>): Sink.Sink<R | T, E, unknown, never, Z> =>
-    fromEffect(Effect.serviceWithEffect(tag)(f))
+    fromEffect(Effect.serviceWithEffect(tag, f))
 }
 
 /** @internal */
 export const serviceWithSink = <T>(tag: Context.Tag<T>) => {
   return <R, E, In, L, Z>(f: (service: T) => Sink.Sink<R, E, In, L, Z>): Sink.Sink<R | T, E, In, L, Z> =>
-    new SinkImpl(pipe(Effect.serviceWith(tag)((service) => f(service).channel), channel.unwrap))
+    new SinkImpl(pipe(Effect.serviceWith(tag, (service) => f(service).channel), channel.unwrap))
 }
 
 /** @internal */
@@ -1590,14 +1586,14 @@ const splitWhereSplitter = <E, A>(
           return pipe(core.write(input), channel.zipRight(splitWhereSplitter<E, A>(true, leftovers, f)))
         }
         const [left, right] = pipe(input, Chunk.splitAt(index))
-        return pipe(core.write(left), channel.zipRight(core.fromEffect(pipe(leftovers, Ref.set(right)))))
+        return pipe(core.write(left), channel.zipRight(core.fromEffect(Ref.set(leftovers, right))))
       }
       const index = indexWhere(input, f, 1)
       if (index === -1) {
         return pipe(core.write(input), channel.zipRight(splitWhereSplitter<E, A>(true, leftovers, f)))
       }
       const [left, right] = pipe(input, Chunk.splitAt(Math.max(index, 1)))
-      return pipe(core.write(left), channel.zipRight(core.fromEffect(pipe(leftovers, Ref.set(right)))))
+      return pipe(core.write(left), channel.zipRight(core.fromEffect(Ref.set(leftovers, right))))
     },
     core.failCause,
     core.succeed

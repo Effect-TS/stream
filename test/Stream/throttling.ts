@@ -45,12 +45,12 @@ describe.concurrent("Stream", () => {
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
-            yield* $(pipe(queue, Queue.offer(1)))
+            yield* $(pipe(Queue.offer(queue, 1)))
             const result1 = yield* $(pull)
-            yield* $(pipe(queue, Queue.offer(2)))
+            yield* $(pipe(Queue.offer(queue, 2)))
             const result2 = yield* $(pull)
             yield* $(Effect.sleep(Duration.seconds(4)))
-            yield* $(pipe(queue, Queue.offer(3)))
+            yield* $(pipe(Queue.offer(queue, 3)))
             const result3 = yield* $(pull)
             return [Array.from(result1), Array.from(result2), Array.from(result3)] as const
           })
@@ -72,9 +72,9 @@ describe.concurrent("Stream", () => {
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
-            yield* $(pipe(queue, Queue.offer(1)))
+            yield* $(pipe(Queue.offer(queue, 1)))
             const result1 = yield* $(pull)
-            yield* $(pipe(queue, Queue.offer(2)))
+            yield* $(pipe(Queue.offer(queue, 2)))
             const result2 = yield* $(pull)
             const elapsed = yield* $(Clock.currentTimeMillis())
             return [Array.from(result1), Array.from(result2), elapsed] as const
@@ -94,13 +94,13 @@ describe.concurrent("Stream", () => {
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
-            yield* $(pipe(queue, Queue.offer(1)))
+            yield* $(pipe(Queue.offer(queue, 1)))
             const result1 = yield* $(pull)
             yield* $(TestClock.adjust(Duration.seconds(2)))
-            yield* $(pipe(queue, Queue.offer(2)))
+            yield* $(pipe(Queue.offer(queue, 2)))
             const result2 = yield* $(pull)
             yield* $(TestClock.adjust(Duration.seconds(4)))
-            yield* $(pipe(queue, Queue.offer(3)))
+            yield* $(pipe(Queue.offer(queue, 3)))
             const result3 = yield* $(pull)
             return [Array.from(result1), Array.from(result2), Array.from(result3)] as const
           })
@@ -299,7 +299,7 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Effect.unit()),
         Stream.concat(Stream.fromEffect(pipe(
           Effect.never(),
-          Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+          Effect.onInterrupt(() => Ref.set(ref, true))
         ))),
         Stream.debounce(Duration.millis(800)),
         Stream.runDrain,

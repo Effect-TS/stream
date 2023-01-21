@@ -17,7 +17,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
       const stream = pipe(
-        Stream.fromEffect(pipe(ref, Ref.getAndUpdate((n) => n + 1))),
+        Stream.fromEffect(Ref.getAndUpdate(ref, (n) => n + 1)),
         Stream.concat(Stream.fail(Option.none))
       )
       const result = yield* $(pipe(
@@ -33,7 +33,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
       const stream = pipe(
-        Effect.addFinalizer(() => pipe(ref, Ref.getAndUpdate((n) => n + 1))),
+        Effect.addFinalizer(() => Ref.getAndUpdate(ref, (n) => n + 1)),
         Effect.as(
           pipe(
             Stream.fromEffect(Ref.get(ref)),
@@ -58,7 +58,7 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(
           pipe(
             Clock.currentTimeMillis(),
-            Effect.flatMap((n) => pipe(ref, Ref.update(Chunk.prepend(n))))
+            Effect.flatMap((n) => Ref.update(ref, Chunk.prepend(n)))
           )
         ),
         Stream.flatMap(() => Stream.fail(Option.none))
@@ -85,9 +85,8 @@ describe.concurrent("Stream", () => {
         Clock.currentTimeMillis(),
         Effect.flatMap((time) =>
           pipe(
-            times,
-            Ref.update(Chunk.prepend(time / 1000)),
-            Effect.zipRight(pipe(ref, Ref.updateAndGet((n) => n + 1)))
+            Ref.update(times, Chunk.prepend(time / 1000)),
+            Effect.zipRight(Ref.updateAndGet(ref, (n) => n + 1))
           )
         )
       )

@@ -5,7 +5,6 @@ import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecuto
 import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import type { ErasedChannel, ErasedExecutor } from "@effect/stream/internal/channel/channelExecutor"
-import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
 
 /** @internal */
@@ -58,7 +57,6 @@ export class PullFromChild<R> implements Subexecutor<R> {
     readonly parentSubexecutor: Subexecutor<R>,
     readonly onEmit: (value: unknown) => ChildExecutorDecision.ChildExecutorDecision
   ) {
-    Equal.considerByRef(this)
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
@@ -105,7 +103,6 @@ export class PullFromUpstream<R> implements Subexecutor<R> {
     ) => UpstreamPullStrategy.UpstreamPullStrategy<unknown>,
     readonly onEmit: (value: unknown) => ChildExecutorDecision.ChildExecutorDecision
   ) {
-    Equal.considerByRef(this)
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
@@ -176,7 +173,6 @@ export class DrainChildExecutors<R> implements Subexecutor<R> {
       request: UpstreamPullRequest.UpstreamPullRequest<unknown>
     ) => UpstreamPullStrategy.UpstreamPullStrategy<unknown>
   ) {
-    Equal.considerByRef(this)
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
@@ -227,7 +223,6 @@ export class Emit<R> implements Subexecutor<R> {
   readonly _tag: OP_EMIT = OP_EMIT
 
   constructor(readonly value: unknown, readonly next: Subexecutor<R>) {
-    Equal.considerByRef(this)
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {

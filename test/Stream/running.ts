@@ -23,7 +23,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       yield* $(pipe(
         Stream.make(1, 1, 1, 1, 1),
-        Stream.runForEach((i) => pipe(ref, Ref.update((n) => n + i)))
+        Stream.runForEach((i) => Ref.update(ref, (n) => n + i))
       ))
       const result = yield* $(Ref.get(ref))
       assert.strictEqual(result, 5)
@@ -34,7 +34,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       yield* $(pipe(
         Stream.fromIterable(Array.from({ length: 1_000 }, () => 1)),
-        Stream.runForEach((i) => pipe(ref, Ref.update((n) => n + i)))
+        Stream.runForEach((i) => Ref.update(ref, (n) => n + i))
       ))
       const result = yield* $(Ref.get(ref))
       assert.strictEqual(result, 1_000)
@@ -48,12 +48,10 @@ describe.concurrent("Stream", () => {
         Stream.make(1, 1, 1, 1, 1, 1),
         Stream.runForEachWhile((n) =>
           pipe(
-            ref,
-            Ref.modify((sum) =>
+            Ref.modify(ref, (sum) =>
               sum >= expected ?
                 [false, sum] as const :
-                [true, sum + n]
-            )
+                [true, sum + n])
           )
         )
       ))
@@ -68,14 +66,10 @@ describe.concurrent("Stream", () => {
       yield* $(pipe(
         Stream.fromIterable(Array.from({ length: 1_000 }, () => 1)),
         Stream.runForEachWhile((n) =>
-          pipe(
-            ref,
-            Ref.modify((sum) =>
-              sum >= expected ?
-                [false, sum] as const :
-                [true, sum + n] as const
-            )
-          )
+          Ref.modify(ref, (sum) =>
+            sum >= expected ?
+              [false, sum] as const :
+              [true, sum + n] as const)
         )
       ))
       const result = yield* $(Ref.get(ref))
@@ -87,7 +81,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(true))
       yield* $(pipe(
         Stream.make(true, true, false),
-        Stream.concat(Stream.drain(Stream.fromEffect(pipe(ref, Ref.set(false))))),
+        Stream.concat(Stream.drain(Stream.fromEffect(Ref.set(ref, false)))),
         Stream.runForEachWhile(Effect.succeed)
       ))
       const result = yield* $(Ref.get(ref))
@@ -111,10 +105,10 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const head = yield* $(pipe(
         Stream.make(
-          Stream.drain(Stream.fromEffect(pipe(ref, Ref.update(Chunk.prepend(1))))),
-          Stream.drain(Stream.fromEffect(pipe(ref, Ref.update(Chunk.prepend(2))))),
+          Stream.drain(Stream.fromEffect(Ref.update(ref, Chunk.prepend(1)))),
+          Stream.drain(Stream.fromEffect(Ref.update(ref, Chunk.prepend(2)))),
           Stream.make(1),
-          Stream.drain(Stream.fromEffect(pipe(ref, Ref.update(Chunk.prepend(3)))))
+          Stream.drain(Stream.fromEffect(Ref.update(ref, Chunk.prepend(3))))
         ),
         Stream.flatten,
         Stream.runHead
@@ -142,7 +136,7 @@ describe.concurrent("Stream", () => {
   it.effect("runScoped - properly closes resources", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      const resource = Effect.acquireRelease(Effect.succeed(1), () => pipe(ref, Ref.set(true)))
+      const resource = Effect.acquireRelease(Effect.succeed(1), () => Ref.set(ref, true))
       const stream = pipe(Stream.scoped(resource), Stream.flatMap((a) => Stream.make(a, a, a)))
       const [result, state] = yield* $(pipe(
         stream,

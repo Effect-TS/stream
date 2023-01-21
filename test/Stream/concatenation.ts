@@ -33,8 +33,8 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       yield* $(pipe(
-        Stream.finalizer(pipe(ref, Ref.update(Chunk.append("Second")))),
-        Stream.concat(Stream.finalizer(pipe(ref, Ref.update(Chunk.append("First"))))),
+        Stream.finalizer(Ref.update(ref, Chunk.append("Second"))),
+        Stream.concat(Stream.finalizer(Ref.update(ref, Chunk.append("First")))),
         Stream.runDrain
       ))
       const result = yield* $(Ref.get(ref))

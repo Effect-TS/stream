@@ -39,8 +39,7 @@ describe.concurrent("Stream", () => {
             emit(Effect.succeed(Chunk.of(n)))
           })
           return pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.unit())
           )
         }),
@@ -102,8 +101,7 @@ describe.concurrent("Stream", () => {
           [1, 2, 3, 4, 5, 6, 7].map((n) =>
             emit.fromEffectChunk(
               pipe(
-                refCount,
-                Ref.set(n),
+                Ref.set(refCount, n),
                 Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
@@ -111,8 +109,7 @@ describe.concurrent("Stream", () => {
         ).then(() =>
           emit.fromEffect(
             pipe(
-              refDone,
-              Ref.set(true),
+              Ref.set(refDone, true),
               Effect.zipRight(Effect.fail(Option.none))
             )
           )
@@ -134,9 +131,9 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(pipe(
         Stream.asyncInterrupt<never, never, void>((emit) => {
           emit.chunk(Chunk.of(void 0))
-          return Either.left(pipe(ref, Ref.set(true)))
+          return Either.left(Ref.set(ref, true))
         }),
-        Stream.tap(() => pipe(latch, Deferred.succeed<void>(void 0))),
+        Stream.tap(() => Deferred.succeed<never, void>(latch, void 0)),
         Stream.runDrain,
         Effect.fork
       ))
@@ -205,8 +202,7 @@ describe.concurrent("Stream", () => {
           [1, 2, 3, 4, 5, 6, 7].map((n) =>
             emit.fromEffectChunk(
               pipe(
-                refCount,
-                Ref.set(n),
+                Ref.set(refCount, n),
                 Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
@@ -214,8 +210,7 @@ describe.concurrent("Stream", () => {
         ).then(() =>
           emit.fromEffect(
             pipe(
-              refDone,
-              Ref.set(true),
+              Ref.set(refDone, true),
               Effect.zipRight(Effect.fail(Option.none))
             )
           )
@@ -305,8 +300,7 @@ describe.concurrent("Stream", () => {
           [1, 2, 3, 4, 5, 6, 7].map((n) =>
             emit.fromEffectChunk(
               pipe(
-                refCount,
-                Ref.set(n),
+                Ref.set(refCount, n),
                 Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
@@ -314,8 +308,7 @@ describe.concurrent("Stream", () => {
         ).then(() =>
           emit.fromEffect(
             pipe(
-              refDone,
-              Ref.set(true),
+              Ref.set(refDone, true),
               Effect.zipRight(Effect.fail(Option.none))
             )
           )
@@ -340,8 +333,7 @@ describe.concurrent("Stream", () => {
             cb(Effect.succeed(Chunk.of(n)))
           })
           return pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.asUnit
           )
         }),
@@ -403,8 +395,7 @@ describe.concurrent("Stream", () => {
           [1, 2, 3, 4, 5, 6, 7].map((n) =>
             cb(
               pipe(
-                refCount,
-                Ref.set(n),
+                Ref.set(refCount, n),
                 Effect.zipRight(Effect.succeed(Chunk.of(1)))
               )
             )
@@ -412,8 +403,7 @@ describe.concurrent("Stream", () => {
         ).then(() =>
           cb(
             pipe(
-              refDone,
-              Ref.set(true),
+              Ref.set(refDone, true),
               Effect.zipRight(Effect.fail(Option.none))
             )
           )

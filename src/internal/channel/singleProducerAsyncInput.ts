@@ -8,8 +8,6 @@ import type * as SingleProducerAsyncInput from "@effect/stream/Channel/SinglePro
 import * as Either from "@fp-ts/data/Either"
 import { pipe } from "@fp-ts/data/Function"
 
-import * as Equal from "@fp-ts/data/Equal"
-
 /** @internal */
 type State<Err, Elem, _Done> =
   | Empty
@@ -96,18 +94,15 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   implements SingleProducerAsyncInput.SingleProducerAsyncInput<Err, Elem, Done>
 {
   constructor(readonly ref: Ref.Ref<State<Err, Elem, Done>>) {
-    Equal.considerByRef(this)
   }
 
   awaitRead(): Effect.Effect<never, never, unknown> {
     const trace = getCallTrace()
     return pipe(
-      this.ref,
-      Ref.modify((state) =>
+      Ref.modify(this.ref, (state) =>
         state._tag === OP_STATE_EMPTY ?
           [Deferred.await(state.notifyProducer), state as State<Err, Elem, Done>] :
-          [Effect.unit(), state]
-      ),
+          [Effect.unit(), state]),
       Effect.flatten
     ).traced(trace)
   }
@@ -122,8 +117,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   done(value: Done): Effect.Effect<never, never, unknown> {
     const trace = getCallTrace()
     return pipe(
-      this.ref,
-      Ref.modify((state) => {
+      Ref.modify(this.ref, (state) => {
         switch (state._tag) {
           case OP_STATE_EMPTY: {
             return [Deferred.await(state.notifyProducer), state]
@@ -132,9 +126,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
             return [
               pipe(
                 state.notifyConsumers,
-                Effect.forEachDiscard((deferred) =>
-                  pipe(deferred, Deferred.succeed<Either.Either<Done, Elem>>(Either.left(value)))
-                )
+                Effect.forEachDiscard((deferred) => Deferred.succeed(deferred, Either.left(value)))
               ),
               stateDone(value) as State<Err, Elem, Done>
             ]
@@ -157,8 +149,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
       Deferred.make<never, void>(),
       Effect.flatMap((deferred) =>
         pipe(
-          this.ref,
-          Ref.modify((state) => {
+          Ref.modify(this.ref, (state) => {
             switch (state._tag) {
               case OP_STATE_EMPTY: {
                 return [Deferred.await(state.notifyProducer), state]
@@ -168,10 +159,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
                 const notifyConsumers = state.notifyConsumers.slice(1)
                 if (notifyConsumer !== undefined) {
                   return [
-                    pipe(
-                      notifyConsumer,
-                      Deferred.succeed<Either.Either<Done, Elem>>(Either.right(element))
-                    ),
+                    Deferred.succeed(notifyConsumer, Either.right(element)),
                     (notifyConsumers.length === 0 ?
                       stateEmpty(deferred) :
                       stateEmit(notifyConsumers)) as State<Err, Elem, Done>
@@ -198,8 +186,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   error(cause: Cause.Cause<Err>): Effect.Effect<never, never, unknown> {
     const trace = getCallTrace()
     return pipe(
-      this.ref,
-      Ref.modify((state) => {
+      Ref.modify(this.ref, (state) => {
         switch (state._tag) {
           case OP_STATE_EMPTY: {
             return [Deferred.await(state.notifyProducer), state]
@@ -208,7 +195,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
             return [
               pipe(
                 state.notifyConsumers,
-                Effect.forEachDiscard((deferred) => pipe(deferred, Deferred.failCause(cause)))
+                Effect.forEachDiscard((deferred) => Deferred.failCause(deferred, cause))
               ),
               stateError(cause) as State<Err, Elem, Done>
             ]
@@ -244,14 +231,12 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
       Deferred.make<Err, Either.Either<Done, Elem>>(),
       Effect.flatMap((deferred) =>
         pipe(
-          this.ref,
-          Ref.modify((state) => {
+          Ref.modify(this.ref, (state) => {
             switch (state._tag) {
               case OP_STATE_EMPTY: {
                 return [
                   pipe(
-                    state.notifyProducer,
-                    Deferred.succeed<void>(void 0),
+                    Deferred.succeed<never, void>(state.notifyProducer, void 0),
                     Effect.zipRight(
                       pipe(
                         Deferred.await(deferred),

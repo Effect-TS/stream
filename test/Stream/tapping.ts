@@ -14,7 +14,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const result = yield* $(pipe(
         Stream.make(1, 1),
-        Stream.tap((i) => pipe(ref, Ref.update((n) => i + n))),
+        Stream.tap((i) => Ref.update(ref, (n) => i + n)),
         Stream.runCollect
       ))
       const sum = yield* $(Ref.get(ref))
@@ -43,7 +43,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(1, 1),
         Stream.concat(Stream.fail("Ouch")),
-        Stream.tapError((e) => pipe(ref, Ref.update((s) => s + e))),
+        Stream.tapError((e) => Ref.update(ref, (s) => s + e)),
         Stream.runCollect,
         Effect.either
       ))
@@ -53,7 +53,7 @@ describe.concurrent("Stream", () => {
   it.effect("tapSink - sink that is done after stream", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const sink = Sink.forEach((i: number) => pipe(ref, Ref.update((n) => i + n)))
+      const sink = Sink.forEach((i: number) => Ref.update(ref, (n) => i + n))
       const result = yield* $(pipe(
         Stream.make(1, 1, 2, 3, 5, 8),
         Stream.tapSink(sink),
@@ -70,7 +70,7 @@ describe.concurrent("Stream", () => {
       const sink = pipe(
         Sink.take<number>(3),
         Sink.map(Chunk.reduce(0, (x, y) => x + y)),
-        Sink.mapEffect((i) => pipe(ref, Ref.update((n) => n + i)))
+        Sink.mapEffect((i) => Ref.update(ref, (n) => n + i))
       )
       const result = yield* $(pipe(
         Stream.make(1, 1, 2, 3, 5, 8),
@@ -97,7 +97,7 @@ describe.concurrent("Stream", () => {
   it.effect("tapSink - does not read ahead", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const sink = Sink.forEach((i: number) => pipe(ref, Ref.update((n) => i + n)))
+      const sink = Sink.forEach((i: number) => Ref.update(ref, (n) => i + n))
       yield* $(pipe(
         Stream.make(1, 2, 3, 4, 5),
         Stream.rechunk(1),

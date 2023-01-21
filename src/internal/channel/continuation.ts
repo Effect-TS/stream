@@ -3,7 +3,6 @@ import type * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as Channel from "@effect/stream/Channel"
 import * as OpCodes from "@effect/stream/internal/opCodes/continuation"
-import * as Equal from "@fp-ts/data/Equal"
 
 /** @internal */
 export const ContinuationTypeId = Symbol.for("@effect/stream/Channel/Continuation")
@@ -155,7 +154,6 @@ export class ContinuationKImpl<
       c: Cause.Cause<OutErr>
     ) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem, OutDone2>
   ) {
-    Equal.considerByRef(this)
   }
   onExit(
     exit: Exit.Exit<OutErr, OutDone>
@@ -169,6 +167,5 @@ export class ContinuationFinalizerImpl<Env, OutErr, OutDone> implements Continua
   readonly _tag = OpCodes.OP_CONTINUATION_FINALIZER
   readonly [ContinuationTypeId] = continuationVariance
   constructor(readonly finalizer: (exit: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env, never, unknown>) {
-    Equal.considerByRef(this)
   }
 }

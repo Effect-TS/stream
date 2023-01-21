@@ -119,13 +119,15 @@ export const offer = <A>(value: A) => {
       Deferred.make<never, void>(),
       Effect.flatMap((deferred) =>
         pipe(
-          self.ref,
-          Ref.modify((state) =>
+          Ref.modify(self.ref, (state) =>
             pipe(
               state,
               handoffStateMatch(
                 (notifyConsumer) => [
-                  pipe(notifyConsumer, Deferred.succeed<void>(void 0), Effect.zipRight(Deferred.await(deferred))),
+                  pipe(
+                    Deferred.succeed<never, void>(notifyConsumer, void 0),
+                    Effect.zipRight(Deferred.await(deferred))
+                  ),
                   handoffStateFull(value, deferred)
                 ],
                 (_, notifyProducer) => [
@@ -133,8 +135,7 @@ export const offer = <A>(value: A) => {
                   state
                 ]
               )
-            )
-          ),
+            )),
           Effect.flatten
         )
       )
@@ -152,8 +153,7 @@ export const take = <A>(self: Handoff<A>): Effect.Effect<never, never, A> => {
     Deferred.make<never, void>(),
     Effect.flatMap((deferred) =>
       pipe(
-        self.ref,
-        Ref.modify((state) =>
+        Ref.modify(self.ref, (state) =>
           pipe(
             state,
             handoffStateMatch(
@@ -162,12 +162,11 @@ export const take = <A>(self: Handoff<A>): Effect.Effect<never, never, A> => {
                 state
               ],
               (value, notifyProducer) => [
-                pipe(notifyProducer, Deferred.succeed<void>(void 0), Effect.as(value)),
+                pipe(Deferred.succeed<never, void>(notifyProducer, void 0), Effect.as(value)),
                 handoffStateEmpty(deferred)
               ]
             )
-          )
-        ),
+          )),
         Effect.flatten
       )
     )
@@ -184,8 +183,7 @@ export const poll = <A>(self: Handoff<A>): Effect.Effect<never, never, Option.Op
     Deferred.make<never, void>(),
     Effect.flatMap((deferred) =>
       pipe(
-        self.ref,
-        Ref.modify((state) =>
+        Ref.modify(self.ref, (state) =>
           pipe(
             state,
             handoffStateMatch(
@@ -194,12 +192,11 @@ export const poll = <A>(self: Handoff<A>): Effect.Effect<never, never, Option.Op
                 state
               ],
               (value, notifyProducer) => [
-                pipe(notifyProducer, Deferred.succeed<void>(void 0), Effect.as(Option.some(value))),
+                pipe(Deferred.succeed<never, void>(notifyProducer, void 0), Effect.as(Option.some(value))),
                 handoffStateEmpty(deferred)
               ]
             )
-          )
-        ),
+          )),
         Effect.flatten
       )
     )

@@ -69,14 +69,14 @@ export const get: <A>(self: SubscriptionRef<A>) => Effect.Effect<never, never, A
  * @since 1.0.0
  * @category utils
  */
-export const getAndSet: <A>(value: A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = Ref.getAndSet
+export const getAndSet: <A>(self: SubscriptionRef<A>, value: A) => Effect.Effect<never, never, A> = Ref.getAndSet
 
 /**
  * @macro traced
  * @since 1.0.0
  * @category utils
  */
-export const getAndUpdate: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> =
+export const getAndUpdate: <A>(self: SubscriptionRef<A>, f: (a: A) => A) => Effect.Effect<never, never, A> =
   Ref.getAndUpdate
 
 /**
@@ -85,8 +85,9 @@ export const getAndUpdate: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => 
  * @category utils
  */
 export const getAndUpdateEffect: <A, R, E>(
+  self: SubscriptionRef<A>,
   f: (a: A) => Effect.Effect<R, E, A>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, A> = Synchronized.getAndUpdateEffect
+) => Effect.Effect<R, E, A> = Synchronized.getAndUpdateEffect
 
 /**
  * @macro traced
@@ -94,8 +95,9 @@ export const getAndUpdateEffect: <A, R, E>(
  * @category utils
  */
 export const getAndUpdateSome: <A>(
+  self: SubscriptionRef<A>,
   pf: (a: A) => Option.Option<A>
-) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = Ref.getAndUpdateSome
+) => Effect.Effect<never, never, A> = Ref.getAndUpdateSome
 
 /**
  * @macro traced
@@ -103,8 +105,9 @@ export const getAndUpdateSome: <A>(
  * @category utils
  */
 export const getAndUpdateSomeEffect: <A, R, E>(
+  self: SubscriptionRef<A>,
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, A> = Synchronized.getAndUpdateSomeEffect
+) => Effect.Effect<R, E, A> = Synchronized.getAndUpdateSomeEffect
 
 /**
  * Creates a new `SubscriptionRef` with the specified value.
@@ -139,9 +142,10 @@ export const modifyEffect: <A, R, E, B>(
  * @category utils
  */
 export const modifySome: <A, B>(
+  self: SubscriptionRef<A>,
   fallback: B,
   pf: (a: A) => Option.Option<readonly [B, A]>
-) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, B> = Ref.modifySome
+) => Effect.Effect<never, never, B> = Ref.modifySome
 
 /**
  * @macro traced
@@ -149,9 +153,10 @@ export const modifySome: <A, B>(
  * @category utils
  */
 export const modifySomeEffect: <B, A, R, E>(
+  self: SubscriptionRef<A>,
   fallback: B,
   pf: (a: A) => Option.Option<Effect.Effect<R, E, readonly [B, A]>>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, B> = Synchronized.modifySomeEffect
+) => Effect.Effect<R, E, B> = Synchronized.modifySomeEffect
 
 /**
  * @macro traced
@@ -165,14 +170,14 @@ export const set: <A>(value: A) => (self: SubscriptionRef<A>) => Effect.Effect<n
  * @since 1.0.0
  * @category utils
  */
-export const setAndGet: <A>(value: A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = Ref.setAndGet
+export const setAndGet: <A>(self: SubscriptionRef<A>, value: A) => Effect.Effect<never, never, A> = Ref.setAndGet
 
 /**
  * @macro traced
  * @since 1.0.0
  * @category utils
  */
-export const update: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, void> = Ref.update
+export const update: <A>(self: SubscriptionRef<A>, f: (a: A) => A) => Effect.Effect<never, never, void> = Ref.update
 
 /**
  * @macro traced
@@ -180,15 +185,16 @@ export const update: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect
  * @category utils
  */
 export const updateEffect: <A, R, E>(
+  self: SubscriptionRef<A>,
   f: (a: A) => Effect.Effect<R, E, A>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, void> = Synchronized.updateEffect
+) => Effect.Effect<R, E, void> = Synchronized.updateEffect
 
 /**
  * @macro traced
  * @since 1.0.0
  * @category utils
  */
-export const updateAndGet: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> =
+export const updateAndGet: <A>(self: SubscriptionRef<A>, f: (a: A) => A) => Effect.Effect<never, never, A> =
   Ref.updateAndGet
 
 /**
@@ -197,8 +203,9 @@ export const updateAndGet: <A>(f: (a: A) => A) => (self: SubscriptionRef<A>) => 
  * @category utils
  */
 export const updateAndGetEffect: <A, R, E>(
+  self: SubscriptionRef<A>,
   f: (a: A) => Effect.Effect<R, E, A>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, A> = Synchronized.updateAndGetEffect
+) => Effect.Effect<R, E, A> = Synchronized.updateAndGetEffect
 
 /**
  * @macro traced
@@ -206,8 +213,9 @@ export const updateAndGetEffect: <A, R, E>(
  * @category utils
  */
 export const updateSome: <A>(
+  self: SubscriptionRef<A>,
   f: (a: A) => Option.Option<A>
-) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, void> = Ref.updateSome
+) => Effect.Effect<never, never, void> = Ref.updateSome
 
 /**
  * @macro traced
@@ -215,8 +223,9 @@ export const updateSome: <A>(
  * @category utils
  */
 export const updateSomeEffect: <A, R, E>(
+  self: SubscriptionRef<A>,
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, void> = Synchronized.updateSomeEffect
+) => Effect.Effect<R, E, void> = Synchronized.updateSomeEffect
 
 /**
  * @macro traced
@@ -224,8 +233,9 @@ export const updateSomeEffect: <A, R, E>(
  * @category utils
  */
 export const updateSomeAndGet: <A>(
+  self: SubscriptionRef<A>,
   pf: (a: A) => Option.Option<A>
-) => (self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = Ref.updateSomeAndGet
+) => Effect.Effect<never, never, A> = Ref.updateSomeAndGet
 
 /**
  * @macro traced
@@ -233,5 +243,6 @@ export const updateSomeAndGet: <A>(
  * @category utils
  */
 export const updateSomeAndGetEffect: <A, R, E>(
+  self: SubscriptionRef<A>,
   pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
-) => (self: SubscriptionRef<A>) => Effect.Effect<R, E, A> = Synchronized.updateSomeAndGetEffect
+) => Effect.Effect<R, E, A> = Synchronized.updateSomeAndGetEffect

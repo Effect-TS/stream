@@ -16,10 +16,9 @@ describe.concurrent("Channel", () => {
       const halt = yield* $(Deferred.make<never, void>())
       const started = yield* $(Deferred.make<never, void>())
       const channel = pipe(
-        started,
-        Deferred.succeed<void>(void 0),
+        Deferred.succeed<never, void>(started, void 0),
         Effect.zipRight(Deferred.await(latch)),
-        Effect.onInterrupt(() => pipe(interrupted, Ref.set(true))),
+        Effect.onInterrupt(() => Ref.set(interrupted, true)),
         Channel.fromEffect,
         Channel.interruptWhen(Deferred.await(halt))
       )
@@ -27,7 +26,7 @@ describe.concurrent("Channel", () => {
       yield* $(
         pipe(
           Deferred.await(started),
-          Effect.zipRight(pipe(halt, Deferred.succeed<void>(void 0)))
+          Effect.zipRight(Deferred.succeed<never, void>(halt, void 0))
         )
       )
       yield* $(Fiber.await(fiber))
@@ -42,7 +41,7 @@ describe.concurrent("Channel", () => {
         Channel.fromEffect(Effect.never()),
         Channel.interruptWhen(Deferred.await(deferred))
       )
-      yield* $(pipe(deferred, Deferred.fail("fail")))
+      yield* $(Deferred.fail(deferred, "fail"))
       const result = yield* $(pipe(Channel.runDrain(channel), Effect.either))
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
@@ -54,10 +53,9 @@ describe.concurrent("Channel", () => {
       const halt = yield* $(Deferred.make<never, void>())
       const started = yield* $(Deferred.make<never, void>())
       const channel = pipe(
-        started,
-        Deferred.succeed<void>(void 0),
+        Deferred.succeed<never, void>(started, void 0),
         Effect.zipRight(Deferred.await(latch)),
-        Effect.onInterrupt(() => pipe(interrupted, Ref.set(true))),
+        Effect.onInterrupt(() => Ref.set(interrupted, true)),
         Channel.fromEffect,
         Channel.interruptWhenDeferred(halt)
       )
@@ -65,7 +63,7 @@ describe.concurrent("Channel", () => {
       yield* $(
         pipe(
           Deferred.await(started),
-          Effect.zipRight(pipe(halt, Deferred.succeed<void>(void 0)))
+          Effect.zipRight(Deferred.succeed<never, void>(halt, void 0))
         )
       )
       yield* $(Fiber.await(fiber))
@@ -80,7 +78,7 @@ describe.concurrent("Channel", () => {
         Channel.fromEffect(Effect.never()),
         Channel.interruptWhenDeferred(deferred)
       )
-      yield* $(pipe(deferred, Deferred.fail("fail")))
+      yield* $(Deferred.fail(deferred, "fail"))
       const result = yield* $(pipe(Channel.runDrain(channel), Effect.either))
       assert.deepStrictEqual(result, Either.left("fail"))
     }))

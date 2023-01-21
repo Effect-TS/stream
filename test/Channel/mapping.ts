@@ -153,7 +153,7 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - upstream acquireReleaseOut + downstream failure", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
-      const event = (label: string) => pipe(ref, Ref.update((array) => [...array, label]))
+      const event = (label: string) => Ref.update(ref, (array) => [...array, label])
       const effect = pipe(
         Channel.acquireReleaseOut(event("Acquired"), () => event("Released")),
         Channel.concatMap(() => Channel.fail("error")),

@@ -67,7 +67,7 @@ describe.concurrent("Stream", () => {
   it.effect("execute", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
-      yield* $(Stream.runDrain(Stream.execute(pipe(ref, Ref.set(Chunk.fromIterable([1]))))))
+      yield* $(Stream.runDrain(Stream.execute(Ref.set(ref, Chunk.fromIterable([1])))))
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [1])
     }))
@@ -124,7 +124,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMap - inner finalizers", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
-      const push = (n: number) => pipe(ref, Ref.update(Chunk.append(n)))
+      const push = (n: number) => Ref.update(ref, Chunk.append(n))
       const latch = yield* $(Deferred.make<never, void>())
       const fiber = yield* $(pipe(
         Stream.make(
@@ -133,8 +133,7 @@ describe.concurrent("Stream", () => {
           pipe(
             Stream.acquireRelease(push(3), () => push(3)),
             Stream.crossRight(Stream.fromEffect(pipe(
-              latch,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch, void 0),
               Effect.zipRight(Effect.never())
             )))
           )
@@ -152,7 +151,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMap - finalizer ordering #1", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      const push = (message: string) => pipe(ref, Ref.update(Chunk.append(message)))
+      const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const chunks = Chunk.make(Chunk.of(void 0), Chunk.of(void 0))
       yield* $(pipe(
         Stream.acquireRelease(push("open 1"), () => push("close 1")),
@@ -200,7 +199,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMap - finalizer ordering #2", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      const push = (message: string) => pipe(ref, Ref.update(Chunk.append(message)))
+      const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const chunks = Chunk.make(Chunk.of(1), Chunk.of(2))
       yield* $(pipe(
         Stream.fromChunks(...chunks),
@@ -227,8 +226,8 @@ describe.concurrent("Stream", () => {
           pipe(
             exit,
             Exit.match(
-              () => pipe(ref, Ref.set(true)),
-              Effect.unit
+              () => Ref.set(ref, true),
+              () => Effect.unit()
             )
           )),
         Stream.flatMap(() => Stream.fail("Ouch"))
@@ -246,7 +245,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMap - finalizers are registered in the proper order", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
-      const push = (n: number) => pipe(ref, Ref.update(Chunk.prepend(n)))
+      const push = (n: number) => Ref.update(ref, Chunk.prepend(n))
       yield* $(pipe(
         Stream.finalizer(push(1)),
         Stream.flatMap(() => Stream.finalizer(push(2))),
@@ -261,7 +260,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMap - early release finalizer concatenation is preserved", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
-      const push = (n: number) => pipe(ref, Ref.update(Chunk.prepend(n)))
+      const push = (n: number) => Ref.update(ref, Chunk.prepend(n))
       const stream = pipe(
         Stream.finalizer(push(1)),
         Stream.flatMap(() => Stream.finalizer(push(2)))
@@ -270,12 +269,11 @@ describe.concurrent("Stream", () => {
         Scope.make(),
         Effect.flatMap((scope) =>
           pipe(
-            scope,
-            Scope.extend(Stream.toPull(stream)),
+            Scope.extend(scope)(Stream.toPull(stream)),
             Effect.flatMap((pull) =>
               pipe(
                 pull,
-                Effect.zipRight(pipe(scope, Scope.close(Exit.unit()))),
+                Effect.zipRight(Scope.close(scope, Exit.unit())),
                 Effect.zipRight(Ref.get(ref))
               )
             )
@@ -321,10 +319,9 @@ describe.concurrent("Stream", () => {
         Stream.make(void 0),
         Stream.flatMapPar(1)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),
@@ -345,10 +342,9 @@ describe.concurrent("Stream", () => {
         Stream.make(
           Stream.fromEffect(
             pipe(
-              latch,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch, void 0),
               Effect.zipRight(Effect.never()),
-              Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+              Effect.onInterrupt(() => Ref.set(ref, true))
             )
           ),
           Stream.fromEffect(
@@ -379,10 +375,9 @@ describe.concurrent("Stream", () => {
         ))),
         Stream.flatMapPar(2)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),
@@ -402,10 +397,9 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(
           Stream.fromEffect(pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+            Effect.onInterrupt(() => Ref.set(ref, true))
           )),
           Stream.fromEffect(pipe(
             Deferred.await(latch),
@@ -434,10 +428,9 @@ describe.concurrent("Stream", () => {
         ))),
         Stream.flatMapPar(2)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),
@@ -452,7 +445,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMapPar - finalizer ordering", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      const push = (message: string) => pipe(ref, Ref.update(Chunk.append(message)))
+      const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const inner = Stream.acquireRelease(push("Inner Acquire"), () => push("Inner Release"))
       yield* $(pipe(
         Stream.acquireRelease(
@@ -483,7 +476,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapParSwitch(1)((n) => {
           if (n > 3) {
             return pipe(
-              Stream.acquireRelease(Effect.unit(), () => pipe(ref, Ref.set(true))),
+              Stream.acquireRelease(Effect.unit(), () => Ref.set(ref, true)),
               Stream.flatMap(() => Stream.empty)
             )
           }
@@ -509,7 +502,7 @@ describe.concurrent("Stream", () => {
             return pipe(
               Stream.acquireRelease(
                 Effect.unit(),
-                () => pipe(ref, Ref.update((n) => n + 1))
+                () => Ref.update(ref, (n) => n + 1)
               ),
               Stream.flatMap(() => Stream.empty)
             )
@@ -547,10 +540,9 @@ describe.concurrent("Stream", () => {
         Stream.make(void 0),
         Stream.flatMapParSwitch(1)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),
@@ -571,10 +563,9 @@ describe.concurrent("Stream", () => {
         Stream.make(
           Stream.fromEffect(
             pipe(
-              latch,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch, void 0),
               Effect.zipRight(Effect.never()),
-              Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+              Effect.onInterrupt(() => Ref.set(ref, true))
             )
           ),
           Stream.fromEffect(
@@ -605,10 +596,9 @@ describe.concurrent("Stream", () => {
         ))),
         Stream.flatMapParSwitch(2)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),
@@ -629,10 +619,9 @@ describe.concurrent("Stream", () => {
         Stream.make(
           Stream.fromEffect(
             pipe(
-              latch,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch, void 0),
               Effect.zipRight(Effect.never()),
-              Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+              Effect.onInterrupt(() => Ref.set(ref, true))
             )
           ),
           Stream.fromEffect(
@@ -664,10 +653,9 @@ describe.concurrent("Stream", () => {
         ))),
         Stream.flatMapParSwitch(2)(() =>
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )
         ),
@@ -682,7 +670,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMapParSwitch - finalizer ordering", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      const push = (message: string) => pipe(ref, Ref.update(Chunk.append(message)))
+      const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const inner = Stream.acquireRelease(push("Inner Acquire"), () => push("Inner Release"))
       yield* $(pipe(
         Stream.acquireRelease(

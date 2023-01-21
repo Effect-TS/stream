@@ -120,10 +120,9 @@ describe.concurrent("Channel", () => {
         Channel.write(1),
         Channel.zipRight(
           pipe(
-            latch,
-            Deferred.succeed<void>(void 0),
+            Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
-            Effect.onInterrupt(() => pipe(interrupted, Ref.set(true))),
+            Effect.onInterrupt(() => Ref.set(interrupted, true)),
             Channel.fromEffect
           )
         )

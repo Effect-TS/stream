@@ -18,7 +18,6 @@ import * as ChildExecutorDecisionOpCodes from "@effect/stream/internal/opCodes/c
 import * as ContinuationOpCodes from "@effect/stream/internal/opCodes/continuation"
 import * as UpstreamPullStrategyOpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
 import type * as Context from "@fp-ts/data/Context"
-import * as Equal from "@fp-ts/data/Equal"
 import { identity, pipe } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 
@@ -89,7 +88,6 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     providedEnv: Context.Context<unknown> | undefined,
     executeCloseLastSubstream: (effect: Effect.Effect<Env, never, unknown>) => Effect.Effect<Env, never, unknown>
   ) {
-    Equal.considerByRef(this)
     this._currentChannel = initialChannel as core.Primitive
     this._executeCloseLastSubstream = executeCloseLastSubstream
     this._providedEnv = providedEnv
@@ -254,7 +252,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                   this._currentChannel.effect() :
                   pipe(
                     this._currentChannel.effect(),
-                    Effect.provideEnvironment(this._providedEnv)
+                    Effect.provideContext(this._providedEnv)
                   )
 
                 result = ChannelState.FromEffect(
@@ -303,7 +301,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
               case ChannelOpCodes.OP_PROVIDE: {
                 const previousEnv = this._providedEnv
-                this._providedEnv = this._currentChannel.environment()
+                this._providedEnv = this._currentChannel.context()
                 this._currentChannel = this._currentChannel.inner as core.Primitive
                 this.addFinalizer(() =>
                   Effect.sync(() => {
@@ -570,7 +568,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     if (this._providedEnv === undefined) {
       return effect
     }
-    return pipe(effect, Effect.provideEnvironment(this._providedEnv))
+    return pipe(effect, Effect.provideContext(this._providedEnv))
   }
 
   runEnsuring(ensuring: core.Ensuring): void {

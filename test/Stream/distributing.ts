@@ -22,7 +22,7 @@ describe.concurrent("Stream", () => {
             Effect.flatMap((onEnd) =>
               pipe(
                 subscribe,
-                Stream.ensuring(pipe(onEnd, Deferred.succeed<void>(void 0))),
+                Stream.ensuring(Deferred.succeed<never, void>(onEnd, void 0)),
                 Stream.runDrain,
                 Effect.fork,
                 Effect.zipRight(Deferred.await(onEnd)),

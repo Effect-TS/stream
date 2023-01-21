@@ -84,7 +84,7 @@ describe.concurrent("Sink", () => {
               Stream.transduce(Sink.foldEffect(
                 0,
                 constTrue,
-                (_, y: number) => pipe(ref, Ref.update(Chunk.append(y)), Effect.as(30))
+                (_, y: number) => pipe(Ref.update(ref, Chunk.append(y)), Effect.as(30))
               )),
               Stream.runCollect,
               Effect.flatMap((exit) =>

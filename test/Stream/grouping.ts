@@ -151,7 +151,7 @@ describe.concurrent("Stream", () => {
       )
       const either = yield* $(pipe(
         stream,
-        Stream.mapEffect((chunk) => pipe(ref, Ref.update(Chunk.append(Array.from(chunk))))),
+        Stream.mapEffect((chunk) => Ref.update(ref, Chunk.append(Array.from(chunk)))),
         Stream.runCollect,
         Effect.either
       ))
@@ -210,8 +210,7 @@ describe.concurrent("Stream", () => {
         Stream.groupedWithin(10, Duration.seconds(3)),
         Stream.tap((chunk) =>
           pipe(
-            ref,
-            Ref.update((n) => n + chunk.length),
+            Ref.update(ref, (n) => n + chunk.length),
             Effect.zipRight(pipe(latch, Handoff.offer<void>(void 0)))
           )
         ),

@@ -4,6 +4,7 @@ import * as it from "@effect/stream/test/utils/extend"
 import * as Context from "@fp-ts/data/Context"
 import * as Equal from "@fp-ts/data/Equal"
 import { pipe } from "@fp-ts/data/Function"
+import * as Hash from "@fp-ts/data/Hash"
 import { assert, describe } from "vitest"
 
 const NumberServiceSymbolKey = "@effect/stream/test/NumberService"
@@ -24,14 +25,14 @@ export class NumberServiceImpl implements NumberService {
 
   constructor(readonly n: number) {}
 
-  [Equal.symbolHash](): number {
+  [Hash.symbol](): number {
     return pipe(
-      Equal.hash(NumberServiceSymbolKey),
-      Equal.hashCombine(Equal.hash(this.n))
+      Hash.hash(NumberServiceSymbolKey),
+      Hash.combine(Hash.hash(this.n))
     )
   }
 
-  [Equal.symbolEqual](u: unknown): boolean {
+  [Equal.symbol](u: unknown): boolean {
     return isNumberService(u) && u.n === this.n
   }
 }
@@ -96,7 +97,7 @@ describe.concurrent("Channel", () => {
       const channel1 = Channel.fromEffect(Effect.service(NumberService))
       const channel2 = pipe(
         Effect.service(NumberService),
-        Effect.provideEnvironment(pipe(Context.empty(), Context.add(NumberService)(new NumberServiceImpl(2)))),
+        Effect.provideContext(pipe(Context.empty(), Context.add(NumberService)(new NumberServiceImpl(2)))),
         Channel.fromEffect
       )
       const channel3 = Channel.fromEffect(Effect.service(NumberService))
@@ -105,7 +106,7 @@ describe.concurrent("Channel", () => {
         Channel.zip(channel2),
         Channel.zip(channel3),
         Channel.runDrain,
-        Effect.provideService(NumberService)(new NumberServiceImpl(4))
+        Effect.provideService(NumberService, new NumberServiceImpl(4))
       ))
       assert.deepStrictEqual(result1, new NumberServiceImpl(4))
       assert.deepStrictEqual(result2, new NumberServiceImpl(2))

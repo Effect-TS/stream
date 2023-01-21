@@ -75,12 +75,10 @@ describe.concurrent("Stream", () => {
               evens,
               Stream.tap((n) =>
                 pipe(
-                  ref,
-                  Ref.update(Chunk.prepend(n)),
+                  Ref.update(ref, Chunk.prepend(n)),
                   Effect.zipRight(
                     pipe(
-                      latch,
-                      Deferred.succeed<void>(void 0),
+                      Deferred.succeed<never, void>(latch, void 0),
                       Effect.when(() => n === 2)
                     )
                   )

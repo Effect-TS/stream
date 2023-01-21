@@ -24,8 +24,7 @@ const program = Effect.gen(function*($) {
     )
   const subscriptionRef = yield* $(SubscriptionRef.make(0))
   const fiber = yield* $(pipe(
-    subscriptionRef,
-    SubscriptionRef.update((n) => n + 1),
+    SubscriptionRef.update(subscriptionRef, (n) => n + 1),
     Effect.forever,
     Effect.fork
   ))

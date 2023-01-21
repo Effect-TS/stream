@@ -21,14 +21,14 @@ describe.concurrent("Stream", () => {
       const halt = yield* $(Deferred.make<never, void>())
       yield* $(pipe(
         Deferred.await(latch),
-        Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+        Effect.onInterrupt(() => Ref.set(ref, true)),
         Stream.fromEffect,
         Stream.haltWhen(Deferred.await(halt)),
         Stream.runDrain,
         Effect.fork
       ))
-      yield* $(pipe(halt, Deferred.succeed<void>(void 0)))
-      yield* $(pipe(latch, Deferred.succeed<void>(void 0)))
+      yield* $(Deferred.succeed<never, void>(halt, void 0))
+      yield* $(Deferred.succeed<never, void>(latch, void 0))
       const result = yield* $(Ref.get(ref))
       assert.isFalse(result)
     }))
@@ -36,7 +36,7 @@ describe.concurrent("Stream", () => {
   it.effect("haltWhen - propagates errors", () =>
     Effect.gen(function*($) {
       const halt = yield* $(Deferred.make<string, void>())
-      yield* $(pipe(halt, Deferred.fail("fail")))
+      yield* $(Deferred.fail(halt, "fail"))
       const result = yield* $(pipe(
         Stream.make(0),
         Stream.forever,
@@ -54,14 +54,14 @@ describe.concurrent("Stream", () => {
       const halt = yield* $(Deferred.make<never, void>())
       yield* $(pipe(
         Deferred.await(latch),
-        Effect.onInterrupt(() => pipe(ref, Ref.set(true))),
+        Effect.onInterrupt(() => Ref.set(ref, true)),
         Stream.fromEffect,
         Stream.haltWhenDeferred(halt),
         Stream.runDrain,
         Effect.fork
       ))
-      yield* $(pipe(halt, Deferred.succeed<void>(void 0)))
-      yield* $(pipe(latch, Deferred.succeed<void>(void 0)))
+      yield* $(Deferred.succeed<never, void>(halt, void 0))
+      yield* $(Deferred.succeed<never, void>(latch, void 0))
       const result = yield* $(Ref.get(ref))
       assert.isFalse(result)
     }))
@@ -69,7 +69,7 @@ describe.concurrent("Stream", () => {
   it.effect("haltWhenDeferred - propagates errors", () =>
     Effect.gen(function*($) {
       const halt = yield* $(Deferred.make<string, void>())
-      yield* $(pipe(halt, Deferred.fail("fail")))
+      yield* $(Deferred.fail(halt, "fail"))
       const result = yield* $(pipe(
         Stream.make(1),
         Stream.haltWhenDeferred(halt),
@@ -128,7 +128,7 @@ describe.concurrent("Stream", () => {
         Effect.fork
       ))
       yield* $(TestClock.adjust(Duration.seconds(6)))
-      yield* $(pipe(queue, Queue.offer(1)))
+      yield* $(pipe(Queue.offer(queue, 1)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1])
     }))

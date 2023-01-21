@@ -77,10 +77,9 @@ describe.concurrent("Stream", () => {
           return Effect.succeed(acc.prepend(curr))
         }
         return pipe(
-          latch,
-          Deferred.succeed<void>(void 0),
+          Deferred.succeed<never, void>(latch, void 0),
           Effect.zipRight(Effect.never()),
-          Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+          Effect.onInterrupt(() => Ref.set(ref, true))
         )
       })
       const fiber = yield* $(pipe(
@@ -100,10 +99,9 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const ref = yield* $(Ref.make(false))
       const sink = Sink.fromEffect(pipe(
-        latch,
-        Deferred.succeed<void>(void 0),
+        Deferred.succeed<never, void>(latch, void 0),
         Effect.zipRight(Effect.never()),
-        Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+        Effect.onInterrupt(() => Ref.set(ref, true))
       ))
       const fiber = yield* $(pipe(
         Stream.make(1, 1, 2),
@@ -162,12 +160,12 @@ describe.concurrent("Stream", () => {
         Effect.fork
       ))
       yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
-      yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(1, 2, 3, 4, 5)))))
+      yield* $(pipe(Queue.offer(queue, Take.chunk(Chunk.make(1, 2, 3, 4, 5)))))
       yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
-      yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(6, 7, 8, 9, 10)))))
+      yield* $(pipe(Queue.offer(queue, Take.chunk(Chunk.make(6, 7, 8, 9, 10)))))
       yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
-      yield* $(pipe(queue, Queue.offer(Take.chunk(Chunk.make(11, 12, 13, 14, 15)))))
-      yield* $(pipe(queue, Queue.offer(Take.end)))
+      yield* $(pipe(Queue.offer(queue, Take.chunk(Chunk.make(11, 12, 13, 14, 15)))))
+      yield* $(pipe(Queue.offer(queue, Take.end)))
       const result = yield* $(pipe(
         Fiber.join(fiber),
         Effect.map(Chunk.filter(Chunk.isNonEmpty))
@@ -251,7 +249,7 @@ describe.concurrent("Stream", () => {
             pipe(
               Effect.fail("Boom"),
               Effect.when(() => n === 6),
-              Effect.zipRight(pipe(queue, Queue.offer(n)))
+              Effect.zipRight(pipe(Queue.offer(queue, n)))
             )
           ),
           Stream.aggregateWithinEither(
@@ -310,10 +308,9 @@ describe.concurrent("Stream", () => {
           return Effect.succeed(acc.prepend(curr))
         }
         return pipe(
-          latch,
-          Deferred.succeed<void>(void 0),
+          Deferred.succeed<never, void>(latch, void 0),
           Effect.zipRight(Effect.never()),
-          Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+          Effect.onInterrupt(() => Ref.set(ref, true))
         )
       })
       const fiber = yield* $(
@@ -335,10 +332,9 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const ref = yield* $(Ref.make(false))
       const sink = Sink.fromEffect(pipe(
-        latch,
-        Deferred.succeed<void>(void 0),
+        Deferred.succeed<never, void>(latch, void 0),
         Effect.zipRight(Effect.never()),
-        Effect.onInterrupt(() => pipe(ref, Ref.set(true)))
+        Effect.onInterrupt(() => Ref.set(ref, true))
       ))
       const fiber = yield* $(
         pipe(

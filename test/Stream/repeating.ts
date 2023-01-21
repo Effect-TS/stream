@@ -22,12 +22,7 @@ describe.concurrent("Stream", () => {
       yield* $(pipe(
         Stream.make(1),
         Stream.forever,
-        Stream.runForEachWhile(() =>
-          pipe(
-            ref,
-            Ref.modify((sum) => [sum >= 9 ? false : true, sum + 1] as const)
-          )
-        )
+        Stream.runForEachWhile(() => Ref.modify(ref, (sum) => [sum >= 9 ? false : true, sum + 1] as const))
       ))
       const result = yield* $(Ref.get(ref))
       assert.strictEqual(result, 10)
@@ -47,7 +42,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const fiber = yield* $(pipe(
-        Stream.fromEffect(pipe(ref, Ref.update(Chunk.prepend(1)))),
+        Stream.fromEffect(Ref.update(ref, Chunk.prepend(1))),
         Stream.repeat(Schedule.spaced(Duration.millis(10))),
         Stream.take(2),
         Stream.runDrain,
@@ -64,8 +59,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const result = yield* $(pipe(
         Stream.fromEffect(pipe(
-          ref,
-          Ref.getAndUpdate((n) => n + 1),
+          Ref.getAndUpdate(ref, (n) => n + 1),
           Effect.flatMap((n) => n <= 2 ? Effect.succeed(n) : Effect.fail("boom"))
         )),
         Stream.repeat(Schedule.recurs(3)),
@@ -111,8 +105,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.repeatEffectOption(
           pipe(
-            ref,
-            Ref.updateAndGet((n) => n + 1),
+            Ref.updateAndGet(ref, (n) => n + 1),
             Effect.flatMap((n) =>
               n >= 5 ?
                 Effect.fail(Option.none) :
@@ -131,8 +124,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       yield* $(pipe(
         Stream.repeatEffectOption(pipe(
-          ref,
-          Ref.updateAndGet((n) => n + 1),
+          Ref.updateAndGet(ref, (n) => n + 1),
           Effect.zipRight(Effect.fail(Option.none))
         )),
         Stream.toPull,
@@ -153,7 +145,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const fiber = yield* $(pipe(
         Stream.repeatEffectWithSchedule(
-          pipe(ref, Ref.update(Chunk.append(1))),
+          Ref.update(ref, Chunk.append(1)),
           Schedule.spaced(Duration.millis(10))
         ),
         Stream.take(2),
@@ -171,8 +163,7 @@ describe.concurrent("Stream", () => {
       const effect = Effect.gen(function*($) {
         const ref = yield* $(Ref.make(0))
         const effect = pipe(
-          ref,
-          Ref.getAndUpdate((n) => n + 1),
+          Ref.getAndUpdate(ref, (n) => n + 1),
           Effect.filterOrFail((n) => n <= length + 1, constVoid)
         )
         const schedule = pipe(
@@ -182,7 +173,7 @@ describe.concurrent("Stream", () => {
         const stream = Stream.repeatEffectWithSchedule(effect, schedule)
         return yield* $(pipe(
           Stream.runCollect(stream),
-          Effect.provideLayer(TestEnvironment.testEnvironment())
+          Effect.provideLayer(TestEnvironment.testContext())
         ))
       })
       const result = await Effect.unsafeRunPromise(effect)
@@ -213,7 +204,7 @@ describe.concurrent("Stream", () => {
       const schedule = Schedule.spaced(Duration.seconds(1))
       const fiber = yield* $(pipe(
         Stream.repeatEffectWithSchedule(Effect.unit(), schedule),
-        Stream.tap(() => pipe(ref, Ref.update((n) => n + 1))),
+        Stream.tap(() => Ref.update(ref, (n) => n + 1)),
         Stream.runDrain,
         Effect.fork
       ))
@@ -230,7 +221,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const fiber = yield* $(pipe(
-        Stream.fromEffect(pipe(ref, Ref.update(Chunk.prepend(1)))),
+        Stream.fromEffect(Ref.update(ref, Chunk.prepend(1))),
         Stream.repeatEither(Schedule.spaced(Duration.millis(10))),
         Stream.take(3), // take one of the schedule outputs
         Stream.runDrain,

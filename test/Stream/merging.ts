@@ -35,10 +35,10 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.fork
       ))
-      yield* $(pipe(queue1, Queue.offer(1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
-      yield* $(pipe(queue1, Queue.offer(2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(Queue.offer(queue1, 1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(Queue.offer(queue1, 2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
       yield* $(pipe(Queue.shutdown(queue1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
-      yield* $(pipe(queue2, Queue.offer(3)))
+      yield* $(Queue.offer(queue2, 3))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
@@ -67,10 +67,10 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.fork
       ))
-      yield* $(pipe(queue2, Queue.offer(1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
-      yield* $(pipe(queue2, Queue.offer(2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(Queue.offer(queue2, 1), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
+      yield* $(pipe(Queue.offer(queue2, 2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
       yield* $(pipe(Queue.shutdown(queue2), Effect.zipRight(TestClock.adjust(Duration.seconds(1)))))
-      yield* $(pipe(queue1, Queue.offer(3)))
+      yield* $(Queue.offer(queue1, 3))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
@@ -89,7 +89,7 @@ describe.concurrent("Stream", () => {
       ))
       yield* $(Queue.shutdown(queue1))
       yield* $(TestClock.adjust(Duration.seconds(1)))
-      yield* $(pipe(queue2, Queue.offer(1)))
+      yield* $(Queue.offer(queue2, 1))
       const result = yield* $(Fiber.join(fiber))
       assert.isTrue(Chunk.isEmpty(result))
     }))

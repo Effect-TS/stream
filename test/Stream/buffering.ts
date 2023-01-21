@@ -50,11 +50,9 @@ describe.concurrent("Stream", () => {
         Stream.range(1, 5),
         Stream.tap((n) =>
           pipe(
-            ref,
-            Ref.update(Chunk.append(n)),
+            Ref.update(ref, Chunk.append(n)),
             Effect.zipRight(pipe(
-              latch,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch, void 0),
               Effect.when(() => n === 4)
             ))
           )
@@ -108,11 +106,9 @@ describe.concurrent("Stream", () => {
         Stream.range(1, 5),
         Stream.tap((n) =>
           pipe(
-            ref,
-            Ref.update(Chunk.append(n)),
+            Ref.update(ref, Chunk.append(n)),
             Effect.zipRight(pipe(
-              latch,
-              Deferred.succeed<void>(void 0),
+              Deferred.succeed<never, void>(latch, void 0),
               Effect.when(() => n === 4)
             ))
           )
@@ -158,7 +154,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 Stream.range(1, 17),
                 Stream.rechunk(1),
-                Stream.ensuring(pipe(latch2, Deferred.succeed<void>(void 0)))
+                Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
             )
           )
@@ -170,7 +166,7 @@ describe.concurrent("Stream", () => {
           pipe(
             Stream.range(17, 25),
             Stream.rechunk(1),
-            Stream.ensuring(pipe(latch4, Deferred.succeed<void>(void 0)))
+            Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
         )
       )
@@ -187,29 +183,23 @@ describe.concurrent("Stream", () => {
           Effect.flatMap((pull) =>
             Effect.gen(function*($) {
               const result1 = yield* $(pull)
-              yield* $(pipe(latch1, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch1, void 0))
               yield* $(Deferred.await(latch2))
               yield* $(pipe(
                 pull,
                 Effect.flatMap((chunk) =>
                   pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
+                    Ref.update(ref, Chunk.concat(chunk))
                   )
                 ),
                 Effect.repeatN(7)
               ))
               const result2 = yield* $(Ref.get(ref))
-              yield* $(pipe(latch3, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch3, void 0))
               yield* $(Deferred.await(latch4))
               yield* $(pipe(
                 pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
-                  )
-                ),
+                Effect.flatMap((chunk) => Ref.update(ref, Chunk.concat(chunk))),
                 Effect.repeatN(7)
               ))
               const result3 = yield* $(Ref.get(ref))
@@ -259,7 +249,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 Stream.range(1, 17),
                 Stream.rechunk(1),
-                Stream.ensuring(pipe(latch2, Deferred.succeed<void>(void 0)))
+                Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
             )
           )
@@ -271,7 +261,7 @@ describe.concurrent("Stream", () => {
           pipe(
             Stream.range(17, 25),
             Stream.rechunk(1),
-            Stream.ensuring(pipe(latch4, Deferred.succeed<void>(void 0)))
+            Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
         )
       )
@@ -288,29 +278,19 @@ describe.concurrent("Stream", () => {
           Effect.flatMap((pull) =>
             Effect.gen(function*($) {
               const result1 = yield* $(pull)
-              yield* $(pipe(latch1, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch1, void 0))
               yield* $(Deferred.await(latch2))
               yield* $(pipe(
                 pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
-                  )
-                ),
+                Effect.flatMap((chunk) => Ref.update(ref, Chunk.concat(chunk))),
                 Effect.repeatN(7)
               ))
               const result2 = yield* $(Ref.get(ref))
-              yield* $(pipe(latch3, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch3, void 0))
               yield* $(Deferred.await(latch4))
               yield* $(pipe(
                 pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
-                  )
-                ),
+                Effect.flatMap((chunk) => Ref.update(ref, Chunk.concat(chunk))),
                 Effect.repeatN(7)
               ))
               const result3 = yield* $(Ref.get(ref))
@@ -360,7 +340,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 Stream.range(1, 17),
                 Stream.rechunk(1),
-                Stream.ensuring(pipe(latch2, Deferred.succeed<void>(void 0)))
+                Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
             )
           )
@@ -372,7 +352,7 @@ describe.concurrent("Stream", () => {
           pipe(
             Stream.range(17, 25),
             Stream.rechunk(1),
-            Stream.ensuring(pipe(latch4, Deferred.succeed<void>(void 0)))
+            Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
         )
       )
@@ -389,29 +369,23 @@ describe.concurrent("Stream", () => {
           Effect.flatMap((pull) =>
             Effect.gen(function*($) {
               const result1 = yield* $(pull)
-              yield* $(pipe(latch1, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch1, void 0))
               yield* $(Deferred.await(latch2))
               yield* $(pipe(
                 pull,
                 Effect.flatMap((chunk) =>
                   pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
+                    Ref.update(ref, Chunk.concat(chunk))
                   )
                 ),
                 Effect.repeatN(7)
               ))
               const result2 = yield* $(Ref.get(ref))
-              yield* $(pipe(latch3, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch3, void 0))
               yield* $(Deferred.await(latch4))
               yield* $(pipe(
                 pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
-                  )
-                ),
+                Effect.flatMap((chunk) => Ref.update(ref, Chunk.concat(chunk))),
                 Effect.repeatN(7)
               ))
               const result3 = yield* $(Ref.get(ref))
@@ -461,7 +435,7 @@ describe.concurrent("Stream", () => {
               pipe(
                 Stream.range(1, 17),
                 Stream.rechunk(1),
-                Stream.ensuring(pipe(latch2, Deferred.succeed<void>(void 0)))
+                Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
             )
           )
@@ -473,7 +447,7 @@ describe.concurrent("Stream", () => {
           pipe(
             Stream.range(17, 25),
             Stream.rechunk(1),
-            Stream.ensuring(pipe(latch4, Deferred.succeed<void>(void 0)))
+            Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
         )
       )
@@ -490,29 +464,19 @@ describe.concurrent("Stream", () => {
           Effect.flatMap((pull) =>
             Effect.gen(function*($) {
               const result1 = yield* $(pull)
-              yield* $(pipe(latch1, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch1, void 0))
               yield* $(Deferred.await(latch2))
               yield* $(pipe(
                 pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
-                  )
-                ),
+                Effect.flatMap((chunk) => Ref.update(ref, Chunk.concat(chunk))),
                 Effect.repeatN(7)
               ))
               const result2 = yield* $(Ref.get(ref))
-              yield* $(pipe(latch3, Deferred.succeed<void>(void 0)))
+              yield* $(Deferred.succeed<never, void>(latch3, void 0))
               yield* $(Deferred.await(latch4))
               yield* $(pipe(
                 pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    ref,
-                    Ref.update(Chunk.concat(chunk))
-                  )
-                ),
+                Effect.flatMap((chunk) => Ref.update(ref, Chunk.concat(chunk))),
                 Effect.repeatN(7)
               ))
               const result3 = yield* $(Ref.get(ref))
@@ -566,9 +530,8 @@ describe.concurrent("Stream", () => {
         Stream.range(1, 1_000),
         Stream.tap((n) =>
           pipe(
-            ref,
-            Ref.update(Chunk.append(n)),
-            Effect.zipRight(pipe(latch, Deferred.succeed<void>(void 0), Effect.when(() => n === 999)))
+            Ref.update(ref, Chunk.append(n)),
+            Effect.zipRight(pipe(Deferred.succeed<never, void>(latch, void 0), Effect.when(() => n === 999)))
           )
         ),
         Stream.rechunk(1_000),

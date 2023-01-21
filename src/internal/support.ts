@@ -1,5 +1,4 @@
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Equal from "@fp-ts/data/Equal"
 import { constUndefined } from "@fp-ts/data/Function"
 import * as Option from "@fp-ts/data/Option"
 
@@ -10,7 +9,6 @@ export class RingBuffer<A> {
   private current = 0
 
   constructor(public readonly capacity: number) {
-    Equal.considerByRef(this)
     this.array = Array.from({ length: capacity }, constUndefined)
   }
 
