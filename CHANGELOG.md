@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.0.13
+
+### Patch Changes
+
+- [#35](https://github.com/Effect-TS/stream/pull/35) [`4a9db22`](https://github.com/Effect-TS/stream/commit/4a9db22a5a857d3dc0d7d9569b6de8083d52cd10) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Update effect/io
+
+- [#33](https://github.com/Effect-TS/stream/pull/33) [`77563e1`](https://github.com/Effect-TS/stream/commit/77563e1d822b6d1c0ddce62ce4798aea10edff1e) Thanks [@patroza](https://github.com/patroza)! - Fix missing \_tag in built-in Exceptions
+
 ## 0.0.12
 
 ### Patch Changes
