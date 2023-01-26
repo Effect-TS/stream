@@ -2,9 +2,9 @@ import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 
 export interface ChunkCoordination<A> {
   readonly queue: Queue.Queue<Exit.Exit<Option.Option<never>, Chunk.Chunk<A>>>
@@ -31,7 +31,7 @@ export const chunkCoordination = <A>(
             Option.map((chunk) =>
               Chunk.unsafeFromArray<Exit.Exit<Option.Option<never>, Chunk.Chunk<A>>>([
                 Exit.succeed(chunk),
-                Exit.fail(Option.none)
+                Exit.fail(Option.none())
               ])
             ),
             Option.match(

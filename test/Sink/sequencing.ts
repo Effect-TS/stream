@@ -2,9 +2,9 @@ import * as Effect from "@effect/io/Effect"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Sink", () => {
@@ -12,7 +12,7 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(Sink.head<number>(), Sink.flatMap(Sink.succeed))
       const result = yield* $(pipe(Stream.empty, Stream.run(sink)))
-      assert.deepStrictEqual(result, Option.none)
+      assert.deepStrictEqual(result, Option.none())
     }))
 
   it.effect("flatMap - non-empty input", () =>

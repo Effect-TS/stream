@@ -18,14 +18,14 @@ import type * as Sink from "@effect/stream/Sink"
 import type * as Emit from "@effect/stream/Stream/Emit"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 import type * as Take from "@effect/stream/Take"
+import type * as Either from "@fp-ts/core/Either"
+import type { LazyArg } from "@fp-ts/core/Function"
+import type * as Option from "@fp-ts/core/Option"
+import type { Predicate, Refinement } from "@fp-ts/core/Predicate"
 import type * as Order from "@fp-ts/core/typeclass/Order"
 import type * as Chunk from "@fp-ts/data/Chunk"
 import type * as Context from "@fp-ts/data/Context"
 import type * as Duration from "@fp-ts/data/Duration"
-import type * as Either from "@fp-ts/data/Either"
-import type { LazyArg } from "@fp-ts/data/Function"
-import type * as Option from "@fp-ts/data/Option"
-import type { Predicate, Refinement } from "@fp-ts/data/Predicate"
 
 /**
  * @since 1.0.0
@@ -1501,7 +1501,7 @@ export const groupBy: <A, R2, E2, K, V>(
  * ```ts
  * import * as GroupBy from "@effect/stream/GroupBy"
  * import * as Stream from "@effect/stream/Stream"
- * import { pipe } from "@fp-ts/data/Function"
+ * import { pipe } from "@fp-ts/core/Function"
  *
  * pipe(
  *   Stream.fromIterable(["hello", "world", "hi", "holla"]),
@@ -3217,7 +3217,7 @@ export const serviceWithStream: <T>(
  *
  * ```ts
  * import * as Stream from "@effect/stream/Stream"
- * import { pipe } from "@fp-ts/data/Function"
+ * import { pipe } from "@fp-ts/core/Function"
  *
  * pipe(
  *   Stream.make(1, 2, 3, 4),
@@ -3268,7 +3268,7 @@ export const someOrFail: <E2>(
  *
  * ```ts
  * import * as Stream from "@effect/stream/Stream"
- * import { pipe } from "@fp-ts/data/Function"
+ * import { pipe } from "@fp-ts/core/Function"
  *
  * pipe(
  *   Stream.range(1, 10),

@@ -4,7 +4,7 @@ import * as Exit from "@effect/io/Exit"
 import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@fp-ts/data/Function"
+import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Channel", () => {

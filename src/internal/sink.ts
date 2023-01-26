@@ -12,17 +12,17 @@ import * as channel from "@effect/stream/internal/channel"
 import * as mergeDecision from "@effect/stream/internal/channel/mergeDecision"
 import * as core from "@effect/stream/internal/core"
 import type * as Sink from "@effect/stream/Sink"
+import * as Either from "@fp-ts/core/Either"
+import type { LazyArg } from "@fp-ts/core/Function"
+import { constTrue, identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
+import type { Predicate, Refinement } from "@fp-ts/core/Predicate"
+import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray"
 import * as Chunk from "@fp-ts/data/Chunk"
 import type * as Context from "@fp-ts/data/Context"
 import * as Duration from "@fp-ts/data/Duration"
-import * as Either from "@fp-ts/data/Either"
-import type { LazyArg } from "@fp-ts/data/Function"
-import { constTrue, identity, pipe } from "@fp-ts/data/Function"
 import * as HashMap from "@fp-ts/data/HashMap"
 import * as HashSet from "@fp-ts/data/HashSet"
-import * as Option from "@fp-ts/data/Option"
-import type { Predicate, Refinement } from "@fp-ts/data/Predicate"
-import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray"
 
 /** @internal */
 const SinkSymbolKey = "@effect/stream/Sink"
@@ -587,7 +587,7 @@ export const findEffect = <Z, R2, E2>(f: (z: Z) => Effect.Effect<R2, E2, boolean
                               return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.some(doneValue)))
                             }
                             if (upstreamDone) {
-                              return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.none))
+                              return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.none()))
                             }
                             return loop
                           })
@@ -833,7 +833,7 @@ const foldChunkSplitEffectInternal = <S, R, E, In>(
   f: (s: S, input: In) => Effect.Effect<R, E, S>
 ): Effect.Effect<R, E, readonly [S, Option.Option<Chunk.Chunk<In>>]> => {
   if (index === length) {
-    return Effect.succeed([s, Option.none] as const)
+    return Effect.succeed([s, Option.none()] as const)
   }
   return pipe(
     f(s, pipe(chunk, Chunk.unsafeGet(index))),
@@ -1222,7 +1222,7 @@ const fromPushPull = <R, E, In, L, Z>(
     core.fail,
     () =>
       pipe(
-        core.fromEffect(push(Option.none)),
+        core.fromEffect(push(Option.none())),
         channel.foldChannel(
           ([either, leftovers]) =>
             pipe(
@@ -1259,7 +1259,7 @@ export const fromQueueWithShutdown = <In>(queue: Queue.Enqueue<In>): Sink.Sink<n
 /** @internal */
 export const head = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =>
   fold(
-    Option.none as Option.Option<In>,
+    Option.none() as Option.Option<In>,
     Option.isNone,
     (option, input) => pipe(option, Option.match(() => Option.some(input), () => option))
   )
@@ -1271,7 +1271,7 @@ export const ignoreLeftover = <R, E, In, L, Z>(self: Sink.Sink<R, E, In, L, Z>):
 /** @internal */
 export const last = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =>
   foldLeft(
-    Option.none as Option.Option<In>,
+    Option.none() as Option.Option<In>,
     (_, input) => Option.some(input)
   )
 

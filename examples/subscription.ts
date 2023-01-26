@@ -1,12 +1,12 @@
 import * as Effect from "@effect/io/Effect"
 import * as Stream from "@effect/stream/Stream"
+import { pipe } from "@fp-ts/core/Function"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
 
 import * as Fiber from "@effect/io/Fiber"
 import * as SubscriptionRef from "@effect/stream/SubscriptionRef"
+import * as Number from "@fp-ts/core/Number"
 import * as Equal from "@fp-ts/data/Equal"
-import * as Number from "@fp-ts/data/Number"
 
 const program = Effect.gen(function*($) {
   console.log("START")
@@ -41,6 +41,6 @@ const program = Effect.gen(function*($) {
   return isSorted
 })
 
-Effect.unsafeRunPromiseExit(program).then((exit) => {
+Effect.runPromiseExit(program).then((exit) => {
   console.log(exit)
 })

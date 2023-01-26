@@ -1,9 +1,9 @@
 import * as Effect from "@effect/io/Effect"
-import * as TestEnvironment from "@effect/io/internal/testing/testEnvironment"
+import * as TestEnvironment from "@effect/io/internal_effect_untraced/testing/testEnvironment"
 import * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
+import { pipe } from "@fp-ts/core/Function"
 import * as Duration from "@fp-ts/data/Duration"
-import { pipe } from "@fp-ts/data/Function"
 import type { TestAPI } from "vitest"
 import * as V from "vitest"
 
@@ -23,7 +23,7 @@ export const effect = (() => {
         pipe(
           Effect.suspendSucceed(self),
           Effect.provideLayer(TestEnvironment.testContext()),
-          Effect.unsafeRunPromise
+          Effect.runPromise
         ),
       timeout
     )
@@ -40,7 +40,7 @@ export const effect = (() => {
           pipe(
             Effect.suspendSucceed(self),
             Effect.provideLayer(TestEnvironment.testContext()),
-            Effect.unsafeRunPromise
+            Effect.runPromise
           ),
         timeout
       )
@@ -56,7 +56,7 @@ export const effect = (() => {
           pipe(
             Effect.suspendSucceed(self),
             Effect.provideLayer(TestEnvironment.testContext()),
-            Effect.unsafeRunPromise
+            Effect.runPromise
           ),
         timeout
       )
@@ -74,7 +74,7 @@ export const live = <E, A>(
     () =>
       pipe(
         Effect.suspendSucceed(self),
-        Effect.unsafeRunPromise
+        Effect.runPromise
       ),
     timeout
   )
@@ -109,7 +109,7 @@ export const scoped = <E, A>(
         Effect.suspendSucceed(self),
         Effect.scoped,
         Effect.provideLayer(TestEnvironment.testContext()),
-        Effect.unsafeRunPromise
+        Effect.runPromise
       ),
     timeout
   )
@@ -126,7 +126,7 @@ export const scopedLive = <E, A>(
       pipe(
         Effect.suspendSucceed(self),
         Effect.scoped,
-        Effect.unsafeRunPromise
+        Effect.runPromise
       ),
     timeout
   )

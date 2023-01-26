@@ -3,8 +3,8 @@ import * as Exit from "@effect/io/Exit"
 import * as Layer from "@effect/io/Layer"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
 import * as Context from "@fp-ts/data/Context"
-import { pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
 
 interface StringService {

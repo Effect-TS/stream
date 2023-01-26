@@ -11,12 +11,12 @@ import type { ErasedContinuationK } from "@effect/stream/internal/channel/contin
 import { ContinuationKImpl } from "@effect/stream/internal/channel/continuation"
 import * as upstreamPullStrategy from "@effect/stream/internal/channel/upstreamPullStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/channel"
+import * as Either from "@fp-ts/core/Either"
+import type { LazyArg } from "@fp-ts/core/Function"
+import { constVoid, identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import type * as Context from "@fp-ts/data/Context"
-import * as Either from "@fp-ts/data/Either"
-import type { LazyArg } from "@fp-ts/data/Function"
-import { constVoid, identity, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 
 /** @internal */
 const ChannelSymbolKey = "@effect/stream/Channel"
@@ -319,7 +319,7 @@ export const concatAllWith = <
     _tag: { value: OpCodes.OP_CONCAT_ALL },
     combineInners: { value: f },
     combineAll: { value: g },
-    onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none) },
+    onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none()) },
     onEmit: { value: () => childExecutorDecision.Continue },
     value: { value: () => channels },
     k: { value: identity }
@@ -359,7 +359,7 @@ export const concatMapWith = <
       _tag: { value: OpCodes.OP_CONCAT_ALL },
       combineInners: { value: g },
       combineAll: { value: h },
-      onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none) },
+      onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none()) },
       onEmit: { value: () => childExecutorDecision.Continue },
       value: { value: () => self },
       k: { value: f }

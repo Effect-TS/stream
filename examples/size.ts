@@ -1,8 +1,8 @@
 import * as Effect from "@effect/io/Effect"
 import * as GroupBy from "@effect/stream/GroupBy"
 import * as Stream from "@effect/stream/Stream"
+import { identity, pipe } from "@fp-ts/core/Function"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { identity, pipe } from "@fp-ts/data/Function"
 
 const program = Effect.gen(function*($) {
   const words = pipe(
@@ -28,4 +28,4 @@ const program = Effect.gen(function*($) {
   )
 })
 
-Effect.unsafeFork(program)
+Effect.runFork(program)

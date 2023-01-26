@@ -1,6 +1,6 @@
 import * as Cause from "@effect/io/Cause"
 import * as Clock from "@effect/io/Clock"
-import { getCallTrace } from "@effect/io/Debug"
+import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -9,6 +9,7 @@ import * as Hub from "@effect/io/Hub"
 import * as Layer from "@effect/io/Layer"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
+import * as Runtime from "@effect/io/Runtime"
 import * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
 import type * as Channel from "@effect/stream/Channel"
@@ -36,16 +37,16 @@ import type * as Stream from "@effect/stream/Stream"
 import type * as Emit from "@effect/stream/Stream/Emit"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 import type * as Take from "@effect/stream/Take"
+import * as Either from "@fp-ts/core/Either"
+import type { LazyArg } from "@fp-ts/core/Function"
+import { constTrue, identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
+import type { Predicate, Refinement } from "@fp-ts/core/Predicate"
 import type * as Order from "@fp-ts/core/typeclass/Order"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Context from "@fp-ts/data/Context"
 import * as Duration from "@fp-ts/data/Duration"
-import * as Either from "@fp-ts/data/Either"
 import * as Equal from "@fp-ts/data/Equal"
-import type { LazyArg } from "@fp-ts/data/Function"
-import { constTrue, identity, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
-import type { Predicate, Refinement } from "@fp-ts/data/Predicate"
 
 /** @internal */
 const StreamSymbolKey = "@effect/stream/Stream"
@@ -297,7 +298,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                   Fiber.interrupt(scheduleFiber),
                   Effect.zipRight(pipe(
                     Effect.done(sinkExit),
-                    Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none))
+                    Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
                   ))
                 ),
               (scheduleExit, _) =>
@@ -318,7 +319,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                               Effect.zipRight(
                                 pipe(
                                   Fiber.join(sinkFiber),
-                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none))
+                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
                                 )
                               )
                             ),
@@ -332,7 +333,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                               Effect.zipRight(
                                 pipe(
                                   Fiber.join(sinkFiber),
-                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none))
+                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
                                 )
                               )
                             )
@@ -373,7 +374,7 @@ export const aggregateWithinEither = <R2, E2, A, A2, B, R3, C>(
                 Effect.forkScoped,
                 Effect.flatMap((sinkFiber) =>
                   pipe(
-                    Effect.forkScoped(timeout(Option.none)),
+                    Effect.forkScoped(timeout(Option.none())),
                     Effect.flatMap((scheduleFiber) =>
                       pipe(
                         Effect.scope(),
@@ -407,7 +408,7 @@ export const _async = <R, E, A>(
 ): Stream.Stream<R, E, A> =>
   asyncOption((cb) => {
     register(cb)
-    return Option.none
+    return Option.none()
   }, outputBuffer)
 
 /** @internal */
@@ -431,7 +432,7 @@ export const asyncEffect = <R, E, A>(
                   _take.fromPull(k),
                   Effect.flatMap((take) => Queue.offer(output, take)),
                   Effect.asUnit,
-                  runtime.unsafeRunPromiseExit
+                  Runtime.runPromiseExit(runtime)
                 ).then((exit) => {
                   if (Exit.isFailure(exit)) {
                     if (!Cause.isInterrupted(exit.cause)) {
@@ -489,7 +490,7 @@ export const asyncInterrupt = <R, E, A>(
                     _take.fromPull(k),
                     Effect.flatMap((take) => Queue.offer(output, take)),
                     Effect.asUnit,
-                    runtime.unsafeRunPromiseExit
+                    Runtime.runPromiseExit(runtime)
                   ).then((exit) => {
                     if (Exit.isFailure(exit)) {
                       if (!Cause.isInterrupted(exit.cause)) {
@@ -559,7 +560,7 @@ export const asyncScoped = <R, E, A>(
                   _take.fromPull(k),
                   Effect.flatMap((take) => Queue.offer(output, take)),
                   Effect.asUnit,
-                  runtime.unsafeRunPromiseExit
+                  Runtime.runPromiseExit(runtime)
                 ).then((exit) => {
                   if (Exit.isFailure(exit)) {
                     if (!Cause.isInterrupted(exit.cause)) {
@@ -632,64 +633,64 @@ export const branchAfter = <A, R2, E2, A2>(
 }
 
 /** @internal */
-export const broadcast = <N extends number>(n: N, maximumLag: number) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>> =>
-    pipe(
-      self,
-      broadcastedQueues(n, maximumLag),
-      Effect.map((tuple) =>
-        tuple.map((queue) =>
-          pipe(
-            fromQueueWithShutdown(queue),
-            flattenTake
-          )
-        ) as Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>
-      )
-    ).traced(trace)
-}
-
-/** @internal */
-export const broadcastDynamic = (maximumLag: number) => {
-  const trace = getCallTrace()
-  return <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, Stream.Stream<never, E, A>> =>
-    pipe(
-      self,
-      broadcastedQueuesDynamic(maximumLag),
-      Effect.map((effect) => pipe(scoped(effect), flatMap(fromQueue), flattenTake))
-    ).traced(trace)
-}
-
-/** @internal */
-export const broadcastedQueues = <N extends number>(n: N, maximumLag: number) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>> =>
-    pipe(
-      Hub.bounded<Take.Take<E, A>>(maximumLag),
-      Effect.flatMap((hub) =>
-        pipe(
-          Effect.collectAll(Array.from({ length: n }, () => Hub.subscribe(hub))),
-          Effect.map((chunk) =>
-            Chunk.toReadonlyArray(chunk) as Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
-          ),
-          Effect.tap(() => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
+export const broadcast = Debug.pipeableWithTrace((trace) =>
+  <N extends number>(n: N, maximumLag: number) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>> =>
+      pipe(
+        self,
+        broadcastedQueues(n, maximumLag),
+        Effect.map((tuple) =>
+          tuple.map((queue) =>
+            pipe(
+              fromQueueWithShutdown(queue),
+              flattenTake
+            )
+          ) as Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>
         )
-      )
-    ).traced(trace)
-}
+      ).traced(trace)
+)
 
 /** @internal */
-export const broadcastedQueuesDynamic = (maximumLag: number) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>> =>
-    pipe(self, toHub(maximumLag), Effect.map(Hub.subscribe)).traced(trace)
-}
+export const broadcastDynamic = Debug.pipeableWithTrace((trace) =>
+  (maximumLag: number) =>
+    <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, Stream.Stream<never, E, A>> =>
+      pipe(
+        self,
+        broadcastedQueuesDynamic(maximumLag),
+        Effect.map((effect) => pipe(scoped(effect), flatMap(fromQueue), flattenTake))
+      ).traced(trace)
+)
+
+/** @internal */
+export const broadcastedQueues = Debug.pipeableWithTrace((trace) =>
+  <N extends number>(n: N, maximumLag: number) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>> =>
+      pipe(
+        Hub.bounded<Take.Take<E, A>>(maximumLag),
+        Effect.flatMap((hub) =>
+          pipe(
+            Effect.collectAll(Array.from({ length: n }, () => Hub.subscribe(hub))),
+            Effect.map((chunk) =>
+              Chunk.toReadonlyArray(chunk) as Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
+            ),
+            Effect.tap(() => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
+          )
+        )
+      ).traced(trace)
+)
+
+/** @internal */
+export const broadcastedQueuesDynamic = Debug.pipeableWithTrace((trace) =>
+  (maximumLag: number) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>> =>
+      pipe(self, toHub(maximumLag), Effect.map(Hub.subscribe)).traced(trace)
+)
 
 /** @internal */
 export const buffer = (capacity: number) => {
@@ -954,7 +955,7 @@ export const changesWith = <A>(f: (x: A, y: A) => boolean) => {
         core.failCause,
         core.unit
       )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(writer(Option.none))))
+    return new StreamImpl(pipe(self.channel, core.pipeTo(writer(Option.none()))))
   }
 }
 
@@ -997,7 +998,7 @@ export const changesWithEffect = <A, R2, E2>(f: (x: A, y: A) => Effect.Effect<R2
         core.failCause,
         core.unit
       )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(writer(Option.none))))
+    return new StreamImpl(pipe(self.channel, core.pipeTo(writer(Option.none()))))
   }
 }
 
@@ -1048,19 +1049,19 @@ export const collectEffect = <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.
 
 /** @internal */
 export const collectLeft = <R, E, E2, A>(self: Stream.Stream<R, E, Either.Either<E2, A>>): Stream.Stream<R, E, E2> =>
-  pipe(self, collect((either) => Either.isLeft(either) ? Option.some(either.left) : Option.none))
+  pipe(self, collect((either) => Either.isLeft(either) ? Option.some(either.left) : Option.none()))
 
 /** @internal */
 export const collectSome = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collect((option) => Option.isSome(option) ? Option.some(option.value) : Option.none))
+  pipe(self, collect((option) => Option.isSome(option) ? Option.some(option.value) : Option.none()))
 
 /** @internal */
 export const collectSuccess = <R, E, E2, A>(self: Stream.Stream<R, E, Exit.Exit<E2, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collect((exit) => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none))
+  pipe(self, collect((exit) => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()))
 
 /** @internal */
 export const collectRight = <R, E, E2, A>(self: Stream.Stream<R, E, Either.Either<E2, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collect((either) => Either.isRight(either) ? Option.some(either.right) : Option.none))
+  pipe(self, collect((either) => Either.isRight(either) ? Option.some(either.right) : Option.none()))
 
 /** @internal */
 export const collectWhile = <A, A2>(pf: (a: A) => Option.Option<A2>) => {
@@ -1084,21 +1085,21 @@ export const collectWhile = <A, A2>(pf: (a: A) => Option.Option<A2>) => {
 export const collectWhileLeft = <R, E, E2, A>(
   self: Stream.Stream<R, E, Either.Either<E2, A>>
 ): Stream.Stream<R, E, E2> =>
-  pipe(self, collectWhile((either) => Either.isLeft(either) ? Option.some(either.left) : Option.none))
+  pipe(self, collectWhile((either) => Either.isLeft(either) ? Option.some(either.left) : Option.none()))
 
 /** @internal */
 export const collectWhileSome = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collectWhile((option) => Option.isSome(option) ? Option.some(option.value) : Option.none))
+  pipe(self, collectWhile((option) => Option.isSome(option) ? Option.some(option.value) : Option.none()))
 
 /** @internal */
 export const collectWhileRight = <R, E, E2, A>(
   self: Stream.Stream<R, E, Either.Either<E2, A>>
 ): Stream.Stream<R, E, A> =>
-  pipe(self, collectWhile((either) => Either.isRight(either) ? Option.some(either.right) : Option.none))
+  pipe(self, collectWhile((either) => Either.isRight(either) ? Option.some(either.right) : Option.none()))
 
 /** @internal */
 export const collectWhileSuccess = <R, E, E2, A>(self: Stream.Stream<R, E, Exit.Exit<E2, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collectWhile((exit) => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none))
+  pipe(self, collectWhile((exit) => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()))
 
 /** @internal */
 export const collectWhileEffect = <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>) => {
@@ -1165,7 +1166,7 @@ export const combine = <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
               core.fromEffect(
                 pipe(
                   handoff,
-                  Handoff.offer<Exit.Exit<Option.Option<Err>, Elem>>(Exit.fail(Option.none))
+                  Handoff.offer<Exit.Exit<Option.Option<Err>, Elem>>(Exit.fail(Option.none()))
                 )
               ),
               core.flatMap(() => producer(handoff, latch))
@@ -1597,145 +1598,145 @@ const newDistributedWithDynamicId = () => {
 }
 
 /** @internal */
-export const distributedWithDynamic = <E, A, _>(
-  maximumLag: number,
-  decide: (a: A) => Effect.Effect<never, never, Predicate<number>>,
-  done: (exit: Exit.Exit<Option.Option<E>, never>) => Effect.Effect<never, never, _> = () =>
-    Effect.unit() as Effect.Effect<never, never, _>
-) => {
-  const trace = getCallTrace()
-  return <R>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<
-    R | Scope.Scope,
-    never,
-    Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
-  > =>
-    pipe(
-      Effect.acquireRelease(
-        Ref.make<Map<number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>>>(new Map()),
-        (ref, _) =>
-          pipe(Ref.get(ref), Effect.flatMap((queues) => pipe(queues.values(), Effect.forEach(Queue.shutdown))))
-      ),
-      Effect.flatMap((queuesRef) =>
-        Effect.gen(function*($) {
-          const offer = (a: A): Effect.Effect<never, never, void> =>
-            pipe(
-              decide(a),
-              Effect.flatMap((shouldProcess) =>
-                pipe(
-                  Ref.get(queuesRef),
-                  Effect.flatMap((queues) =>
-                    pipe(
-                      queues.entries(),
-                      Effect.reduce(Chunk.empty<number>(), (acc, [id, queue]) => {
-                        if (shouldProcess(id)) {
-                          return pipe(
-                            Queue.offer(queue, Exit.succeed(a)),
-                            Effect.matchCauseEffect(
-                              (cause) =>
-                                // Ignore all downstream queues that were shut
-                                // down and remove them later
-                                Cause.isInterrupted(cause) ?
-                                  Effect.succeed(pipe(acc, Chunk.prepend(id))) :
-                                  Effect.failCause(cause),
-                              () => Effect.succeed(acc)
-                            )
-                          )
-                        }
-                        return Effect.succeed(acc)
-                      }),
-                      Effect.flatMap((ids) => {
-                        if (Chunk.isNonEmpty(ids)) {
-                          return pipe(
-                            Ref.update(queuesRef, (map) => {
-                              for (const id of ids) {
-                                map.delete(id)
-                              }
-                              return map
-                            })
-                          )
-                        }
-                        return Effect.unit()
-                      })
-                    )
-                  )
-                )
-              ),
-              Effect.asUnit
-            )
-          const queuesLock = yield* $(Effect.makeSemaphore(1))
-          const newQueue = yield* $(
-            Ref.make<Effect.Effect<never, never, readonly [number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>]>>(
+export const distributedWithDynamic = Debug.pipeableWithTrace((trace) =>
+  <E, A, _>(
+    maximumLag: number,
+    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>,
+    done: (exit: Exit.Exit<Option.Option<E>, never>) => Effect.Effect<never, never, _> = () =>
+      Effect.unit() as Effect.Effect<never, never, _>
+  ) =>
+    <R>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<
+      R | Scope.Scope,
+      never,
+      Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
+    > =>
+      pipe(
+        Effect.acquireRelease(
+          Ref.make<Map<number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>>>(new Map()),
+          (ref, _) =>
+            pipe(Ref.get(ref), Effect.flatMap((queues) => pipe(queues.values(), Effect.forEach(Queue.shutdown))))
+        ),
+        Effect.flatMap((queuesRef) =>
+          Effect.gen(function*($) {
+            const offer = (a: A): Effect.Effect<never, never, void> =>
               pipe(
-                Queue.bounded<Exit.Exit<Option.Option<E>, A>>(maximumLag),
-                Effect.flatMap((queue) => {
-                  const id = newDistributedWithDynamicId()
-                  return pipe(
-                    Ref.update(queuesRef, (map) => map.set(id, queue)),
-                    Effect.as([id, queue] as const)
-                  )
-                })
-              )
-            )
-          )
-          const finalize = (endTake: Exit.Exit<Option.Option<E>, never>): Effect.Effect<never, never, void> =>
-            // Make sure that no queues are currently being added
-            queuesLock.withPermits(1)(
-              pipe(
-                Ref.set(
-                  newQueue,
-                  pipe(
-                    // All newly created queues should end immediately
-                    Queue.bounded<Exit.Exit<Option.Option<E>, A>>(1),
-                    Effect.tap((queue) => Queue.offer(queue, endTake)),
-                    Effect.flatMap((queue) => {
-                      const id = newDistributedWithDynamicId()
-                      return pipe(
-                        Ref.update(queuesRef, (map) => map.set(id, queue)),
-                        Effect.as([id, queue] as const)
-                      )
-                    })
-                  )
-                ),
-                Effect.zipRight(
+                decide(a),
+                Effect.flatMap((shouldProcess) =>
                   pipe(
                     Ref.get(queuesRef),
-                    Effect.flatMap((map) =>
+                    Effect.flatMap((queues) =>
                       pipe(
-                        Chunk.fromIterable(map.values()),
-                        Effect.forEach((queue) =>
-                          pipe(
-                            Queue.offer(queue, endTake),
-                            Effect.catchSomeCause((cause) =>
-                              Cause.isInterrupted(cause) ? Option.some(Effect.unit()) : Option.none
+                        queues.entries(),
+                        Effect.reduce(Chunk.empty<number>(), (acc, [id, queue]) => {
+                          if (shouldProcess(id)) {
+                            return pipe(
+                              Queue.offer(queue, Exit.succeed(a)),
+                              Effect.matchCauseEffect(
+                                (cause) =>
+                                  // Ignore all downstream queues that were shut
+                                  // down and remove them later
+                                  Cause.isInterrupted(cause) ?
+                                    Effect.succeed(pipe(acc, Chunk.prepend(id))) :
+                                    Effect.failCause(cause),
+                                () => Effect.succeed(acc)
+                              )
+                            )
+                          }
+                          return Effect.succeed(acc)
+                        }),
+                        Effect.flatMap((ids) => {
+                          if (Chunk.isNonEmpty(ids)) {
+                            return pipe(
+                              Ref.update(queuesRef, (map) => {
+                                for (const id of ids) {
+                                  map.delete(id)
+                                }
+                                return map
+                              })
+                            )
+                          }
+                          return Effect.unit()
+                        })
+                      )
+                    )
+                  )
+                ),
+                Effect.asUnit
+              )
+            const queuesLock = yield* $(Effect.makeSemaphore(1))
+            const newQueue = yield* $(
+              Ref.make<Effect.Effect<never, never, readonly [number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>]>>(
+                pipe(
+                  Queue.bounded<Exit.Exit<Option.Option<E>, A>>(maximumLag),
+                  Effect.flatMap((queue) => {
+                    const id = newDistributedWithDynamicId()
+                    return pipe(
+                      Ref.update(queuesRef, (map) => map.set(id, queue)),
+                      Effect.as([id, queue] as const)
+                    )
+                  })
+                )
+              )
+            )
+            const finalize = (endTake: Exit.Exit<Option.Option<E>, never>): Effect.Effect<never, never, void> =>
+              // Make sure that no queues are currently being added
+              queuesLock.withPermits(1)(
+                pipe(
+                  Ref.set(
+                    newQueue,
+                    pipe(
+                      // All newly created queues should end immediately
+                      Queue.bounded<Exit.Exit<Option.Option<E>, A>>(1),
+                      Effect.tap((queue) => Queue.offer(queue, endTake)),
+                      Effect.flatMap((queue) => {
+                        const id = newDistributedWithDynamicId()
+                        return pipe(
+                          Ref.update(queuesRef, (map) => map.set(id, queue)),
+                          Effect.as([id, queue] as const)
+                        )
+                      })
+                    )
+                  ),
+                  Effect.zipRight(
+                    pipe(
+                      Ref.get(queuesRef),
+                      Effect.flatMap((map) =>
+                        pipe(
+                          Chunk.fromIterable(map.values()),
+                          Effect.forEach((queue) =>
+                            pipe(
+                              Queue.offer(queue, endTake),
+                              Effect.catchSomeCause((cause) =>
+                                Cause.isInterrupted(cause) ? Option.some(Effect.unit()) : Option.none()
+                              )
                             )
                           )
                         )
                       )
                     )
-                  )
-                ),
-                Effect.zipRight(done(endTake)),
-                Effect.asUnit
+                  ),
+                  Effect.zipRight(done(endTake)),
+                  Effect.asUnit
+                )
               )
+            yield* $(pipe(
+              self,
+              runForEachScoped(offer),
+              Effect.matchCauseEffect(
+                (cause) => finalize(Exit.failCause(pipe(cause, Cause.map(Option.some)))),
+                () => finalize(Exit.fail(Option.none()))
+              ),
+              Effect.forkScoped
+            ))
+            return queuesLock.withPermits(1)(
+              Effect.flatten(Ref.get(newQueue))
             )
-          yield* $(pipe(
-            self,
-            runForEachScoped(offer),
-            Effect.matchCauseEffect(
-              (cause) => finalize(Exit.failCause(pipe(cause, Cause.map(Option.some)))),
-              () => finalize(Exit.fail(Option.none))
-            ),
-            Effect.forkScoped
-          ))
-          return queuesLock.withPermits(1)(
-            Effect.flatten(Ref.get(newQueue))
-          )
-        })
-      )
-    ).traced(trace)
-}
+          })
+        )
+      ).traced(trace)
+)
 
 /** @internal */
 export const done = <E, A>(exit: Exit.Exit<E, A>): Stream.Stream<never, E, A> => fromEffect(Effect.done(exit))
@@ -2131,7 +2132,7 @@ export const flattenExitOption = <R, E, E2, A>(
         Chunk.filterMap((exit) =>
           Exit.isSuccess(exit) ?
             Option.some(exit.value) :
-            Option.none
+            Option.none()
         )
       )),
       core.flatMap(() => next)
@@ -2254,20 +2255,20 @@ export const fromHub = <A>(hub: Hub.Hub<A>, maxChunkSize = DefaultChunkSize): St
   )
 
 /** @internal */
-export const fromHubScoped = <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize = DefaultChunkSize
-): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> => {
-  const trace = getCallTrace()
-  return pipe(
-    Effect.suspendSucceed(() =>
-      pipe(
-        Hub.subscribe(hub),
-        Effect.map((queue) => fromQueueWithShutdown(queue, maxChunkSize))
+export const fromHubScoped = Debug.methodWithTrace((trace) =>
+  <A>(
+    hub: Hub.Hub<A>,
+    maxChunkSize = DefaultChunkSize
+  ): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
+    pipe(
+      Effect.suspendSucceed(() =>
+        pipe(
+          Hub.subscribe(hub),
+          Effect.map((queue) => fromQueueWithShutdown(queue, maxChunkSize))
+        )
       )
-    )
-  ).traced(trace)
-}
+    ).traced(trace)
+)
 
 /** @internal */
 export const fromHubWithShutdown = <A>(
@@ -2276,16 +2277,16 @@ export const fromHubWithShutdown = <A>(
 ): Stream.Stream<never, never, A> => pipe(fromHub(hub, maxChunkSize), ensuring(Hub.shutdown(hub)))
 
 /** @internal */
-export const fromHubScopedWithShutdown = <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize = DefaultChunkSize
-): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> => {
-  const trace = getCallTrace()
-  return pipe(
-    fromHubScoped(hub, maxChunkSize),
-    Effect.map(ensuring(Hub.shutdown(hub)))
-  ).traced(trace)
-}
+export const fromHubScopedWithShutdown = Debug.methodWithTrace((trace) =>
+  <A>(
+    hub: Hub.Hub<A>,
+    maxChunkSize = DefaultChunkSize
+  ): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
+    pipe(
+      fromHubScoped(hub, maxChunkSize),
+      Effect.map(ensuring(Hub.shutdown(hub)))
+    ).traced(trace)
+)
 
 /** @internal */
 export const fromIterable = <A>(iterable: Iterable<A>): Stream.Stream<never, never, A> =>
@@ -2425,7 +2426,7 @@ export const groupAdjacentBy = <A, K>(f: (a: A) => K) => {
         core.failCause,
         () => pipe(buffer, Option.match(core.unit, (output) => core.write(Chunk.of(output))))
       )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(chunkAdjacent(Option.none))))
+    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(chunkAdjacent(Option.none()))))
   }
 }
 
@@ -3025,10 +3026,10 @@ export const mergeWith = <R2, E2, A2, A, A3, A4>(
 }
 
 /** @internal */
-export const mkString = <R, E>(self: Stream.Stream<R, E, string>): Effect.Effect<R, E, string> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.mkString())).traced(trace)
-}
+export const mkString = Debug.methodWithTrace((trace) =>
+  <R, E>(self: Stream.Stream<R, E, string>): Effect.Effect<R, E, string> =>
+    pipe(self, run(_sink.mkString())).traced(trace)
+)
 
 /** @internal */
 export const never = (): Stream.Stream<never, never, never> => fromEffect(Effect.never())
@@ -3173,124 +3174,125 @@ export const paginateEffect = <S, R, E, A>(
   paginateChunkEffect(s, (s) => pipe(f(s), Effect.map(([a, s]) => [Chunk.of(a), s] as const)))
 
 /** @internal */
-export const peel = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
-  return <R, E>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | R2 | Scope.Scope, E2 | E, readonly [Z, Stream.Stream<never, E, A>]> => {
-    const trace = getCallTrace()
-    type Signal = Emit | Halt | End
-    const OP_EMIT = "Emit" as const
-    type OP_EMIT = typeof OP_EMIT
-    const OP_HALT = "Halt" as const
-    type OP_HALT = typeof OP_HALT
-    const OP_END = "End" as const
-    type OP_END = typeof OP_END
-    interface Emit {
-      readonly _tag: OP_EMIT
-      readonly elements: Chunk.Chunk<A>
-    }
-    interface Halt {
-      readonly _tag: OP_HALT
-      readonly cause: Cause.Cause<E>
-    }
-    interface End {
-      readonly _tag: OP_END
-    }
-    return pipe(
-      Deferred.make<E | E2, Z>(),
-      Effect.flatMap((deferred) =>
-        pipe(
-          Handoff.make<Signal>(),
-          Effect.map((handoff) => {
-            const consumer = pipe(
-              _sink.collectLeftover(sink),
-              _sink.foldSink(
-                (error) =>
-                  pipe(
-                    _sink.fromEffect(Deferred.fail(deferred, error)),
-                    _sink.zipRight(_sink.fail(error))
-                  ),
-                ([z, leftovers]) => {
-                  const loop: Channel.Channel<
-                    never,
-                    E,
-                    Chunk.Chunk<A>,
-                    unknown,
-                    E | E2,
-                    Chunk.Chunk<A>,
-                    void
-                  > = core
-                    .readWithCause(
-                      (elements) =>
-                        pipe(
-                          core.fromEffect(
-                            pipe(
-                              handoff,
-                              Handoff.offer<Signal>({ _tag: OP_EMIT, elements })
-                            )
-                          ),
-                          core.flatMap(() => loop)
-                        ),
-                      (cause) =>
-                        pipe(
-                          core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_HALT, cause }))),
-                          channel.zipRight(core.failCause(cause))
-                        ),
-                      (_) =>
-                        pipe(
-                          core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_END }))),
-                          channel.zipRight(core.unit())
-                        )
-                    )
-                  return _sink.fromChannel(
+export const peel = Debug.pipeableWithTrace((trace) =>
+  <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>) => {
+    return <R, E>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | R2 | Scope.Scope, E2 | E, readonly [Z, Stream.Stream<never, E, A>]> => {
+      type Signal = Emit | Halt | End
+      const OP_EMIT = "Emit" as const
+      type OP_EMIT = typeof OP_EMIT
+      const OP_HALT = "Halt" as const
+      type OP_HALT = typeof OP_HALT
+      const OP_END = "End" as const
+      type OP_END = typeof OP_END
+      interface Emit {
+        readonly _tag: OP_EMIT
+        readonly elements: Chunk.Chunk<A>
+      }
+      interface Halt {
+        readonly _tag: OP_HALT
+        readonly cause: Cause.Cause<E>
+      }
+      interface End {
+        readonly _tag: OP_END
+      }
+      return pipe(
+        Deferred.make<E | E2, Z>(),
+        Effect.flatMap((deferred) =>
+          pipe(
+            Handoff.make<Signal>(),
+            Effect.map((handoff) => {
+              const consumer = pipe(
+                _sink.collectLeftover(sink),
+                _sink.foldSink(
+                  (error) =>
                     pipe(
-                      core.fromEffect(Deferred.succeed(deferred, z)),
-                      channel.zipRight(core.fromEffect(
-                        pipe(
-                          handoff,
-                          Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
-                        )
-                      )),
-                      channel.zipRight(loop)
+                      _sink.fromEffect(Deferred.fail(deferred, error)),
+                      _sink.zipRight(_sink.fail(error))
+                    ),
+                  ([z, leftovers]) => {
+                    const loop: Channel.Channel<
+                      never,
+                      E,
+                      Chunk.Chunk<A>,
+                      unknown,
+                      E | E2,
+                      Chunk.Chunk<A>,
+                      void
+                    > = core
+                      .readWithCause(
+                        (elements) =>
+                          pipe(
+                            core.fromEffect(
+                              pipe(
+                                handoff,
+                                Handoff.offer<Signal>({ _tag: OP_EMIT, elements })
+                              )
+                            ),
+                            core.flatMap(() => loop)
+                          ),
+                        (cause) =>
+                          pipe(
+                            core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_HALT, cause }))),
+                            channel.zipRight(core.failCause(cause))
+                          ),
+                        (_) =>
+                          pipe(
+                            core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_END }))),
+                            channel.zipRight(core.unit())
+                          )
+                      )
+                    return _sink.fromChannel(
+                      pipe(
+                        core.fromEffect(Deferred.succeed(deferred, z)),
+                        channel.zipRight(core.fromEffect(
+                          pipe(
+                            handoff,
+                            Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
+                          )
+                        )),
+                        channel.zipRight(loop)
+                      )
                     )
-                  )
-                }
+                  }
+                )
               )
-            )
 
-            const producer: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
-              Handoff.take(handoff),
-              Effect.map((signal) => {
-                switch (signal._tag) {
-                  case OP_EMIT: {
-                    return pipe(core.write(signal.elements), core.flatMap(() => producer))
+              const producer: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
+                Handoff.take(handoff),
+                Effect.map((signal) => {
+                  switch (signal._tag) {
+                    case OP_EMIT: {
+                      return pipe(core.write(signal.elements), core.flatMap(() => producer))
+                    }
+                    case OP_HALT: {
+                      return core.failCause(signal.cause)
+                    }
+                    case OP_END: {
+                      return core.unit()
+                    }
                   }
-                  case OP_HALT: {
-                    return core.failCause(signal.cause)
-                  }
-                  case OP_END: {
-                    return core.unit()
-                  }
-                }
-              }),
-              channel.unwrap
-            )
+                }),
+                channel.unwrap
+              )
 
-            return pipe(
-              self,
-              tapErrorCause((cause) => Deferred.failCause(deferred, cause)),
-              run(consumer),
-              Effect.forkScoped,
-              Effect.zipRight(Deferred.await(deferred)),
-              Effect.map((z) => [z, new StreamImpl(producer)] as const)
-            )
-          })
-        )
-      ),
-      Effect.flatten
-    ).traced(trace)
+              return pipe(
+                self,
+                tapErrorCause((cause) => Deferred.failCause(deferred, cause)),
+                run(consumer),
+                Effect.forkScoped,
+                Effect.zipRight(Deferred.await(deferred)),
+                Effect.map((z) => [z, new StreamImpl(producer)] as const)
+              )
+            })
+          )
+        ),
+        Effect.flatten
+      ).traced(trace)
+    }
   }
-}
+)
 
 /** @internal */
 export const partition = <A>(predicate: Predicate<A>, bufferSize = 16) => {
@@ -3784,7 +3786,7 @@ export const retry = <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>) => {
 export const right = <R, E, A, A2>(
   self: Stream.Stream<R, E, Either.Either<A, A2>>
 ): Stream.Stream<R, Option.Option<E>, A2> =>
-  pipe(self, mapError(Option.some), rightOrFail((): Option.Option<E> => Option.none))
+  pipe(self, mapError(Option.some), rightOrFail((): Option.Option<E> => Option.none()))
 
 /** @internal */
 export const rightOrFail = <E2>(error: LazyArg<E2>) => {
@@ -3793,246 +3795,245 @@ export const rightOrFail = <E2>(error: LazyArg<E2>) => {
 }
 
 /** @internal */
-export const run = <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, unknown, Z>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, Z> =>
-    pipe(self.channel, channel.pipeToOrFail(sink.channel), channel.runDrain).traced(trace)
-}
+export const run = Debug.pipeableWithTrace((trace) =>
+  <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, unknown, Z>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, Z> =>
+      pipe(self.channel, channel.pipeToOrFail(sink.channel), channel.runDrain).traced(trace)
+)
 
 /** @internal */
-export const runCollect = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Chunk.Chunk<A>> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.collectAll())).traced(trace)
-}
+export const runCollect = Debug.methodWithTrace((trace) =>
+  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Chunk.Chunk<A>> =>
+    pipe(self, run(_sink.collectAll())).traced(trace)
+)
 
 /** @internal */
-export const runCount = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, number> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.count())).traced(trace)
-}
+export const runCount = Debug.methodWithTrace((trace) =>
+  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, number> => pipe(self, run(_sink.count())).traced(trace)
+)
 
 /** @internal */
-export const runDrain = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, void> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.drain())).traced(trace)
-}
+export const runDrain = Debug.methodWithTrace((trace) =>
+  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, void> => pipe(self, run(_sink.drain())).traced(trace)
+)
 
 /** @internal */
-export const runFold = <S, A>(s: S, f: (s: S, a: A) => S) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, S> =>
-    pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.scoped).traced(trace)
-}
+export const runFold = Debug.pipeableWithTrace((trace) =>
+  <S, A>(s: S, f: (s: S, a: A) => S) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, S> =>
+      pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.scoped).traced(trace)
+)
 
 /** @internal */
-export const runFoldEffect = <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, S> =>
-    pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.scoped).traced(trace)
-}
+export const runFoldEffect = Debug.pipeableWithTrace((trace) =>
+  <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, S> =>
+      pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.scoped).traced(trace)
+)
 
 /** @internal */
-export const runFoldScoped = <S, A>(s: S, f: (s: S, a: A) => S) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, E, S> =>
-    pipe(self, runFoldWhileScoped(s, constTrue, f)).traced(trace)
-}
+export const runFoldScoped = Debug.pipeableWithTrace((trace) =>
+  <S, A>(s: S, f: (s: S, a: A) => S) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, E, S> =>
+      pipe(self, runFoldWhileScoped(s, constTrue, f)).traced(trace)
+)
 
 /** @internal */
-export const runFoldScopedEffect = <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
-    pipe(self, runFoldWhileScopedEffect(s, constTrue, f)).traced(trace)
-}
+export const runFoldScopedEffect = Debug.pipeableWithTrace((trace) =>
+  <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
+      pipe(self, runFoldWhileScopedEffect(s, constTrue, f)).traced(trace)
+)
 
 /** @internal */
-export const runFoldWhile = <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, S> =>
-    pipe(self, runFoldWhileScoped(s, cont, f), Effect.scoped).traced(trace)
-}
+export const runFoldWhile = Debug.pipeableWithTrace((trace) =>
+  <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, S> =>
+      pipe(self, runFoldWhileScoped(s, cont, f), Effect.scoped).traced(trace)
+)
 
 /** @internal */
-export const runFoldWhileEffect = <S, A, R2, E2>(
-  s: S,
-  cont: Predicate<S>,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, S> =>
-    pipe(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped).traced(trace)
-}
+export const runFoldWhileEffect = Debug.pipeableWithTrace((trace) =>
+  <S, A, R2, E2>(
+    s: S,
+    cont: Predicate<S>,
+    f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+  ) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, S> =>
+      pipe(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped).traced(trace)
+)
 
 /** @internal */
-export const runFoldWhileScoped = <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, E, S> =>
-    pipe(self, runScoped(_sink.fold(s, cont, f))).traced(trace)
-}
+export const runFoldWhileScoped = Debug.pipeableWithTrace((trace) =>
+  <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, E, S> =>
+      pipe(self, runScoped(_sink.fold(s, cont, f))).traced(trace)
+)
 
 /** @internal */
-export const runFoldWhileScopedEffect = <S, A, R2, E2>(
-  s: S,
-  cont: Predicate<S>,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
-    pipe(self, runScoped(_sink.foldEffect(s, cont, f))).traced(trace)
-}
+export const runFoldWhileScopedEffect = Debug.pipeableWithTrace((trace) =>
+  <S, A, R2, E2>(
+    s: S,
+    cont: Predicate<S>,
+    f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+  ) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
+      pipe(self, runScoped(_sink.foldEffect(s, cont, f))).traced(trace)
+)
 
 /** @internal */
-export const runForEach = <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
-    pipe(self, run(_sink.forEach(f))).traced(trace)
-}
+export const runForEach = Debug.pipeableWithTrace((trace) =>
+  <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
+      pipe(self, run(_sink.forEach(f))).traced(trace)
+)
 
 /** @internal */
-export const runForEachChunk = <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
-    pipe(self, run(_sink.forEachChunk(f))).traced(trace)
-}
+export const runForEachChunk = Debug.pipeableWithTrace((trace) =>
+  <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
+      pipe(self, run(_sink.forEachChunk(f))).traced(trace)
+)
 
 /** @internal */
-export const runForEachChunkScoped = <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
-    pipe(self, runScoped(_sink.forEachChunk(f))).traced(trace)
-}
+export const runForEachChunkScoped = Debug.pipeableWithTrace((trace) =>
+  <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
+      pipe(self, runScoped(_sink.forEachChunk(f))).traced(trace)
+)
 
 /** @internal */
-export const runForEachScoped = <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
-    pipe(self, runScoped(_sink.forEach(f))).traced(trace)
-}
+export const runForEachScoped = Debug.pipeableWithTrace((trace) =>
+  <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
+      pipe(self, runScoped(_sink.forEach(f))).traced(trace)
+)
 
 /** @internal */
-export const runForEachWhile = <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
-    pipe(self, run(_sink.forEachWhile(f))).traced(trace)
-}
+export const runForEachWhile = Debug.pipeableWithTrace((trace) =>
+  <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2, E | E2, void> =>
+      pipe(self, run(_sink.forEachWhile(f))).traced(trace)
+)
 
 /** @internal */
-export const runForEachWhileScoped = <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
-    pipe(self, runScoped(_sink.forEachWhile(f))).traced(trace)
-}
+export const runForEachWhileScoped = Debug.pipeableWithTrace((trace) =>
+  <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> =>
+      pipe(self, runScoped(_sink.forEachWhile(f))).traced(trace)
+)
 
 /** @internal */
-export const runHead = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.head<A>())).traced(trace)
-}
+export const runHead = Debug.methodWithTrace((trace) =>
+  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> =>
+    pipe(self, run(_sink.head<A>())).traced(trace)
+)
 
 /** @internal */
-export const runIntoHub = <E, A>(hub: Hub.Hub<Take.Take<E, A>>) => {
-  const trace = getCallTrace()
-  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> => pipe(self, runIntoQueue(hub)).traced(trace)
-}
+export const runIntoHub = Debug.pipeableWithTrace((trace) =>
+  <E, A>(hub: Hub.Hub<Take.Take<E, A>>) =>
+    <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> => pipe(self, runIntoQueue(hub)).traced(trace)
+)
 
 /** @internal */
-export const runIntoHubScoped = <E, A>(hub: Hub.Hub<Take.Take<E, A>>) => {
-  const trace = getCallTrace()
-  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> =>
-    pipe(self, runIntoQueueScoped(hub)).traced(trace)
-}
+export const runIntoHubScoped = Debug.pipeableWithTrace((trace) =>
+  <E, A>(hub: Hub.Hub<Take.Take<E, A>>) =>
+    <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> =>
+      pipe(self, runIntoQueueScoped(hub)).traced(trace)
+)
 
 /** @internal */
-export const runIntoQueue = <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) => {
-  const trace = getCallTrace()
-  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> =>
-    pipe(self, runIntoQueueScoped(queue), Effect.scoped).traced(trace)
-}
+export const runIntoQueue = Debug.pipeableWithTrace((trace) =>
+  <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) =>
+    <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R, never, void> =>
+      pipe(self, runIntoQueueScoped(queue), Effect.scoped).traced(trace)
+)
 
 /** @internal */
-export const runIntoQueueElementsScoped = <E, A>(queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>) => {
-  const trace = getCallTrace()
-  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> => {
-    const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Exit.Exit<Option.Option<E>, A>, unknown> = core
-      .readWithCause(
-        (input: Chunk.Chunk<A>) =>
-          pipe(
-            input,
-            Chunk.reduce(
-              core.unit() as Channel.Channel<
-                R,
-                E,
-                Chunk.Chunk<A>,
-                unknown,
-                never,
-                Exit.Exit<Option.Option<E>, A>,
-                unknown
-              >,
-              (acc, a) =>
-                pipe(
-                  acc,
-                  channel.zipRight(core.write(Exit.succeed(a)))
-                )
-            ),
-            core.flatMap(() => writer)
-          ),
-        (cause) => pipe(core.write(Exit.failCause(pipe(cause, Cause.map(Option.some))))),
-        () => core.write(Exit.fail(Option.none))
-      )
-    return pipe(
-      self.channel,
-      core.pipeTo(writer),
-      channel.mapOutEffect((exit) => pipe(Queue.offer(queue, exit))),
-      channel.drain,
-      channelExecutor.runScoped,
-      Effect.asUnit
-    ).traced(trace)
-  }
-}
+export const runIntoQueueElementsScoped = Debug.pipeableWithTrace((trace) =>
+  <E, A>(queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>) =>
+    <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> => {
+      const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Exit.Exit<Option.Option<E>, A>, unknown> =
+        core
+          .readWithCause(
+            (input: Chunk.Chunk<A>) =>
+              pipe(
+                input,
+                Chunk.reduce(
+                  core.unit() as Channel.Channel<
+                    R,
+                    E,
+                    Chunk.Chunk<A>,
+                    unknown,
+                    never,
+                    Exit.Exit<Option.Option<E>, A>,
+                    unknown
+                  >,
+                  (acc, a) =>
+                    pipe(
+                      acc,
+                      channel.zipRight(core.write(Exit.succeed(a)))
+                    )
+                ),
+                core.flatMap(() => writer)
+              ),
+            (cause) => pipe(core.write(Exit.failCause(pipe(cause, Cause.map(Option.some))))),
+            () => core.write(Exit.fail(Option.none()))
+          )
+      return pipe(
+        self.channel,
+        core.pipeTo(writer),
+        channel.mapOutEffect((exit) => pipe(Queue.offer(queue, exit))),
+        channel.drain,
+        channelExecutor.runScoped,
+        Effect.asUnit
+      ).traced(trace)
+    }
+)
 
 /** @internal */
-export const runIntoQueueScoped = <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) => {
-  const trace = getCallTrace()
-  return <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> => {
-    const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Take.Take<E, A>, unknown> = core.readWithCause(
-      (input: Chunk.Chunk<A>) => pipe(core.write(_take.chunk(input)), core.flatMap(() => writer)),
-      (cause) => core.write(_take.failCause(cause)),
-      () => core.write(_take.end)
-    )
-    return pipe(
-      self.channel,
-      core.pipeTo(writer),
-      channel.mapOutEffect((take) => pipe(Queue.offer(queue, take))),
-      channel.drain,
-      channelExecutor.runScoped,
-      Effect.asUnit
-    ).traced(trace)
-  }
-}
+export const runIntoQueueScoped = Debug.pipeableWithTrace((trace) =>
+  <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) =>
+    <R>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, void> => {
+      const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Take.Take<E, A>, unknown> = core
+        .readWithCause(
+          (input: Chunk.Chunk<A>) => pipe(core.write(_take.chunk(input)), core.flatMap(() => writer)),
+          (cause) => core.write(_take.failCause(cause)),
+          () => core.write(_take.end)
+        )
+      return pipe(
+        self.channel,
+        core.pipeTo(writer),
+        channel.mapOutEffect((take) => pipe(Queue.offer(queue, take))),
+        channel.drain,
+        channelExecutor.runScoped,
+        Effect.asUnit
+      ).traced(trace)
+    }
+)
 
 /** @internal */
-export const runLast = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.last())).traced(trace)
-}
+export const runLast = Debug.methodWithTrace((trace) =>
+  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> =>
+    pipe(self, run(_sink.last())).traced(trace)
+)
 
 /** @internal */
-export const runScoped = <R2, E2, A, A2>(sink: Sink.Sink<R2, E2, A, unknown, A2>) => {
-  const trace = getCallTrace()
-  return <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, A2> =>
-    pipe(
-      self.channel,
-      channel.pipeToOrFail(sink.channel),
-      channel.drain,
-      channelExecutor.runScoped
-    ).traced(trace)
-}
+export const runScoped = Debug.pipeableWithTrace((trace) =>
+  <R2, E2, A, A2>(sink: Sink.Sink<R2, E2, A, unknown, A2>) =>
+    <R, E>(self: Stream.Stream<R, E, A>): Effect.Effect<R | R2 | Scope.Scope, E | E2, A2> =>
+      pipe(
+        self.channel,
+        channel.pipeToOrFail(sink.channel),
+        channel.drain,
+        channelExecutor.runScoped
+      ).traced(trace)
+)
 
 /** @internal */
-export const runSum = <R, E>(self: Stream.Stream<R, E, number>): Effect.Effect<R, E, number> => {
-  const trace = getCallTrace()
-  return pipe(self, run(_sink.sum())).traced(trace)
-}
+export const runSum = Debug.methodWithTrace((trace) =>
+  <R, E>(self: Stream.Stream<R, E, number>): Effect.Effect<R, E, number> => pipe(self, run(_sink.sum())).traced(trace)
+)
 
 /** @internal */
 export const scan = <S, A>(s: S, f: (s: S, a: A) => S) => {
@@ -4051,7 +4052,7 @@ export const scanReduceEffect = <A2, A, R2, E2>(f: (a2: A | A2, a: A) => Effect.
   return <R, E>(self: Stream.Stream<R, E, A>): Stream.Stream<R | R2, E | E2, A | A2> =>
     pipe(
       self,
-      mapAccumEffect<Option.Option<A | A2>, A, R2, E2, A | A2>(Option.none as Option.Option<A | A2>, (option, a) => {
+      mapAccumEffect<Option.Option<A | A2>, A, R2, E2, A | A2>(Option.none() as Option.Option<A | A2>, (option, a) => {
         switch (option._tag) {
           case "None": {
             return Effect.succeed([Option.some<A | A2>(a), a] as const)
@@ -4180,7 +4181,7 @@ export const serviceWithStream = <T>(tag: Context.Tag<T>) => {
 
 /** @internal */
 export const some = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, Option.Option<E>, A> =>
-  pipe(self, mapError(Option.some), someOrFail(() => Option.none))
+  pipe(self, mapError(Option.some), someOrFail(() => Option.none()))
 
 /** @internal */
 export const someOrElse = <A2>(fallback: LazyArg<A2>) => {
@@ -4235,7 +4236,7 @@ export const sliding = (chunkSize: number, stepSize = 1) => {
                     queue.put(element)
                     const currentIndex = queueSize + index + 1
                     if (currentIndex < chunkSize || (currentIndex - chunkSize) % stepSize > 0) {
-                      return Option.none
+                      return Option.none()
                     }
                     return Option.some(queue.toChunk())
                   })
@@ -4323,7 +4324,7 @@ export const splitOnChunk = <A>(delimiter: Chunk.Chunk<A>) => {
           const output = buffer === undefined ? Chunk.empty<Chunk.Chunk<A>>() : Chunk.unsafeFromArray(buffer)
           return pipe(
             core.write(output),
-            core.flatMap(() => next(Chunk.isNonEmpty(carry) ? Option.some(carry) : Option.none, delimiterCursor))
+            core.flatMap(() => next(Chunk.isNonEmpty(carry) ? Option.some(carry) : Option.none(), delimiterCursor))
           )
         },
         (cause) =>
@@ -4343,7 +4344,7 @@ export const splitOnChunk = <A>(delimiter: Chunk.Chunk<A>) => {
             )
           )
       )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(next(Option.none, 0))))
+    return new StreamImpl(pipe(self.channel, core.pipeTo(next(Option.none(), 0))))
   }
 }
 
@@ -4647,7 +4648,7 @@ export const timeout = (duration: Duration.Duration) => {
   return <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> =>
     pipe(
       toPull(self),
-      Effect.map(Effect.timeoutFail<Option.Option<E>>(() => Option.none, duration)),
+      Effect.map(Effect.timeoutFail<Option.Option<E>>(() => Option.none(), duration)),
       fromPull
     )
 }
@@ -4690,96 +4691,99 @@ export const timeoutTo = <R2, E2, A2>(
             cause.defect.message !== undefined &&
             cause.defect.message === "Stream Timeout" ?
           Option.some(that) :
-          Option.none
+          Option.none()
       })
     )
 }
 
 /** @internal */
-export const toHub = (capacity: number) => {
-  const trace = getCallTrace()
-  return <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, Hub.Hub<Take.Take<E, A>>> =>
-    pipe(
-      Effect.acquireRelease(Hub.bounded<Take.Take<E, A>>(capacity), (hub) => Hub.shutdown(hub)),
-      Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
-    ).traced(trace)
-}
-
-/** @internal */
-export const toPull = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> => {
-  const trace = getCallTrace()
-  return pipe(
-    channel.toPull(self.channel),
-    Effect.map((pull) =>
+export const toHub = Debug.pipeableWithTrace((trace) =>
+  (capacity: number) =>
+    <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, Hub.Hub<Take.Take<E, A>>> =>
       pipe(
-        pull,
-        Effect.mapError(Option.some),
-        Effect.flatMap(Either.match(() => Effect.fail(Option.none), Effect.succeed))
+        Effect.acquireRelease(Hub.bounded<Take.Take<E, A>>(capacity), (hub) => Hub.shutdown(hub)),
+        Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
+      ).traced(trace)
+)
+
+/** @internal */
+export const toPull = Debug.methodWithTrace((trace) =>
+  <R, E, A>(
+    self: Stream.Stream<R, E, A>
+  ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> =>
+    pipe(
+      channel.toPull(self.channel),
+      Effect.map((pull) =>
+        pipe(
+          pull,
+          Effect.mapError(Option.some),
+          Effect.flatMap(Either.match(() => Effect.fail(Option.none()), Effect.succeed))
+        )
       )
-    )
-  ).traced(trace)
-}
+    ).traced(trace)
+)
 
 /** @internal */
-export const toQueue = (capacity = 2) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
+export const toQueue = Debug.pipeableWithTrace((trace) =>
+  (capacity = 2) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+      pipe(
+        Effect.acquireRelease(Queue.bounded<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
+        Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+      ).traced(trace)
+)
+
+/** @internal */
+export const toQueueDropping = Debug.pipeableWithTrace((trace) =>
+  (capacity = 2) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+      pipe(
+        Effect.acquireRelease(Queue.dropping<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
+        Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+      ).traced(trace)
+)
+
+/** @internal */
+export const toQueueOfElements = Debug.pipeableWithTrace((trace) =>
+  (capacity = 2) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
+      pipe(
+        Effect.acquireRelease(
+          Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity),
+          (queue) => Queue.shutdown(queue)
+        ),
+        Effect.tap((queue) => pipe(self, runIntoQueueElementsScoped(queue), Effect.forkScoped))
+      ).traced(trace)
+)
+
+/** @internal */
+export const toQueueSliding = Debug.pipeableWithTrace((trace) =>
+  (capacity = 2) =>
+    <R, E, A>(
+      self: Stream.Stream<R, E, A>
+    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+      pipe(
+        Effect.acquireRelease(Queue.sliding<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
+        Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+      ).traced(trace)
+)
+
+/** @internal */
+export const toQueueUnbounded = Debug.methodWithTrace((trace) =>
+  <R, E, A>(
     self: Stream.Stream<R, E, A>
   ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
     pipe(
-      Effect.acquireRelease(Queue.bounded<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
+      Effect.acquireRelease(Queue.unbounded<Take.Take<E, A>>(), (queue) => Queue.shutdown(queue)),
       Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
     ).traced(trace)
-}
-
-/** @internal */
-export const toQueueDropping = (capacity = 2) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-    pipe(
-      Effect.acquireRelease(Queue.dropping<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-    ).traced(trace)
-}
-
-/** @internal */
-export const toQueueOfElements = (capacity = 2) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
-    pipe(
-      Effect.acquireRelease(Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueElementsScoped(queue), Effect.forkScoped))
-    ).traced(trace)
-}
-
-/** @internal */
-export const toQueueSliding = (capacity = 2) => {
-  const trace = getCallTrace()
-  return <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-    pipe(
-      Effect.acquireRelease(Queue.sliding<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-    ).traced(trace)
-}
-
-/** @internal */
-export const toQueueUnbounded = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => {
-  const trace = getCallTrace()
-  return pipe(
-    Effect.acquireRelease(Queue.unbounded<Take.Take<E, A>>(), (queue) => Queue.shutdown(queue)),
-    Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-  ).traced(trace)
-}
+)
 
 /** @internal */
 export const transduce = <R2, E2, A, Z>(
@@ -5130,7 +5134,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
                       )
                     )
                   }
-                  return Effect.succeed(Exit.fail<Option.Option<E | E2>>(Option.none))
+                  return Effect.succeed(Exit.fail<Option.Option<E | E2>>(Option.none()))
                 }
               )
             )
@@ -5224,7 +5228,7 @@ export const zipAllSortedByKeyWith = <K>(order: Order.Order<K>) => {
         let a2 = rightTuple[1]
         let loop = true
         while (loop) {
-          const compare = order.compare(k2)(k1)
+          const compare = order.compare(k1, k2)
           if (compare === 0) {
             builder.push([k1, both(a, a2)])
             if (hasNext(leftChunk, leftIndex) && hasNext(rightChunk, rightIndex)) {
@@ -5377,7 +5381,7 @@ export const zipAllWith = <R2, E2, A2, A, A3>(
                     ] as const
                   ))
                 }
-                return Effect.succeed(Exit.fail<Option.Option<E | E2>>(Option.none))
+                return Effect.succeed(Exit.fail<Option.Option<E | E2>>(Option.none()))
               }
             )
           )
@@ -5660,7 +5664,7 @@ export const zipWithChunks = <R2, E2, A2, A, A3>(
                   }
                   return Effect.succeed(Exit.succeed(zip(leftOption.value, rightOption.value)))
                 }
-                return Effect.succeed(Exit.fail(Option.none))
+                return Effect.succeed(Exit.fail(Option.none()))
               }
             )
           )
@@ -5753,7 +5757,7 @@ export const zipWithNext = <R, E, A>(
           Chunk.filterMap((option) =>
             Option.isSome(option) ?
               Option.some([option.value[0], Option.some(option.value[1])] as const) :
-              Option.none
+              Option.none()
           )
         )
         return pipe(core.write(output), core.flatMap(() => process(newLast)))
@@ -5766,13 +5770,13 @@ export const zipWithNext = <R, E, A>(
             core.unit,
             (value) =>
               pipe(
-                core.write(Chunk.of<readonly [A, Option.Option<A>]>([value, Option.none])),
+                core.write(Chunk.of<readonly [A, Option.Option<A>]>([value, Option.none()])),
                 channel.zipRight(core.unit())
               )
           )
         )
     )
-  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(process(Option.none))))
+  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(process(Option.none()))))
 }
 
 /** @internal */
@@ -5782,7 +5786,7 @@ export const zipWithPrevious = <R, E, A>(
   pipe(
     self,
     mapAccum<Option.Option<A>, A, readonly [Option.Option<A>, A]>(
-      Option.none,
+      Option.none(),
       (prev, curr) => [Option.some(curr), [prev, curr]]
     )
   )

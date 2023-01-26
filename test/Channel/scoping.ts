@@ -5,7 +5,7 @@ import * as FiberId from "@effect/io/Fiber/Id"
 import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@fp-ts/data/Function"
+import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Channel", () => {
@@ -27,8 +27,8 @@ describe.concurrent("Channel", () => {
       )
       return yield* $(Ref.get(ref))
     })
-    const result = await Effect.unsafeRunPromise(program)
-    await Effect.unsafeRunPromise(Deferred.succeed<never, void>(latch, void 0))
+    const result = await Effect.runPromise(program)
+    await Effect.runPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
   }, 20_000)
 
@@ -48,8 +48,8 @@ describe.concurrent("Channel", () => {
       ))
       return yield* $(Ref.get(ref))
     })
-    const result = await Effect.unsafeRunPromise(program)
-    await Effect.unsafeRunPromise(Deferred.succeed<never, void>(latch, void 0))
+    const result = await Effect.runPromise(program)
+    await Effect.runPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
   }, 20_000)
 })

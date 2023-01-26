@@ -2,9 +2,9 @@ import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as Emit from "@effect/stream/Stream/Emit"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 
 /** @internal */
 export const make = <R, E, A, B>(
@@ -24,7 +24,7 @@ export const make = <R, E, A, B>(
       return this(Effect.done(pipe(exit, Exit.mapBoth(Option.some, Chunk.of))))
     },
     end(this: Emit.Emit<R, E, A, B>) {
-      return this(Effect.fail(Option.none))
+      return this(Effect.fail(Option.none()))
     },
     fail(this: Emit.Emit<R, E, A, B>, e: E) {
       return this(Effect.fail(Option.some(e)))

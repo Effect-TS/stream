@@ -9,9 +9,9 @@ import * as Stream from "@effect/stream/Stream"
 import * as Take from "@effect/stream/Take"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
+import * as Either from "@fp-ts/core/Either"
 import * as Equal from "@fp-ts/data/Equal"
-import { identity, pipe } from "@fp-ts/data/Function"
+import { identity, pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 const withPermitsScoped = (permits: number) =>

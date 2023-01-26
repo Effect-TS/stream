@@ -2,17 +2,17 @@ import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Duration from "@fp-ts/data/Duration"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -232,12 +232,12 @@ describe.concurrent("Stream", () => {
   it.effect("debounce - should fail immediately", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.fromEffect(Effect.fail(Option.none)),
+        Stream.fromEffect(Effect.fail(Option.none())),
         Stream.debounce(Duration.infinity),
         Stream.runCollect,
         Effect.exit
       ))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(Option.none))
+      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(Option.none()))
     }))
 
   it.effect("debounce - should work with empty streams", () =>

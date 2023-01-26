@@ -1,11 +1,11 @@
-import { getCallTrace } from "@effect/io/Debug"
+import * as Debug from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
 import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import type { ErasedChannel, ErasedExecutor } from "@effect/stream/internal/channel/channelExecutor"
-import { pipe } from "@fp-ts/data/Function"
+import { pipe } from "@fp-ts/core/Function"
 
 /** @internal */
 export interface Subexecutor<R> {
@@ -60,21 +60,22 @@ export class PullFromChild<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    const trace = getCallTrace()
-    const fin1 = this.childExecutor.close(exit)
-    const fin2 = this.parentSubexecutor.close(exit)
-    if (fin1 !== undefined && fin2 !== undefined) {
-      return pipe(
-        Effect.exit(fin1),
-        Effect.zipWith(Effect.exit(fin2), (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2)))
-      ).traced(trace)
-    } else if (fin1 !== undefined) {
-      return fin1.traced(trace)
-    } else if (fin2 !== undefined) {
-      return fin2.traced(trace)
-    } else {
-      return undefined
-    }
+    return Debug.bodyWithTrace((trace) => {
+      const fin1 = this.childExecutor.close(exit)
+      const fin2 = this.parentSubexecutor.close(exit)
+      if (fin1 !== undefined && fin2 !== undefined) {
+        return pipe(
+          Effect.exit(fin1),
+          Effect.zipWith(Effect.exit(fin2), (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2)))
+        ).traced(trace)
+      } else if (fin1 !== undefined) {
+        return fin1.traced(trace)
+      } else if (fin2 !== undefined) {
+        return fin2.traced(trace)
+      } else {
+        return undefined
+      }
+    })
   }
 
   enqueuePullFromChild(_child: PullFromChild<R>): Subexecutor<R> {
@@ -106,37 +107,38 @@ export class PullFromUpstream<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    const trace = getCallTrace()
-    const fin1 = this.upstreamExecutor.close(exit)
-    const fins = [
-      ...this.activeChildExecutors.map((child) =>
-        child !== undefined ?
-          child.childExecutor.close(exit) :
-          undefined
-      ),
-      fin1
-    ]
-    const result = fins.reduce(
-      (acc: Effect.Effect<R, never, Exit.Exit<unknown, unknown>> | undefined, next) => {
-        if (acc !== undefined && next !== undefined) {
-          return pipe(
-            acc,
-            Effect.zipWith(
-              Effect.exit(next),
-              (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2))
+    return Debug.bodyWithTrace((trace) => {
+      const fin1 = this.upstreamExecutor.close(exit)
+      const fins = [
+        ...this.activeChildExecutors.map((child) =>
+          child !== undefined ?
+            child.childExecutor.close(exit) :
+            undefined
+        ),
+        fin1
+      ]
+      const result = fins.reduce(
+        (acc: Effect.Effect<R, never, Exit.Exit<unknown, unknown>> | undefined, next) => {
+          if (acc !== undefined && next !== undefined) {
+            return pipe(
+              acc,
+              Effect.zipWith(
+                Effect.exit(next),
+                (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2))
+              )
             )
-          )
-        } else if (acc !== undefined) {
-          return acc
-        } else if (next !== undefined) {
-          return Effect.exit(next)
-        } else {
-          return undefined
-        }
-      },
-      undefined
-    )
-    return result === undefined ? result : result.traced(trace)
+          } else if (acc !== undefined) {
+            return acc
+          } else if (next !== undefined) {
+            return Effect.exit(next)
+          } else {
+            return undefined
+          }
+        },
+        undefined
+      )
+      return result === undefined ? result : result.traced(trace)
+    })
   }
 
   enqueuePullFromChild(child: PullFromChild<R>): Subexecutor<R> {
@@ -176,33 +178,34 @@ export class DrainChildExecutors<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    const trace = getCallTrace()
-    const fin1 = this.upstreamExecutor.close(exit)
-    const fins = [
-      ...this.activeChildExecutors.map((child) => (child !== undefined ?
-        child.childExecutor.close(exit) :
-        undefined)
-      ),
-      fin1
-    ]
-    const result = fins.reduce(
-      (acc: Effect.Effect<R, never, Exit.Exit<unknown, unknown>> | undefined, next) => {
-        if (acc !== undefined && next !== undefined) {
-          return pipe(
-            acc,
-            Effect.zipWith(Effect.exit(next), (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2)))
-          )
-        } else if (acc !== undefined) {
-          return acc
-        } else if (next !== undefined) {
-          return Effect.exit(next)
-        } else {
-          return undefined
-        }
-      },
-      undefined
-    )
-    return result === undefined ? result : result.traced(trace)
+    return Debug.bodyWithTrace((trace) => {
+      const fin1 = this.upstreamExecutor.close(exit)
+      const fins = [
+        ...this.activeChildExecutors.map((child) => (child !== undefined ?
+          child.childExecutor.close(exit) :
+          undefined)
+        ),
+        fin1
+      ]
+      const result = fins.reduce(
+        (acc: Effect.Effect<R, never, Exit.Exit<unknown, unknown>> | undefined, next) => {
+          if (acc !== undefined && next !== undefined) {
+            return pipe(
+              acc,
+              Effect.zipWith(Effect.exit(next), (exit1, exit2) => pipe(exit1, Exit.zipRight(exit2)))
+            )
+          } else if (acc !== undefined) {
+            return acc
+          } else if (next !== undefined) {
+            return Effect.exit(next)
+          } else {
+            return undefined
+          }
+        },
+        undefined
+      )
+      return result === undefined ? result : result.traced(trace)
+    })
   }
 
   enqueuePullFromChild(child: PullFromChild<R>): Subexecutor<R> {
@@ -226,9 +229,10 @@ export class Emit<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    const trace = getCallTrace()
-    const result = this.next.close(exit)
-    return result === undefined ? result : result.traced(trace)
+    return Debug.bodyWithTrace((trace) => {
+      const result = this.next.close(exit)
+      return result === undefined ? result : result.traced(trace)
+    })
   }
 
   enqueuePullFromChild(_child: PullFromChild<R>): Subexecutor<R> {

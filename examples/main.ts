@@ -1,10 +1,10 @@
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Stream from "@effect/stream/Stream"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Equal from "@fp-ts/data/Equal"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import * as util from "node:util"
 
 // See original test here:
@@ -46,7 +46,7 @@ const program = Effect.gen(function*($) {
   return { equal, result1: Array.from(result1), result2: Array.from(result2) }
 })
 
-Effect.unsafeRunPromiseExit(program).then((exit) => {
+Effect.runPromiseExit(program).then((exit) => {
   if (Exit.isSuccess(exit)) {
     console.log(util.inspect(exit.value, { depth: null, colors: true }))
   }

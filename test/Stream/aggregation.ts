@@ -3,8 +3,8 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal/testing/testClock"
-import * as TestServices from "@effect/io/internal/testing/testServices"
+import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestServices from "@effect/io/internal_effect_untraced/testing/testServices"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
@@ -13,11 +13,11 @@ import * as Stream from "@effect/stream/Stream"
 import * as Take from "@effect/stream/Take"
 import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { constTrue, constVoid, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Duration from "@fp-ts/data/Duration"
-import * as Either from "@fp-ts/data/Either"
-import { constTrue, constVoid, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 Stream.onError
@@ -368,7 +368,7 @@ describe.concurrent("Stream", () => {
           Stream.collect((either) =>
             Either.isRight(either) ?
               Option.some(either.right) :
-              Option.none
+              Option.none()
           ),
           Stream.runCollect,
           Effect.map(Chunk.flatten),

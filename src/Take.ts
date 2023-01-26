@@ -5,8 +5,8 @@ import type * as Cause from "@effect/io/Cause"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import * as internal from "@effect/stream/internal/take"
+import type * as Option from "@fp-ts/core/Option"
 import type * as Chunk from "@fp-ts/data/Chunk"
-import type * as Option from "@fp-ts/data/Option"
 
 /**
  * @since 1.0.0
