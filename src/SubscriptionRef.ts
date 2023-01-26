@@ -7,7 +7,7 @@ import * as Ref from "@effect/io/Ref"
 import * as Synchronized from "@effect/io/Ref/Synchronized"
 import * as internal from "@effect/stream/internal/subscriptionRef"
 import type * as Stream from "@effect/stream/Stream"
-import type * as Option from "@fp-ts/data/Option"
+import type * as Option from "@fp-ts/core/Option"
 
 /**
  * @since 1.0.0

@@ -2,8 +2,8 @@ import * as Effect from "@effect/io/Effect"
 import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

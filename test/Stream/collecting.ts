@@ -1,10 +1,10 @@
 import * as Effect from "@effect/io/Effect"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { identity, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -15,7 +15,7 @@ describe.concurrent("Stream", () => {
         Stream.collect((either) =>
           Either.isRight(either) ?
             Option.some(either.right) :
-            Option.none
+            Option.none()
         ),
         Stream.runCollect
       ))
@@ -29,7 +29,7 @@ describe.concurrent("Stream", () => {
         Stream.collectEffect((either) =>
           Either.isRight(either) ?
             Option.some(Effect.succeed(either.right * 2)) :
-            Option.none
+            Option.none()
         ),
         Stream.runCollect
       ))
@@ -47,7 +47,7 @@ describe.concurrent("Stream", () => {
         Stream.collectEffect((either) =>
           Either.isRight(either) ?
             Option.some(Effect.succeed(either.right * 10)) :
-            Option.none
+            Option.none()
         ),
         Stream.runCollect
       ))
@@ -87,7 +87,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(
         Option.some(1),
-        Option.none as Option.Option<number>,
+        Option.none() as Option.Option<number>,
         Option.some(2)
       )
       const { result1, result2 } = yield* $(Effect.struct({
@@ -100,7 +100,7 @@ describe.concurrent("Stream", () => {
   it.effect("collectWhile - simple example", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.make(Option.some(1), Option.some(2), Option.none, Option.some(4)),
+        Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(4)),
         Stream.collectWhile(identity),
         Stream.runCollect
       ))
@@ -112,7 +112,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(Option.some(1)),
         Stream.concat(Stream.fail("Ouch")),
-        Stream.collectWhile((option) => Option.isNone(option) ? Option.some(1) : Option.none),
+        Stream.collectWhile((option) => Option.isNone(option) ? Option.some(1) : Option.none()),
         Stream.runDrain,
         Effect.either
       ))
@@ -122,11 +122,11 @@ describe.concurrent("Stream", () => {
   it.effect("collectWhileEffect - simple example", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.make(Option.some(1), Option.some(2), Option.none, Option.some(4)),
+        Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(4)),
         Stream.collectWhileEffect((option) =>
           Option.isSome(option) ?
             Option.some(Effect.succeed(option.value * 2)) :
-            Option.none
+            Option.none()
         ),
         Stream.runCollect
       ))
@@ -141,7 +141,7 @@ describe.concurrent("Stream", () => {
         Stream.collectWhileEffect((option) =>
           Option.isNone(option) ?
             Option.some(Effect.succeed(1)) :
-            Option.none
+            Option.none()
         ),
         Stream.runDrain,
         Effect.either
@@ -152,7 +152,7 @@ describe.concurrent("Stream", () => {
   it.effect("collectWhileEffect - fails", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.make(Option.some(1), Option.some(2), Option.none, Option.some(3)),
+        Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(3)),
         Stream.collectWhileEffect(() => Option.some(Effect.fail("Ouch"))),
         Stream.runDrain,
         Effect.either

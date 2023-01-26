@@ -2,10 +2,10 @@ import * as Effect from "@effect/io/Effect"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Equal from "@fp-ts/data/Equal"
-import { identity, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Sink", () => {
@@ -60,7 +60,7 @@ describe.concurrent("Sink", () => {
           Stream.run(sink)
         )
       )
-      assert.deepStrictEqual(result, Option.none)
+      assert.deepStrictEqual(result, Option.none())
     }))
 
   it.effect("findEffect - unsatisfied condition terminates with none", () =>
@@ -75,7 +75,7 @@ describe.concurrent("Sink", () => {
           Stream.run(sink)
         )
       )
-      assert.deepStrictEqual(result, Option.none)
+      assert.deepStrictEqual(result, Option.none())
     }))
 
   it.effect("forEachWhile - handles leftovers", () =>

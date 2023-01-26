@@ -2,7 +2,7 @@
  * @since 1.0.0
  */
 import * as internal from "@effect/stream/internal/channel/upstreamPullStrategy"
-import type * as Option from "@fp-ts/data/Option"
+import type * as Option from "@fp-ts/core/Option"
 
 /**
  * @since 1.0.0

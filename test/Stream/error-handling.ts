@@ -4,10 +4,10 @@ import * as Exit from "@effect/io/Exit"
 import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -168,7 +168,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.make(3, 4)
       const result = yield* $(pipe(
         stream1,
-        Stream.catchSome((error) => error === "boom" ? Option.some(stream2) : Option.none),
+        Stream.catchSome((error) => error === "boom" ? Option.some(stream2) : Option.none()),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
@@ -183,7 +183,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.make(3, 4)
       const result = yield* $(pipe(
         stream1,
-        Stream.catchSome((error) => error === "boomer" ? Option.some(stream2) : Option.none),
+        Stream.catchSome((error) => error === "boomer" ? Option.some(stream2) : Option.none()),
         Stream.runCollect,
         Effect.either
       ))
@@ -202,7 +202,7 @@ describe.concurrent("Stream", () => {
         Stream.catchSomeCause((cause) =>
           Cause.isFailType(cause) && cause.error === "boom" ?
             Option.some(stream2) :
-            Option.none
+            Option.none()
         ),
         Stream.runCollect
       ))
@@ -221,7 +221,7 @@ describe.concurrent("Stream", () => {
         Stream.catchSomeCause((cause) =>
           Cause.isEmpty(cause) ?
             Option.some(stream2) :
-            Option.none
+            Option.none()
         ),
         Stream.runCollect,
         Effect.either
@@ -328,7 +328,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("orElseOptional", () =>
     Effect.gen(function*($) {
-      const stream1 = pipe(Stream.succeed(1), Stream.concat(Stream.fail(Option.none)))
+      const stream1 = pipe(Stream.succeed(1), Stream.concat(Stream.fail(Option.none())))
       const stream2 = Stream.succeed(2)
       const result = yield* $(pipe(
         stream1,

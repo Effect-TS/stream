@@ -7,12 +7,12 @@ import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import * as Take from "@effect/stream/Take"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { identity, pipe } from "@fp-ts/core/Function"
+import * as Number from "@fp-ts/core/Number"
+import * as Option from "@fp-ts/core/Option"
 import * as Order from "@fp-ts/core/typeclass/Order"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { identity, pipe } from "@fp-ts/data/Function"
-import * as Number from "@fp-ts/data/Number"
-import * as Option from "@fp-ts/data/Option"
 import * as fc from "fast-check"
 import { assert, describe } from "vitest"
 
@@ -76,7 +76,7 @@ describe.concurrent("Stream", () => {
         Chunk.fromIterable,
         Chunk.sort(OrderByKey)
       )
-      const result = await Effect.unsafeRunPromise(Stream.runCollect(actual))
+      const result = await Effect.runPromise(Stream.runCollect(actual))
       assert.deepStrictEqual(Array.from(result), Array.from(expected))
     }))
   })
@@ -103,7 +103,7 @@ describe.concurrent("Stream", () => {
           Chunk.flatten(Chunk.unsafeFromArray(left)),
           Chunk.zip(Chunk.flatten(Chunk.unsafeFromArray(right)))
         )
-        const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+        const actual = await Effect.runPromise(Stream.runCollect(stream))
         assert.deepStrictEqual(Array.from(actual), Array.from(expected))
       })
     ))
@@ -112,7 +112,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.never(),
-        Stream.zipWith(Stream.fail("Ouch"), () => Option.none),
+        Stream.zipWith(Stream.fail("Ouch"), () => Option.none()),
         Stream.runCollect,
         Effect.either
       ))
@@ -148,18 +148,18 @@ describe.concurrent("Stream", () => {
           Stream.map(Option.some),
           Stream.zipAll(
             pipe(Stream.fromChunks(...right), Stream.map(Option.some)),
-            Option.none as Option.Option<number>,
-            Option.none as Option.Option<number>
+            Option.none() as Option.Option<number>,
+            Option.none() as Option.Option<number>
           )
         )
-        const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+        const actual = await Effect.runPromise(Stream.runCollect(stream))
         const expected = pipe(
           Chunk.flatten(Chunk.fromIterable(left)),
           Chunk.zipAllWith(
             Chunk.flatten(Chunk.fromIterable(right)),
             (a, b) => [Option.some(a), Option.some(b)] as const,
-            (a) => [Option.some(a), Option.none] as const,
-            (b) => [Option.none, Option.some(b)] as const
+            (a) => [Option.some(a), Option.none()] as const,
+            (b) => [Option.none(), Option.some(b)] as const
           )
         )
         assert.deepStrictEqual(Array.from(actual), Array.from(expected))
@@ -170,7 +170,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.never(),
-        Stream.zipAll(Stream.fail("Ouch"), Option.none, Option.none),
+        Stream.zipAll(Stream.fail("Ouch"), Option.none(), Option.none()),
         Stream.runCollect,
         Effect.either
       ))
@@ -277,7 +277,7 @@ describe.concurrent("Stream", () => {
         Stream.fromChunks(...left),
         Stream.zipLatestWith(Stream.fromChunks(...right), (l, r) => l + r)
       )
-      const result = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+      const result = await Effect.runPromise(Stream.runCollect(stream))
       const [isSorted] = Chunk.isEmpty(result) ? [true] : pipe(
         result,
         Chunk.drop(1),
@@ -300,7 +300,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [
         [1, Option.some(2)],
         [2, Option.some(3)],
-        [3, Option.none]
+        [3, Option.none()]
       ])
     }))
 
@@ -314,7 +314,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [
         [1, Option.some(2)],
         [2, Option.some(3)],
-        [3, Option.none]
+        [3, Option.none()]
       ])
     }))
 
@@ -331,7 +331,7 @@ describe.concurrent("Stream", () => {
   it.it("zipWithNext - should output the same values as zipping with the tail plus the last element", () =>
     fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
-      const { result1, result2 } = await Effect.unsafeRunPromise(Effect.struct({
+      const { result1, result2 } = await Effect.runPromise(Effect.struct({
         result1: pipe(
           stream,
           Stream.zipWithNext,
@@ -339,7 +339,7 @@ describe.concurrent("Stream", () => {
         ),
         result2: pipe(
           stream,
-          Stream.zipAll(pipe(stream, Stream.drop(1), Stream.map(Option.some)), 0, Option.none),
+          Stream.zipAll(pipe(stream, Stream.drop(1), Stream.map(Option.some)), 0, Option.none()),
           Stream.runCollect
         )
       }))
@@ -354,7 +354,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [
-        [Option.none, 1],
+        [Option.none(), 1],
         [Option.some(1), 2],
         [Option.some(2), 3]
       ])
@@ -368,7 +368,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [
-        [Option.none, 1],
+        [Option.none(), 1],
         [Option.some(1), 2],
         [Option.some(2), 3]
       ])
@@ -387,14 +387,14 @@ describe.concurrent("Stream", () => {
   it.it("zipWithPrevious - should output same values as first element plus zipping with init", () =>
     fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
-      const { result1, result2 } = await Effect.unsafeRunPromise(Effect.struct({
+      const { result1, result2 } = await Effect.runPromise(Effect.struct({
         result1: pipe(
           stream,
           Stream.zipWithPrevious,
           Stream.runCollect
         ),
         result2: pipe(
-          Stream.make(Option.none),
+          Stream.make(Option.none()),
           Stream.concat(pipe(stream, Stream.map(Option.some))),
           Stream.zip(stream),
           Stream.runCollect
@@ -411,9 +411,9 @@ describe.concurrent("Stream", () => {
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [
-        [Option.none, 1, Option.some(2)],
+        [Option.none(), 1, Option.some(2)],
         [Option.some(1), 2, Option.some(3)],
-        [Option.some(2), 3, Option.none]
+        [Option.some(2), 3, Option.none()]
       ])
     }))
 
@@ -421,14 +421,14 @@ describe.concurrent("Stream", () => {
     fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer()), { minLength: 0, maxLength: 5 }), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
       const previous = pipe(
-        Stream.make(Option.none),
+        Stream.make(Option.none()),
         Stream.concat(pipe(stream, Stream.map(Option.some)))
       )
       const next = pipe(
         stream,
         Stream.drop(1),
         Stream.map(Option.some),
-        Stream.concat(Stream.make(Option.none))
+        Stream.concat(Stream.make(Option.none()))
       )
       const { result1, result2 } = await pipe(
         Effect.struct({
@@ -444,7 +444,7 @@ describe.concurrent("Stream", () => {
             Stream.runCollect
           )
         }),
-        Effect.unsafeRunPromise
+        Effect.runPromise
       )
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
     })))

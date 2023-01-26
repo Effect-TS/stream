@@ -3,7 +3,7 @@ import type * as Exit from "@effect/io/Exit"
 import type * as Fiber from "@effect/io/Fiber"
 import type * as MergeState from "@effect/stream/Channel/MergeState"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeState"
-import type * as Either from "@fp-ts/data/Either"
+import type * as Either from "@fp-ts/core/Either"
 
 /** @internal */
 const MergeStateSymbolKey = "@effect/stream/Channel/MergeState"

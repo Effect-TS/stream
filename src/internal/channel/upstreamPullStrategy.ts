@@ -1,6 +1,6 @@
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
-import type * as Option from "@fp-ts/data/Option"
+import type * as Option from "@fp-ts/core/Option"
 
 /** @internal */
 const UpstreamPullStrategySymbolKey = "@effect/stream/Channel/UpstreamPullStrategy"

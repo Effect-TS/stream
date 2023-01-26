@@ -5,8 +5,8 @@ import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import * as Take from "@effect/stream/Take"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

@@ -6,8 +6,8 @@ import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as it from "@effect/stream/test/utils/extend"
-import { constTrue, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
+import { constTrue, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Channel", () => {
@@ -38,7 +38,7 @@ describe.concurrent("Channel", () => {
             Effect.refineOrDie((e) =>
               Cause.isRuntimeException(e) ?
                 Option.some(e) :
-                Option.none
+                Option.none()
             ),
             Channel.fromEffect
           )
@@ -52,7 +52,7 @@ describe.concurrent("Channel", () => {
             Effect.refineOrDie((e) =>
               Cause.isIllegalArgumentException(e) ?
                 Option.some(e) :
-                Option.none
+                Option.none()
             ),
             Channel.fromEffect
           )

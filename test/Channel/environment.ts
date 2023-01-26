@@ -1,9 +1,9 @@
 import * as Effect from "@effect/io/Effect"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
 import * as Context from "@fp-ts/data/Context"
 import * as Equal from "@fp-ts/data/Equal"
-import { pipe } from "@fp-ts/data/Function"
 import * as Hash from "@fp-ts/data/Hash"
 import { assert, describe } from "vitest"
 

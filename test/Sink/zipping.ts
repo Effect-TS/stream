@@ -3,18 +3,18 @@ import * as Random from "@effect/io/Random"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { constVoid, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { constVoid, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 const findSink = <A>(a: A): Sink.Sink<never, void, A, A, A> =>
   pipe(
     Sink.fold<Option.Option<A>, A>(
-      Option.none,
+      Option.none(),
       Option.isNone,
-      (_, v) => (a === v ? Option.some(a) : Option.none)
+      (_, v) => (a === v ? Option.some(a) : Option.none())
     ),
     Sink.mapEffect(Option.match(() => Effect.failSync(constVoid), Effect.succeed))
   )
@@ -71,7 +71,7 @@ describe.concurrent("Sink", () => {
       const ints = yield* $(Effect.unfold(0, (n) =>
         pipe(
           Random.nextIntBetween(0, 10),
-          Effect.map((i) => n < 20 ? Option.some([i, n + 1] as const) : Option.none)
+          Effect.map((i) => n < 20 ? Option.some([i, n + 1] as const) : Option.none())
         )))
       const success1 = yield* $(Random.nextBoolean())
       const success2 = yield* $(Random.nextBoolean())

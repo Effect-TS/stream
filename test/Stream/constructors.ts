@@ -1,17 +1,17 @@
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Duration from "@fp-ts/data/Duration"
-import * as Either from "@fp-ts/data/Either"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import * as fc from "fast-check"
 import { assert, describe } from "vitest"
 
@@ -36,7 +36,7 @@ describe.concurrent("Stream", () => {
         Chunk.map(Stream.fromChunk),
         Stream.concatAll
       )
-      const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+      const actual = await Effect.runPromise(Stream.runCollect(stream))
       const expected = Chunk.flatten(Chunk.fromIterable(chunks))
       assert.deepStrictEqual(Array.from(actual), Array.from(expected))
     })))
@@ -72,14 +72,14 @@ describe.concurrent("Stream", () => {
   it.it("fromChunk", () =>
     fc.assert(fc.asyncProperty(chunkArb(fc.integer()), async (chunk) => {
       const stream = Stream.fromChunk(chunk)
-      const result = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+      const result = await Effect.runPromise(Stream.runCollect(stream))
       assert.deepStrictEqual(Array.from(result), Array.from(chunk))
     })))
 
   it.it("fromChunks", () =>
     fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
-      const result = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+      const result = await Effect.runPromise(Stream.runCollect(stream))
       assert.deepStrictEqual(
         Array.from(result),
         Array.from(Chunk.flatten(Chunk.fromIterable(chunks)))
@@ -103,7 +103,7 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [
         Either.right([1]),
         Either.right([1]),
-        Either.left(Option.none)
+        Either.left(Option.none())
       ])
     }))
 
@@ -139,7 +139,7 @@ describe.concurrent("Stream", () => {
   it.effect("fromEffectOption - do not emit any element", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.fromEffectOption(Effect.fail(Option.none)),
+        Stream.fromEffectOption(Effect.fail(Option.none())),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [])
@@ -268,7 +268,7 @@ describe.concurrent("Stream", () => {
           Stream.rechunk(n),
           Stream.mapChunks(Chunk.of)
         )
-        const actual = await Effect.unsafeRunPromise(Stream.runCollect(stream))
+        const actual = await Effect.runPromise(Stream.runCollect(stream))
         const expected = chunks.map((chunk) => Array.from(chunk)).flat()
         assert.deepStrictEqual(
           Array.from(actual).map((chunk) => Array.from(chunk)),
@@ -283,7 +283,7 @@ describe.concurrent("Stream", () => {
         Stream.unfold(0, (n) =>
           n < 10 ?
             Option.some([n, n + 1] as const) :
-            Option.none),
+            Option.none()),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
@@ -295,7 +295,7 @@ describe.concurrent("Stream", () => {
         Stream.unfoldChunk(0, (n) =>
           n < 10 ?
             Option.some([Chunk.make(n, n + 1), n + 2] as const) :
-            Option.none),
+            Option.none()),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
@@ -307,7 +307,7 @@ describe.concurrent("Stream", () => {
         Stream.unfoldChunkEffect(0, (n) =>
           n < 10 ?
             Effect.succeed(Option.some([Chunk.make(n, n + 1), n + 2] as const)) :
-            Effect.succeed(Option.none)),
+            Effect.succeed(Option.none())),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
@@ -319,7 +319,7 @@ describe.concurrent("Stream", () => {
         Stream.unfoldEffect(0, (n) =>
           n < 10 ?
             Effect.succeed(Option.some([n, n + 1] as const)) :
-            Effect.succeed(Option.none)),
+            Effect.succeed(Option.none())),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))

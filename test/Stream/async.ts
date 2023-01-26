@@ -7,10 +7,10 @@ import * as Ref from "@effect/io/Ref"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -83,7 +83,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.asyncEffect<never, never, number>((emit) => {
-          emit(Effect.fail(Option.none))
+          emit(Effect.fail(Option.none()))
           return Effect.unit()
         }),
         Stream.runCollect
@@ -110,7 +110,7 @@ describe.concurrent("Stream", () => {
           emit.fromEffect(
             pipe(
               Ref.set(refDone, true),
-              Effect.zipRight(Effect.fail(Option.none))
+              Effect.zipRight(Effect.fail(Option.none()))
             )
           )
         )
@@ -211,7 +211,7 @@ describe.concurrent("Stream", () => {
           emit.fromEffect(
             pipe(
               Ref.set(refDone, true),
-              Effect.zipRight(Effect.fail(Option.none))
+              Effect.zipRight(Effect.fail(Option.none()))
             )
           )
         )
@@ -229,8 +229,8 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.asyncOption<never, never, number>((emit) => {
-          emit(Effect.fail(Option.none))
-          return Option.none
+          emit(Effect.fail(Option.none()))
+          return Option.none()
         }),
         Stream.runCollect
       ))
@@ -255,7 +255,7 @@ describe.concurrent("Stream", () => {
           array.forEach((n) => {
             emit(Effect.succeed(Chunk.of(n)))
           })
-          return Option.none
+          return Option.none()
         }),
         Stream.take(array.length),
         Stream.runCollect
@@ -269,7 +269,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncOption<never, Cause.RuntimeException, number>((emit) => {
           emit.fromEffect(Effect.fail(error))
-          return Option.none
+          return Option.none()
         }),
         Stream.runCollect,
         Effect.exit
@@ -309,11 +309,11 @@ describe.concurrent("Stream", () => {
           emit.fromEffect(
             pipe(
               Ref.set(refDone, true),
-              Effect.zipRight(Effect.fail(Option.none))
+              Effect.zipRight(Effect.fail(Option.none()))
             )
           )
         )
-        return Option.none
+        return Option.none()
       }, 5)
       const sink = pipe(Sink.take<number>(1), Sink.zipRight(Sink.never()))
       const fiber = yield* $(pipe(stream, Stream.run(sink), Effect.fork))
@@ -350,7 +350,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.asyncScoped<never, never, number>((cb) => {
-          cb(Effect.fail(Option.none))
+          cb(Effect.fail(Option.none()))
           return Effect.unit()
         }),
         Stream.runCollect
@@ -404,7 +404,7 @@ describe.concurrent("Stream", () => {
           cb(
             pipe(
               Ref.set(refDone, true),
-              Effect.zipRight(Effect.fail(Option.none))
+              Effect.zipRight(Effect.fail(Option.none()))
             )
           )
         )

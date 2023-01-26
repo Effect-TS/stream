@@ -1,14 +1,14 @@
-import { getCallTrace } from "@effect/io/Debug"
+import * as Debug from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Hub from "@effect/io/Hub"
-import * as _circular from "@effect/io/internal/effect/circular"
-import * as _ref from "@effect/io/internal/ref"
+import * as _circular from "@effect/io/internal_effect_untraced/effect/circular"
+import * as _ref from "@effect/io/internal_effect_untraced/ref"
 import * as Ref from "@effect/io/Ref"
 import * as Synchronized from "@effect/io/Ref/Synchronized"
 import * as stream from "@effect/stream/internal/stream"
 import type { Stream } from "@effect/stream/Stream"
 import type * as SubscriptionRef from "@effect/stream/SubscriptionRef"
-import { pipe } from "@fp-ts/data/Function"
+import { pipe } from "@fp-ts/core/Function"
 
 /** @internal */
 const SubscriptionRefSymbolKey = "@effect/stream/SubscriptionRef"
@@ -54,65 +54,64 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
   }
   /** @macro traced */
   modify<B>(f: (a: A) => readonly [B, A]): Effect.Effect<never, never, B> {
-    const trace = getCallTrace()
-    return this.modifyEffect((a) => Effect.succeed(f(a))).traced(trace)
+    return Debug.bodyWithTrace((trace) => this.modifyEffect((a) => Effect.succeed(f(a))).traced(trace))
   }
   /** @macro traced */
   modifyEffect<R, E, B>(f: (a: A) => Effect.Effect<R, E, readonly [B, A]>): Effect.Effect<R, E, B> {
-    const trace = getCallTrace()
-    return pipe(
-      Ref.get(this.ref),
-      Effect.flatMap(f),
-      Effect.flatMap(([b, a]) =>
-        pipe(
-          Ref.set(this.ref, a),
-          Effect.as(b),
-          Effect.zipLeft(Hub.publish(this.hub, a))
-        )
-      ),
-      this.semaphore.withPermits(1)
-    ).traced(trace)
+    return Debug.bodyWithTrace((trace) =>
+      pipe(
+        Ref.get(this.ref),
+        Effect.flatMap(f),
+        Effect.flatMap(([b, a]) =>
+          pipe(
+            Ref.set(this.ref, a),
+            Effect.as(b),
+            Effect.zipLeft(Hub.publish(this.hub, a))
+          )
+        ),
+        this.semaphore.withPermits(1)
+      ).traced(trace)
+    )
   }
 }
 
 /** @internal */
-export const get = <A>(self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, A> => {
-  const trace = getCallTrace()
-  return Ref.get(self.ref).traced(trace)
-}
+export const get = Debug.methodWithTrace((trace) =>
+  <A>(self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, A> => Ref.get(self.ref).traced(trace)
+)
 
 /** @internal */
-export const make = <A>(value: A): Effect.Effect<never, never, SubscriptionRef.SubscriptionRef<A>> => {
-  const trace = getCallTrace()
-  return pipe(
-    Effect.tuple(
-      Hub.unbounded<A>(),
-      Ref.make(value),
-      Effect.makeSemaphore(1)
-    ),
-    Effect.map(([hub, ref, semaphore]) => new SubscriptionRefImpl(ref, hub, semaphore))
-  ).traced(trace)
-}
-
-/** @internal */
-export const modify = <A, B>(f: (a: A) => readonly [B, A]) => {
-  const trace = getCallTrace()
-  return (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, B> => self.modify(f).traced(trace)
-}
-
-/** @internal */
-export const modifyEffect = <A, R, E, B>(f: (a: A) => Effect.Effect<R, E, readonly [B, A]>) => {
-  const trace = getCallTrace()
-  return (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<R, E, B> => self.modifyEffect(f).traced(trace)
-}
-
-/** @internal */
-export const set = <A>(value: A) => {
-  const trace = getCallTrace()
-  return (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, void> =>
+export const make = Debug.methodWithTrace((trace) =>
+  <A>(value: A): Effect.Effect<never, never, SubscriptionRef.SubscriptionRef<A>> =>
     pipe(
-      Ref.set(self.ref, value),
-      Effect.zipLeft(Hub.publish(self.hub, value)),
-      self.semaphore.withPermits(1)
+      Effect.tuple(
+        Hub.unbounded<A>(),
+        Ref.make(value),
+        Effect.makeSemaphore(1)
+      ),
+      Effect.map(([hub, ref, semaphore]) => new SubscriptionRefImpl(ref, hub, semaphore))
     ).traced(trace)
-}
+)
+
+/** @internal */
+export const modify = Debug.methodWithTrace((trace) =>
+  <A, B>(f: (a: A) => readonly [B, A]) =>
+    (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, B> => self.modify(f).traced(trace)
+)
+
+/** @internal */
+export const modifyEffect = Debug.methodWithTrace((trace) =>
+  <A, R, E, B>(f: (a: A) => Effect.Effect<R, E, readonly [B, A]>) =>
+    (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<R, E, B> => self.modifyEffect(f).traced(trace)
+)
+
+/** @internal */
+export const set = Debug.methodWithTrace((trace) =>
+  <A>(value: A) =>
+    (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, void> =>
+      pipe(
+        Ref.set(self.ref, value),
+        Effect.zipLeft(Hub.publish(self.hub, value)),
+        self.semaphore.withPermits(1)
+      ).traced(trace)
+)

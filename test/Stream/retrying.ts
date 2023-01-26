@@ -1,15 +1,15 @@
 import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Duration from "@fp-ts/data/Duration"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -18,7 +18,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const stream = pipe(
         Stream.fromEffect(Ref.getAndUpdate(ref, (n) => n + 1)),
-        Stream.concat(Stream.fail(Option.none))
+        Stream.concat(Stream.fail(Option.none()))
       )
       const result = yield* $(pipe(
         stream,
@@ -37,7 +37,7 @@ describe.concurrent("Stream", () => {
         Effect.as(
           pipe(
             Stream.fromEffect(Ref.get(ref)),
-            Stream.concat(Stream.fail(Option.none))
+            Stream.concat(Stream.fail(Option.none()))
           )
         ),
         Stream.unwrapScoped
@@ -61,7 +61,7 @@ describe.concurrent("Stream", () => {
             Effect.flatMap((n) => Ref.update(ref, Chunk.prepend(n)))
           )
         ),
-        Stream.flatMap(() => Stream.fail(Option.none))
+        Stream.flatMap(() => Stream.fail(Option.none()))
       )
       const fiber = yield* $(pipe(
         stream,
@@ -95,7 +95,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap((attempt) =>
           attempt === 3 || attempt === 5 ?
             Stream.succeed(attempt) :
-            Stream.fail(Option.none)
+            Stream.fail(Option.none())
         ),
         Stream.forever
       )

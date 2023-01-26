@@ -6,10 +6,10 @@ import * as Random from "@effect/io/Random"
 import * as Stream from "@effect/stream/Stream"
 import * as SubscriptionRef from "@effect/stream/SubscriptionRef"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
+import * as Number from "@fp-ts/core/Number"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Equal from "@fp-ts/data/Equal"
-import { pipe } from "@fp-ts/data/Function"
-import * as Number from "@fp-ts/data/Number"
 import { assert, describe } from "vitest"
 
 describe.concurrent("SubscriptionRef", () => {

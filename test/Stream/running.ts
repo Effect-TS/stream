@@ -3,9 +3,9 @@ import * as Ref from "@effect/io/Ref"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -97,7 +97,7 @@ describe.concurrent("Stream", () => {
   it.effect("runHead - empty stream", () =>
     Effect.gen(function*($) {
       const result = yield* $(Stream.runHead(Stream.empty))
-      assert.deepStrictEqual(result, Option.none)
+      assert.deepStrictEqual(result, Option.none())
     }))
 
   it.effect("runHead - pulls up to the first non-empty chunk", () =>
@@ -130,7 +130,7 @@ describe.concurrent("Stream", () => {
   it.effect("runLast - empty stream", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(Stream.empty, Stream.runLast))
-      assert.deepStrictEqual(result, Option.none)
+      assert.deepStrictEqual(result, Option.none())
     }))
 
   it.effect("runScoped - properly closes resources", () =>

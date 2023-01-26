@@ -13,10 +13,10 @@ import * as stream from "@effect/stream/internal/stream"
 import * as take from "@effect/stream/internal/take"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Take from "@effect/stream/Take"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
+import type { Predicate } from "@fp-ts/core/Predicate"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
-import type { Predicate } from "@fp-ts/data/Predicate"
 
 /** @internal */
 const GroupBySymbolKey = "@effect/stream/GroupBy"
@@ -270,7 +270,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                               Effect.catchSomeCause((cause) =>
                                 Cause.isInterruptedOnly(cause) ?
                                   Option.some(Effect.unit()) :
-                                  Option.none
+                                  Option.none()
                               )
                             )
                           )
@@ -283,7 +283,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                     Effect.catchSomeCause((cause) =>
                       Cause.isInterruptedOnly(cause) ?
                         Option.some(Effect.unit()) :
-                        Option.none
+                        Option.none()
                     )
                   )
                 })
@@ -303,7 +303,7 @@ export const groupByKey = <A, K>(f: (a: A) => K, bufferSize = 16) => {
                     Effect.catchSomeCause((cause) =>
                       Cause.isInterruptedOnly(cause) ?
                         Option.some(Effect.unit()) :
-                        Option.none
+                        Option.none()
                     )
                   )
                 ),

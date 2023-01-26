@@ -6,10 +6,10 @@ import * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDeci
 import * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import * as it from "@effect/stream/test/utils/extend"
+import { constVoid, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
+import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray"
 import * as Chunk from "@fp-ts/data/Chunk"
-import { constVoid, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
-import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray"
 import { assert, describe } from "vitest"
 
 interface First {
@@ -235,18 +235,18 @@ describe.concurrent("Channel", () => {
             (x) =>
               Channel.writeAll(
                 Option.some([x, 1]) as Option.Option<readonly [number, number]>,
-                Option.none as Option.Option<readonly [number, number]>,
+                Option.none() as Option.Option<readonly [number, number]>,
                 Option.some([x, 2]) as Option.Option<readonly [number, number]>,
-                Option.none as Option.Option<readonly [number, number]>,
+                Option.none() as Option.Option<readonly [number, number]>,
                 Option.some([x, 3]) as Option.Option<readonly [number, number]>,
-                Option.none as Option.Option<readonly [number, number]>,
+                Option.none() as Option.Option<readonly [number, number]>,
                 Option.some([x, 4]) as Option.Option<readonly [number, number]>
               ),
             constVoid,
             constVoid,
             UpstreamPullRequest.match(
-              () => UpstreamPullStrategy.PullAfterNext(Option.none),
-              () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none)
+              () => UpstreamPullStrategy.PullAfterNext(Option.none()),
+              () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
             ),
             Option.match(
               () => ChildExecutorDecision.Yield,
@@ -286,16 +286,16 @@ describe.concurrent("Channel", () => {
             (x) =>
               Channel.writeAll(
                 Option.some([x, 1]) as Option.Option<readonly [number, number]>,
-                Option.none as Option.Option<readonly [number, number]>,
+                Option.none() as Option.Option<readonly [number, number]>,
                 Option.some([x, 2]) as Option.Option<readonly [number, number]>,
-                Option.none as Option.Option<readonly [number, number]>,
+                Option.none() as Option.Option<readonly [number, number]>,
                 Option.some([x, 3]) as Option.Option<readonly [number, number]>,
-                Option.none as Option.Option<readonly [number, number]>,
+                Option.none() as Option.Option<readonly [number, number]>,
                 Option.some([x, 4]) as Option.Option<readonly [number, number]>
               ),
             constVoid,
             constVoid,
-            () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none),
+            () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none()),
             Option.match(
               () => ChildExecutorDecision.Yield,
               () => ChildExecutorDecision.Continue

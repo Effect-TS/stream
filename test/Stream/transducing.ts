@@ -2,9 +2,9 @@ import * as Effect from "@effect/io/Effect"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { constTrue, pipe } from "@fp-ts/core/Function"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { constTrue, pipe } from "@fp-ts/data/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

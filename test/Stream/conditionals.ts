@@ -4,9 +4,9 @@ import * as Exit from "@effect/io/Exit"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 // import * as Chunk from "@fp-ts/data/Chunk"
-// import * as Either from "@fp-ts/data/Either"
-import { constFalse, constTrue, constVoid, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
+// import * as Either from "@fp-ts/core/Either"
+import { constFalse, constTrue, constVoid, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 // import * as fc from "fast-check"
 import { assert, describe } from "vitest"
 
@@ -53,7 +53,7 @@ describe.concurrent("Stream", () => {
           (option) =>
             Option.isSome(option) ?
               Option.some(Stream.make(option.value)) :
-              Option.none
+              Option.none()
         ),
         Stream.runCollect
       ))
@@ -64,11 +64,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.whenCase(
-          () => Option.none,
+          () => Option.none(),
           (option) =>
             Option.isSome(option) ?
               Option.some(Stream.make(option.value)) :
-              Option.none
+              Option.none()
         ),
         Stream.runCollect
       ))
@@ -115,7 +115,7 @@ describe.concurrent("Stream", () => {
           (option) =>
             Option.isSome(option) ?
               Option.some(Stream.make(option.value)) :
-              Option.none
+              Option.none()
         ),
         Stream.runCollect
       ))
@@ -125,12 +125,12 @@ describe.concurrent("Stream", () => {
   it.effect("whenCaseEffect - returns an empty stream if the given partial function is not defined for the given effectful value", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Effect.succeed<Option.Option<number>>(Option.none),
+        Effect.succeed<Option.Option<number>>(Option.none()),
         Stream.whenCaseEffect(
           (option) =>
             Option.isSome(option) ?
               Option.some(Stream.make(option.value)) :
-              Option.none
+              Option.none()
         ),
         Stream.runCollect
       ))

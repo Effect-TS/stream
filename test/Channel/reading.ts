@@ -4,13 +4,13 @@ import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as it from "@effect/stream/test/utils/extend"
+import { pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
+import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Equal from "@fp-ts/data/Equal"
-import { pipe } from "@fp-ts/data/Function"
 import * as Hash from "@fp-ts/data/Hash"
 import * as HashSet from "@fp-ts/data/HashSet"
-import * as Option from "@fp-ts/data/Option"
-import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray"
 import { assert, describe } from "vitest"
 
 export const mapper = <A, B>(
@@ -48,7 +48,7 @@ export const refReader = <A>(
     Channel.fromEffect(
       Ref.modify(ref, (array) => {
         if (ReadonlyArray.isEmpty(array)) {
-          return [Option.none, ReadonlyArray.empty<A>()] as const
+          return [Option.none(), ReadonlyArray.empty<A>()] as const
         }
         return [Option.some(array[0]!), array.slice(1)] as const
       })

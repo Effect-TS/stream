@@ -1,17 +1,17 @@
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal/testing/testClock"
-import * as TestEnvironment from "@effect/io/internal/testing/testEnvironment"
+import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestEnvironment from "@effect/io/internal_effect_untraced/testing/testEnvironment"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
+import { constVoid, identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Duration from "@fp-ts/data/Duration"
-import * as Either from "@fp-ts/data/Either"
-import { constVoid, identity, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
 import fc from "fast-check"
 import { assert, describe } from "vitest"
 
@@ -108,7 +108,7 @@ describe.concurrent("Stream", () => {
             Ref.updateAndGet(ref, (n) => n + 1),
             Effect.flatMap((n) =>
               n >= 5 ?
-                Effect.fail(Option.none) :
+                Effect.fail(Option.none()) :
                 Effect.succeed(n)
             )
           )
@@ -125,7 +125,7 @@ describe.concurrent("Stream", () => {
       yield* $(pipe(
         Stream.repeatEffectOption(pipe(
           Ref.updateAndGet(ref, (n) => n + 1),
-          Effect.zipRight(Effect.fail(Option.none))
+          Effect.zipRight(Effect.fail(Option.none()))
         )),
         Stream.toPull,
         Effect.flatMap((pull) =>
@@ -176,7 +176,7 @@ describe.concurrent("Stream", () => {
           Effect.provideLayer(TestEnvironment.testContext())
         ))
       })
-      const result = await Effect.unsafeRunPromise(effect)
+      const result = await Effect.runPromise(effect)
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, length)))
     })))
 

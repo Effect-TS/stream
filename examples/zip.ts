@@ -1,6 +1,6 @@
+import * as Either from "@fp-ts/core/Either"
+import { pipe } from "@fp-ts/core/Function"
 import * as Chunk from "@fp-ts/data/Chunk"
-import * as Either from "@fp-ts/data/Either"
-import { pipe } from "@fp-ts/data/Function"
 import * as util from "node:util"
 
 /** @internal */

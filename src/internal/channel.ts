@@ -1,5 +1,5 @@
 import * as Cause from "@effect/io/Cause"
-import { getCallTrace } from "@effect/io/Debug"
+import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -24,14 +24,14 @@ import * as core from "@effect/stream/internal/core"
 import * as ChannelStateOpCodes from "@effect/stream/internal/opCodes/channelState"
 import * as MergeDecisionOpCodes from "@effect/stream/internal/opCodes/mergeDecision"
 import * as MergeStateOpCodes from "@effect/stream/internal/opCodes/mergeState"
+import * as Either from "@fp-ts/core/Either"
+import type { LazyArg } from "@fp-ts/core/Function"
+import { constVoid, identity, pipe } from "@fp-ts/core/Function"
+import * as Option from "@fp-ts/core/Option"
+import type { Predicate } from "@fp-ts/core/Predicate"
 import * as Chunk from "@fp-ts/data/Chunk"
 import * as Context from "@fp-ts/data/Context"
-import * as Either from "@fp-ts/data/Either"
 import * as Equal from "@fp-ts/data/Equal"
-import type { LazyArg } from "@fp-ts/data/Function"
-import { constVoid, identity, pipe } from "@fp-ts/data/Function"
-import * as Option from "@fp-ts/data/Option"
-import type { Predicate } from "@fp-ts/data/Predicate"
 
 /** @internal */
 export const acquireUseRelease = <
@@ -576,18 +576,18 @@ export const fromHub = <Err, Done, Elem>(
 }
 
 /** @internal */
-export const fromHubScoped = <Err, Done, Elem>(
-  hub: Hub.Hub<Either.Either<Exit.Exit<Err, Done>, Elem>>
-): Effect.Effect<Scope.Scope, never, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>> => {
-  const trace = getCallTrace()
-  return pipe(Hub.subscribe(hub), Effect.map(fromQueue)).traced(trace)
-}
+export const fromHubScoped = Debug.methodWithTrace((trace) =>
+  <Err, Done, Elem>(
+    hub: Hub.Hub<Either.Either<Exit.Exit<Err, Done>, Elem>>
+  ): Effect.Effect<Scope.Scope, never, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>> =>
+    pipe(Hub.subscribe(hub), Effect.map(fromQueue)).traced(trace)
+)
 
 /** @internal */
 export const fromOption = <A>(
   option: Option.Option<A>
 ): Channel.Channel<never, unknown, unknown, unknown, Option.Option<never>, never, A> => {
-  return core.suspend(() => pipe(option, Option.match(() => core.fail(Option.none), core.succeed)))
+  return core.suspend(() => pipe(option, Option.match(() => core.fail(Option.none()), core.succeed)))
 }
 
 /** @internal */
@@ -1020,7 +1020,7 @@ export const mergeAllWith = (
             Queue.shutdown
           )
         )
-        const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none))
+        const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none()))
         const errorSignal = yield* $(Deferred.make<never, void>())
         const withPermits = n === Number.POSITIVE_INFINITY ?
           ((_: number) => identity) :
@@ -1033,7 +1033,7 @@ export const mergeAllWith = (
             pull,
             Effect.flatMap(Either.match(
               (done) => Effect.succeed(Option.some(done)),
-              (outElem) => pipe(Queue.offer(queue, Effect.succeed(Either.right(outElem))), Effect.as(Option.none))
+              (outElem) => pipe(Queue.offer(queue, Effect.succeed(Either.right(outElem))), Effect.as(Option.none()))
             )),
             Effect.repeatUntil(Option.isSome),
             Effect.flatMap(Option.match(
@@ -1732,7 +1732,7 @@ export const read = <In>(): Channel.Channel<
   Option.Option<never>,
   never,
   In
-> => core.readOrFail(Option.none)
+> => core.readOrFail(Option.none())
 
 /** @internal */
 export const repeated = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
@@ -1742,28 +1742,26 @@ export const repeated = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
 }
 
 /** @internal */
-export const run = <Env, InErr, InDone, OutErr, OutDone>(
-  self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
-): Effect.Effect<Env, OutErr, OutDone> => {
-  const trace = getCallTrace()
-  return Effect.scoped(executor.runScoped(self)).traced(trace)
-}
+export const run = Debug.methodWithTrace((trace) =>
+  <Env, InErr, InDone, OutErr, OutDone>(
+    self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
+  ): Effect.Effect<Env, OutErr, OutDone> => Effect.scoped(executor.runScoped(self)).traced(trace)
+)
 
 /** @internal */
-export const runCollect = <Env, InErr, InDone, OutErr, OutElem, OutDone>(
-  self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, OutElem, OutDone>
-): Effect.Effect<Env, OutErr, readonly [Chunk.Chunk<OutElem>, OutDone]> => {
-  const trace = getCallTrace()
-  return executor.run(core.collectElements(self)).traced(trace)
-}
+export const runCollect = Debug.methodWithTrace((trace) =>
+  <Env, InErr, InDone, OutErr, OutElem, OutDone>(
+    self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, OutElem, OutDone>
+  ): Effect.Effect<Env, OutErr, readonly [Chunk.Chunk<OutElem>, OutDone]> =>
+    executor.run(core.collectElements(self)).traced(trace)
+)
 
 /** @internal */
-export const runDrain = <Env, InErr, InDone, OutElem, OutErr, OutDone>(
-  self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, OutElem, OutDone>
-): Effect.Effect<Env, OutErr, OutDone> => {
-  const trace = getCallTrace()
-  return executor.run(drain(self)).traced(trace)
-}
+export const runDrain = Debug.methodWithTrace((trace) =>
+  <Env, InErr, InDone, OutElem, OutErr, OutDone>(
+    self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, OutElem, OutDone>
+  ): Effect.Effect<Env, OutErr, OutDone> => executor.run(drain(self)).traced(trace)
+)
 
 /** @internal */
 export const scoped = <R, E, A>(
