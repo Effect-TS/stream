@@ -1,3 +1,4 @@
+import * as Debug from "@effect/io/Debug"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as MergeDecision from "@effect/stream/Channel/MergeDecision"
@@ -78,19 +79,28 @@ export const isMergeDecision = (
 }
 
 /** @internal */
-export const match = <R, E0, Z0, E, Z, Z2>(
+export const match = Debug.dual<
+  <R, E0, Z0, E, Z, Z2>(
+    self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>,
+    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
+    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+  ) => Z2,
+  <R, E0, Z0, E, Z, Z2>(
+    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
+    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+  ) => (self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>) => Z2
+>(3, <R, E0, Z0, E, Z, Z2>(
+  self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>,
   onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
   onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
-) => {
-  return (self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>): Z2 => {
-    const op = self as Primitive
-    switch (op._tag) {
-      case OpCodes.OP_DONE: {
-        return onDone(op.effect)
-      }
-      case OpCodes.OP_AWAIT: {
-        return onAwait(op.f)
-      }
+): Z2 => {
+  const op = self as Primitive
+  switch (op._tag) {
+    case OpCodes.OP_DONE: {
+      return onDone(op.effect)
+    }
+    case OpCodes.OP_AWAIT: {
+      return onAwait(op.f)
     }
   }
-}
+})

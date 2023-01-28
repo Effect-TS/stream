@@ -1,3 +1,4 @@
+import * as Debug from "@effect/io/Debug"
 import type * as MergeStrategy from "@effect/stream/Channel/MergeStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeStrategy"
 
@@ -40,18 +41,24 @@ export const isBufferSliding = (self: MergeStrategy.MergeStrategy): self is Merg
 }
 
 /** @internal */
-export const match = <A>(
+export const match = Debug.dual<
+  <A>(
+    self: MergeStrategy.MergeStrategy,
+    onBackPressure: () => A,
+    onBufferSliding: () => A
+  ) => A,
+  <A>(onBackPressure: () => A, onBufferSliding: () => A) => (self: MergeStrategy.MergeStrategy) => A
+>(3, <A>(
+  self: MergeStrategy.MergeStrategy,
   onBackPressure: () => A,
   onBufferSliding: () => A
-) => {
-  return (self: MergeStrategy.MergeStrategy): A => {
-    switch (self._tag) {
-      case OpCodes.OP_BACK_PRESSURE: {
-        return onBackPressure()
-      }
-      case OpCodes.OP_BUFFER_SLIDING: {
-        return onBufferSliding()
-      }
+): A => {
+  switch (self._tag) {
+    case OpCodes.OP_BACK_PRESSURE: {
+      return onBackPressure()
+    }
+    case OpCodes.OP_BUFFER_SLIDING: {
+      return onBufferSliding()
     }
   }
-}
+})

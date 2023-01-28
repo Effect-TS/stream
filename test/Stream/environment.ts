@@ -132,7 +132,7 @@ describe.concurrent("Stream", () => {
       const service = Stream.succeed<StringService>({ string: "test" })
       const result = yield* $(pipe(
         stream,
-        Stream.provideServiceStream(StringService)(service),
+        Stream.provideServiceStream(StringService, service),
         Stream.map((s) => s.string),
         Stream.runCollect
       ))
@@ -142,7 +142,7 @@ describe.concurrent("Stream", () => {
   it.effect("serviceWith", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.serviceWith(StringService)((service) => service.string),
+        Stream.serviceWith(StringService, (service) => service.string),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))
@@ -152,7 +152,7 @@ describe.concurrent("Stream", () => {
   it.effect("serviceWithEffect", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.serviceWithEffect(StringService)((service) => Effect.succeed(service.string)),
+        Stream.serviceWithEffect(StringService, (service) => Effect.succeed(service.string)),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))
@@ -162,7 +162,7 @@ describe.concurrent("Stream", () => {
   it.effect("serviceWithStream", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.serviceWithStream(StringService)((service) => Stream.succeed(service.string)),
+        Stream.serviceWithStream(StringService, (service) => Stream.succeed(service.string)),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))

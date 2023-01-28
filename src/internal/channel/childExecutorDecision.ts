@@ -1,3 +1,4 @@
+import * as Debug from "@effect/io/Debug"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
 import * as OpCodes from "@effect/stream/internal/opCodes/childExecutorDecision"
 
@@ -58,22 +59,33 @@ export const isYield = (
 }
 
 /** @internal */
-export const match = <A>(
+export const match = Debug.dual<
+  <A>(
+    self: ChildExecutorDecision.ChildExecutorDecision,
+    onContinue: () => A,
+    onClose: (value: unknown) => A,
+    onYield: () => A
+  ) => A,
+  <A>(
+    onContinue: () => A,
+    onClose: (value: unknown) => A,
+    onYield: () => A
+  ) => (self: ChildExecutorDecision.ChildExecutorDecision) => A
+>(4, <A>(
+  self: ChildExecutorDecision.ChildExecutorDecision,
   onContinue: () => A,
   onClose: (value: unknown) => A,
   onYield: () => A
-) => {
-  return (self: ChildExecutorDecision.ChildExecutorDecision): A => {
-    switch (self._tag) {
-      case OpCodes.OP_CONTINUE: {
-        return onContinue()
-      }
-      case OpCodes.OP_CLOSE: {
-        return onClose(self.value)
-      }
-      case OpCodes.OP_YIELD: {
-        return onYield()
-      }
+): A => {
+  switch (self._tag) {
+    case OpCodes.OP_CONTINUE: {
+      return onContinue()
+    }
+    case OpCodes.OP_CLOSE: {
+      return onClose(self.value)
+    }
+    case OpCodes.OP_YIELD: {
+      return onYield()
     }
   }
-}
+})

@@ -74,8 +74,10 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         pipe(
-          Stream.make(1, 2, 3),
-          Stream.concat(Stream.fail("Aie")),
+          Stream.concat(
+            Stream.make(1, 2, 3),
+            Stream.fail("Aie")
+          ),
           Stream.concat(Stream.make(5, 1, 2, 3, 4, 5)),
           Stream.pipeThrough(Sink.dropWhileEffect((n) => Effect.succeed(n < 3))),
           Stream.either,

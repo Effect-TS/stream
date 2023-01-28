@@ -66,7 +66,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const { result1, result2, result3 } = yield* $(pipe(
         Stream.range(0, 6),
-        Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n)), 1),
+        Stream.partitionEitherBuffer((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n)), 1),
         Effect.flatMap(([evens, odds]) =>
           Effect.gen(function*($) {
             const ref = yield* $(Ref.make(Chunk.empty<number>()))

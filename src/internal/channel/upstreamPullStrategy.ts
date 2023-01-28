@@ -1,3 +1,4 @@
+import * as Debug from "@effect/io/Debug"
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
 import type * as Option from "@fp-ts/core/Option"
@@ -56,18 +57,27 @@ export const isPullAfterAllEnqueued = <A>(
 }
 
 /** @internal */
-export const match = <A, Z>(
+export const match = Debug.dual<
+  <A, Z>(
+    self: UpstreamPullStrategy.UpstreamPullStrategy<A>,
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ) => Z,
+  <A, Z>(
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ) => (self: UpstreamPullStrategy.UpstreamPullStrategy<A>) => Z
+>(3, <A, Z>(
+  self: UpstreamPullStrategy.UpstreamPullStrategy<A>,
   onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
   onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
-) => {
-  return (self: UpstreamPullStrategy.UpstreamPullStrategy<A>): Z => {
-    switch (self._tag) {
-      case OpCodes.OP_PULL_AFTER_NEXT: {
-        return onPullAfterNext(self.emitSeparator)
-      }
-      case OpCodes.OP_PULL_AFTER_ALL_ENQUEUED: {
-        return onPullAfterAllEnqueued(self.emitSeparator)
-      }
+): Z => {
+  switch (self._tag) {
+    case OpCodes.OP_PULL_AFTER_NEXT: {
+      return onPullAfterNext(self.emitSeparator)
+    }
+    case OpCodes.OP_PULL_AFTER_ALL_ENQUEUED: {
+      return onPullAfterAllEnqueued(self.emitSeparator)
     }
   }
-}
+})

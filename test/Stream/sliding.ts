@@ -3,8 +3,8 @@ import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Either from "@fp-ts/core/Either"
-import * as Chunk from "@fp-ts/data/Chunk"
 import { pipe } from "@fp-ts/core/Function"
+import * as Chunk from "@fp-ts/data/Chunk"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
@@ -82,7 +82,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.range(1, 6)
       const { result1, result2 } = yield* $(Effect.struct({
-        result1: pipe(stream, Stream.sliding(3, 3), Stream.runCollect),
+        result1: pipe(stream, Stream.slidingSize(3, 3), Stream.runCollect),
         result2: pipe(stream, Stream.grouped(3), Stream.runCollect)
       }))
       assert.deepStrictEqual(
@@ -121,7 +121,7 @@ describe.concurrent("Stream", () => {
       const stream = pipe(
         streamChunks,
         Stream.concat(Stream.fail("Ouch")),
-        Stream.sliding(3, 3)
+        Stream.slidingSize(3, 3)
       )
       const either = yield* $(pipe(
         stream,

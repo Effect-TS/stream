@@ -99,7 +99,10 @@ export const isNoUpstream: <A>(self: UpstreamPullRequest<A>) => self is NoUpstre
  * @since 1.0.0
  * @category folding
  */
-export const match: <A, Z>(
-  onPulled: (value: A) => Z,
-  onNoUpstream: (activeDownstreamCount: number) => Z
-) => (self: UpstreamPullRequest<A>) => Z = internal.match
+export const match: {
+  <A, Z>(self: UpstreamPullRequest<A>, onPulled: (value: A) => Z, onNoUpstream: (activeDownstreamCount: number) => Z): Z
+  <A, Z>(
+    onPulled: (value: A) => Z,
+    onNoUpstream: (activeDownstreamCount: number) => Z
+  ): (self: UpstreamPullRequest<A>) => Z
+} = internal.match

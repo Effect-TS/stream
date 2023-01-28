@@ -1,3 +1,4 @@
+import * as Debug from "@effect/io/Debug"
 import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullRequest"
 
@@ -53,18 +54,27 @@ export const isNoUpstream = <A>(
 }
 
 /** @internal */
-export const match = <A, Z>(
+export const match = Debug.dual<
+  <A, Z>(
+    self: UpstreamPullRequest.UpstreamPullRequest<A>,
+    onPulled: (value: A) => Z,
+    onNoUpstream: (activeDownstreamCount: number) => Z
+  ) => Z,
+  <A, Z>(
+    onPulled: (value: A) => Z,
+    onNoUpstream: (activeDownstreamCount: number) => Z
+  ) => (self: UpstreamPullRequest.UpstreamPullRequest<A>) => Z
+>(3, <A, Z>(
+  self: UpstreamPullRequest.UpstreamPullRequest<A>,
   onPulled: (value: A) => Z,
   onNoUpstream: (activeDownstreamCount: number) => Z
-) => {
-  return (self: UpstreamPullRequest.UpstreamPullRequest<A>): Z => {
-    switch (self._tag) {
-      case OpCodes.OP_PULLED: {
-        return onPulled(self.value)
-      }
-      case OpCodes.OP_NO_UPSTREAM: {
-        return onNoUpstream(self.activeDownstreamCount)
-      }
+): Z => {
+  switch (self._tag) {
+    case OpCodes.OP_PULLED: {
+      return onPulled(self.value)
+    }
+    case OpCodes.OP_NO_UPSTREAM: {
+      return onNoUpstream(self.activeDownstreamCount)
     }
   }
-}
+})

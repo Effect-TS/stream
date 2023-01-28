@@ -56,11 +56,12 @@ describe.concurrent("Stream", () => {
       const right = Stream.fromChunks(...bs)
       const actual = pipe(
         left,
-        Stream.zipAllSortedByKeyWith(Number.Order)(
+        Stream.zipAllSortedByKeyWith(
           right,
           identity,
           identity,
-          (x, y) => x + y
+          (x, y) => x + y,
+          Number.Order
         )
       )
       const expected = pipe(

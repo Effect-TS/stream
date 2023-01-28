@@ -93,9 +93,7 @@ export const isEither: (self: HaltStrategy) => self is Either = internal.isEithe
  * @since 1.0.0
  * @category folding
  */
-export const match: <Z>(
-  onLeft: () => Z,
-  onRight: () => Z,
-  onBoth: () => Z,
-  onEither: () => Z
-) => (self: HaltStrategy) => Z = internal.match
+export const match: {
+  <Z>(self: HaltStrategy, onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z): Z
+  <Z>(onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z): (self: HaltStrategy) => Z
+} = internal.match

@@ -1,3 +1,4 @@
+import * as Debug from "@effect/io/Debug"
 import * as OpCodes from "@effect/stream/internal/opCodes/haltStrategy"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 
@@ -35,26 +36,34 @@ export const isEither = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.
   self._tag === OpCodes.OP_EITHER
 
 /** @internal */
-export const match = <Z>(
+export const match = Debug.dual<
+  <Z>(
+    self: HaltStrategy.HaltStrategy,
+    onLeft: () => Z,
+    onRight: () => Z,
+    onBoth: () => Z,
+    onEither: () => Z
+  ) => Z,
+  <Z>(onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z) => (self: HaltStrategy.HaltStrategy) => Z
+>(5, <Z>(
+  self: HaltStrategy.HaltStrategy,
   onLeft: () => Z,
   onRight: () => Z,
   onBoth: () => Z,
   onEither: () => Z
-) => {
-  return (self: HaltStrategy.HaltStrategy): Z => {
-    switch (self._tag) {
-      case OpCodes.OP_LEFT: {
-        return onLeft()
-      }
-      case OpCodes.OP_RIGHT: {
-        return onRight()
-      }
-      case OpCodes.OP_BOTH: {
-        return onBoth()
-      }
-      case OpCodes.OP_EITHER: {
-        return onEither()
-      }
+): Z => {
+  switch (self._tag) {
+    case OpCodes.OP_LEFT: {
+      return onLeft()
+    }
+    case OpCodes.OP_RIGHT: {
+      return onRight()
+    }
+    case OpCodes.OP_BOTH: {
+      return onBoth()
+    }
+    case OpCodes.OP_EITHER: {
+      return onEither()
     }
   }
-}
+})
