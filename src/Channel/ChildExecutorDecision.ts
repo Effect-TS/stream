@@ -127,8 +127,7 @@ export const isYield: (self: ChildExecutorDecision) => self is Yield = internal.
  * @since 1.0.0
  * @category folding
  */
-export const match: <A>(
-  onContinue: () => A,
-  onClose: (value: unknown) => A,
-  onYield: () => A
-) => (self: ChildExecutorDecision) => A = internal.match
+export const match: {
+  <A>(self: ChildExecutorDecision, onContinue: () => A, onClose: (value: unknown) => A, onYield: () => A): A
+  <A>(onContinue: () => A, onClose: (value: unknown) => A, onYield: () => A): (self: ChildExecutorDecision) => A
+} = internal.match

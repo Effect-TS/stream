@@ -1,11 +1,10 @@
 import * as Effect from "@effect/io/Effect"
-import * as Stream from "@effect/stream/Stream"
-import { pipe } from "@fp-ts/core/Function"
-import * as Chunk from "@fp-ts/data/Chunk"
-
 import * as Fiber from "@effect/io/Fiber"
+import * as Stream from "@effect/stream/Stream"
 import * as SubscriptionRef from "@effect/stream/SubscriptionRef"
+import { pipe } from "@fp-ts/core/Function"
 import * as Number from "@fp-ts/core/Number"
+import * as Chunk from "@fp-ts/data/Chunk"
 import * as Equal from "@fp-ts/data/Equal"
 
 const program = Effect.gen(function*($) {
@@ -14,10 +13,8 @@ const program = Effect.gen(function*($) {
     pipe(
       Effect.log("STARTED"),
       Effect.flatMap(() =>
-        pipe(
-          subscriptionRef.changes,
-          Stream.take(20),
-          Stream.runCollect
+        Stream.runCollect(
+          Stream.take(subscriptionRef.changes, 20)
         )
       ),
       Effect.tap(() => Effect.log("STOPPED"))

@@ -103,7 +103,14 @@ export const isPullAfterAllEnqueued: <A>(self: UpstreamPullStrategy<A>) => self 
  * @since 1.0.0
  * @category folding
  */
-export const match: <A, Z>(
-  onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
-  onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
-) => (self: UpstreamPullStrategy<A>) => Z = internal.match
+export const match: {
+  <A, Z>(
+    self: UpstreamPullStrategy<A>,
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ): Z
+  <A, Z>(
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ): (self: UpstreamPullStrategy<A>) => Z
+} = internal.match

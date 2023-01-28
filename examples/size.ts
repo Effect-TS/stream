@@ -12,7 +12,7 @@ const program = Effect.gen(function*($) {
   )
   const result = yield* $(pipe(
     Stream.fromIterable(words),
-    Stream.groupByKey(identity, 8192),
+    Stream.groupByKeyBuffer(identity, 8192),
     GroupBy.evaluate((key, stream) =>
       pipe(
         Stream.runCollect(stream),

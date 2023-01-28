@@ -94,24 +94,47 @@ export const make = Debug.methodWithTrace((trace) =>
 )
 
 /** @internal */
-export const modify = Debug.methodWithTrace((trace) =>
-  <A, B>(f: (a: A) => readonly [B, A]) =>
-    (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, B> => self.modify(f).traced(trace)
-)
+export const modify = Debug.dualWithTrace<
+  <A, B>(
+    self: SubscriptionRef.SubscriptionRef<A>,
+    f: (a: A) => readonly [B, A]
+  ) => Effect.Effect<never, never, B>,
+  <A, B>(f: (a: A) => readonly [B, A]) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<never, never, B>
+>(2, (trace) =>
+  <A, B>(
+    self: SubscriptionRef.SubscriptionRef<A>,
+    f: (a: A) => readonly [B, A]
+  ): Effect.Effect<never, never, B> => self.modify(f).traced(trace))
 
 /** @internal */
-export const modifyEffect = Debug.methodWithTrace((trace) =>
-  <A, R, E, B>(f: (a: A) => Effect.Effect<R, E, readonly [B, A]>) =>
-    (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<R, E, B> => self.modifyEffect(f).traced(trace)
-)
+export const modifyEffect = Debug.dualWithTrace<
+  <A, R, E, B>(
+    self: SubscriptionRef.SubscriptionRef<A>,
+    f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
+  ) => Effect.Effect<R, E, B>,
+  <A, R, E, B>(
+    f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
+  ) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<R, E, B>
+>(2, (trace) =>
+  <A, R, E, B>(
+    self: SubscriptionRef.SubscriptionRef<A>,
+    f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
+  ): Effect.Effect<R, E, B> => self.modifyEffect(f).traced(trace))
 
 /** @internal */
-export const set = Debug.methodWithTrace((trace) =>
-  <A>(value: A) =>
-    (self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, void> =>
-      pipe(
-        Ref.set(self.ref, value),
-        Effect.zipLeft(Hub.publish(self.hub, value)),
-        self.semaphore.withPermits(1)
-      ).traced(trace)
-)
+export const set = Debug.dualWithTrace<
+  <A>(
+    self: SubscriptionRef.SubscriptionRef<A>,
+    value: A
+  ) => Effect.Effect<never, never, void>,
+  <A>(value: A) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<never, never, void>
+>(2, (trace) =>
+  <A>(
+    self: SubscriptionRef.SubscriptionRef<A>,
+    value: A
+  ): Effect.Effect<never, never, void> =>
+    pipe(
+      Ref.set(self.ref, value),
+      Effect.zipLeft(Hub.publish(self.hub, value)),
+      self.semaphore.withPermits(1)
+    ).traced(trace))

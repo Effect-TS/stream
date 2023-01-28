@@ -47,7 +47,7 @@ describe.concurrent("Channel", () => {
       const result = yield* $(
         pipe(
           Channel.fromEffect(Effect.service(NumberService)),
-          Channel.provideService(NumberService)(new NumberServiceImpl(100)),
+          Channel.provideService(NumberService, new NumberServiceImpl(100)),
           Channel.run
         )
       )
@@ -59,11 +59,11 @@ describe.concurrent("Channel", () => {
       const result = yield* $(
         pipe(
           Channel.fromEffect(Effect.service(NumberService)),
-          Channel.provideService(NumberService)(new NumberServiceImpl(100)),
+          Channel.provideService(NumberService, new NumberServiceImpl(100)),
           Channel.zip(
             pipe(
               Channel.fromEffect(Effect.service(NumberService)),
-              Channel.provideService(NumberService)(new NumberServiceImpl(200))
+              Channel.provideService(NumberService, new NumberServiceImpl(200))
             )
           ),
           Channel.run
@@ -81,11 +81,11 @@ describe.concurrent("Channel", () => {
         Channel.concatMap((n) =>
           pipe(
             Channel.fromEffect(pipe(Effect.service(NumberService), Effect.map((m) => [n, m] as const))),
-            Channel.provideService(NumberService)(new NumberServiceImpl(200)),
+            Channel.provideService(NumberService, new NumberServiceImpl(200)),
             Channel.flatMap(Channel.write)
           )
         ),
-        Channel.provideService(NumberService)(new NumberServiceImpl(100)),
+        Channel.provideService(NumberService, new NumberServiceImpl(100)),
         Channel.runCollect
       ))
       assert.deepStrictEqual(Array.from(chunk), [[new NumberServiceImpl(100), new NumberServiceImpl(200)] as const])

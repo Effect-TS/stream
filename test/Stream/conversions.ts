@@ -19,7 +19,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         stream,
-        Stream.toQueue(1_000),
+        Stream.toQueueCapacity(1_000),
         Effect.flatMap((queue) =>
           pipe(
             Queue.size(queue),
@@ -67,7 +67,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const queue = yield* $(pipe(
         Stream.dieMessage("die"),
-        Stream.toQueueOfElements(1),
+        Stream.toQueueOfElementsCapacity(1),
         Effect.flatMap(Queue.take),
         Effect.scoped
       ))

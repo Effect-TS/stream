@@ -56,10 +56,33 @@ export declare namespace GroupBy {
  * @since 1.0.0
  * @category destructors
  */
-export const evaluate: <K, E, V, R2, E2, A>(
-  f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-  bufferSize?: number
-) => <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A> = internal.evaluate
+export const evaluate: {
+  <R, K, E, V, R2, E2, A>(
+    self: GroupBy<R, E, K, V>,
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+  ): Stream.Stream<R | R2, E | E2, A>
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
+} = internal.evaluate
+
+/**
+ * Like `evaluate`, but with a configurable `bufferSize` parameter.
+ *
+ * @since 1.0.0
+ * @category destructors
+ */
+export const evaluateBuffer: {
+  <R, K, E, V, R2, E2, A>(
+    self: GroupBy<R, E, K, V>,
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    bufferSize: number
+  ): Stream.Stream<R | R2, E | E2, A>
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    bufferSize: number
+  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
+} = internal.evaluateBuffer
 
 /**
  * Filter the groups to be processed.
@@ -67,8 +90,10 @@ export const evaluate: <K, E, V, R2, E2, A>(
  * @since 1.0.0
  * @category utils
  */
-export const filter: <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V> =
-  internal.filter
+export const filter: {
+  <R, E, V, K>(self: GroupBy<R, E, K, V>, predicate: Predicate<K>): GroupBy<R, E, K, V>
+  <K>(predicate: Predicate<K>): <R, E, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+} = internal.filter
 
 /**
  * Only consider the first `n` groups found in the `Stream`.
@@ -76,7 +101,10 @@ export const filter: <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy<R, 
  * @since 1.0.0
  * @category utils
  */
-export const first: (n: number) => <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V> = internal.first
+export const first: {
+  <R, E, K, V>(self: GroupBy<R, E, K, V>, n: number): GroupBy<R, E, K, V>
+  (n: number): <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+} = internal.first
 
 /**
  * Constructs a `GroupBy` from a `Stream`.
