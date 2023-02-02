@@ -2275,11 +2275,9 @@ export const provideService = Debug.dual<
     return pipe(
       context<any>(),
       core.flatMap((context) =>
-        pipe(
+        core.provideContext(
           self,
-          core.provideContext(
-            pipe(context, Context.add(tag)(service))
-          )
+          pipe(context, Context.add(tag, service))
         )
       )
     )
@@ -2569,30 +2567,30 @@ export const unwrapScoped = <
 
 /** @internal */
 export const updateService = Debug.dual<
-  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>, T1>(
+  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
     self: Channel.Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
     tag: T,
-    f: (resource: Context.Tag.Service<T>) => T1
+    f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ) => Channel.Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
-  <T extends Context.Tag<any>, T1>(
+  <T extends Context.Tag<any>>(
     tag: T,
-    f: (resource: Context.Tag.Service<T>) => T1
+    f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ) => <R, InErr, InDone, OutElem, OutErr, OutDone>(
     self: Channel.Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
   ) => Channel.Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
 >(
   3,
-  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>, T1>(
+  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
     self: Channel.Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
     tag: T,
-    f: (resource: Context.Tag.Service<T>) => T1
+    f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ): Channel.Channel<R | T, InErr, unknown, InDone, OutErr, OutElem, OutDone> =>
     pipe(
       self,
       contramapContext((context) =>
-        pipe(
+        Context.merge(
           context,
-          Context.merge(pipe(Context.empty(), Context.add(tag)(f(pipe(context, Context.unsafeGet(tag))))))
+          Context.make(tag, f(Context.unsafeGet(context, tag)))
         )
       )
     )

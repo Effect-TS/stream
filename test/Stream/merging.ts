@@ -103,7 +103,7 @@ describe.concurrent("Stream", () => {
           stream1,
           Stream.merge(stream2),
           Stream.runCollect,
-          Effect.map(HashSet.from)
+          Effect.map(HashSet.fromIterable)
         ),
         result2: pipe(
           Stream.runCollect(stream1),
@@ -111,7 +111,7 @@ describe.concurrent("Stream", () => {
             Stream.runCollect(stream2),
             (chunk1, chunk2) => pipe(chunk1, Chunk.concat(chunk2))
           ),
-          Effect.map(HashSet.from)
+          Effect.map(HashSet.fromIterable)
         )
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))

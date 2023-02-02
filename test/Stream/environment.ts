@@ -18,7 +18,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const context = pipe(
         Context.empty(),
-        Context.add(StringService)({ string: "test" })
+        Context.add(StringService, { string: "test" })
       )
       const result = yield* $(pipe(
         Stream.context<StringService>(),
@@ -36,7 +36,7 @@ describe.concurrent("Stream", () => {
         Stream.provideContext(
           pipe(
             Context.empty(),
-            Context.add(StringService)({ string: "test" })
+            Context.add(StringService, { string: "test" })
           )
         ),
         Stream.runHead,
@@ -54,7 +54,7 @@ describe.concurrent("Stream", () => {
         Stream.provideContext(
           pipe(
             Context.empty(),
-            Context.add(StringService)({ string: "test" })
+            Context.add(StringService, { string: "test" })
           )
         ),
         Stream.runHead,
@@ -70,7 +70,7 @@ describe.concurrent("Stream", () => {
         Stream.provideContext(
           pipe(
             Context.empty(),
-            Context.add(StringService)({ string: "test" })
+            Context.add(StringService, { string: "test" })
           )
         ),
         Stream.runHead,
@@ -88,7 +88,7 @@ describe.concurrent("Stream", () => {
         Stream.provideContext(
           pipe(
             Context.empty(),
-            Context.add(StringService)({ string: "test" })
+            Context.add(StringService, { string: "test" })
           )
         ),
         Stream.runHead,
@@ -104,7 +104,7 @@ describe.concurrent("Stream", () => {
         Stream.provideContext(
           pipe(
             Context.empty(),
-            Context.add(StringService)({ string: "test" })
+            Context.add(StringService, { string: "test" })
           )
         ),
         Stream.runHead,
