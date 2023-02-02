@@ -47,3 +47,8 @@ jobs:
       - run: pnpm run test --coverage
       - run: pnpm run lint
       - run: pnpm run docs
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with: 
+          name: build
+          path: dist/
