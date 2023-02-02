@@ -4630,7 +4630,7 @@ export const provideServiceStream = Debug.dual<
     contextWithStream((env: Context.Context<R2 | Exclude<R, Context.Tag.Service<T>>>) =>
       flatMap(
         stream,
-        (service) => pipe(self, provideContext(pipe(env, Context.add(tag)(service)) as Context.Context<R | R2>))
+        (service) => pipe(self, provideContext(Context.add(env, tag, service) as Context.Context<R | R2>))
       )
     )
 )
@@ -6969,7 +6969,7 @@ export const updateService = Debug.dual<
       contramapContext((context) =>
         pipe(
           context,
-          Context.add(tag)(f(pipe(context, Context.unsafeGet(tag))))
+          Context.add(tag, f(pipe(context, Context.unsafeGet(tag))))
         )
       )
     )

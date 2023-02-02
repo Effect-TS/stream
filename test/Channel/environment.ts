@@ -97,7 +97,7 @@ describe.concurrent("Channel", () => {
       const channel1 = Channel.fromEffect(Effect.service(NumberService))
       const channel2 = pipe(
         Effect.service(NumberService),
-        Effect.provideContext(pipe(Context.empty(), Context.add(NumberService)(new NumberServiceImpl(2)))),
+        Effect.provideContext(pipe(Context.empty(), Context.add(NumberService, new NumberServiceImpl(2)))),
         Channel.fromEffect
       )
       const channel3 = Channel.fromEffect(Effect.service(NumberService))

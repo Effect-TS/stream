@@ -13,11 +13,11 @@ specifiers:
   '@changesets/cli': ^2.26.0
   '@effect-ts/build-utils': 0.40.7
   '@effect-ts/core': ^0.60.5
-  '@effect/io': ~0.1.0
+  '@effect/io': ~0.1.8
   '@effect/language-service': 0.0.15
   '@effect/vite-plugin': ^0.0.1
   '@fp-ts/core': ~0.1.1
-  '@fp-ts/data': ~0.1.0
+  '@fp-ts/data': ~0.1.1
   '@repo-tooling/eslint-plugin-dprint': ^0.0.4
   '@rollup/pluginutils': ^5.0.2
   '@types/benchmark': ^2.1.2
@@ -56,9 +56,9 @@ specifiers:
   vitest: 0.27.0
 
 dependencies:
-  '@effect/io': 0.1.0
+  '@effect/io': 0.1.8
   '@fp-ts/core': 0.1.1
-  '@fp-ts/data': 0.1.0
+  '@fp-ts/data': 0.1.1
 
 devDependencies:
   '@babel/cli': 7.20.7_@babel+core@7.20.12
@@ -656,18 +656,18 @@ packages:
     resolution: {integrity: sha512-/crHGujo0xnuHIYNc1VgP0HGJGFSoSqq88JFXe6FmFyXPpWt8Xu39LyLg7rchsxfXFeEdA9CrIZvLV5eswXV5g==}
     dev: true
 
-  /@effect/io/0.1.0:
-    resolution: {integrity: sha512-mQSoXqgAC33F5pmJFtQFoSGXlNe6C2h5sz8EtLBHQtQP8SkaJXtD4QU9J8DYYRdRIByuNZbFmG2FBh4wXWYMZA==}
+  /@effect/io/0.1.8:
+    resolution: {integrity: sha512-lZP57eToueXhNQzkrR3q3Tl8iH+cPRWVEeUFLW+/C24wQlKgEm9UyRdnB3xYerKHQjUQD28nRJ2IZeQFPRIC5Q==}
     dependencies:
       '@fp-ts/core': 0.1.1
-      '@fp-ts/data': 0.1.0
+      '@fp-ts/data': 0.1.1
     dev: false
 
   /@effect/language-service/0.0.15:
     resolution: {integrity: sha512-ELYL6h56W2TjTd13AiddZgbZjZFaa0J6MpnLpM26XlxYIR66j5tmdNFW67dtJxFbieoFS33+E713E5hrkg8MKg==}
     dependencies:
       '@fp-ts/core': 0.0.11
-      '@fp-ts/data': 0.0.40
+      '@fp-ts/data': 0.0.41
     dev: true
 
   /@effect/vite-plugin/0.0.1_vite@4.0.4:
@@ -905,14 +905,14 @@ packages:
     resolution: {integrity: sha512-7vQnrnvJAMrXgIwt0qQNhXkPDtm4l8vwql8EvXeY47v/FwnWpDvt1HISoO9Kq3am5SZ0A8Av+4NqPab2FRdKxw==}
     dev: false
 
-  /@fp-ts/data/0.0.40:
-    resolution: {integrity: sha512-Wo/2KNO3n6TdUuX+vFEkK1hkQ3EDWp/5Uha8ZLtIvurndQxlDcF4kpU20c0CKJL8g5DpnRHiKN/cni5yyb09eQ==}
+  /@fp-ts/data/0.0.41:
+    resolution: {integrity: sha512-0S93kOQ91D7wp60q/PSVWvMsJjSWJutjt4qX/BvVNV7+fymuC2hTfW2HlE2OcMK11xCNiI6Rq2AkvyzoMhOlpg==}
     dependencies:
       '@fp-ts/core': 0.0.11
     dev: true
 
-  /@fp-ts/data/0.1.0:
-    resolution: {integrity: sha512-T4PbFVo2fzy2XaUHbFmEc24TJSPzTl/xUHC+1qCXZZfb3MaIKdKHS10aUt+9zcQ75KpiZbHL8hBfoP9fHOI6Mg==}
+  /@fp-ts/data/0.1.1:
+    resolution: {integrity: sha512-hgsoSDKP01kGY+g/Ino+QX3VEqiPnf0mrhKujMajT4ma0w82i4u0nMEPbBykyMxscQirFemwl7CnWn7G3TadcA==}
     dependencies:
       '@fp-ts/core': 0.1.1
     dev: false

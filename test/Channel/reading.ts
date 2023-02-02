@@ -247,8 +247,8 @@ describe.concurrent("Channel", () => {
           Channel.mapEffect(() => Ref.get(destination)),
           Channel.run,
           Effect.map((result) => {
-            let missing = HashSet.from(elements)
-            let surplus = HashSet.from(result)
+            let missing = HashSet.fromIterable(elements)
+            let surplus = HashSet.fromIterable(result)
             for (const value of result) {
               missing = pipe(missing, HashSet.remove(value))
             }
@@ -287,9 +287,9 @@ describe.concurrent("Channel", () => {
           Channel.mapEffect(() => Ref.get(destination)),
           Channel.run,
           Effect.map((result) => {
-            const expected = HashSet.from(pipe(elements, Chunk.map(f)))
-            let missing = HashSet.from(expected)
-            let surplus = HashSet.from(result)
+            const expected = HashSet.fromIterable(pipe(elements, Chunk.map(f)))
+            let missing = HashSet.fromIterable(expected)
+            let surplus = HashSet.fromIterable(result)
             for (const value of result) {
               missing = pipe(missing, HashSet.remove(value))
             }
