@@ -1,9 +1,11 @@
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
+import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
+import * as ExecutionStrategy from "@effect/io/ExecutionStrategy"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import type * as Scope from "@effect/io/Scope"
+import * as Scope from "@effect/io/Scope"
 import type * as Channel from "@effect/stream/Channel"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
@@ -1142,18 +1144,37 @@ export const run = Debug.methodWithTrace((trace) =>
 export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
   self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
 ): Effect.Effect<Env | Scope.Scope, OutErr, OutDone> => {
-  return pipe(
-    Effect.acquireRelease(
+  const run = (deferred: Deferred.Deferred<OutErr, OutDone>, scope: Scope.Scope) =>
+    Effect.acquireUseRelease(
       Effect.sync(() => new ChannelExecutor(self, void 0, identity)),
+      (exec) =>
+        Effect.suspendSucceed(() =>
+          pipe(
+            runScopedInterpret(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec),
+            Effect.intoDeferred(deferred),
+            Effect.zipRight(Deferred.await(deferred)),
+            Effect.zipLeft(Effect.never())
+          )
+        ),
       (exec, exit) => {
         const finalize = exec.close(exit)
-        return finalize === undefined ? Effect.unit() : finalize
+        if (finalize === undefined) {
+          return Effect.unit()
+        }
+        return Effect.tapErrorCause(
+          finalize,
+          (cause) => Scope.addFinalizer(scope, Effect.failCause(cause))
+        )
       }
-    ),
-    Effect.flatMap((exec) =>
-      Effect.suspendSucceed(() => runScopedInterpret(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec))
     )
-  )
+  return Effect.flatMap(Effect.scope(), (parent) =>
+    Effect.flatMap(
+      Scope.fork(parent, ExecutionStrategy.sequential),
+      (child) =>
+        Effect.flatMap(Deferred.make<OutErr, OutDone>(), (deferred) =>
+          Effect.flatMap(Effect.forkScoped(run(deferred, child)), (fiber) =>
+            Effect.zipLeft(Deferred.await(deferred), Fiber.inheritAll(fiber))))
+    ))
 }
 
 /** @internal */
