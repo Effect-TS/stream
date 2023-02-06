@@ -937,7 +937,7 @@ const bufferSignal = <R, E, A>(
         Effect.asUnit,
         core.fromEffect
       )
-    return core.readWith(
+    return core.readWithCause(
       (input: Chunk.Chunk<A>) =>
         pipe(
           Deferred.make<never, void>(),
@@ -951,7 +951,7 @@ const bufferSignal = <R, E, A>(
           core.fromEffect,
           core.flatMap(() => producer(queue, ref))
         ),
-      (error) => terminate(_take.fail(error)),
+      (error) => terminate(_take.failCause(error)),
       () => terminate(_take.end)
     )
   }

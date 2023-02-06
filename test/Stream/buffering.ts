@@ -240,6 +240,7 @@ describe.concurrent("Stream", () => {
       const latch2 = yield* $(Deferred.make<never, void>())
       const latch3 = yield* $(Deferred.make<never, void>())
       const latch4 = yield* $(Deferred.make<never, void>())
+      const latch5 = yield* $(Deferred.make<never, void>())
       const stream1 = pipe(
         Stream.make(0),
         Stream.concat(
@@ -259,13 +260,16 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Deferred.await(latch3)),
         Stream.flatMap(() =>
           pipe(
-            Stream.range(17, 25),
+            Stream.range(17, 26),
             Stream.rechunk(1),
             Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
         )
       )
-      const stream3 = Stream.make(-1)
+      const stream3 = pipe(
+        Stream.fromEffect(Deferred.await(latch5)),
+        Stream.flatMap(() => Stream.make(-1))
+      )
       const stream = pipe(
         stream1,
         Stream.concat(stream2),
@@ -302,7 +306,7 @@ describe.concurrent("Stream", () => {
       )
       const expected1 = [0]
       const expected2 = [9, 10, 11, 12, 13, 14, 15, 16]
-      const expected3 = [9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, -1]
+      const expected3 = [9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25]
       assert.deepStrictEqual(Array.from(result1), expected1)
       assert.deepStrictEqual(Array.from(result2), expected2)
       assert.deepStrictEqual(Array.from(result3), expected3)
@@ -492,6 +496,17 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result1), expected1)
       assert.deepStrictEqual(Array.from(result2), expected2)
       assert.deepStrictEqual(Array.from(result3), expected3)
+    }))
+
+  it.effect("bufferSliding - propagates defects", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(pipe(
+        Stream.fromEffect(Effect.dieMessage("boom")),
+        Stream.bufferSliding(1),
+        Stream.runDrain,
+        Effect.exit
+      ))
+      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(Cause.RuntimeException("boom")))
     }))
 
   it.effect("bufferUnbounded - buffers the stream", () =>
