@@ -1629,7 +1629,7 @@ export const crossRight = Debug.dual<
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
     that: Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> => pipe(self, crossWith(that, (_, a2) => a2))
+  ): Stream.Stream<R | R2, E | E2, A2> => flatMap(self, () => that)
 )
 
 /** @internal */
