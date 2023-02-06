@@ -50,14 +50,7 @@
           "1002": "none"
         }
       }
-    ],
-    "transformers": [
-      {
-        "name": "./plugins/tsPlugin.ts",
-        "trace": { "exclude": ["src/**/*.ts", "test/**/*.ts"] }
-      }
-    ],
-    "tsPlusEnabled": false
+    ]
   },
   "include": [],
   "exclude": ["node_modules", "build", "lib"]
