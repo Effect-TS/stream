@@ -27,6 +27,7 @@ describe.concurrent("Channel", () => {
   it.effect("error cause is propagated on channel interruption", () =>
     Effect.gen(function*($) {
       const deferred = yield* $(Deferred.make<never, void>())
+      const finished = yield* $(Deferred.make<never, void>())
       const ref = yield* $(Ref.make<Exit.Exit<never, void>>(Exit.unit()))
       const effect = pipe(
         Deferred.succeed<never, void>(deferred, void 0),
@@ -37,9 +38,11 @@ describe.concurrent("Channel", () => {
           Channel.fromEffect(effect),
           Channel.runDrain,
           Effect.onExit((exit) => Ref.set(ref, exit as Exit.Exit<never, void>)),
+          Effect.ensuring(Deferred.succeed(finished, void 0)),
           Effect.raceEither(Deferred.await(deferred))
         )
       )
+      yield* $(Deferred.await(finished)) // Note: interruption in race is now done in the background
       const result = yield* $(Ref.get(ref))
       assert.isTrue(Exit.isInterrupted(result))
     }))
