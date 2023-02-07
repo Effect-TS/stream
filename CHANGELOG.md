@@ -1,5 +1,23 @@
 # @effect/stream
 
+## 0.2.0
+
+### Minor Changes
+
+- [#39](https://github.com/Effect-TS/stream/pull/39) [`f8ea714`](https://github.com/Effect-TS/stream/commit/f8ea7144be18bc47683da181f385fc492a805993) Thanks [@tim-smart](https://github.com/tim-smart)! - implement dual api
+
+### Patch Changes
+
+- [#46](https://github.com/Effect-TS/stream/pull/46) [`7a85479`](https://github.com/Effect-TS/stream/commit/7a85479cad38418c749488df9f872386f98667e6) Thanks [@IMax153](https://github.com/IMax153)! - propagate defects in Stream.bufferSliding
+
+- [#46](https://github.com/Effect-TS/stream/pull/46) [`ec40f40`](https://github.com/Effect-TS/stream/commit/ec40f40fe7e759bac28d488d5ee80987bc236a89) Thanks [@IMax153](https://github.com/IMax153)! - optimize Stream.crossRight
+
+- [#47](https://github.com/Effect-TS/stream/pull/47) [`e91ae74`](https://github.com/Effect-TS/stream/commit/e91ae7435170d86163c98a3258ed03b14dd7a94d) Thanks [@IMax153](https://github.com/IMax153)! - replace @fp-ts/data with @effect/data
+
+- [#42](https://github.com/Effect-TS/stream/pull/42) [`c33091e`](https://github.com/Effect-TS/stream/commit/c33091e59536b7b8db081a8f11af8e0fb13be825) Thanks [@tim-smart](https://github.com/tim-smart)! - update /data and /io
+
+- [#46](https://github.com/Effect-TS/stream/pull/46) [`65e92b1`](https://github.com/Effect-TS/stream/commit/65e92b1fb9b6aa47fc52ac79110ecdbe830cf049) Thanks [@IMax153](https://github.com/IMax153)! - ensure ChannelExecutor.close is called by the Fiber itself
+
 ## 0.1.0
 
 ### Minor Changes
