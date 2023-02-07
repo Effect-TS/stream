@@ -1,3 +1,7 @@
+import * as Chunk from "@effect/data/Chunk"
+import * as Context from "@effect/data/Context"
+import * as Duration from "@effect/data/Duration"
+import * as Equal from "@effect/data/Equal"
 import * as Cause from "@effect/io/Cause"
 import * as Clock from "@effect/io/Clock"
 import * as Debug from "@effect/io/Debug"
@@ -42,10 +46,6 @@ import { constTrue, identity, pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
 import type { Predicate, Refinement } from "@fp-ts/core/Predicate"
 import type * as Order from "@fp-ts/core/typeclass/Order"
-import * as Chunk from "@fp-ts/data/Chunk"
-import * as Context from "@fp-ts/data/Context"
-import * as Duration from "@fp-ts/data/Duration"
-import * as Equal from "@fp-ts/data/Equal"
 
 /** @internal */
 const StreamSymbolKey = "@effect/stream/Stream"

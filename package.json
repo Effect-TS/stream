@@ -56,9 +56,9 @@
     }
   },
   "dependencies": {
-    "@effect/io": "~0.1.9",
-    "@fp-ts/core": "~0.1.1",
-    "@fp-ts/data": "~0.1.1"
+    "@effect/data": "~0.0.1",
+    "@effect/io": "~0.1.10",
+    "@fp-ts/core": "~0.1.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.20.7",
@@ -78,8 +78,8 @@
     "@types/jest": "^29.4.0",
     "@types/node": "^18.11.19",
     "@types/prettier": "2.7.2",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
     "@vitejs/plugin-react": "^3.1.0",
     "@vitest/coverage-c8": "^0.28.4",
     "babel-plugin-annotate-pure-calls": "^0.4.0",

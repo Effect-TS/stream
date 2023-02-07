@@ -1,8 +1,8 @@
+import * as Chunk from "@effect/data/Chunk"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
-import * as Chunk from "@fp-ts/data/Chunk"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Channel", () => {

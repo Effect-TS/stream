@@ -1,3 +1,4 @@
+import * as Chunk from "@effect/data/Chunk"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -12,7 +13,6 @@ import { identity, pipe } from "@fp-ts/core/Function"
 import * as Number from "@fp-ts/core/Number"
 import * as Option from "@fp-ts/core/Option"
 import * as Order from "@fp-ts/core/typeclass/Order"
-import * as Chunk from "@fp-ts/data/Chunk"
 import * as fc from "fast-check"
 import { assert, describe } from "vitest"
 

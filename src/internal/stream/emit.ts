@@ -1,10 +1,10 @@
+import * as Chunk from "@effect/data/Chunk"
 import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as Emit from "@effect/stream/Stream/Emit"
 import { pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
-import * as Chunk from "@fp-ts/data/Chunk"
 
 /** @internal */
 export const make = <R, E, A, B>(

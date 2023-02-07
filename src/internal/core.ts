@@ -1,3 +1,5 @@
+import * as Chunk from "@effect/data/Chunk"
+import type * as Context from "@effect/data/Context"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import type * as Effect from "@effect/io/Effect"
@@ -16,8 +18,6 @@ import * as Either from "@fp-ts/core/Either"
 import type { LazyArg } from "@fp-ts/core/Function"
 import { constVoid, identity, pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
-import * as Chunk from "@fp-ts/data/Chunk"
-import type * as Context from "@fp-ts/data/Context"
 
 /** @internal */
 const ChannelSymbolKey = "@effect/stream/Channel"

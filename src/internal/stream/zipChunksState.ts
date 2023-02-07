@@ -1,4 +1,4 @@
-import type * as Chunk from "@fp-ts/data/Chunk"
+import type * as Chunk from "@effect/data/Chunk"
 
 /** @internal */
 export type ZipChunksState<A, A2> = PullBoth | PullLeft<A2> | PullRight<A>
