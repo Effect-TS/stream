@@ -1,3 +1,4 @@
+import type * as Context from "@effect/data/Context"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
@@ -21,7 +22,6 @@ import * as ContinuationOpCodes from "@effect/stream/internal/opCodes/continuati
 import * as UpstreamPullStrategyOpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
 import { identity, pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
-import type * as Context from "@fp-ts/data/Context"
 
 export type ErasedChannel<R> = Channel.Channel<
   R,

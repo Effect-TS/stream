@@ -1,4 +1,4 @@
-import * as Chunk from "@fp-ts/data/Chunk"
+import * as Chunk from "@effect/data/Chunk"
 import { constUndefined } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
 

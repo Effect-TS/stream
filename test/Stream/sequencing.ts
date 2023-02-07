@@ -1,3 +1,5 @@
+import * as Chunk from "@effect/data/Chunk"
+import * as Equal from "@effect/data/Equal"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -10,8 +12,6 @@ import * as Take from "@effect/stream/Take"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Either from "@fp-ts/core/Either"
 import { identity, pipe } from "@fp-ts/core/Function"
-import * as Chunk from "@fp-ts/data/Chunk"
-import * as Equal from "@fp-ts/data/Equal"
 import { assert, describe } from "vitest"
 
 const withPermitsScoped = (permits: number) =>

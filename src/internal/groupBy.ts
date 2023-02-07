@@ -1,3 +1,4 @@
+import * as Chunk from "@effect/data/Chunk"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
@@ -17,7 +18,6 @@ import type * as Take from "@effect/stream/Take"
 import { pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
 import type { Predicate } from "@fp-ts/core/Predicate"
-import * as Chunk from "@fp-ts/data/Chunk"
 
 /** @internal */
 const GroupBySymbolKey = "@effect/stream/GroupBy"

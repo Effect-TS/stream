@@ -1,3 +1,6 @@
+import type * as Chunk from "@effect/data/Chunk"
+import type * as MutableQueue from "@effect/data/MutableQueue"
+import type * as MutableRef from "@effect/data/MutableRef"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -10,9 +13,6 @@ import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import { pipe } from "@fp-ts/core/Function"
 import type * as Option from "@fp-ts/core/Option"
-import type * as Chunk from "@fp-ts/data/Chunk"
-import type * as MutableQueue from "@fp-ts/data/MutableQueue"
-import type * as MutableRef from "@fp-ts/data/MutableRef"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Sink", () => {

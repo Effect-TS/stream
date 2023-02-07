@@ -1,3 +1,5 @@
+import * as Chunk from "@effect/data/Chunk"
+import * as Equal from "@effect/data/Equal"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -8,8 +10,6 @@ import * as SubscriptionRef from "@effect/stream/SubscriptionRef"
 import * as it from "@effect/stream/test/utils/extend"
 import { pipe } from "@fp-ts/core/Function"
 import * as Number from "@fp-ts/core/Number"
-import * as Chunk from "@fp-ts/data/Chunk"
-import * as Equal from "@fp-ts/data/Equal"
 import { assert, describe } from "vitest"
 
 describe.concurrent("SubscriptionRef", () => {

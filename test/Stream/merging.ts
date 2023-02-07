@@ -1,3 +1,6 @@
+import * as Chunk from "@effect/data/Chunk"
+import * as Duration from "@effect/data/Duration"
+import * as HashSet from "@effect/data/HashSet"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
@@ -7,9 +10,6 @@ import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Either from "@fp-ts/core/Either"
 import { constVoid, pipe } from "@fp-ts/core/Function"
-import * as Chunk from "@fp-ts/data/Chunk"
-import * as Duration from "@fp-ts/data/Duration"
-import * as HashSet from "@fp-ts/data/HashSet"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

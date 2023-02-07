@@ -1,3 +1,4 @@
+import * as Chunk from "@effect/data/Chunk"
 import type * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
@@ -6,7 +7,6 @@ import * as take from "@effect/stream/internal/take"
 import type * as Take from "@effect/stream/Take"
 import { pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
-import * as Chunk from "@fp-ts/data/Chunk"
 
 /** @internal */
 export interface Pull<R, E, A> extends Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>> {}

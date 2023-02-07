@@ -1,6 +1,6 @@
+import type * as Chunk from "@effect/data/Chunk"
 import type * as Fiber from "@effect/io/Fiber"
 import type * as HandoffSignal from "@effect/stream/internal/stream/handoffSignal"
-import type * as Chunk from "@fp-ts/data/Chunk"
 
 /** @internal */
 export type DebounceState<E, A> = NotStarted | Previous<A> | Current<E, A>

@@ -1,3 +1,4 @@
+import * as Chunk from "@effect/data/Chunk"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
@@ -5,7 +6,6 @@ import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Either from "@fp-ts/core/Either"
-import * as Chunk from "@fp-ts/data/Chunk"
 import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 

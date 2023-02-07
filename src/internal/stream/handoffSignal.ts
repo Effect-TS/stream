@@ -1,6 +1,6 @@
+import type * as Chunk from "@effect/data/Chunk"
 import type * as Cause from "@effect/io/Cause"
 import type * as SinkEndReason from "@effect/stream/internal/stream/sinkEndReason"
-import type * as Chunk from "@fp-ts/data/Chunk"
 
 /** @internal */
 export type HandoffSignal<E, A> = Emit<A> | Halt<E> | End

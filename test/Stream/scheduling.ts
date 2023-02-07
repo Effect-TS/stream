@@ -1,3 +1,4 @@
+import * as Duration from "@effect/data/Duration"
 import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
@@ -7,7 +8,6 @@ import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import * as Either from "@fp-ts/core/Either"
 import { identity, pipe } from "@fp-ts/core/Function"
-import * as Duration from "@fp-ts/data/Duration"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
