@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.3.0
+
+### Minor Changes
+
+- [#48](https://github.com/Effect-TS/stream/pull/48) [`ccd96a9`](https://github.com/Effect-TS/stream/commit/ccd96a947557e90a1da13d18502290fc6aa38b79) Thanks [@tim-smart](https://github.com/tim-smart)! - update to fp-ts/core 0.2
+
 ## 0.2.0
 
 ### Minor Changes
