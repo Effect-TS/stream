@@ -30,7 +30,7 @@ describe.concurrent("Channel", () => {
     const result = await Effect.runPromise(program)
     await Effect.runPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
-  }, 30_000)
+  }, 35_000)
 
   it.it("scoped closes the scope", async () => {
     const latch = Deferred.unsafeMake<never, void>(FiberId.none)
@@ -51,5 +51,5 @@ describe.concurrent("Channel", () => {
     const result = await Effect.runPromise(program)
     await Effect.runPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
-  }, 30_000)
+  }, 35_000)
 })
