@@ -1,6 +1,6 @@
-import * as Debug from "@effect/io/Debug"
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
+import { dual } from "@fp-ts/core/Function"
 import type * as Option from "@fp-ts/core/Option"
 
 /** @internal */
@@ -57,16 +57,16 @@ export const isPullAfterAllEnqueued = <A>(
 }
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <A, Z>(
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ) => (self: UpstreamPullStrategy.UpstreamPullStrategy<A>) => Z,
   <A, Z>(
     self: UpstreamPullStrategy.UpstreamPullStrategy<A>,
     onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
     onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
-  ) => Z,
-  <A, Z>(
-    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
-    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
-  ) => (self: UpstreamPullStrategy.UpstreamPullStrategy<A>) => Z
+  ) => Z
 >(3, <A, Z>(
   self: UpstreamPullStrategy.UpstreamPullStrategy<A>,
   onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,

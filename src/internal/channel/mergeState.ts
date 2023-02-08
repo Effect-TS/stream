@@ -1,10 +1,10 @@
-import * as Debug from "@effect/io/Debug"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Fiber from "@effect/io/Fiber"
 import type * as MergeState from "@effect/stream/Channel/MergeState"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeState"
 import type * as Either from "@fp-ts/core/Either"
+import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const MergeStateSymbolKey = "@effect/stream/Channel/MergeState"
@@ -83,7 +83,15 @@ export const isRightDone = <Env, Err, Err1, Err2, Elem, Done, Done1, Done2>(
 }
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <Env, Err, Err1, Err2, Elem, Done, Done1, Done2, Z>(
+    onBothRunning: (
+      left: Fiber.Fiber<Err, Either.Either<Done, Elem>>,
+      right: Fiber.Fiber<Err1, Either.Either<Done1, Elem>>
+    ) => Z,
+    onLeftDone: (f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>) => Z,
+    onRightDone: (f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>) => Z
+  ) => (self: MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2>) => Z,
   <Env, Err, Err1, Err2, Elem, Done, Done1, Done2, Z>(
     self: MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2>,
     onBothRunning: (
@@ -92,15 +100,7 @@ export const match = Debug.dual<
     ) => Z,
     onLeftDone: (f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>) => Z,
     onRightDone: (f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>) => Z
-  ) => Z,
-  <Env, Err, Err1, Err2, Elem, Done, Done1, Done2, Z>(
-    onBothRunning: (
-      left: Fiber.Fiber<Err, Either.Either<Done, Elem>>,
-      right: Fiber.Fiber<Err1, Either.Either<Done1, Elem>>
-    ) => Z,
-    onLeftDone: (f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>) => Z,
-    onRightDone: (f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>) => Z
-  ) => (self: MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2>) => Z
+  ) => Z
 >(4, (
   self,
   onBothRunning,

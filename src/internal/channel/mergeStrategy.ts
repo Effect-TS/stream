@@ -1,6 +1,6 @@
-import * as Debug from "@effect/io/Debug"
 import type * as MergeStrategy from "@effect/stream/Channel/MergeStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeStrategy"
+import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const MergeStrategySymbolKey = "@effect/stream/Channel/MergeStrategy"
@@ -41,13 +41,13 @@ export const isBufferSliding = (self: MergeStrategy.MergeStrategy): self is Merg
 }
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <A>(onBackPressure: () => A, onBufferSliding: () => A) => (self: MergeStrategy.MergeStrategy) => A,
   <A>(
     self: MergeStrategy.MergeStrategy,
     onBackPressure: () => A,
     onBufferSliding: () => A
-  ) => A,
-  <A>(onBackPressure: () => A, onBufferSliding: () => A) => (self: MergeStrategy.MergeStrategy) => A
+  ) => A
 >(3, <A>(
   self: MergeStrategy.MergeStrategy,
   onBackPressure: () => A,

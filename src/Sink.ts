@@ -72,10 +72,7 @@ export declare namespace Sink {
  * @since 1.0.0
  * @category mapping
  */
-export const as: {
-  <R, E, In, L, Z, Z2>(self: Sink<R, E, In, L, Z>, z: Z2): Sink<R, E, In, L, Z2>
-  <Z2>(z: Z2): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, L, Z2>
-} = internal.as
+export const as = internal.as
 
 /**
  * A sink that collects all elements into a `Chunk`.
@@ -197,17 +194,17 @@ export const collectAllWhileEffect: <In, R, E>(
  * @category utils
  */
 export const collectAllWhileWith: {
+  <Z, S>(
+    z: S,
+    p: Predicate<Z>,
+    f: (s: S, z: Z) => S
+  ): <R, E, In, L extends In>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, L, S>
   <R, E, In, L extends In, Z, S>(
     self: Sink<R, E, In, L, Z>,
     z: S,
     p: Predicate<Z>,
     f: (s: S, z: Z) => S
   ): Sink<R, E, In, L, S>
-  <Z, S>(
-    z: S,
-    p: Predicate<Z>,
-    f: (s: S, z: Z) => S
-  ): <R, E, In, L extends In>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, L, S>
 } = internal.collectAllWhileWith as any
 
 /**
@@ -227,10 +224,7 @@ export const collectLeftover: <R, E, In, L, Z>(
  * @since 1.0.0
  * @category mapping
  */
-export const contramap: {
-  <R, E, L, Z, In0, In>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In): Sink<R, E, In0, L, Z>
-  <In0, In>(f: (input: In0) => In): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z>
-} = internal.contramap
+export const contramap = internal.contramap
 
 /**
  * Effectfully transforms this sink's input elements.
@@ -238,15 +232,7 @@ export const contramap: {
  * @since 1.0.0
  * @category mapping
  */
-export const contramapEffect: {
-  <R, E, L, Z, In0, R2, E2, In>(
-    self: Sink<R, E, In, L, Z>,
-    f: (input: In0) => Effect.Effect<R2, E2, In>
-  ): Sink<R | R2, E | E2, In0, L, Z>
-  <In0, R2, E2, In>(
-    f: (input: In0) => Effect.Effect<R2, E2, In>
-  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In0, L, Z>
-} = internal.contramapEffect
+export const contramapEffect = internal.contramapEffect
 
 /**
  * Transforms this sink's input chunks. `f` must preserve chunking-invariance.
@@ -255,13 +241,13 @@ export const contramapEffect: {
  * @category mapping
  */
 export const contramapChunks: {
+  <In0, In>(
+    f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
+  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z>
   <R, E, L, Z, In0, In>(
     self: Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
   ): Sink<R, E, In0, L, Z>
-  <In0, In>(
-    f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
-  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z>
 } = internal.contramapChunks
 
 /**
@@ -272,13 +258,13 @@ export const contramapChunks: {
  * @category mapping
  */
 export const contramapChunksEffect: {
+  <In0, R2, E2, In>(
+    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In0, L, Z>
   <R, E, L, Z, In0, R2, E2, In>(
     self: Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
   ): Sink<R | R2, E | E2, In0, L, Z>
-  <In0, R2, E2, In>(
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
-  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In0, L, Z>
 } = internal.contramapChunksEffect
 
 /**
@@ -322,11 +308,11 @@ export const dieSync: (evaluate: LazyArg<unknown>) => Sink<never, never, unknown
  * @category mapping
  */
 export const dimap: {
-  <R, E, L, In0, In, Z, Z2>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In, g: (z: Z) => Z2): Sink<R, E, In0, L, Z2>
   <In0, In, Z, Z2>(
     f: (input: In0) => In,
     g: (z: Z) => Z2
   ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z2>
+  <R, E, L, In0, In, Z, Z2>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In, g: (z: Z) => Z2): Sink<R, E, In0, L, Z2>
 } = internal.dimap
 
 /**
@@ -337,15 +323,15 @@ export const dimap: {
  * @category mapping
  */
 export const dimapEffect: {
+  <In0, R2, E2, In, Z, R3, E3, Z2>(
+    f: (input: In0) => Effect.Effect<R2, E2, In>,
+    g: (z: Z) => Effect.Effect<R3, E3, Z2>
+  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
   <R, E, L, In0, R2, E2, In, Z, R3, E3, Z2>(
     self: Sink<R, E, In, L, Z>,
     f: (input: In0) => Effect.Effect<R2, E2, In>,
     g: (z: Z) => Effect.Effect<R3, E3, Z2>
   ): Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2>
-  <In0, R2, E2, In, Z, R3, E3, Z2>(
-    f: (input: In0) => Effect.Effect<R2, E2, In>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
 } = internal.dimapEffect
 
 /**
@@ -356,15 +342,15 @@ export const dimapEffect: {
  * @category mapping
  */
 export const dimapChunks: {
+  <In0, In, Z, Z2>(
+    f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>,
+    g: (z: Z) => Z2
+  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z2>
   <R, E, L, In0, In, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>,
     g: (z: Z) => Z2
   ): Sink<R, E, In0, L, Z2>
-  <In0, In, Z, Z2>(
-    f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>,
-    g: (z: Z) => Z2
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z2>
 } = internal.dimapChunks
 
 /**
@@ -375,15 +361,15 @@ export const dimapChunks: {
  * @category mapping
  */
 export const dimapChunksEffect: {
+  <In0, R2, E2, In, Z, R3, E3, Z2>(
+    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
+    g: (z: Z) => Effect.Effect<R3, E3, Z2>
+  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
   <R, E, L, In0, R2, E2, In, Z, R3, E3, Z2>(
     self: Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
     g: (z: Z) => Effect.Effect<R3, E3, Z2>
   ): Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2>
-  <In0, R2, E2, In, Z, R3, E3, Z2>(
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
 } = internal.dimapChunksEffect
 
 /**
@@ -447,10 +433,10 @@ export const dropWhileEffect: <In, R, E>(
  * @category finalization
  */
 export const ensuring: {
-  <R, E, In, L, Z, R2, _>(self: Sink<R, E, In, L, Z>, finalizer: Effect.Effect<R2, never, _>): Sink<R | R2, E, In, L, Z>
   <R2, _>(
     finalizer: Effect.Effect<R2, never, _>
   ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E, In, L, Z>
+  <R, E, In, L, Z, R2, _>(self: Sink<R, E, In, L, Z>, finalizer: Effect.Effect<R2, never, _>): Sink<R | R2, E, In, L, Z>
 } = internal.ensuring
 
 /**
@@ -462,13 +448,13 @@ export const ensuring: {
  * @category finalization
  */
 export const ensuringWith: {
+  <E, Z, R2, _>(
+    finalizer: (exit: Exit.Exit<E, Z>) => Effect.Effect<R2, never, _>
+  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E, In, L, Z>
   <R, In, L, E, Z, R2, _>(
     self: Sink<R, E, In, L, Z>,
     finalizer: (exit: Exit.Exit<E, Z>) => Effect.Effect<R2, never, _>
   ): Sink<R | R2, E, In, L, Z>
-  <E, Z, R2, _>(
-    finalizer: (exit: Exit.Exit<E, Z>) => Effect.Effect<R2, never, _>
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E, In, L, Z>
 } = internal.ensuringWith
 
 /**
@@ -569,13 +555,13 @@ export const filterInput: {
  * @category filtering
  */
 export const filterInputEffect: {
+  <R2, E2, In, In1 extends In>(
+    f: (input: In1) => Effect.Effect<R2, E2, boolean>
+  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In1, L, Z>
   <R, E, L, Z, R2, E2, In, In1 extends In>(
     self: Sink<R, E, In, L, Z>,
     f: (input: In1) => Effect.Effect<R2, E2, boolean>
   ): Sink<R | R2, E | E2, In1, L, Z>
-  <R2, E2, In, In1 extends In>(
-    f: (input: In1) => Effect.Effect<R2, E2, boolean>
-  ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In1, L, Z>
 } = internal.filterInputEffect
 
 /**
@@ -585,13 +571,13 @@ export const filterInputEffect: {
  * @category elements
  */
 export const findEffect: {
+  <Z, R2, E2>(
+    f: (z: Z) => Effect.Effect<R2, E2, boolean>
+  ): <R, E, In, L extends In>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In, L, Option.Option<Z>>
   <R, E, In, L extends In, Z, R2, E2>(
     self: Sink<R, E, In, L, Z>,
     f: (z: Z) => Effect.Effect<R2, E2, boolean>
   ): Sink<R | R2, E | E2, In, L, Option.Option<Z>>
-  <Z, R2, E2>(
-    f: (z: Z) => Effect.Effect<R2, E2, boolean>
-  ): <R, E, In, L extends In>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In, L, Option.Option<Z>>
 } = internal.findEffect as any
 
 /**
@@ -611,15 +597,15 @@ export const fold: <S, In>(s: S, contFn: Predicate<S>, f: (z: S, input: In) => S
  * @category folding
  */
 export const foldSink: {
+  <R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
+    onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
+    onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+  ): <R>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
   <R, R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
     self: Sink<R, E, In, L, Z>,
     onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
     onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R1 | R2, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
-  <R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
-    onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
-  ): <R>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
 } = internal.foldSink
 
 /**
@@ -897,13 +883,13 @@ export const forEachWhile: <In, R, E>(f: (input: In) => Effect.Effect<R, E, bool
  * @category sequencing
  */
 export const flatMap: {
+  <R1, E1, In, In1 extends In, L, L1, Z, Z1>(
+    f: (z: Z) => Sink<R1, E1, In1, L1, Z1>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L | L1, Z1>
   <R, E, R1, E1, In, In1 extends In, L, L1, Z, Z1>(
     self: Sink<R, E, In, L, Z>,
     f: (z: Z) => Sink<R1, E1, In1, L1, Z1>
   ): Sink<R | R1, E | E1, In & In1, L | L1, Z1>
-  <R1, E1, In, In1 extends In, L, L1, Z, Z1>(
-    f: (z: Z) => Sink<R1, E1, In1, L1, Z1>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L | L1, Z1>
 } = internal.flatMap
 
 /**
@@ -1192,8 +1178,8 @@ export const logTraceCauseMessage: <E>(
  * @category mapping
  */
 export const map: {
-  <R, E, In, L, Z, Z2>(self: Sink<R, E, In, L, Z>, f: (z: Z) => Z2): Sink<R, E, In, L, Z2>
   <Z, Z2>(f: (z: Z) => Z2): <R, E, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, L, Z2>
+  <R, E, In, L, Z, Z2>(self: Sink<R, E, In, L, Z>, f: (z: Z) => Z2): Sink<R, E, In, L, Z2>
 } = internal.map
 
 /**
@@ -1203,13 +1189,13 @@ export const map: {
  * @category mapping
  */
 export const mapEffect: {
+  <Z, R2, E2, Z2>(
+    f: (z: Z) => Effect.Effect<R2, E2, Z2>
+  ): <R, E, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In, L, Z2>
   <R, E, In, L, Z, R2, E2, Z2>(
     self: Sink<R, E, In, L, Z>,
     f: (z: Z) => Effect.Effect<R2, E2, Z2>
   ): Sink<R | R2, E | E2, In, L, Z2>
-  <Z, R2, E2, Z2>(
-    f: (z: Z) => Effect.Effect<R2, E2, Z2>
-  ): <R, E, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In, L, Z2>
 } = internal.mapEffect
 
 /**
@@ -1219,8 +1205,8 @@ export const mapEffect: {
  * @category mapping
  */
 export const mapError: {
-  <R, In, L, Z, E, E2>(self: Sink<R, E, In, L, Z>, f: (error: E) => E2): Sink<R, E2, In, L, Z>
   <E, E2>(f: (error: E) => E2): <R, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E2, In, L, Z>
+  <R, In, L, Z, E, E2>(self: Sink<R, E, In, L, Z>, f: (error: E) => E2): Sink<R, E2, In, L, Z>
 } = internal.mapError
 
 /**
@@ -1230,8 +1216,8 @@ export const mapError: {
  * @category mapping
  */
 export const mapLeftover: {
-  <R, E, In, Z, L, L2>(self: Sink<R, E, In, L, Z>, f: (leftover: L) => L2): Sink<R, E, In, L2, Z>
   <L, L2>(f: (leftover: L) => L2): <R, E, In, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, L2, Z>
+  <R, E, In, Z, L, L2>(self: Sink<R, E, In, L, Z>, f: (leftover: L) => L2): Sink<R, E, In, L2, Z>
 } = internal.mapLeftover
 
 /**
@@ -1257,13 +1243,13 @@ export const never: () => Sink<never, never, unknown, never, never> = internal.n
  * @category error handling
  */
 export const orElse: {
+  <R2, E2, In2, L2, Z2>(
+    that: LazyArg<Sink<R2, E2, In2, L2, Z2>>
+  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z2 | Z>
   <R, E, In, L, Z, R2, E2, In2, L2, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: LazyArg<Sink<R2, E2, In2, L2, Z2>>
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z | Z2>
-  <R2, E2, In2, L2, Z2>(
-    that: LazyArg<Sink<R2, E2, In2, L2, Z2>>
-  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z2 | Z>
 } = internal.orElse
 
 /**
@@ -1274,8 +1260,8 @@ export const orElse: {
  * @category context
  */
 export const provideContext: {
-  <E, In, L, Z, R>(self: Sink<R, E, In, L, Z>, context: Context.Context<R>): Sink<never, E, In, L, Z>
   <R>(context: Context.Context<R>): <E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<never, E, In, L, Z>
+  <E, In, L, Z, R>(self: Sink<R, E, In, L, Z>, context: Context.Context<R>): Sink<never, E, In, L, Z>
 } = internal.provideContext
 
 /**
@@ -1286,13 +1272,13 @@ export const provideContext: {
  * @category utils
  */
 export const race: {
+  <R1, E1, In1, L1, Z1>(
+    that: Sink<R1, E1, In1, L1, Z1>
+  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Z1 | Z>
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R1, E1, In1, L1, Z1>
   ): Sink<R | R1, E | E1, In & In1, L | L1, Z | Z1>
-  <R1, E1, In1, L1, Z1>(
-    that: Sink<R1, E1, In1, L1, Z1>
-  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Z1 | Z>
 } = internal.race
 
 /**
@@ -1303,13 +1289,13 @@ export const race: {
  * @category utils
  */
 export const raceBoth: {
+  <R1, E1, In1, L1, Z1>(
+    that: Sink<R1, E1, In1, L1, Z1>
+  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R1, E1, In1, L1, Z1>
   ): Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>>
-  <R1, E1, In1, L1, Z1>(
-    that: Sink<R1, E1, In1, L1, Z1>
-  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
 } = internal.raceBoth
 
 /**
@@ -1319,15 +1305,15 @@ export const raceBoth: {
  * @category utils
  */
 export const raceBothCapacity: {
+  <R1, E1, In1, L1, Z1>(
+    that: Sink<R1, E1, In1, L1, Z1>,
+    capacity: number
+  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R1, E1, In1, L1, Z1>,
     capacity: number
   ): Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>>
-  <R1, E1, In1, L1, Z1>(
-    that: Sink<R1, E1, In1, L1, Z1>,
-    capacity: number
-  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
 } = internal.raceBothCapacity
 
 /**
@@ -1338,17 +1324,17 @@ export const raceBothCapacity: {
  * @category utils
  */
 export const raceWith: {
+  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
+    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
   <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
     leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
     rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
   ): Sink<R | R2, E2 | E, In & In2, L | L2, Z3 | Z4>
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
 } = internal.raceWith
 
 /**
@@ -1358,6 +1344,12 @@ export const raceWith: {
  * @category utils
  */
 export const raceWithCapacity: {
+  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
+    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
+    capacity: number
+  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
   <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
@@ -1365,12 +1357,6 @@ export const raceWithCapacity: {
     rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
     capacity: number
   ): Sink<R | R2, E2 | E, In & In2, L | L2, Z3 | Z4>
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
 } = internal.raceWithCapacity
 
 /**
@@ -1378,8 +1364,8 @@ export const raceWithCapacity: {
  * @category error handling
  */
 export const refineOrDie: {
-  <R, In, L, Z, E, E2>(self: Sink<R, E, In, L, Z>, pf: (error: E) => Option.Option<E2>): Sink<R, E2, In, L, Z>
   <E, E2>(pf: (error: E) => Option.Option<E2>): <R, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E2, In, L, Z>
+  <R, In, L, Z, E, E2>(self: Sink<R, E, In, L, Z>, pf: (error: E) => Option.Option<E2>): Sink<R, E2, In, L, Z>
 } = internal.refineOrDie
 
 /**
@@ -1451,8 +1437,8 @@ export const some: <In>(predicate: Predicate<In>) => Sink<never, never, In, In, 
  * @category utils
  */
 export const splitWhere: {
-  <R, E, L extends In, Z, In>(self: Sink<R, E, In, L, Z>, f: Predicate<In>): Sink<R, E, In, In, Z>
   <In>(f: Predicate<In>): <R, E, L extends In, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, In, Z>
+  <R, E, L extends In, Z, In>(self: Sink<R, E, In, L, Z>, f: Predicate<In>): Sink<R, E, In, In, Z>
 } = internal.splitWhere
 
 /**
@@ -1479,15 +1465,15 @@ export const sum: () => Sink<never, never, number, never, number> = internal.sum
  * @category utils
  */
 export const summarized: {
+  <R2, E2, Z2, Z3>(
+    summary: Effect.Effect<R2, E2, Z2>,
+    f: (start: Z2, end: Z2) => Z3
+  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In, L, readonly [Z, Z3]>
   <R, E, In, L, Z, R2, E2, Z2, Z3>(
     self: Sink<R, E, In, L, Z>,
     summary: Effect.Effect<R2, E2, Z2>,
     f: (start: Z2, end: Z2) => Z3
   ): Sink<R | R2, E | E2, In, L, readonly [Z, Z3]>
-  <R2, E2, Z2, Z3>(
-    summary: Effect.Effect<R2, E2, Z2>,
-    f: (start: Z2, end: Z2) => Z3
-  ): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In, L, readonly [Z, Z3]>
 } = internal.summarized
 
 /**
@@ -1571,13 +1557,13 @@ export const withDuration: <R, E, In, L, Z>(
  * @category zipping
  */
 export const zip: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
 } = internal.zip
 
 /**
@@ -1587,13 +1573,13 @@ export const zip: {
  * @category zipping
  */
 export const zipLeft: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
 } = internal.zipLeft
 
 /**
@@ -1603,13 +1589,13 @@ export const zipLeft: {
  * @category zipping
  */
 export const zipRight: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z2>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
 } = internal.zipRight
 
 /**
@@ -1621,15 +1607,15 @@ export const zipRight: {
  * @category zipping
  */
 export const zipWith: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    f: (z: Z, z1: Z2) => Z3
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
     f: (z: Z, z1: Z2) => Z3
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
 } = internal.zipWith
 
 /**
@@ -1640,13 +1626,13 @@ export const zipWith: {
  * @category zipping
  */
 export const zipPar: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
 } = internal.zipPar
 
 /**
@@ -1656,13 +1642,13 @@ export const zipPar: {
  * @category zipping
  */
 export const zipParLeft: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
 } = internal.zipParLeft
 
 /**
@@ -1672,13 +1658,13 @@ export const zipParLeft: {
  * @category zipping
  */
 export const zipParRight: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z2>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
 } = internal.zipParRight
 
 /**
@@ -1689,13 +1675,13 @@ export const zipParRight: {
  * @category zipping
  */
 export const zipWithPar: {
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    f: (z: Z, z1: Z2) => Z3
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
     f: (z: Z, z1: Z2) => Z3
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
 } = internal.zipWithPar

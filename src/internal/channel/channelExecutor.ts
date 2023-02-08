@@ -1,6 +1,6 @@
 import type * as Context from "@effect/data/Context"
 import * as Cause from "@effect/io/Cause"
-import * as Debug from "@effect/io/Debug"
+import { bodyWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as ExecutionStrategy from "@effect/io/ExecutionStrategy"
@@ -379,7 +379,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
   /** @macro traced */
   popAllFinalizers(exit: Exit.Exit<unknown, unknown>): Effect.Effect<Env, never, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       let effect: Effect.Effect<Env, never, Exit.Exit<unknown, unknown>> = Effect.succeed(Exit.unit())
       while (this._doneStack.length !== 0) {
         const cont = this._doneStack.shift() as Continuation.Primitive
@@ -413,7 +413,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     exit: Exit.Exit<unknown, unknown>,
     prev: ErasedExecutor<Env> | undefined
   ): Effect.Effect<Env, never, unknown> | undefined {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       const currInput = this._input
       this._input = prev
       if (currInput !== undefined) {
@@ -428,7 +428,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
   /** @macro traced */
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<Env, never, unknown> | undefined {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       let runInProgressFinalizers: Effect.Effect<Env, never, unknown> | undefined = undefined
       const finalizer = this._inProgressFinalizer
       if (finalizer !== undefined) {
@@ -616,7 +616,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
   /** @macro traced */
   finishWithExit(exit: Exit.Exit<unknown, unknown>): Effect.Effect<Env, unknown, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       const state = pipe(
         exit,
         Exit.match(
@@ -1022,7 +1022,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
  * @macro traced
  * @internal
  */
-const ifNotNull = Debug.methodWithTrace((trace) =>
+const ifNotNull = methodWithTrace((trace) =>
   <Env>(effect: Effect.Effect<Env, never, unknown> | undefined): Effect.Effect<Env, never, unknown> =>
     effect !== undefined ?
       effect.traced(trace) :
@@ -1033,7 +1033,7 @@ const ifNotNull = Debug.methodWithTrace((trace) =>
  * @macro traced
  * @internal
  */
-const runFinalizers = Debug.methodWithTrace((trace) =>
+const runFinalizers = methodWithTrace((trace) =>
   <Env>(
     finalizers: Array<Continuation.ContinuationFinalizer<Env, unknown, unknown>>,
     exit: Exit.Exit<unknown, unknown>
@@ -1054,7 +1054,7 @@ const runFinalizers = Debug.methodWithTrace((trace) =>
  * @macro traced
  * @internal
  */
-export const readUpstream = Debug.methodWithTrace((trace) =>
+export const readUpstream = methodWithTrace((trace) =>
   <R, E, E2, A>(
     r: ChannelState.Read,
     onSuccess: () => Effect.Effect<R, E2, A>,
@@ -1134,7 +1134,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
 )
 
 /** @internal */
-export const run = Debug.methodWithTrace((trace) =>
+export const run = methodWithTrace((trace) =>
   <Env, InErr, InDone, OutErr, OutDone>(
     self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
   ): Effect.Effect<Env, OutErr, OutDone> => pipe(runScoped(self), Effect.scoped).traced(trace)

@@ -1,4 +1,4 @@
-import * as Debug from "@effect/io/Debug"
+import { bodyWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
@@ -60,7 +60,7 @@ export class PullFromChild<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       const fin1 = this.childExecutor.close(exit)
       const fin2 = this.parentSubexecutor.close(exit)
       if (fin1 !== undefined && fin2 !== undefined) {
@@ -107,7 +107,7 @@ export class PullFromUpstream<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       const fin1 = this.upstreamExecutor.close(exit)
       const fins = [
         ...this.activeChildExecutors.map((child) =>
@@ -178,7 +178,7 @@ export class DrainChildExecutors<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       const fin1 = this.upstreamExecutor.close(exit)
       const fins = [
         ...this.activeChildExecutors.map((child) => (child !== undefined ?
@@ -229,7 +229,7 @@ export class Emit<R> implements Subexecutor<R> {
   }
 
   close(exit: Exit.Exit<unknown, unknown>): Effect.Effect<R, never, unknown> | undefined {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       const result = this.next.close(exit)
       return result === undefined ? result : result.traced(trace)
     })

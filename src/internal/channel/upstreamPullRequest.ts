@@ -1,6 +1,6 @@
-import * as Debug from "@effect/io/Debug"
 import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullRequest"
+import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const UpstreamPullRequestSymbolKey = "@effect/stream/Channel/UpstreamPullRequest"
@@ -54,16 +54,16 @@ export const isNoUpstream = <A>(
 }
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <A, Z>(
+    onPulled: (value: A) => Z,
+    onNoUpstream: (activeDownstreamCount: number) => Z
+  ) => (self: UpstreamPullRequest.UpstreamPullRequest<A>) => Z,
   <A, Z>(
     self: UpstreamPullRequest.UpstreamPullRequest<A>,
     onPulled: (value: A) => Z,
     onNoUpstream: (activeDownstreamCount: number) => Z
-  ) => Z,
-  <A, Z>(
-    onPulled: (value: A) => Z,
-    onNoUpstream: (activeDownstreamCount: number) => Z
-  ) => (self: UpstreamPullRequest.UpstreamPullRequest<A>) => Z
+  ) => Z
 >(3, <A, Z>(
   self: UpstreamPullRequest.UpstreamPullRequest<A>,
   onPulled: (value: A) => Z,

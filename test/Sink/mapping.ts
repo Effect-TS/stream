@@ -44,7 +44,7 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapChunks<string, number>(Chunk.map(Number.parseInt))
+        Sink.contramapChunks<string, number>(Chunk.map((_) => Number.parseInt(_)))
       )
       const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink)))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])

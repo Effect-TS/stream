@@ -57,13 +57,13 @@ export declare namespace GroupBy {
  * @category destructors
  */
 export const evaluate: {
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
   <R, K, E, V, R2, E2, A>(
     self: GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
   ): Stream.Stream<R | R2, E | E2, A>
-  <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
 } = internal.evaluate
 
 /**
@@ -73,15 +73,15 @@ export const evaluate: {
  * @category destructors
  */
 export const evaluateBuffer: {
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    bufferSize: number
+  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
   <R, K, E, V, R2, E2, A>(
     self: GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
     bufferSize: number
   ): Stream.Stream<R | R2, E | E2, A>
-  <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
-  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
 } = internal.evaluateBuffer
 
 /**
@@ -91,8 +91,8 @@ export const evaluateBuffer: {
  * @category utils
  */
 export const filter: {
-  <R, E, V, K>(self: GroupBy<R, E, K, V>, predicate: Predicate<K>): GroupBy<R, E, K, V>
   <K>(predicate: Predicate<K>): <R, E, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+  <R, E, V, K>(self: GroupBy<R, E, K, V>, predicate: Predicate<K>): GroupBy<R, E, K, V>
 } = internal.filter
 
 /**
@@ -102,8 +102,8 @@ export const filter: {
  * @category utils
  */
 export const first: {
-  <R, E, K, V>(self: GroupBy<R, E, K, V>, n: number): GroupBy<R, E, K, V>
   (n: number): <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+  <R, E, K, V>(self: GroupBy<R, E, K, V>, n: number): GroupBy<R, E, K, V>
 } = internal.first
 
 /**

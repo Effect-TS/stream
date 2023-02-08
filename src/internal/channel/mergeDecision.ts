@@ -1,8 +1,8 @@
-import * as Debug from "@effect/io/Debug"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeDecision"
+import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const MergeDecisionSymbolKey = "@effect/stream/Channel/MergeDecision"
@@ -79,16 +79,16 @@ export const isMergeDecision = (
 }
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <R, E0, Z0, E, Z, Z2>(
+    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
+    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+  ) => (self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>) => Z2,
   <R, E0, Z0, E, Z, Z2>(
     self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>,
     onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
     onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
-  ) => Z2,
-  <R, E0, Z0, E, Z, Z2>(
-    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
-    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
-  ) => (self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>) => Z2
+  ) => Z2
 >(3, <R, E0, Z0, E, Z, Z2>(
   self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>,
   onDone: (effect: Effect.Effect<R, E, Z>) => Z2,

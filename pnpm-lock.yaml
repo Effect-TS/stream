@@ -14,10 +14,10 @@ specifiers:
   '@effect-ts/build-utils': 0.40.7
   '@effect-ts/core': ^0.60.5
   '@effect/babel-plugin': ^0.1.0
-  '@effect/data': ~0.0.1
-  '@effect/io': ~0.1.10
+  '@effect/data': ~0.1.0
+  '@effect/io': ~0.1.11
   '@effect/language-service': 0.0.19
-  '@fp-ts/core': ~0.1.1
+  '@fp-ts/core': ~0.2.0
   '@repo-tooling/eslint-plugin-dprint': ^0.0.4
   '@rollup/pluginutils': ^5.0.2
   '@types/benchmark': ^2.1.2
@@ -56,9 +56,9 @@ specifiers:
   vitest: 0.28.4
 
 dependencies:
-  '@effect/data': 0.0.1
-  '@effect/io': 0.1.10
-  '@fp-ts/core': 0.1.1
+  '@effect/data': 0.1.0
+  '@effect/io': 0.1.11
+  '@fp-ts/core': 0.2.0
 
 devDependencies:
   '@babel/cli': 7.20.7_@babel+core@7.20.12
@@ -672,17 +672,17 @@ packages:
       '@babel/core': 7.20.12
     dev: true
 
-  /@effect/data/0.0.1:
-    resolution: {integrity: sha512-C5G23kMDMhKkgR+hyWLaE83BoAf/L36vdJ703US79dOpSkH3U6RgJUiXsZK893GmW5KXISxdqkpSacNIH2OMLQ==}
+  /@effect/data/0.1.0:
+    resolution: {integrity: sha512-p9/AYs06o7IVyKRUvzq73+XnzmYQIkflo+F/IDMJRzulOEdfSyl3+Tvkw0pXVeXqlcKxlTSdos1VYs2wbRFQDg==}
     dependencies:
-      '@fp-ts/core': 0.1.1
+      '@fp-ts/core': 0.2.0
     dev: false
 
-  /@effect/io/0.1.10:
-    resolution: {integrity: sha512-iGlvA2i+ocsdOUk+6rucGrg8BklVJehbllIWeyMgQvYWjxAbrqH3hUPzExz42Z1iw9duTx6iWpUguHV5+4U1KQ==}
+  /@effect/io/0.1.11:
+    resolution: {integrity: sha512-dQLGx6KhuEgGAbb5UDbBi0P+wtSsm33ojlcshf2Ho4soORDd2QRDOMC+ki1EzVENztBhRmUd9Yp8DyICBQtldw==}
     dependencies:
-      '@effect/data': 0.0.1
-      '@fp-ts/core': 0.1.1
+      '@effect/data': 0.1.0
+      '@fp-ts/core': 0.2.0
     dev: false
 
   /@effect/language-service/0.0.19:
@@ -911,8 +911,8 @@ packages:
     resolution: {integrity: sha512-BCAJBYzghwoJpcUOARJ1tui50HoYJFlV2pJlVMlsEkDFhD8MTtq8xQVpZCRF66RmtkxtGBYINCQ+5H1lRaL35Q==}
     dev: true
 
-  /@fp-ts/core/0.1.1:
-    resolution: {integrity: sha512-7vQnrnvJAMrXgIwt0qQNhXkPDtm4l8vwql8EvXeY47v/FwnWpDvt1HISoO9Kq3am5SZ0A8Av+4NqPab2FRdKxw==}
+  /@fp-ts/core/0.2.0:
+    resolution: {integrity: sha512-oDMfMDId/Op6EHLTBZvhsW6d0XmXZDWQsvcZmC2wXGt+utv8hXGi41IJD8SwBJsvQvoJYe/NRTamDco4Bl7qsQ==}
     dev: false
 
   /@fp-ts/data/0.0.41:
