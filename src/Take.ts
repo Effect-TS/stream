@@ -178,8 +178,8 @@ export const make: <E, A>(exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<A>>) => 
  * @category mapping
  */
 export const map: {
-  <E, A, B>(self: Take<E, A>, f: (a: A) => B): Take<E, B>
   <A, B>(f: (a: A) => B): <E>(self: Take<E, A>) => Take<E, B>
+  <E, A, B>(self: Take<E, A>, f: (a: A) => B): Take<E, B>
 } = internal.map
 
 /**
@@ -191,16 +191,16 @@ export const map: {
  */
 export const match: {
   <Z, E, Z2, A, Z3>(
+    onEnd: () => Z,
+    onError: (cause: Cause.Cause<E>) => Z2,
+    onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+  ): (self: Take<E, A>) => Z | Z2 | Z3
+  <Z, E, Z2, A, Z3>(
     self: Take<E, A>,
     onEnd: () => Z,
     onError: (cause: Cause.Cause<E>) => Z2,
     onSuccess: (chunk: Chunk.Chunk<A>) => Z3
   ): Z | Z2 | Z3
-  <Z, E, Z2, A, Z3>(
-    onEnd: () => Z,
-    onError: (cause: Cause.Cause<E>) => Z2,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Z3
-  ): (self: Take<E, A>) => Z | Z2 | Z3
 } = internal.match
 
 /**
@@ -215,16 +215,16 @@ export const match: {
  */
 export const matchEffect: {
   <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
+    onEnd: () => Effect.Effect<R, E2, Z>,
+    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
+    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+  ): (self: Take<E, A>) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
+  <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
     self: Take<E, A>,
     onEnd: () => Effect.Effect<R, E2, Z>,
     onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
     onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
   ): Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
-  <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
-    onEnd: () => Effect.Effect<R, E2, Z>,
-    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
-  ): (self: Take<E, A>) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
 } = internal.matchEffect
 
 /**
@@ -243,11 +243,11 @@ export const of: <A>(value: A) => Take<never, A> = internal.of
  * @category sequencing
  */
 export const tap: {
+  <A, R, E2, _>(
+    f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
+  ): <E>(self: Take<E, A>) => Effect.Effect<R, E2 | E, void>
   <E, A, R, E2, _>(
     self: Take<E, A>,
     f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
   ): Effect.Effect<R, E | E2, void>
-  <A, R, E2, _>(
-    f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
-  ): <E>(self: Take<E, A>) => Effect.Effect<R, E2 | E, void>
 } = internal.tap

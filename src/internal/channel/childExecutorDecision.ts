@@ -1,6 +1,6 @@
-import * as Debug from "@effect/io/Debug"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
 import * as OpCodes from "@effect/stream/internal/opCodes/childExecutorDecision"
+import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const ChildExecutorDecisionSymbolKey = "@effect/stream/Channel/ChildExecutorDecision"
@@ -59,18 +59,18 @@ export const isYield = (
 }
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <A>(
+    onContinue: () => A,
+    onClose: (value: unknown) => A,
+    onYield: () => A
+  ) => (self: ChildExecutorDecision.ChildExecutorDecision) => A,
   <A>(
     self: ChildExecutorDecision.ChildExecutorDecision,
     onContinue: () => A,
     onClose: (value: unknown) => A,
     onYield: () => A
-  ) => A,
-  <A>(
-    onContinue: () => A,
-    onClose: (value: unknown) => A,
-    onYield: () => A
-  ) => (self: ChildExecutorDecision.ChildExecutorDecision) => A
+  ) => A
 >(4, <A>(
   self: ChildExecutorDecision.ChildExecutorDecision,
   onContinue: () => A,

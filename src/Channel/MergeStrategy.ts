@@ -96,6 +96,6 @@ export const isBufferSliding: (self: MergeStrategy) => self is BufferSliding = i
  * @category folding
  */
 export const match: {
-  <A>(self: MergeStrategy, onBackPressure: () => A, onBufferSliding: () => A): A
   <A>(onBackPressure: () => A, onBufferSliding: () => A): (self: MergeStrategy) => A
+  <A>(self: MergeStrategy, onBackPressure: () => A, onBufferSliding: () => A): A
 } = internal.match

@@ -1,5 +1,5 @@
 import * as Cause from "@effect/io/Cause"
-import * as Debug from "@effect/io/Debug"
+import { bodyWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -97,7 +97,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   awaitRead(): Effect.Effect<never, never, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return pipe(
         Ref.modify(this.ref, (state) =>
           state._tag === OP_STATE_EMPTY ?
@@ -109,7 +109,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   close(): Effect.Effect<never, never, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return Effect.fiberIdWith(
         (fiberId) => this.error(Cause.interrupt(fiberId))
       ).traced(trace)
@@ -117,7 +117,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   done(value: Done): Effect.Effect<never, never, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return pipe(
         Ref.modify(this.ref, (state) => {
           switch (state._tag) {
@@ -147,7 +147,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   emit(element: Elem): Effect.Effect<never, never, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return pipe(
         Deferred.make<never, void>(),
         Effect.flatMap((deferred) =>
@@ -188,7 +188,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   error(cause: Cause.Cause<Err>): Effect.Effect<never, never, unknown> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return pipe(
         Ref.modify(this.ref, (state) => {
           switch (state._tag) {
@@ -218,7 +218,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   take(): Effect.Effect<never, never, Exit.Exit<Either.Either<Err, Done>, Elem>> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return this.takeWith(
         (cause) => Exit.failCause(pipe(cause, Cause.map(Either.left))),
         (elem) => Exit.succeed(elem) as Exit.Exit<Either.Either<Err, Done>, Elem>,
@@ -232,7 +232,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
     onElement: (element: Elem) => A,
     onDone: (value: Done) => A
   ): Effect.Effect<never, never, A> {
-    return Debug.bodyWithTrace((trace) => {
+    return bodyWithTrace((trace) => {
       return pipe(
         Deferred.make<Err, Either.Either<Done, Elem>>(),
         Effect.flatMap((deferred) =>
@@ -279,7 +279,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
 }
 
 /** @internal */
-export const make = Debug.methodWithTrace((trace) =>
+export const make = methodWithTrace((trace) =>
   <Err, Elem, Done>(): Effect.Effect<
     never,
     never,

@@ -1,4 +1,4 @@
-import * as Debug from "@effect/io/Debug"
+import { bodyWithTrace, dualWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Hub from "@effect/io/Hub"
 import * as _circular from "@effect/io/internal_effect_untraced/effect/circular"
@@ -54,11 +54,11 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
   }
   /** @macro traced */
   modify<B>(f: (a: A) => readonly [B, A]): Effect.Effect<never, never, B> {
-    return Debug.bodyWithTrace((trace) => this.modifyEffect((a) => Effect.succeed(f(a))).traced(trace))
+    return bodyWithTrace((trace) => this.modifyEffect((a) => Effect.succeed(f(a))).traced(trace))
   }
   /** @macro traced */
   modifyEffect<R, E, B>(f: (a: A) => Effect.Effect<R, E, readonly [B, A]>): Effect.Effect<R, E, B> {
-    return Debug.bodyWithTrace((trace) =>
+    return bodyWithTrace((trace) =>
       pipe(
         Ref.get(this.ref),
         Effect.flatMap(f),
@@ -76,12 +76,12 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
 }
 
 /** @internal */
-export const get = Debug.methodWithTrace((trace) =>
+export const get = methodWithTrace((trace) =>
   <A>(self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<never, never, A> => Ref.get(self.ref).traced(trace)
 )
 
 /** @internal */
-export const make = Debug.methodWithTrace((trace) =>
+export const make = methodWithTrace((trace) =>
   <A>(value: A): Effect.Effect<never, never, SubscriptionRef.SubscriptionRef<A>> =>
     pipe(
       Effect.tuple(
@@ -94,12 +94,12 @@ export const make = Debug.methodWithTrace((trace) =>
 )
 
 /** @internal */
-export const modify = Debug.dualWithTrace<
+export const modify = dualWithTrace<
+  <A, B>(f: (a: A) => readonly [B, A]) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<never, never, B>,
   <A, B>(
     self: SubscriptionRef.SubscriptionRef<A>,
     f: (a: A) => readonly [B, A]
-  ) => Effect.Effect<never, never, B>,
-  <A, B>(f: (a: A) => readonly [B, A]) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<never, never, B>
+  ) => Effect.Effect<never, never, B>
 >(2, (trace) =>
   <A, B>(
     self: SubscriptionRef.SubscriptionRef<A>,
@@ -107,14 +107,14 @@ export const modify = Debug.dualWithTrace<
   ): Effect.Effect<never, never, B> => self.modify(f).traced(trace))
 
 /** @internal */
-export const modifyEffect = Debug.dualWithTrace<
+export const modifyEffect = dualWithTrace<
+  <A, R, E, B>(
+    f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
+  ) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<R, E, B>,
   <A, R, E, B>(
     self: SubscriptionRef.SubscriptionRef<A>,
     f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
-  ) => Effect.Effect<R, E, B>,
-  <A, R, E, B>(
-    f: (a: A) => Effect.Effect<R, E, readonly [B, A]>
-  ) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<R, E, B>
+  ) => Effect.Effect<R, E, B>
 >(2, (trace) =>
   <A, R, E, B>(
     self: SubscriptionRef.SubscriptionRef<A>,
@@ -122,12 +122,12 @@ export const modifyEffect = Debug.dualWithTrace<
   ): Effect.Effect<R, E, B> => self.modifyEffect(f).traced(trace))
 
 /** @internal */
-export const set = Debug.dualWithTrace<
+export const set = dualWithTrace<
+  <A>(value: A) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<never, never, void>,
   <A>(
     self: SubscriptionRef.SubscriptionRef<A>,
     value: A
-  ) => Effect.Effect<never, never, void>,
-  <A>(value: A) => (self: SubscriptionRef.SubscriptionRef<A>) => Effect.Effect<never, never, void>
+  ) => Effect.Effect<never, never, void>
 >(2, (trace) =>
   <A>(
     self: SubscriptionRef.SubscriptionRef<A>,

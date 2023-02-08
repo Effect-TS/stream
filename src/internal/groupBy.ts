@@ -1,6 +1,5 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Cause from "@effect/io/Cause"
-import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -15,7 +14,7 @@ import * as stream from "@effect/stream/internal/stream"
 import * as take from "@effect/stream/internal/take"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Take from "@effect/stream/Take"
-import { pipe } from "@fp-ts/core/Function"
+import { dual, pipe } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
 import type { Predicate } from "@fp-ts/core/Predicate"
 
@@ -36,14 +35,14 @@ const groupByVariance = {
 }
 
 /** @internal */
-export const evaluate = Debug.dual<
+export const evaluate = dual<
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+  ) => <R>(self: GroupBy.GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>,
   <R, K, E, V, R2, E2, A>(
     self: GroupBy.GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ) => Stream.Stream<R2 | R, E | E2, A>,
-  <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ) => <R>(self: GroupBy.GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
+  ) => Stream.Stream<R2 | R, E | E2, A>
 >(
   2,
   <R, K, E, V, R2, E2, A>(
@@ -53,16 +52,16 @@ export const evaluate = Debug.dual<
 )
 
 /** @internal */
-export const evaluateBuffer = Debug.dual<
+export const evaluateBuffer = dual<
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    bufferSize: number
+  ) => <R>(self: GroupBy.GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>,
   <R, K, E, V, R2, E2, A>(
     self: GroupBy.GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
     bufferSize: number
-  ) => Stream.Stream<R2 | R, E | E2, A>,
-  <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
-  ) => <R>(self: GroupBy.GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
+  ) => Stream.Stream<R2 | R, E | E2, A>
 >(
   3,
   <R, K, E, V, R2, E2, A>(
@@ -79,9 +78,9 @@ export const evaluateBuffer = Debug.dual<
 )
 
 /** @internal */
-export const filter = Debug.dual<
-  <R, E, V, K>(self: GroupBy.GroupBy<R, E, K, V>, predicate: Predicate<K>) => GroupBy.GroupBy<R, E, K, V>,
-  <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy.GroupBy<R, E, K, V>) => GroupBy.GroupBy<R, E, K, V>
+export const filter = dual<
+  <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy.GroupBy<R, E, K, V>) => GroupBy.GroupBy<R, E, K, V>,
+  <R, E, V, K>(self: GroupBy.GroupBy<R, E, K, V>, predicate: Predicate<K>) => GroupBy.GroupBy<R, E, K, V>
 >(2, <R, E, V, K>(self: GroupBy.GroupBy<R, E, K, V>, predicate: Predicate<K>): GroupBy.GroupBy<R, E, K, V> =>
   make(
     pipe(
@@ -96,9 +95,9 @@ export const filter = Debug.dual<
   ))
 
 /** @internal */
-export const first = Debug.dual<
-  <R, E, K, V>(self: GroupBy.GroupBy<R, E, K, V>, n: number) => GroupBy.GroupBy<R, E, K, V>,
-  (n: number) => <R, E, K, V>(self: GroupBy.GroupBy<R, E, K, V>) => GroupBy.GroupBy<R, E, K, V>
+export const first = dual<
+  (n: number) => <R, E, K, V>(self: GroupBy.GroupBy<R, E, K, V>) => GroupBy.GroupBy<R, E, K, V>,
+  <R, E, K, V>(self: GroupBy.GroupBy<R, E, K, V>, n: number) => GroupBy.GroupBy<R, E, K, V>
 >(2, <R, E, K, V>(self: GroupBy.GroupBy<R, E, K, V>, n: number): GroupBy.GroupBy<R, E, K, V> =>
   make(
     pipe(
@@ -126,14 +125,14 @@ export const make = <R, E, K, V>(
 // Circular with Stream
 
 /** @internal */
-export const groupBy = Debug.dual<
+export const groupBy = dual<
+  <A, R2, E2, K, V>(
+    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>
+  ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>,
   <R, E, A, R2, E2, K, V>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>
-  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>,
-  <A, R2, E2, K, V>(
-    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
+  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
 >(
   2,
   <R, E, A, R2, E2, K, V>(
@@ -143,16 +142,16 @@ export const groupBy = Debug.dual<
 )
 
 /** @internal */
-export const groupByBuffer = Debug.dual<
+export const groupByBuffer = dual<
+  <A, R2, E2, K, V>(
+    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
+    bufferSize: number
+  ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>,
   <R, E, A, R2, E2, K, V>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
     bufferSize: number
-  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>,
-  <A, R2, E2, K, V>(
-    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-    bufferSize: number
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
+  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
 >(
   3,
   <R, E, A, R2, E2, K, V>(
@@ -298,9 +297,9 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
 }
 
 /** @internal */
-export const groupByKey = Debug.dual<
-  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K) => GroupBy.GroupBy<R, E, K, A>,
-  <A, K>(f: (a: A) => K) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
+export const groupByKey = dual<
+  <A, K>(f: (a: A) => K) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>,
+  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K) => GroupBy.GroupBy<R, E, K, A>
 >(
   2,
   <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K): GroupBy.GroupBy<R, E, K, A> =>
@@ -308,9 +307,9 @@ export const groupByKey = Debug.dual<
 )
 
 /** @internal */
-export const groupByKeyBuffer = Debug.dual<
-  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K, bufferSize: number) => GroupBy.GroupBy<R, E, K, A>,
-  <A, K>(f: (a: A) => K, bufferSize: number) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
+export const groupByKeyBuffer = dual<
+  <A, K>(f: (a: A) => K, bufferSize: number) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>,
+  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K, bufferSize: number) => GroupBy.GroupBy<R, E, K, A>
 >(3, <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K, bufferSize: number): GroupBy.GroupBy<R, E, K, A> => {
   const loop = (
     map: Map<K, Queue.Queue<Take.Take<E, A>>>,
@@ -410,16 +409,16 @@ export const groupByKeyBuffer = Debug.dual<
 })
 
 /** @internal */
-export const mapEffectParByKey = Debug.dual<
+export const mapEffectParByKey = dual<
+  <R2, E2, A2, A, K>(
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    keyBy: (a: A) => K
+  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K
-  ) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R2, E2, A2, A, K>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>
+  ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   3,
   <R, E, R2, E2, A2, A, K>(
@@ -430,18 +429,18 @@ export const mapEffectParByKey = Debug.dual<
 )
 
 /** @internal */
-export const mapEffectParByKeyBuffer = Debug.dual<
+export const mapEffectParByKeyBuffer = dual<
+  <R2, E2, A2, A, K>(
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    keyBy: (a: A) => K,
+    bufferSize: number
+  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
     bufferSize: number
-  ) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R2, E2, A2, A, K>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K,
-    bufferSize: number
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>
+  ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   4,
   <R, E, R2, E2, A2, A, K>(
@@ -461,9 +460,9 @@ export const mapEffectParByKeyBuffer = Debug.dual<
  *
  * @internal
  */
-export const groupByIterable = Debug.dual<
-  <V, K>(iterable: Iterable<V>, f: (value: V) => K) => Chunk.Chunk<readonly [K, Chunk.Chunk<V>]>,
-  <V, K>(f: (value: V) => K) => (iterable: Iterable<V>) => Chunk.Chunk<readonly [K, Chunk.Chunk<V>]>
+export const groupByIterable = dual<
+  <V, K>(f: (value: V) => K) => (iterable: Iterable<V>) => Chunk.Chunk<readonly [K, Chunk.Chunk<V>]>,
+  <V, K>(iterable: Iterable<V>, f: (value: V) => K) => Chunk.Chunk<readonly [K, Chunk.Chunk<V>]>
 >(2, <V, K>(iterable: Iterable<V>, f: (value: V) => K): Chunk.Chunk<readonly [K, Chunk.Chunk<V>]> => {
   const builder: Array<readonly [K, Array<V>]> = []
   const iterator = iterable[Symbol.iterator]()

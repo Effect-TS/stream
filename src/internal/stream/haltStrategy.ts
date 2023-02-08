@@ -1,6 +1,6 @@
-import * as Debug from "@effect/io/Debug"
 import * as OpCodes from "@effect/stream/internal/opCodes/haltStrategy"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
+import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 export const Left: HaltStrategy.HaltStrategy = {
@@ -36,15 +36,15 @@ export const isEither = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.
   self._tag === OpCodes.OP_EITHER
 
 /** @internal */
-export const match = Debug.dual<
+export const match = dual<
+  <Z>(onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z) => (self: HaltStrategy.HaltStrategy) => Z,
   <Z>(
     self: HaltStrategy.HaltStrategy,
     onLeft: () => Z,
     onRight: () => Z,
     onBoth: () => Z,
     onEither: () => Z
-  ) => Z,
-  <Z>(onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z) => (self: HaltStrategy.HaltStrategy) => Z
+  ) => Z
 >(5, <Z>(
   self: HaltStrategy.HaltStrategy,
   onLeft: () => Z,

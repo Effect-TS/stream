@@ -143,6 +143,14 @@ export const isRightDone: <Env, Err, Err1, Err2, Elem, Done, Done1, Done2>(
  */
 export const match: {
   <Env, Err, Err1, Err2, Elem, Done, Done1, Done2, Z>(
+    onBothRunning: (
+      left: Fiber.Fiber<Err, Either.Either<Done, Elem>>,
+      right: Fiber.Fiber<Err1, Either.Either<Done1, Elem>>
+    ) => Z,
+    onLeftDone: (f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>) => Z,
+    onRightDone: (f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>) => Z
+  ): (self: MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2>) => Z
+  <Env, Err, Err1, Err2, Elem, Done, Done1, Done2, Z>(
     self: MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2>,
     onBothRunning: (
       left: Fiber.Fiber<Err, Either.Either<Done, Elem>>,
@@ -151,12 +159,4 @@ export const match: {
     onLeftDone: (f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>) => Z,
     onRightDone: (f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>) => Z
   ): Z
-  <Env, Err, Err1, Err2, Elem, Done, Done1, Done2, Z>(
-    onBothRunning: (
-      left: Fiber.Fiber<Err, Either.Either<Done, Elem>>,
-      right: Fiber.Fiber<Err1, Either.Either<Done1, Elem>>
-    ) => Z,
-    onLeftDone: (f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>) => Z,
-    onRightDone: (f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>) => Z
-  ): (self: MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2>) => Z
 } = internal.match
