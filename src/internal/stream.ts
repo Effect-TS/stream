@@ -5808,7 +5808,7 @@ export const scanEffect = dual<
 export const scoped = <R, E, A>(
   effect: Effect.Effect<R | Scope.Scope, E, A>
 ): Stream.Stream<Exclude<R | Scope.Scope, Scope.Scope>, E, A> =>
-  new StreamImpl(channel.scoped(pipe(effect, Effect.map(Chunk.of))))
+  new StreamImpl(channel.ensuring(channel.scoped(pipe(effect, Effect.map(Chunk.of))), Effect.unit()))
 
 /** @internal */
 export const service = <T>(tag: Context.Tag<T>): Stream.Stream<T, never, T> => serviceWith(tag, identity)
