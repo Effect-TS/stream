@@ -1,3 +1,4 @@
+import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
@@ -5,6 +6,7 @@ import * as FiberId from "@effect/io/Fiber/Id"
 import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
+import * as Either from "@fp-ts/core/Either"
 import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
@@ -52,4 +54,21 @@ describe.concurrent("Channel", () => {
     await Effect.runPromise(Deferred.succeed<never, void>(latch, void 0))
     assert.strictEqual(result, 0)
   }, 35_000)
+
+  it.effect("finalizer failure is propagated", () =>
+    Effect.gen(function*($) {
+      const exit = yield* $(
+        pipe(
+          Channel.unit(),
+          Channel.ensuring(Effect.die("ok")),
+          Channel.ensuring(Effect.unit()),
+          Channel.runDrain,
+          Effect.sandbox,
+          Effect.either,
+          Effect.map(Either.mapLeft(Cause.unannotate))
+        )
+      )
+
+      assert.deepEqual(exit, Either.left(Cause.die("ok")))
+    }))
 })
