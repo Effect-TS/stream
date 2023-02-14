@@ -13,6 +13,20 @@ import { constVoid, pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
+  it.effect("merge - with sleep", () =>
+    Effect.gen(function*($) {
+      const stream1 = Stream.make(1, 2, 3, 4)
+      const stream2 = Stream.tap(
+        Stream.make(5, 6, 7, 8),
+        () => Effect.sleep(Duration.millis(10))
+      )
+      const result = yield* $(pipe(
+        Stream.merge(stream1, stream2),
+        Stream.runCollect,
+      ))
+      assert.deepStrictEqual([...result], [1, 2, 3, 4, 5, 6, 7, 8])
+    }))
+
   it.effect("mergeAll - short circuiting", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
