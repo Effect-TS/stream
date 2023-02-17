@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.3.1
+
+### Patch Changes
+
+- [#50](https://github.com/Effect-TS/stream/pull/50) [`3c2833d`](https://github.com/Effect-TS/stream/commit/3c2833d52157fd52f7692b94c1910cb1b3fdf41a) Thanks [@tim-smart](https://github.com/tim-smart)! - fix subscription ref signatures
+
+- [#52](https://github.com/Effect-TS/stream/pull/52) [`43d8867`](https://github.com/Effect-TS/stream/commit/43d8867ff0b8d0c68d0395e44d868ffb50101859) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Propagate finalizer errors in Channel
+
+- [#54](https://github.com/Effect-TS/stream/pull/54) [`012404e`](https://github.com/Effect-TS/stream/commit/012404e4402ea367566a07733eaa7728475e70ce) Thanks [@IMax153](https://github.com/IMax153)! - fix Stream.merge and Channel.mergeWith
+
 ## 0.3.0
 
 ### Minor Changes
