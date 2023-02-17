@@ -595,7 +595,7 @@ export const flatten = <
   OutErr | OutErr1,
   OutElem | OutElem1,
   OutDone2
-> => pipe(self, core.flatMap(identity))
+> => core.flatMap(self, identity)
 
 /** @internal */
 export const foldChannel = dual<
@@ -1096,7 +1096,7 @@ export const mapOutEffectPar = dual<
 export const mergeAll = (
   n: number,
   bufferSize = 16,
-  mergeStrategy: MergeStrategy.MergeStrategy = _mergeStrategy.BackPressure
+  mergeStrategy: MergeStrategy.MergeStrategy = _mergeStrategy.BackPressure()
 ) => {
   return <
     Env,
@@ -1203,7 +1203,7 @@ export const mergeAllUnboundedWith = <
 export const mergeAllWith = (
   n: number,
   bufferSize = 16,
-  mergeStrategy: MergeStrategy.MergeStrategy = _mergeStrategy.BackPressure
+  mergeStrategy: MergeStrategy.MergeStrategy = _mergeStrategy.BackPressure()
 ) => {
   return <
     Env,
@@ -1474,7 +1474,7 @@ export const mergeMap = dual<
   OutErr | OutErr1,
   OutElem1,
   unknown
-> => mergeMapBufferStrategy(self, f, n, 16, _mergeStrategy.BackPressure))
+> => mergeMapBufferStrategy(self, f, n, 16, _mergeStrategy.BackPressure()))
 
 /** @internal */
 export const mergeMapBuffer = dual<
@@ -1520,7 +1520,7 @@ export const mergeMapBuffer = dual<
   OutErr | OutErr1,
   OutElem1,
   unknown
-> => mergeMapBufferStrategy(self, f, n, bufferSize, _mergeStrategy.BackPressure))
+> => mergeMapBufferStrategy(self, f, n, bufferSize, _mergeStrategy.BackPressure()))
 
 /** @internal */
 export const mergeMapStrategy = dual<
@@ -1851,77 +1851,137 @@ export const mergeWith = dual<
     OutElem | OutElem1,
     OutDone2 | OutDone3
   > =>
-    pipe(
-      Effect.gen(function*($) {
-        const input = yield* $(singleProducerAsyncInput.make<
+    unwrapScoped(
+      pipe(
+        singleProducerAsyncInput.make<
           InErr & InErr1,
           InElem & InElem1,
           InDone & InDone1
-        >())
-        const queueReader = fromInput(input)
-        const pullL = yield* $(pipe(queueReader, core.pipeTo(self), toPull))
-        const pullR = yield* $(pipe(queueReader, core.pipeTo(that), toPull))
-
-        type State = MergeState.MergeState<
-          Env | Env1,
-          OutErr,
-          OutErr1,
-          OutErr2 | OutErr3,
-          OutElem | OutElem1,
-          OutDone,
-          OutDone1,
-          OutDone2 | OutDone3
-        >
-
-        const handleSide = <Err, Done, Err2, Done2>(
-          exit: Exit.Exit<Err, Either.Either<Done, OutElem | OutElem1>>,
-          fiber: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>,
-          pull: Effect.Effect<Env | Env1, Err, Either.Either<Done, OutElem | OutElem1>>
-        ) =>
-          (
-            done: (
-              ex: Exit.Exit<Err, Done>
-            ) => MergeDecision.MergeDecision<
-              Env | Env1,
-              Err2,
-              Done2,
-              OutErr2 | OutErr3,
-              OutDone2 | OutDone3
-            >,
-            both: (
-              f1: Fiber.Fiber<Err, Either.Either<Done, OutElem | OutElem1>>,
-              f2: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>
-            ) => State,
-            single: (
-              f: (
-                ex: Exit.Exit<Err2, Done2>
-              ) => Effect.Effect<Env | Env1, OutErr2 | OutErr3, OutDone2 | OutDone3>
-            ) => State
-          ): Effect.Effect<
-            Env | Env1,
-            never,
-            Channel.Channel<
-              Env | Env1,
-              unknown,
-              unknown,
-              unknown,
-              OutErr2 | OutErr3,
-              OutElem | OutElem1,
-              OutDone2 | OutDone3
-            >
-          > => {
-            const onDecision = (
-              decision: MergeDecision.MergeDecision<
+        >(),
+        Effect.flatMap((input) => {
+          const queueReader = fromInput(input)
+          return Effect.map(
+            Effect.zip(
+              toPull(core.pipeTo(queueReader, self)),
+              toPull(core.pipeTo(queueReader, that))
+            ),
+            ([pullL, pullR]) => {
+              type State = MergeState.MergeState<
                 Env | Env1,
-                Err2,
-                Done2,
+                OutErr,
+                OutErr1,
                 OutErr2 | OutErr3,
+                OutElem | OutElem1,
+                OutDone,
+                OutDone1,
                 OutDone2 | OutDone3
               >
-            ): Effect.Effect<
-              never,
-              never,
-              Channel.Channel<
+
+              const handleSide = <Err, Done, Err2, Done2>(
+                exit: Exit.Exit<Err, Either.Either<Done, OutElem | OutElem1>>,
+                fiber: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>,
+                pull: Effect.Effect<Env | Env1, Err, Either.Either<Done, OutElem | OutElem1>>
+              ) =>
+                (
+                  done: (
+                    ex: Exit.Exit<Err, Done>
+                  ) => MergeDecision.MergeDecision<
+                    Env | Env1,
+                    Err2,
+                    Done2,
+                    OutErr2 | OutErr3,
+                    OutDone2 | OutDone3
+                  >,
+                  both: (
+                    f1: Fiber.Fiber<Err, Either.Either<Done, OutElem | OutElem1>>,
+                    f2: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>
+                  ) => State,
+                  single: (
+                    f: (
+                      ex: Exit.Exit<Err2, Done2>
+                    ) => Effect.Effect<Env | Env1, OutErr2 | OutErr3, OutDone2 | OutDone3>
+                  ) => State
+                ): Effect.Effect<
+                  Env | Env1,
+                  never,
+                  Channel.Channel<
+                    Env | Env1,
+                    unknown,
+                    unknown,
+                    unknown,
+                    OutErr2 | OutErr3,
+                    OutElem | OutElem1,
+                    OutDone2 | OutDone3
+                  >
+                > => {
+                  const onDecision = (
+                    decision: MergeDecision.MergeDecision<
+                      Env | Env1,
+                      Err2,
+                      Done2,
+                      OutErr2 | OutErr3,
+                      OutDone2 | OutDone3
+                    >
+                  ): Effect.Effect<
+                    never,
+                    never,
+                    Channel.Channel<
+                      Env | Env1,
+                      unknown,
+                      unknown,
+                      unknown,
+                      OutErr2 | OutErr3,
+                      OutElem | OutElem1,
+                      OutDone2 | OutDone3
+                    >
+                  > => {
+                    const op = decision as mergeDecision.Primitive
+                    if (op._tag === MergeDecisionOpCodes.OP_DONE) {
+                      return Effect.succeed(
+                        core.fromEffect(
+                          Effect.zipRight(
+                            Fiber.interrupt(fiber),
+                            op.effect
+                          )
+                        )
+                      )
+                    }
+                    return Effect.map(
+                      Fiber.await(fiber),
+                      Exit.match(
+                        (cause) => core.fromEffect(op.f(Exit.failCause(cause))),
+                        Either.match(
+                          (done) => core.fromEffect(op.f(Exit.succeed(done))),
+                          (elem) =>
+                            zipRight(
+                              core.write(elem),
+                              go(single(op.f))
+                            )
+                        )
+                      )
+                    )
+                  }
+
+                  return Exit.match(
+                    exit,
+                    (cause) => onDecision(done(Exit.failCause(cause))),
+                    Either.match(
+                      (z) => onDecision(done(Exit.succeed(z))),
+                      (elem) =>
+                        Effect.succeed(
+                          core.flatMap(core.write(elem), () =>
+                            core.flatMap(
+                              core.fromEffect(Effect.forkDaemon(pull)),
+                              (leftFiber) => go(both(leftFiber, fiber))
+                            ))
+                        )
+                    )
+                  )
+                }
+
+              const go = (
+                state: State
+              ): Channel.Channel<
                 Env | Env1,
                 unknown,
                 unknown,
@@ -1929,182 +1989,104 @@ export const mergeWith = dual<
                 OutErr2 | OutErr3,
                 OutElem | OutElem1,
                 OutDone2 | OutDone3
-              >
-            > => {
-              const op = decision as mergeDecision.Primitive
-              if (op._tag === MergeDecisionOpCodes.OP_DONE) {
-                return Effect.succeed(
-                  core.fromEffect(
-                    pipe(
-                      Fiber.interrupt(fiber),
-                      Effect.zipRight(op.effect)
+              > => {
+                switch (state._tag) {
+                  case MergeStateOpCodes.OP_BOTH_RUNNING: {
+                    const leftJoin = Effect.interruptible(Fiber.join(state.left))
+                    const rightJoin = Effect.interruptible(Fiber.join(state.right))
+                    return unwrap(
+                      Effect.raceWith(
+                        leftJoin,
+                        rightJoin,
+                        (leftExit, rf) => {
+                          console.dir({ leftExit }, { depth: null, colors: true })
+                          return Effect.zipRight(
+                            Fiber.interrupt(rf),
+                            handleSide(leftExit, state.right, pullL)(
+                              leftDone,
+                              mergeState.BothRunning,
+                              (f) => mergeState.LeftDone(f)
+                            )
+                          )
+                        },
+                        (rightExit, lf) => {
+                          console.dir({ rightExit }, { depth: null, colors: true })
+                          return Effect.zipRight(
+                            Fiber.interrupt(lf),
+                            handleSide(rightExit, state.left, pullR)(
+                              rightDone as (
+                                ex: Exit.Exit<InErr1 | OutErr1, OutDone1>
+                              ) => MergeDecision.MergeDecision<
+                                Env1 | Env,
+                                OutErr,
+                                OutDone,
+                                OutErr2 | OutErr3,
+                                OutDone2 | OutDone3
+                              >,
+                              (left, right) => mergeState.BothRunning(right, left),
+                              (f) => mergeState.RightDone(f)
+                            )
+                          )
+                        }
+                      )
                     )
-                  )
-                )
+                  }
+                  case MergeStateOpCodes.OP_LEFT_DONE: {
+                    return unwrap(
+                      Effect.map(
+                        Effect.exit(pullR),
+                        Exit.match(
+                          (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
+                          Either.match(
+                            (done) => core.fromEffect(state.f(Exit.succeed(done))),
+                            (elem) => core.flatMap(core.write(elem), () => go(mergeState.LeftDone(state.f)))
+                          )
+                        )
+                      )
+                    )
+                  }
+                  case MergeStateOpCodes.OP_RIGHT_DONE: {
+                    return unwrap(
+                      Effect.map(
+                        Effect.exit(pullL),
+                        Exit.match(
+                          (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
+                          Either.match(
+                            (done) => core.fromEffect(state.f(Exit.succeed(done))),
+                            (elem) => core.flatMap(core.write(elem), () => go(mergeState.RightDone(state.f)))
+                          )
+                        )
+                      )
+                    )
+                  }
+                }
               }
+
               return pipe(
-                Fiber.await(fiber),
-                Effect.map(Exit.match<
-                  Err2,
-                  Either.Either<Done2, OutElem1 | OutElem>,
-                  Channel.Channel<
-                    Env1 | Env,
-                    unknown,
-                    unknown,
-                    unknown,
-                    OutErr2 | OutErr3,
-                    OutElem1 | OutElem,
-                    OutDone2 | OutDone3
-                  >
-                >(
-                  (cause) => core.fromEffect(op.f(Exit.failCause(cause))),
-                  Either.match(
-                    (done) => core.fromEffect(op.f(Exit.succeed(done))),
-                    (elem) =>
-                      pipe(
-                        core.write(elem),
-                        zipRight(go(single(op.f)))
-                      )
+                core.fromEffect(
+                  Effect.zipWith(
+                    Effect.forkDaemon(pullL),
+                    Effect.forkDaemon(pullR),
+                    (left, right): State =>
+                      mergeState.BothRunning<
+                        Env | Env1,
+                        OutErr,
+                        OutErr1,
+                        OutErr2 | OutErr3,
+                        OutElem | OutElem1,
+                        OutDone,
+                        OutDone1,
+                        OutDone2 | OutDone3
+                      >(left, right)
                   )
-                ))
+                ),
+                core.flatMap(go),
+                core.embedInput(input)
               )
             }
-
-            return pipe(
-              exit,
-              Exit.match(
-                (cause) => onDecision(done(Exit.failCause(cause))),
-                Either.match(
-                  (z) => onDecision(done(Exit.succeed(z))),
-                  (elem) =>
-                    Effect.succeed(
-                      pipe(
-                        core.write(elem),
-                        core.flatMap(() =>
-                          pipe(
-                            core.fromEffect(Effect.forkDaemon(pull)),
-                            core.flatMap((leftFiber) => go(both(leftFiber, fiber)))
-                          )
-                        )
-                      )
-                    )
-                )
-              )
-            )
-          }
-
-        const go = (
-          state: State
-        ): Channel.Channel<
-          Env | Env1,
-          unknown,
-          unknown,
-          unknown,
-          OutErr2 | OutErr3,
-          OutElem | OutElem1,
-          OutDone2 | OutDone3
-        > => {
-          switch (state._tag) {
-            case MergeStateOpCodes.OP_BOTH_RUNNING: {
-              const leftJoin = Effect.interruptible(Fiber.join(state.left))
-              const rightJoin = Effect.interruptible(Fiber.join(state.right))
-              return unwrap(
-                pipe(
-                  leftJoin,
-                  Effect.raceWith(
-                    rightJoin,
-                    (leftExit, rf) =>
-                      pipe(
-                        Fiber.interrupt(rf),
-                        Effect.zipRight(
-                          handleSide(leftExit, state.right, pullL)(
-                            leftDone,
-                            mergeState.BothRunning,
-                            (f) => mergeState.LeftDone(f)
-                          )
-                        )
-                      ),
-                    (rightExit, lf) =>
-                      pipe(
-                        Fiber.interrupt(lf),
-                        Effect.zipRight(
-                          handleSide(rightExit, state.left, pullR)(
-                            rightDone as (
-                              ex: Exit.Exit<InErr1 | OutErr1, OutDone1>
-                            ) => MergeDecision.MergeDecision<
-                              Env1 | Env,
-                              OutErr,
-                              OutDone,
-                              OutErr2 | OutErr3,
-                              OutDone2 | OutDone3
-                            >,
-                            (left, right) => mergeState.BothRunning(right, left),
-                            (f) => mergeState.RightDone(f)
-                          )
-                        )
-                      )
-                  )
-                )
-              )
-            }
-            case MergeStateOpCodes.OP_LEFT_DONE: {
-              return unwrap(
-                pipe(
-                  Effect.exit(pullR),
-                  Effect.map(Exit.match(
-                    (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
-                    Either.match(
-                      (done) => core.fromEffect(state.f(Exit.succeed(done))),
-                      (elem) => pipe(core.write(elem), core.flatMap(() => go(mergeState.LeftDone(state.f))))
-                    )
-                  ))
-                )
-              )
-            }
-            case MergeStateOpCodes.OP_RIGHT_DONE: {
-              return unwrap(
-                pipe(
-                  Effect.exit(pullL),
-                  Effect.map(
-                    Exit.match(
-                      (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
-                      Either.match(
-                        (done) => core.fromEffect(state.f(Exit.succeed(done))),
-                        (elem) => pipe(core.write(elem), core.flatMap(() => go(mergeState.RightDone(state.f))))
-                      )
-                    )
-                  )
-                )
-              )
-            }
-          }
-        }
-
-        return pipe(
-          core.fromEffect(
-            pipe(
-              Effect.forkDaemon(pullL),
-              Effect.zipWith(
-                Effect.forkDaemon(pullR),
-                (left, right): State =>
-                  mergeState.BothRunning<
-                    Env | Env1,
-                    OutErr,
-                    OutErr1,
-                    OutErr2 | OutErr3,
-                    OutElem | OutElem1,
-                    OutDone,
-                    OutDone1,
-                    OutDone2 | OutDone3
-                  >(left, right)
-              )
-            )
-          ),
-          core.flatMap(go),
-          core.embedInput(input)
-        )
-      }),
-      unwrapScoped
+          )
+        })
+      )
     )
 )
 

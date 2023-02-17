@@ -21,37 +21,34 @@ const proto = {
 }
 
 /** @internal */
-export const Pulled = <A>(value: A): UpstreamPullRequest.UpstreamPullRequest<A> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_PULLED },
-    value: { value }
-  })
-
-/** @internal */
-export const NoUpstream = (activeDownstreamCount: number): UpstreamPullRequest.UpstreamPullRequest<never> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_NO_UPSTREAM },
-    activeDownstreamCount: { value: activeDownstreamCount }
-  })
-
-/** @internal */
-export const isUpstreamPullRequest = (u: unknown): u is UpstreamPullRequest.UpstreamPullRequest<unknown> => {
-  return typeof u === "object" && u != null && UpstreamPullRequestTypeId in u
+export const Pulled = <A>(value: A): UpstreamPullRequest.UpstreamPullRequest<A> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_PULLED
+  op.value = value
+  return op
 }
+
+/** @internal */
+export const NoUpstream = (activeDownstreamCount: number): UpstreamPullRequest.UpstreamPullRequest<never> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_NO_UPSTREAM
+  op.activeDownstreamCount = activeDownstreamCount
+  return op
+}
+
+/** @internal */
+export const isUpstreamPullRequest = (u: unknown): u is UpstreamPullRequest.UpstreamPullRequest<unknown> =>
+  typeof u === "object" && u != null && UpstreamPullRequestTypeId in u
 
 /** @internal */
 export const isPulled = <A>(
   self: UpstreamPullRequest.UpstreamPullRequest<A>
-): self is UpstreamPullRequest.Pulled<A> => {
-  return self._tag === OpCodes.OP_PULLED
-}
+): self is UpstreamPullRequest.Pulled<A> => self._tag === OpCodes.OP_PULLED
 
 /** @internal */
 export const isNoUpstream = <A>(
   self: UpstreamPullRequest.UpstreamPullRequest<A>
-): self is UpstreamPullRequest.NoUpstream => {
-  return self._tag === OpCodes.OP_NO_UPSTREAM
-}
+): self is UpstreamPullRequest.NoUpstream => self._tag === OpCodes.OP_NO_UPSTREAM
 
 /** @internal */
 export const match = dual<

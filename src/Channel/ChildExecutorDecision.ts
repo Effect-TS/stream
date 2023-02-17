@@ -71,7 +71,7 @@ export interface Yield extends ChildExecutorDecision.Proto {
  * @since 1.0.0
  * @category constructors
  */
-export const Continue: ChildExecutorDecision = internal.Continue
+export const Continue: (_: void) => ChildExecutorDecision = internal.Continue
 
 /**
  * @since 1.0.0
@@ -83,7 +83,7 @@ export const Close: (value: unknown) => ChildExecutorDecision = internal.Close
  * @since 1.0.0
  * @category constructors
  */
-export const Yield: ChildExecutorDecision = internal.Yield
+export const Yield: (_: void) => ChildExecutorDecision = internal.Yield
 
 /**
  * Returns `true` if the specified value is a `ChildExecutorDecision`, `false`

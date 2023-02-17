@@ -54,13 +54,13 @@ export interface BufferSliding extends MergeStrategy.Proto {
  * @since 1.0.0
  * @category constructors
  */
-export const BackPressure: MergeStrategy = internal.BackPressure
+export const BackPressure: (_: void) => MergeStrategy = internal.BackPressure
 
 /**
  * @since 1.0.0
  * @category constructors
  */
-export const BufferSliding: MergeStrategy = internal.BufferSliding
+export const BufferSliding: (_: void) => MergeStrategy = internal.BufferSliding
 
 /**
  * Returns `true` if the specified value is a `MergeStrategy`, `false`

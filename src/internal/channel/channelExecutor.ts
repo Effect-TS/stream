@@ -105,7 +105,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       } else {
         try {
           if (this._currentChannel === undefined) {
-            result = ChannelState.Done
+            result = ChannelState.Done()
           } else {
             switch (this._currentChannel._tag) {
               case ChannelOpCodes.OP_BRACKET_OUT: {
@@ -125,66 +125,54 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                   const inputExecutor = this._input
                   this._input = undefined
 
-                  const drainer = pipe(
-                    bridgeInput.awaitRead(),
-                    Effect.flatMap(() =>
+                  const drainer = (): Effect.Effect<Env, never, unknown> =>
+                    Effect.flatMap(bridgeInput.awaitRead(), () =>
                       Effect.suspendSucceed(() => {
                         const state = inputExecutor.run() as ChannelState.Primitive
                         switch (state._tag) {
                           case ChannelStateOpCodes.OP_DONE: {
-                            return pipe(
+                            return Exit.match(
                               inputExecutor.getDone(),
-                              Exit.match(
-                                (cause) => bridgeInput.error(cause),
-                                (value) => bridgeInput.done(value)
-                              )
+                              (cause) => bridgeInput.error(cause),
+                              (value) => bridgeInput.done(value)
                             )
                           }
                           case ChannelStateOpCodes.OP_EMIT: {
-                            return pipe(
+                            return Effect.flatMap(
                               bridgeInput.emit(inputExecutor.getEmit()),
-                              Effect.flatMap(() => drainer)
+                              () => drainer()
                             )
                           }
                           case ChannelStateOpCodes.OP_FROM_EFFECT: {
-                            return pipe(
+                            return Effect.matchCauseEffect(
                               state.effect,
-                              Effect.matchCauseEffect(
-                                (cause) => bridgeInput.error(cause),
-                                () => drainer
-                              )
+                              (cause) => bridgeInput.error(cause),
+                              () => drainer()
                             )
                           }
                           case ChannelStateOpCodes.OP_READ: {
                             return readUpstream(
                               state,
-                              () => drainer,
+                              () => drainer(),
                               (cause) => bridgeInput.error(cause)
                             )
                           }
                         }
-                      })
-                    )
-                  ) as Effect.Effect<Env, never, unknown>
+                      })) as Effect.Effect<Env, never, unknown>
 
                   result = ChannelState.FromEffect(
-                    pipe(
-                      Effect.fork(drainer),
-                      Effect.flatMap((fiber) =>
+                    Effect.flatMap(
+                      Effect.forkDaemon(drainer()),
+                      (fiber) =>
                         Effect.sync(() =>
                           this.addFinalizer((exit) =>
-                            pipe(
-                              Fiber.interrupt(fiber),
-                              Effect.flatMap(() =>
-                                Effect.suspendSucceed(() => {
-                                  const effect = this.restorePipe(exit, inputExecutor)
-                                  return effect !== undefined ? effect : Effect.unit()
-                                })
-                              )
-                            )
+                            Effect.flatMap(Fiber.interrupt(fiber), () =>
+                              Effect.suspendSucceed(() => {
+                                const effect = this.restorePipe(exit, inputExecutor)
+                                return effect !== undefined ? effect : Effect.unit()
+                              }))
                           )
                         )
-                      )
                     )
                   )
                 }
@@ -229,7 +217,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                 this._currentChannel = (this._activeSubexecutor !== undefined ?
                   undefined :
                   core.unit()) as core.Primitive | undefined
-                result = ChannelState.Emit
+                result = ChannelState.Emit()
                 break
               }
 
@@ -472,7 +460,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     if (this._doneStack.length === 0) {
       this._done = Exit.succeed(value)
       this._currentChannel = undefined
-      return ChannelState.Done
+      return ChannelState.Done()
     }
 
     const head = this._doneStack[this._doneStack.length - 1] as Continuation.Primitive
@@ -487,7 +475,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       this._doneStack = finalizers.reverse()
       this._done = Exit.succeed(value)
       this._currentChannel = undefined
-      return ChannelState.Done
+      return ChannelState.Done()
     }
 
     const finalizerEffect = runFinalizers(finalizers.map((f) => f.finalizer), Exit.succeed(value))!
@@ -507,7 +495,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     if (this._doneStack.length === 0) {
       this._done = Exit.failCause(cause)
       this._currentChannel = undefined
-      return ChannelState.Done
+      return ChannelState.Done()
     }
 
     const head = this._doneStack[this._doneStack.length - 1] as Continuation.Primitive
@@ -522,7 +510,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       this._doneStack = finalizers.reverse()
       this._done = Exit.failCause(cause)
       this._currentChannel = undefined
-      return ChannelState.Done
+      return ChannelState.Done()
     }
 
     const finalizerEffect = runFinalizers(finalizers.map((f) => f.finalizer), Exit.failCause(cause))!
@@ -542,7 +530,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     this._currentChannel = undefined
     this._done = this._cancelled
     this._cancelled = undefined
-    return ChannelState.Done
+    return ChannelState.Done()
   }
 
   runBracketOut(bracketOut: core.BracketOut): ChannelState.ChannelState<Env, unknown> {
@@ -602,7 +590,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       case Subexecutor.OP_EMIT: {
         this._emitted = subexecutor.value
         this._activeSubexecutor = subexecutor.next
-        return ChannelState.Emit
+        return ChannelState.Emit()
       }
     }
   }
@@ -987,7 +975,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
       if (Option.isSome(emitSeparator)) {
         this._emitted = emitSeparator.value
-        return ChannelState.Emit
+        return ChannelState.Emit()
       }
 
       return undefined

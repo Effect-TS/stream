@@ -69,21 +69,26 @@ export interface Read extends
 {}
 
 /** @internal */
-export const Done: ChannelState<never, never> = Object.create(proto, {
-  _tag: { value: OpCodes.OP_DONE }
-})
+export const Done = (): ChannelState<never, never> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_DONE
+  return op
+}
 
 /** @internal */
-export const Emit: ChannelState<never, never> = Object.create(proto, {
-  _tag: { value: OpCodes.OP_EMIT }
-})
+export const Emit = (): ChannelState<never, never> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_EMIT
+  return op
+}
 
 /** @internal */
-export const FromEffect = <R, E, _>(effect: Effect.Effect<R, E, _>): ChannelState<R, E> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_FROM_EFFECT },
-    effect: { value: effect }
-  })
+export const FromEffect = <R, E, _>(effect: Effect.Effect<R, E, _>): ChannelState<R, E> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_FROM_EFFECT
+  op.effect = effect
+  return op
+}
 
 /** @internal */
 export const Read = <R>(
@@ -91,46 +96,37 @@ export const Read = <R>(
   onEffect: (effect: Effect.Effect<R, never, void>) => Effect.Effect<R, never, void>,
   onEmit: (value: unknown) => Effect.Effect<R, never, void> | undefined,
   onDone: (exit: Exit.Exit<unknown, unknown>) => Effect.Effect<R, never, void> | undefined
-): ChannelState<R, never> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_READ },
-    upstream: { value: upstream },
-    onEffect: { value: onEffect },
-    onEmit: { value: onEmit },
-    onDone: { value: onDone }
-  })
-
-/** @internal */
-export const isChannelState = (u: unknown): u is ChannelState<unknown, unknown> => {
-  return typeof u === "object" && u != null && ChannelStateTypeId in u
+): ChannelState<R, never> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_READ
+  op.upstream = upstream
+  op.onEffect = onEffect
+  op.onEmit = onEmit
+  op.onDone = onDone
+  return op
 }
 
 /** @internal */
-export const isDone = <R, E>(self: ChannelState<R, E>): self is Done => {
-  return (self as Primitive)._tag === OpCodes.OP_DONE
-}
+export const isChannelState = (u: unknown): u is ChannelState<unknown, unknown> =>
+  typeof u === "object" && u != null && ChannelStateTypeId in u
 
 /** @internal */
-export const isEmit = <R, E>(self: ChannelState<R, E>): self is Emit => {
-  return (self as Primitive)._tag === OpCodes.OP_EMIT
-}
+export const isDone = <R, E>(self: ChannelState<R, E>): self is Done => (self as Primitive)._tag === OpCodes.OP_DONE
 
 /** @internal */
-export const isFromEffect = <R, E>(self: ChannelState<R, E>): self is FromEffect => {
-  return (self as Primitive)._tag === OpCodes.OP_FROM_EFFECT
-}
+export const isEmit = <R, E>(self: ChannelState<R, E>): self is Emit => (self as Primitive)._tag === OpCodes.OP_EMIT
 
 /** @internal */
-export const isRead = <R, E>(self: ChannelState<R, E>): self is Read => {
-  return (self as Primitive)._tag === OpCodes.OP_READ
-}
+export const isFromEffect = <R, E>(self: ChannelState<R, E>): self is FromEffect =>
+  (self as Primitive)._tag === OpCodes.OP_FROM_EFFECT
 
 /** @internal */
-export const effect = <R, E>(self: ChannelState<R, E>): Effect.Effect<R, E, void> => {
-  return isFromEffect(self) ? self.effect as Effect.Effect<R, E, void> : Effect.unit()
-}
+export const isRead = <R, E>(self: ChannelState<R, E>): self is Read => (self as Primitive)._tag === OpCodes.OP_READ
 
 /** @internal */
-export const effectOrUndefinedIgnored = <R, E>(self: ChannelState<R, E>): Effect.Effect<R, E, void> | undefined => {
-  return isFromEffect(self) ? Effect.ignore(self.effect as Effect.Effect<R, E, void>) : undefined
-}
+export const effect = <R, E>(self: ChannelState<R, E>): Effect.Effect<R, E, void> =>
+  isFromEffect(self) ? self.effect as Effect.Effect<R, E, void> : Effect.unit()
+
+/** @internal */
+export const effectOrUndefinedIgnored = <R, E>(self: ChannelState<R, E>): Effect.Effect<R, E, void> | undefined =>
+  isFromEffect(self) ? Effect.ignore(self.effect as Effect.Effect<R, E, void>) : undefined

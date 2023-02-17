@@ -5,6 +5,7 @@ import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
 import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestServices from "@effect/io/internal_effect_untraced/testing/testServices"
 import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
@@ -13,6 +14,20 @@ import { constVoid, pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
+  it.effect("merge - slower stream", () =>
+    Effect.gen(function*($) {
+      const stream1 = Stream.make(1, 2, 3, 4)
+      const stream2 = Stream.tap(
+        Stream.make(5, 6, 7, 8),
+        () => TestServices.provideLive(Effect.sleep(Duration.millis(10)))
+      )
+      const result = yield* $(pipe(
+        Stream.merge(stream1, stream2),
+        Stream.runCollect
+      ))
+      assert.deepStrictEqual([...result], [1, 2, 3, 4, 5, 6, 7, 8])
+    }))
+
   it.effect("mergeAll - short circuiting", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(

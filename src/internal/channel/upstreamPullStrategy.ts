@@ -22,39 +22,36 @@ const proto = {
 }
 
 /** @internal */
-export const PullAfterNext = <A>(emitSeparator: Option.Option<A>): UpstreamPullStrategy.UpstreamPullStrategy<A> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_PULL_AFTER_NEXT },
-    emitSeparator: { value: emitSeparator }
-  })
+export const PullAfterNext = <A>(emitSeparator: Option.Option<A>): UpstreamPullStrategy.UpstreamPullStrategy<A> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_PULL_AFTER_NEXT
+  op.emitSeparator = emitSeparator
+  return op
+}
 
 /** @internal */
 export const PullAfterAllEnqueued = <A>(
   emitSeparator: Option.Option<A>
-): UpstreamPullStrategy.UpstreamPullStrategy<A> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_PULL_AFTER_ALL_ENQUEUED },
-    emitSeparator: { value: emitSeparator }
-  })
+): UpstreamPullStrategy.UpstreamPullStrategy<A> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_PULL_AFTER_ALL_ENQUEUED
+  op.emitSeparator = emitSeparator
+  return op
+}
 
 /** @internal */
-export const isUpstreamPullStrategy = (u: unknown): u is UpstreamPullStrategy.UpstreamPullStrategy<unknown> => {
-  return typeof u === "object" && u != null && UpstreamPullStrategyTypeId in u
-}
+export const isUpstreamPullStrategy = (u: unknown): u is UpstreamPullStrategy.UpstreamPullStrategy<unknown> =>
+  typeof u === "object" && u != null && UpstreamPullStrategyTypeId in u
 
 /** @internal */
 export const isPullAfterNext = <A>(
   self: UpstreamPullStrategy.UpstreamPullStrategy<A>
-): self is UpstreamPullStrategy.PullAfterNext<A> => {
-  return self._tag === OpCodes.OP_PULL_AFTER_NEXT
-}
+): self is UpstreamPullStrategy.PullAfterNext<A> => self._tag === OpCodes.OP_PULL_AFTER_NEXT
 
 /** @internal */
 export const isPullAfterAllEnqueued = <A>(
   self: UpstreamPullStrategy.UpstreamPullStrategy<A>
-): self is UpstreamPullStrategy.PullAfterAllEnqueued<A> => {
-  return self._tag === OpCodes.OP_PULL_AFTER_ALL_ENQUEUED
-}
+): self is UpstreamPullStrategy.PullAfterAllEnqueued<A> => self._tag === OpCodes.OP_PULL_AFTER_ALL_ENQUEUED
 
 /** @internal */
 export const match = dual<

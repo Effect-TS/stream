@@ -186,12 +186,13 @@ export interface Suspend extends
 export const acquireReleaseOut = <R, R2, E, Z>(
   self: Effect.Effect<R, E, Z>,
   release: (z: Z, e: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, unknown>
-): Channel.Channel<R | R2, unknown, unknown, unknown, E, Z, void> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_BRACKET_OUT },
-    acquire: { value: () => self },
-    finalizer: { value: release }
-  })
+): Channel.Channel<R | R2, unknown, unknown, unknown, E, Z, void> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_BRACKET_OUT
+  op.acquire = () => self
+  op.finalizer = release
+  return op
+}
 
 /** @internal */
 export const catchAllCause = dual<
@@ -233,12 +234,13 @@ export const catchAllCause = dual<
     OutErr1,
     OutElem | OutElem1,
     OutDone | OutDone1
-  > =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_FOLD },
-      channel: { value: self },
-      k: { value: new ContinuationKImpl(succeed, f) }
-    })
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_FOLD
+    op.channel = self
+    op.k = new ContinuationKImpl(succeed, f)
+    return op
+  }
 )
 
 /** @internal */
@@ -331,16 +333,17 @@ export const concatAllWith = <
   OutErr | OutErr2,
   OutElem,
   OutDone3
-> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_CONCAT_ALL },
-    combineInners: { value: f },
-    combineAll: { value: g },
-    onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none()) },
-    onEmit: { value: () => childExecutorDecision.Continue },
-    value: { value: () => channels },
-    k: { value: identity }
-  })
+> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_CONCAT_ALL
+  op.combineInners = f
+  op.combineAll = g
+  op.onPull = () => upstreamPullStrategy.PullAfterNext(Option.none())
+  op.onEmit = () => childExecutorDecision.Continue
+  op.value = () => channels
+  op.k = identity
+  return op
+}
 
 /** @internal */
 export const concatMapWith = dual<
@@ -422,16 +425,17 @@ export const concatMapWith = dual<
     OutErr | OutErr2,
     OutElem2,
     OutDone3
-  > =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_CONCAT_ALL },
-      combineInners: { value: g },
-      combineAll: { value: h },
-      onPull: { value: () => upstreamPullStrategy.PullAfterNext(Option.none()) },
-      onEmit: { value: () => childExecutorDecision.Continue },
-      value: { value: () => self },
-      k: { value: f }
-    })
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_CONCAT_ALL
+    op.combineInners = g
+    op.combineAll = h
+    op.onPull = () => upstreamPullStrategy.PullAfterNext(Option.none())
+    op.onEmit = () => childExecutorDecision.Continue
+    op.value = () => self
+    op.k = f
+    return op
+  }
 )
 
 /** @internal */
@@ -526,16 +530,17 @@ export const concatMapWithCustom = dual<
     OutErr | OutErr2,
     OutElem2,
     OutDone3
-  > =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_CONCAT_ALL },
-      combineInners: { value: g },
-      combineAll: { value: h },
-      onPull: { value: onPull },
-      onEmit: { value: onEmit },
-      value: { value: () => self },
-      k: { value: f }
-    })
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_CONCAT_ALL
+    op.combineInners = g
+    op.combineAll = h
+    op.onPull = onPull
+    op.onEmit = onEmit
+    op.value = () => self
+    op.k = f
+    return op
+  }
 )
 
 /** @internal */
@@ -554,12 +559,13 @@ export const embedInput = dual<
   <Env, OutErr, OutElem, OutDone, InErr, InElem, InDone>(
     self: Channel.Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>,
     input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
-  ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_BRIDGE },
-      input: { value: input },
-      channel: { value: self }
-    })
+  ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_BRIDGE
+    op.input = input
+    op.channel = self
+    return op
+  }
 )
 
 /** @internal */
@@ -578,12 +584,13 @@ export const ensuringWith = dual<
   <Env, InErr, InElem, InDone, OutElem, Env2, OutErr, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
-  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_ENSURING },
-      channel: { value: self },
-      finalizer: { value: finalizer }
-    })
+  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_ENSURING
+    op.channel = self
+    op.finalizer = finalizer
+    return op
+  }
 )
 
 /** @internal */
@@ -608,11 +615,12 @@ export const failCause = <E>(
 /** @internal */
 export const failCauseSync = <E>(
   evaluate: LazyArg<Cause.Cause<E>>
-): Channel.Channel<never, unknown, unknown, unknown, E, never, never> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_FAIL },
-    error: { value: evaluate }
-  })
+): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_FAIL
+  op.error = evaluate
+  return op
+}
 
 /** @internal */
 export const flatMap = dual<
@@ -654,12 +662,13 @@ export const flatMap = dual<
     OutErr | OutErr1,
     OutElem | OutElem1,
     OutDone2
-  > =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_FOLD },
-      channel: { value: self },
-      k: { value: new ContinuationKImpl(f, failCause) }
-    })
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_FOLD
+    op.channel = self
+    op.k = new ContinuationKImpl(f, failCause)
+    return op
+  }
 )
 
 /** @internal */
@@ -770,22 +779,24 @@ export const foldCauseChannel = dual<
     OutErr2 | OutErr3,
     OutElem | OutElem1 | OutElem2,
     OutDone2 | OutDone3
-  > =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_FOLD },
-      channel: { value: self },
-      k: { value: new ContinuationKImpl(onSuccess, onError as any) }
-    })
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_FOLD
+    op.channel = self
+    op.k = new ContinuationKImpl(onSuccess, onError as any)
+    return op
+  }
 )
 
 /** @internal */
 export const fromEffect = <R, E, A>(
   effect: Effect.Effect<R, E, A>
-): Channel.Channel<R, unknown, unknown, unknown, E, never, A> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_FROM_EFFECT },
-    effect: { value: () => effect }
-  })
+): Channel.Channel<R, unknown, unknown, unknown, E, never, A> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_FROM_EFFECT
+  op.effect = () => effect
+  return op
+}
 
 /** @internal */
 export const pipeTo = dual<
@@ -803,12 +814,13 @@ export const pipeTo = dual<
   <Env, InErr, InElem, InDone, Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     that: Channel.Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
-  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_PIPE_TO },
-      left: { value: () => self },
-      right: { value: () => that }
-    })
+  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_PIPE_TO
+    op.left = () => self
+    op.right = () => that
+    return op
+  }
 )
 
 /** @internal */
@@ -827,23 +839,25 @@ export const provideContext = dual<
   <InErr, InElem, InDone, OutErr, OutElem, OutDone, Env>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     env: Context.Context<Env>
-  ): Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
-    Object.create(proto, {
-      _tag: { value: OpCodes.OP_PROVIDE },
-      context: { value: () => env },
-      inner: { value: self }
-    })
+  ): Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_PROVIDE
+    op.context = () => env
+    op.inner = self
+    return op
+  }
 )
 
 /** @internal */
 export const readOrFail = <In, E>(
   error: E
-): Channel.Channel<never, unknown, In, unknown, E, never, In> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_READ },
-    more: { value: succeed },
-    done: { value: new ContinuationKImpl(() => fail(error), () => fail(error)) }
-  })
+): Channel.Channel<never, unknown, In, unknown, E, never, In> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_READ
+  op.more = succeed
+  op.done = new ContinuationKImpl(() => fail(error), () => fail(error))
+  return op
+}
 
 /** @internal */
 export const readWith = <
@@ -907,12 +921,13 @@ export const readWithCause = <
   OutErr | OutErr2 | OutErr3,
   OutElem | OutElem2 | OutElem3,
   OutDone | OutDone2 | OutDone3
-> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_READ },
-    more: { value: input },
-    done: { value: new ContinuationKImpl(done, halt as any) }
-  })
+> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_READ
+  op.more = input
+  op.done = new ContinuationKImpl(done, halt as any)
+  return op
+}
 
 /** @internal */
 export const succeed = <A>(
@@ -924,35 +939,41 @@ export const succeed = <A>(
 /** @internal */
 export const succeedNow = <OutDone>(
   result: OutDone
-): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_SUCCEED_NOW },
-    terminal: { value: result }
-  })
+): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_SUCCEED_NOW
+  op.terminal = result
+  return op
+}
 
 /** @internal */
 export const suspend = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   evaluate: LazyArg<Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
-): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_SUSPEND },
-    channel: { value: evaluate }
-  })
+): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_SUSPEND
+  op.channel = evaluate
+  return op
+}
 
 export const sync = <OutDone>(
   evaluate: LazyArg<OutDone>
-): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_SUCCEED },
-    evaluate: { value: evaluate }
-  })
+): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_SUCCEED
+  op.evaluate = evaluate
+  return op
+}
 
 /** @internal */
 export const unit = (): Channel.Channel<never, unknown, unknown, unknown, never, never, void> => succeedNow(undefined)
 
 /** @internal */
-export const write = <OutElem>(out: OutElem): Channel.Channel<never, unknown, unknown, unknown, never, OutElem, void> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_EMIT },
-    out: { value: out }
-  })
+export const write = <OutElem>(
+  out: OutElem
+): Channel.Channel<never, unknown, unknown, unknown, never, OutElem, void> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_EMIT
+  op.out = out
+  return op
+}
