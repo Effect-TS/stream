@@ -98,12 +98,11 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
 
   awaitRead(): Effect.Effect<never, never, unknown> {
     return bodyWithTrace((trace) => {
-      return pipe(
+      return Effect.flatten(
         Ref.modify(this.ref, (state) =>
           state._tag === OP_STATE_EMPTY ?
             [Deferred.await(state.notifyProducer), state as State<Err, Elem, Done>] :
-            [Effect.unit(), state]),
-        Effect.flatten
+            [Effect.unit(), state])
       ).traced(trace)
     })
   }
@@ -197,9 +196,9 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
             }
             case OP_STATE_EMIT: {
               return [
-                pipe(
+                Effect.forEachDiscard(
                   state.notifyConsumers,
-                  Effect.forEachDiscard((deferred) => Deferred.failCause(deferred, cause))
+                  (deferred) => Deferred.failCause(deferred, cause)
                 ),
                 stateError(cause) as State<Err, Elem, Done>
               ]
@@ -220,7 +219,7 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   take(): Effect.Effect<never, never, Exit.Exit<Either.Either<Err, Done>, Elem>> {
     return bodyWithTrace((trace) => {
       return this.takeWith(
-        (cause) => Exit.failCause(pipe(cause, Cause.map(Either.left))),
+        (cause) => Exit.failCause(Cause.map(cause, Either.left)),
         (elem) => Exit.succeed(elem) as Exit.Exit<Either.Either<Err, Done>, Elem>,
         (done) => Exit.fail(Either.right(done))
       ).traced(trace)
@@ -241,13 +240,12 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
               switch (state._tag) {
                 case OP_STATE_EMPTY: {
                   return [
-                    pipe(
-                      Deferred.succeed<never, void>(state.notifyProducer, void 0),
-                      Effect.zipRight(
-                        pipe(
-                          Deferred.await(deferred),
-                          Effect.matchCause(onError, Either.match(onDone, onElement))
-                        )
+                    Effect.zipRight(
+                      Deferred.succeed(state.notifyProducer, void 0),
+                      Effect.matchCause(
+                        Deferred.await(deferred),
+                        onError,
+                        Either.match(onDone, onElement)
                       )
                     ),
                     stateEmit([deferred])
@@ -255,9 +253,10 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
                 }
                 case OP_STATE_EMIT: {
                   return [
-                    pipe(
+                    Effect.matchCause(
                       Deferred.await(deferred),
-                      Effect.matchCause(onError, Either.match(onDone, onElement))
+                      onError,
+                      Either.match(onDone, onElement)
                     ),
                     stateEmit([...state.notifyConsumers, deferred])
                   ]

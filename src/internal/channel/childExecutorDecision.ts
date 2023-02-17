@@ -16,47 +16,45 @@ const proto = {
 }
 
 /** @internal */
-export const Continue: ChildExecutorDecision.ChildExecutorDecision = Object.create(proto, {
-  _tag: { value: OpCodes.OP_CONTINUE }
-})
-
-/** @internal */
-export const Close = (value: unknown): ChildExecutorDecision.ChildExecutorDecision =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_CLOSE },
-    value: { value }
-  })
-
-/** @internal */
-export const Yield: ChildExecutorDecision.ChildExecutorDecision = Object.create(proto, {
-  _tag: { value: OpCodes.OP_YIELD }
-})
-
-/** @internal */
-export const isChildExecutorDecision = (u: unknown): u is ChildExecutorDecision.ChildExecutorDecision => {
-  return typeof u === "object" && u != null && ChildExecutorDecisionTypeId in u
+export const Continue = (_: void): ChildExecutorDecision.ChildExecutorDecision => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_CONTINUE
+  return op
 }
+
+/** @internal */
+export const Close = (value: unknown): ChildExecutorDecision.ChildExecutorDecision => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_CLOSE
+  op.value = value
+  return op
+}
+
+/** @internal */
+export const Yield = (_: void): ChildExecutorDecision.ChildExecutorDecision => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_YIELD
+  return op
+}
+
+/** @internal */
+export const isChildExecutorDecision = (u: unknown): u is ChildExecutorDecision.ChildExecutorDecision =>
+  typeof u === "object" && u != null && ChildExecutorDecisionTypeId in u
 
 /** @internal */
 export const isContinue = (
   self: ChildExecutorDecision.ChildExecutorDecision
-): self is ChildExecutorDecision.Continue => {
-  return self._tag === OpCodes.OP_CONTINUE
-}
+): self is ChildExecutorDecision.Continue => self._tag === OpCodes.OP_CONTINUE
 
 /** @internal */
 export const isClose = (
   self: ChildExecutorDecision.ChildExecutorDecision
-): self is ChildExecutorDecision.Close => {
-  return self._tag === OpCodes.OP_CLOSE
-}
+): self is ChildExecutorDecision.Close => self._tag === OpCodes.OP_CLOSE
 
 /** @internal */
 export const isYield = (
   self: ChildExecutorDecision.ChildExecutorDecision
-): self is ChildExecutorDecision.Yield => {
-  return self._tag === OpCodes.OP_YIELD
-}
+): self is ChildExecutorDecision.Yield => self._tag === OpCodes.OP_YIELD
 
 /** @internal */
 export const match = dual<

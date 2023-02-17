@@ -249,8 +249,8 @@ describe.concurrent("Channel", () => {
               () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
             ),
             Option.match(
-              () => ChildExecutorDecision.Yield,
-              () => ChildExecutorDecision.Continue
+              () => ChildExecutorDecision.Yield(),
+              () => ChildExecutorDecision.Continue()
             )
           ),
           Channel.runCollect,
@@ -297,8 +297,8 @@ describe.concurrent("Channel", () => {
             constVoid,
             () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none()),
             Option.match(
-              () => ChildExecutorDecision.Yield,
-              () => ChildExecutorDecision.Continue
+              () => ChildExecutorDecision.Yield(),
+              () => ChildExecutorDecision.Continue()
             )
           ),
           Channel.runCollect,

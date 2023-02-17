@@ -16,29 +16,30 @@ const proto = {
 }
 
 /** @internal */
-export const BackPressure: MergeStrategy.MergeStrategy = Object.create(proto, {
-  _tag: { value: OpCodes.OP_BACK_PRESSURE }
-})
-
-/** @internal */
-export const BufferSliding: MergeStrategy.MergeStrategy = Object.create(proto, {
-  _tag: { value: OpCodes.OP_BUFFER_SLIDING }
-})
-
-/** @internal */
-export const isMergeStrategy = (u: unknown): u is MergeStrategy.MergeStrategy => {
-  return typeof u === "object" && u != null && MergeStrategyTypeId in u
+export const BackPressure = (_: void): MergeStrategy.MergeStrategy => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_BACK_PRESSURE
+  return op
 }
 
 /** @internal */
-export const isBackPressure = (self: MergeStrategy.MergeStrategy): self is MergeStrategy.BackPressure => {
-  return self._tag === OpCodes.OP_BACK_PRESSURE
+export const BufferSliding = (_: void): MergeStrategy.MergeStrategy => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_BUFFER_SLIDING
+  return op
 }
 
 /** @internal */
-export const isBufferSliding = (self: MergeStrategy.MergeStrategy): self is MergeStrategy.BufferSliding => {
-  return self._tag === OpCodes.OP_BUFFER_SLIDING
-}
+export const isMergeStrategy = (u: unknown): u is MergeStrategy.MergeStrategy =>
+  typeof u === "object" && u != null && MergeStrategyTypeId in u
+
+/** @internal */
+export const isBackPressure = (self: MergeStrategy.MergeStrategy): self is MergeStrategy.BackPressure =>
+  self._tag === OpCodes.OP_BACK_PRESSURE
+
+/** @internal */
+export const isBufferSliding = (self: MergeStrategy.MergeStrategy): self is MergeStrategy.BufferSliding =>
+  self._tag === OpCodes.OP_BUFFER_SLIDING
 
 /** @internal */
 export const match = dual<

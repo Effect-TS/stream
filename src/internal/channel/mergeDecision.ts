@@ -51,20 +51,24 @@ export interface Await extends
 {}
 
 /** @internal */
-export const Done = <R, E, Z>(effect: Effect.Effect<R, E, Z>): MergeDecision.MergeDecision<R, unknown, unknown, E, Z> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_DONE },
-    effect: { value: effect }
-  })
+export const Done = <R, E, Z>(
+  effect: Effect.Effect<R, E, Z>
+): MergeDecision.MergeDecision<R, unknown, unknown, E, Z> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_DONE
+  op.effect = effect
+  return op
+}
 
 /** @internal */
 export const Await = <R, E0, Z0, E, Z>(
   f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>
-): MergeDecision.MergeDecision<R, E0, Z0, E, Z> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_AWAIT },
-    f: { value: f }
-  })
+): MergeDecision.MergeDecision<R, E0, Z0, E, Z> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_AWAIT
+  op.f = f
+  return op
+}
 
 /** @internal */
 export const AwaitConst = <R, E, Z>(
@@ -74,9 +78,8 @@ export const AwaitConst = <R, E, Z>(
 /** @internal */
 export const isMergeDecision = (
   u: unknown
-): u is MergeDecision.MergeDecision<unknown, unknown, unknown, unknown, unknown> => {
-  return typeof u === "object" && u != null && MergeDecisionTypeId in u
-}
+): u is MergeDecision.MergeDecision<unknown, unknown, unknown, unknown, unknown> =>
+  typeof u === "object" && u != null && MergeDecisionTypeId in u
 
 /** @internal */
 export const match = dual<

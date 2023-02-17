@@ -23,36 +23,33 @@ const proto = {
 export const BothRunning = <Env, Err, Err1, Err2, Elem, Done, Done1, Done2>(
   left: Fiber.Fiber<Err, Either.Either<Done, Elem>>,
   right: Fiber.Fiber<Err1, Either.Either<Done1, Elem>>
-): MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_BOTH_RUNNING },
-    left: { value: left },
-    right: { value: right }
-  })
+): MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_BOTH_RUNNING
+  op.left = left
+  op.right = right
+  return op
+}
 
 /** @internal */
 export const LeftDone = <Env, Err, Err1, Err2, Elem, Done, Done1, Done2>(
   f: (exit: Exit.Exit<Err1, Done1>) => Effect.Effect<Env, Err2, Done2>
-): MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2> =>
-  Object.create(proto, {
-    _tag: { value: OpCodes.OP_LEFT_DONE },
-    f: { value: f }
-  })
+): MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_LEFT_DONE
+  op.f = f
+  return op
+}
 
 /** @internal */
 export const RightDone = <Env, Err, Err1, Err2, Elem, Done, Done1, Done2>(
   f: (exit: Exit.Exit<Err, Done>) => Effect.Effect<Env, Err2, Done2>
-): MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2> =>
-  Object.create(proto, {
-    op: {
-      value: OpCodes.OP_RIGHT_DONE,
-      enumerable: true
-    },
-    f: {
-      value: f,
-      enumerable: true
-    }
-  })
+): MergeState.MergeState<Env, Err, Err1, Err2, Elem, Done, Done1, Done2> => {
+  const op = Object.create(proto)
+  op._tag = OpCodes.OP_RIGHT_DONE
+  op.f = f
+  return op
+}
 
 /** @internal */
 export const isMergeState = (

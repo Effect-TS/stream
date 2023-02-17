@@ -2617,7 +2617,7 @@ export const flatMapParSwitchBuffer = dual<
           (out) => f(out).channel,
           n,
           bufferSize,
-          MergeStrategy.BufferSliding
+          MergeStrategy.BufferSliding()
         )
       )
     )
@@ -3667,36 +3667,33 @@ export const mapEffect = dual<
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> =>
-    suspend(() => {
-      const loop = (
-        iterator: Iterator<A>
-      ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A2>, unknown> => {
-        const next = iterator.next()
-        if (next.done) {
-          return core.readWithCause(
-            (elem) => loop(elem[Symbol.iterator]()),
-            core.failCause,
-            core.succeed
-          )
-        } else {
-          return pipe(
-            f(next.value),
-            Effect.map((a2) =>
-              pipe(
-                core.write(Chunk.of(a2)),
-                core.flatMap(() => loop(iterator))
-              )
-            ),
-            channel.unwrap
-          )
-        }
+  ): Stream.Stream<R | R2, E | E2, A2> => {
+    const loop = (
+      iterator: Iterator<A>
+    ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A2>, unknown> => {
+      const next = iterator.next()
+      if (next.done) {
+        return core.readWithCause(
+          (elem) => loop(elem[Symbol.iterator]()),
+          core.failCause,
+          core.succeed
+        )
+      } else {
+        const value = next.value
+        return channel.unwrap(
+          Effect.map(f(value), (a2) =>
+            core.flatMap(
+              core.write(Chunk.of(a2)),
+              () => loop(iterator)
+            ))
+        )
       }
-      return new StreamImpl(pipe(
-        self.channel,
-        core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))
-      ))
-    })
+    }
+    return new StreamImpl(pipe(
+      self.channel,
+      core.pipeTo(core.suspend(() => loop(Chunk.empty<A>()[Symbol.iterator]())))
+    ))
+  }
 )
 
 /** @internal */
@@ -3972,14 +3969,13 @@ export const mergeWithHaltStrategy = dual<
         terminate || !Exit.isSuccess(exit) ?
           MergeDecision.Done(Effect.done(exit)) :
           MergeDecision.Await(Effect.done)
+
     return new StreamImpl<R | R2, E | E2, A3 | A4>(
-      pipe(
-        pipe(self, map(left)).channel,
-        channel.mergeWith(
-          pipe(that, map(right)).channel,
-          handler(strategy === haltStrategy.Either || strategy === haltStrategy.Left),
-          handler(strategy === haltStrategy.Either || strategy === haltStrategy.Right)
-        )
+      channel.mergeWith(
+        map(self, left).channel,
+        map(that, right).channel,
+        handler(strategy._tag === "Either" || strategy._tag === "Left"),
+        handler(strategy._tag === "Either" || strategy._tag === "Right")
       )
     )
   }
@@ -6196,7 +6192,7 @@ export const tap = dual<
   <R, E, A, R2, E2, _>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, _>
-  ): Stream.Stream<R | R2, E | E2, A> => pipe(self, mapEffect((a) => pipe(f(a), Effect.as(a))))
+  ): Stream.Stream<R | R2, E | E2, A> => mapEffect(self, (a) => Effect.as(f(a), a))
 )
 
 /** @internal */
