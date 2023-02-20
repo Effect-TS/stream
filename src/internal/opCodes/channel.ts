@@ -81,3 +81,9 @@ export const OP_SUSPEND = "Suspend" as const
 
 /** @internal */
 export type OP_SUSPEND = typeof OP_SUSPEND
+
+/** @internal */
+export const OP_TRACED = "Traced" as const
+
+/** @internal */
+export type OP_TRACED = typeof OP_TRACED

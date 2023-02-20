@@ -15,8 +15,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@effect/stream/test": path.resolve(__dirname, "/test"),
-      "@effect/stream": path.resolve(__dirname, "/src")
+      "@effect/stream/test": path.join(__dirname, "test"),
+      "@effect/stream": path.join(__dirname, "src")
     }
   }
 })
