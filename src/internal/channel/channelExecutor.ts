@@ -1,4 +1,6 @@
+import * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
+import * as MRef from "@effect/data/MutableRef"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
@@ -74,6 +76,8 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
   private _doneStack: Array<ErasedContinuation<Env>> = []
 
   private _emitted: unknown | undefined = undefined
+
+  private _traceStack: Array<Debug.SourceLocation> = []
 
   private _executeCloseLastSubstream: (
     effect: Effect.Effect<Env, never, unknown>
@@ -335,6 +339,22 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                 this._currentChannel = this._currentChannel.channel() as core.Primitive
                 break
               }
+
+              case ChannelOpCodes.OP_TRACED: {
+                this._traceStack.push(this._currentChannel.trace)
+                this.addFinalizer(() =>
+                  Effect.sync(() => {
+                    this._traceStack.pop()
+                  })
+                )
+                this._currentChannel = this._currentChannel.channel as core.Primitive
+                break
+              }
+
+              default: {
+                // @ts-expect-error
+                this._currentChannel._tag
+              }
             }
           }
         } catch (error) {
@@ -343,6 +363,20 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
       }
     }
     return result
+  }
+
+  stackToLines(): Chunk.Chunk<Debug.SourceLocation> {
+    if (this._traceStack.length === 0) {
+      return Chunk.empty()
+    }
+    const lines: Array<Debug.SourceLocation> = []
+    let current = this._traceStack.length - 1
+    while (current >= 0 && lines.length < Debug.runtimeDebug.traceStackLimit) {
+      const value = this._traceStack[current]!
+      lines.push(value)
+      current = current - 1
+    }
+    return Chunk.unsafeFromArray(lines)
   }
 
   getDone(): Exit.Exit<OutErr, OutDone> {
@@ -489,6 +523,40 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     )
 
     return ChannelState.FromEffect(effect)
+  }
+
+  annotate<E>(_cause: Cause.Cause<E>) {
+    let cause = _cause
+    if (Cause.isAnnotatedType(cause) && Cause.isStackAnnotation(cause.annotation)) {
+      const stack = cause.annotation.stack
+      const currentStack = this.stackToLines()
+      cause = Cause.annotated(
+        cause.cause,
+        new Cause.StackAnnotation(
+          pipe(
+            stack.length === 0 ?
+              currentStack :
+              currentStack.length === 0 ?
+              stack :
+              Chunk.unsafeLast(stack) === Chunk.unsafeLast(currentStack) ?
+              stack :
+              pipe(
+                stack,
+                Chunk.concat(currentStack)
+              ),
+            Chunk.dedupeAdjacent,
+            Chunk.take(Debug.runtimeDebug.traceStackLimit)
+          ),
+          cause.annotation.seq
+        )
+      )
+    } else {
+      cause = Cause.annotated(
+        cause,
+        new Cause.StackAnnotation(this.stackToLines(), MRef.getAndIncrement(Cause.globalErrorSeq))
+      )
+    }
+    return cause
   }
 
   doneHalt(cause: Cause.Cause<unknown>): ChannelState.ChannelState<Env, unknown> | undefined {

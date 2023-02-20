@@ -4,6 +4,7 @@
 import type * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
 import type * as Cause from "@effect/io/Cause"
+import type * as Debug from "@effect/io/Debug"
 import type * as Deferred from "@effect/io/Deferred"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
@@ -69,7 +70,9 @@ export type ChannelTypeId = typeof ChannelTypeId
  */
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-{}
+{
+  traced(trace: Debug.Trace): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
 
 /**
  * @since 1.0.0

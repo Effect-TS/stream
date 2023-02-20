@@ -1,6 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
 import * as Cause from "@effect/io/Cause"
+import * as Debug from "@effect/io/Debug"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Channel from "@effect/stream/Channel"
@@ -14,7 +15,7 @@ import { ContinuationKImpl } from "@effect/stream/internal/channel/continuation"
 import * as upstreamPullStrategy from "@effect/stream/internal/channel/upstreamPullStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/channel"
 import * as Either from "@fp-ts/core/Either"
-import { constVoid, dual, identity, pipe } from "@fp-ts/core/Function"
+import { constVoid, identity } from "@fp-ts/core/Function"
 import type { LazyArg } from "@fp-ts/core/Function"
 import * as Option from "@fp-ts/core/Option"
 
@@ -39,7 +40,17 @@ const channelVariance = {
 
 /** @internal */
 const proto = {
-  [ChannelTypeId]: channelVariance
+  [ChannelTypeId]: channelVariance,
+  traced(trace: Debug.Trace) {
+    if (trace) {
+      return Object.create(proto, {
+        _tag: { value: OpCodes.OP_TRACED },
+        channel: { value: this },
+        trace: { value: trace }
+      })
+    }
+    return this
+  }
 }
 
 /** @internal */
@@ -66,6 +77,7 @@ export type Primitive =
   | Succeed
   | SucceedNow
   | Suspend
+  | Traced
 
 /** @internal */
 export interface BracketOut extends
@@ -183,19 +195,33 @@ export interface Suspend extends
 {}
 
 /** @internal */
-export const acquireReleaseOut = <R, R2, E, Z>(
-  self: Effect.Effect<R, E, Z>,
-  release: (z: Z, e: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, unknown>
-): Channel.Channel<R | R2, unknown, unknown, unknown, E, Z, void> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_BRACKET_OUT
-  op.acquire = () => self
-  op.finalizer = release
-  return op
-}
+export interface Traced extends
+  Op<OpCodes.OP_TRACED, {
+    readonly channel: ErasedChannel
+    readonly trace: NonNullable<Debug.Trace>
+  }>
+{}
 
 /** @internal */
-export const catchAllCause = dual<
+export const acquireReleaseOut = Debug.dualWithTrace<
+  <R2, Z>(
+    release: (z: Z, e: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, unknown>
+  ) => <R, E>(self: Effect.Effect<R, E, Z>) => Channel.Channel<R | R2, unknown, unknown, unknown, E, Z, void>,
+  <R, R2, E, Z>(
+    self: Effect.Effect<R, E, Z>,
+    release: (z: Z, e: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, unknown>
+  ) => Channel.Channel<R | R2, unknown, unknown, unknown, E, Z, void>
+>(2, (trace, restore) =>
+  (self, release) => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_BRACKET_OUT
+    op.acquire = () => self
+    op.finalizer = restore(release)
+    return op.traced(trace)
+  })
+
+/** @internal */
+export const catchAllCause = Debug.dualWithTrace<
   <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
     f: (cause: Cause.Cause<OutErr>) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
   ) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
@@ -223,47 +249,49 @@ export const catchAllCause = dual<
   >
 >(
   2,
-  <Env, InErr, InElem, InDone, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (cause: Cause.Cause<OutErr>) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel.Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1,
-    OutElem | OutElem1,
-    OutDone | OutDone1
-  > => {
-    const op = Object.create(proto)
-    op._tag = OpCodes.OP_FOLD
-    op.channel = self
-    op.k = new ContinuationKImpl(succeed, f)
-    return op
-  }
+  (trace, restore) =>
+    <Env, InErr, InElem, InDone, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+      f: (cause: Cause.Cause<OutErr>) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    ): Channel.Channel<
+      Env | Env1,
+      InErr & InErr1,
+      InElem & InElem1,
+      InDone & InDone1,
+      OutErr1,
+      OutElem | OutElem1,
+      OutDone | OutDone1
+    > => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_FOLD
+      op.channel = self
+      op.k = new ContinuationKImpl(succeed, restore(f))
+      return op.traced(trace)
+    }
 )
 
 /** @internal */
-export const collectElements = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-): Channel.Channel<
-  Env,
-  InErr,
-  InElem,
-  InDone,
-  OutErr,
-  never,
-  readonly [Chunk.Chunk<OutElem>, OutDone]
-> => {
-  return suspend(() => {
-    const builder: Array<OutElem> = []
-    return pipe(
-      self,
-      pipeTo(collectElementsReader(builder)),
-      flatMap((value) => sync(() => [Chunk.fromIterable(builder), value]))
-    )
-  })
-}
+export const collectElements = Debug.methodWithTrace((trace) =>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ): Channel.Channel<
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    never,
+    readonly [Chunk.Chunk<OutElem>, OutDone]
+  > => {
+    return suspend(() => {
+      const builder: Array<OutElem> = []
+      return flatMap(
+        pipeTo(self, collectElementsReader(builder)),
+        (value) => sync(() => [Chunk.fromIterable(builder), value] as const)
+      )
+    }).traced(trace)
+  }
+)
 
 /** @internal */
 const collectElementsReader = <OutErr, OutElem, OutDone>(
@@ -271,11 +299,11 @@ const collectElementsReader = <OutErr, OutElem, OutDone>(
 ): Channel.Channel<never, OutErr, OutElem, OutDone, OutErr, never, OutDone> => {
   return readWith(
     (outElem) =>
-      pipe(
+      flatMap(
         sync(() => {
           builder.push(outElem)
         }),
-        flatMap(() => collectElementsReader<OutErr, OutElem, OutDone>(builder))
+        () => collectElementsReader<OutErr, OutElem, OutDone>(builder)
       ),
     fail,
     succeedNow
@@ -283,70 +311,73 @@ const collectElementsReader = <OutErr, OutElem, OutDone>(
 }
 
 /** @internal */
-export const concatAll = <Env, InErr, InElem, InDone, OutErr, OutElem>(
-  channels: Channel.Channel<
+export const concatAll = Debug.methodWithTrace((trace) =>
+  <Env, InErr, InElem, InDone, OutErr, OutElem>(
+    channels: Channel.Channel<
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, any>,
+      any
+    >
+  ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, any> =>
+    concatAllWith(channels, constVoid, constVoid).traced(trace)
+)
+
+/** @internal */
+export const concatAllWith = Debug.methodWithTrace((trace, restore) =>
+  <
     Env,
     InErr,
     InElem,
     InDone,
     OutErr,
-    Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, any>,
-    any
-  >
-): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, any> => {
-  return concatAllWith(channels, constVoid, constVoid)
-}
+    OutElem,
+    OutDone,
+    OutDone2,
+    OutDone3,
+    Env2,
+    InErr2,
+    InElem2,
+    InDone2,
+    OutErr2
+  >(
+    channels: Channel.Channel<
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem, OutDone>,
+      OutDone2
+    >,
+    f: (o: OutDone, o1: OutDone) => OutDone,
+    g: (o: OutDone, o2: OutDone2) => OutDone3
+  ): Channel.Channel<
+    Env | Env2,
+    InErr & InErr2,
+    InElem & InElem2,
+    InDone & InDone2,
+    OutErr | OutErr2,
+    OutElem,
+    OutDone3
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_CONCAT_ALL
+    op.combineInners = restore(f)
+    op.combineAll = restore(g)
+    op.onPull = () => upstreamPullStrategy.PullAfterNext(Option.none())
+    op.onEmit = () => childExecutorDecision.Continue
+    op.value = () => channels
+    op.k = identity
+    return op.traced(trace)
+  }
+)
 
 /** @internal */
-export const concatAllWith = <
-  Env,
-  InErr,
-  InElem,
-  InDone,
-  OutErr,
-  OutElem,
-  OutDone,
-  OutDone2,
-  OutDone3,
-  Env2,
-  InErr2,
-  InElem2,
-  InDone2,
-  OutErr2
->(
-  channels: Channel.Channel<
-    Env,
-    InErr,
-    InElem,
-    InDone,
-    OutErr,
-    Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem, OutDone>,
-    OutDone2
-  >,
-  f: (o: OutDone, o1: OutDone) => OutDone,
-  g: (o: OutDone, o2: OutDone2) => OutDone3
-): Channel.Channel<
-  Env | Env2,
-  InErr & InErr2,
-  InElem & InElem2,
-  InDone & InDone2,
-  OutErr | OutErr2,
-  OutElem,
-  OutDone3
-> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_CONCAT_ALL
-  op.combineInners = f
-  op.combineAll = g
-  op.onPull = () => upstreamPullStrategy.PullAfterNext(Option.none())
-  op.onEmit = () => childExecutorDecision.Continue
-  op.value = () => channels
-  op.k = identity
-  return op
-}
-
-/** @internal */
-export const concatMapWith = dual<
+export const concatMapWith = Debug.dualWithTrace<
   <OutElem, OutElem2, OutDone, OutDone2, OutDone3, Env2, InErr2, InElem2, InDone2, OutErr2>(
     f: (o: OutElem) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
     g: (o: OutDone, o1: OutDone) => OutDone,
@@ -394,52 +425,53 @@ export const concatMapWith = dual<
   >
 >(
   4,
-  <
-    Env,
-    InErr,
-    InElem,
-    InDone,
-    OutErr,
-    OutElem,
-    OutElem2,
-    OutDone,
-    OutDone2,
-    OutDone3,
-    Env2,
-    InErr2,
-    InElem2,
-    InDone2,
-    OutErr2
-  >(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>,
-    f: (
-      o: OutElem
-    ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
-    g: (o: OutDone, o1: OutDone) => OutDone,
-    h: (o: OutDone, o2: OutDone2) => OutDone3
-  ): Channel.Channel<
-    Env | Env2,
-    InErr & InErr2,
-    InElem & InElem2,
-    InDone & InDone2,
-    OutErr | OutErr2,
-    OutElem2,
-    OutDone3
-  > => {
-    const op = Object.create(proto)
-    op._tag = OpCodes.OP_CONCAT_ALL
-    op.combineInners = g
-    op.combineAll = h
-    op.onPull = () => upstreamPullStrategy.PullAfterNext(Option.none())
-    op.onEmit = () => childExecutorDecision.Continue
-    op.value = () => self
-    op.k = f
-    return op
-  }
+  (trace, restore) =>
+    <
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      OutElem,
+      OutElem2,
+      OutDone,
+      OutDone2,
+      OutDone3,
+      Env2,
+      InErr2,
+      InElem2,
+      InDone2,
+      OutErr2
+    >(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>,
+      f: (
+        o: OutElem
+      ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
+      g: (o: OutDone, o1: OutDone) => OutDone,
+      h: (o: OutDone, o2: OutDone2) => OutDone3
+    ): Channel.Channel<
+      Env | Env2,
+      InErr & InErr2,
+      InElem & InElem2,
+      InDone & InDone2,
+      OutErr | OutErr2,
+      OutElem2,
+      OutDone3
+    > => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_CONCAT_ALL
+      op.combineInners = restore(g)
+      op.combineAll = restore(h)
+      op.onPull = () => upstreamPullStrategy.PullAfterNext(Option.none())
+      op.onEmit = () => childExecutorDecision.Continue
+      op.value = () => self
+      op.k = restore(f)
+      return op.traced(trace)
+    }
 )
 
 /** @internal */
-export const concatMapWithCustom = dual<
+export const concatMapWithCustom = Debug.dualWithTrace<
   <OutElem, OutElem2, OutDone, OutDone2, OutDone3, Env2, InErr2, InElem2, InDone2, OutErr2>(
     f: (o: OutElem) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
     g: (o: OutDone, o1: OutDone) => OutDone,
@@ -495,56 +527,57 @@ export const concatMapWithCustom = dual<
   >
 >(
   6,
-  <
-    Env,
-    InErr,
-    InElem,
-    InDone,
-    OutErr,
-    OutElem,
-    OutElem2,
-    OutDone,
-    OutDone2,
-    OutDone3,
-    Env2,
-    InErr2,
-    InElem2,
-    InDone2,
-    OutErr2
-  >(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>,
-    f: (
-      o: OutElem
-    ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
-    g: (o: OutDone, o1: OutDone) => OutDone,
-    h: (o: OutDone, o2: OutDone2) => OutDone3,
-    onPull: (
-      upstreamPullRequest: UpstreamPullRequest.UpstreamPullRequest<OutElem>
-    ) => UpstreamPullStrategy.UpstreamPullStrategy<OutElem2>,
-    onEmit: (elem: OutElem2) => ChildExecutorDecision.ChildExecutorDecision
-  ): Channel.Channel<
-    Env | Env2,
-    InErr & InErr2,
-    InElem & InElem2,
-    InDone & InDone2,
-    OutErr | OutErr2,
-    OutElem2,
-    OutDone3
-  > => {
-    const op = Object.create(proto)
-    op._tag = OpCodes.OP_CONCAT_ALL
-    op.combineInners = g
-    op.combineAll = h
-    op.onPull = onPull
-    op.onEmit = onEmit
-    op.value = () => self
-    op.k = f
-    return op
-  }
+  (trace, restore) =>
+    <
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      OutElem,
+      OutElem2,
+      OutDone,
+      OutDone2,
+      OutDone3,
+      Env2,
+      InErr2,
+      InElem2,
+      InDone2,
+      OutErr2
+    >(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>,
+      f: (
+        o: OutElem
+      ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
+      g: (o: OutDone, o1: OutDone) => OutDone,
+      h: (o: OutDone, o2: OutDone2) => OutDone3,
+      onPull: (
+        upstreamPullRequest: UpstreamPullRequest.UpstreamPullRequest<OutElem>
+      ) => UpstreamPullStrategy.UpstreamPullStrategy<OutElem2>,
+      onEmit: (elem: OutElem2) => ChildExecutorDecision.ChildExecutorDecision
+    ): Channel.Channel<
+      Env | Env2,
+      InErr & InErr2,
+      InElem & InElem2,
+      InDone & InDone2,
+      OutErr | OutErr2,
+      OutElem2,
+      OutDone3
+    > => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_CONCAT_ALL
+      op.combineInners = restore(g)
+      op.combineAll = restore(h)
+      op.onPull = restore(onPull)
+      op.onEmit = restore(onEmit)
+      op.value = () => self
+      op.k = restore(f)
+      return op.traced(trace)
+    }
 )
 
 /** @internal */
-export const embedInput = dual<
+export const embedInput = Debug.dualWithTrace<
   <InErr, InElem, InDone>(
     input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
   ) => <Env, OutErr, OutElem, OutDone>(
@@ -556,20 +589,21 @@ export const embedInput = dual<
   ) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 >(
   2,
-  <Env, OutErr, OutElem, OutDone, InErr, InElem, InDone>(
-    self: Channel.Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>,
-    input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
-  ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
-    const op = Object.create(proto)
-    op._tag = OpCodes.OP_BRIDGE
-    op.input = input
-    op.channel = self
-    return op
-  }
+  (trace) =>
+    <Env, OutErr, OutElem, OutDone, InErr, InElem, InDone>(
+      self: Channel.Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>,
+      input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
+    ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_BRIDGE
+      op.input = input
+      op.channel = self
+      return op.traced(trace)
+    }
 )
 
 /** @internal */
-export const ensuringWith = dual<
+export const ensuringWith = Debug.dualWithTrace<
   <Env2, OutErr, OutDone>(
     finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
   ) => <Env, InErr, InElem, InDone, OutElem>(
@@ -581,49 +615,54 @@ export const ensuringWith = dual<
   ) => Channel.Channel<Env2 | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 >(
   2,
-  <Env, InErr, InElem, InDone, OutElem, Env2, OutErr, OutDone>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
-  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+  (trace, restore) =>
+    <Env, InErr, InElem, InDone, OutElem, Env2, OutErr, OutDone>(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+      finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
+    ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_ENSURING
+      op.channel = self
+      op.finalizer = restore(finalizer)
+      return op.traced(trace)
+    }
+)
+
+/** @internal */
+export const fail = Debug.methodWithTrace((trace) =>
+  <E>(error: E): Channel.Channel<never, unknown, unknown, unknown, E, never, never> =>
+    failCause(Cause.fail(error)).traced(trace)
+)
+
+/** @internal */
+export const failSync = Debug.methodWithTrace((trace, restore) =>
+  <E>(
+    evaluate: LazyArg<E>
+  ): Channel.Channel<never, unknown, unknown, unknown, E, never, never> =>
+    failCauseSync(() => Cause.fail(restore(evaluate)())).traced(trace)
+)
+
+/** @internal */
+export const failCause = Debug.methodWithTrace((trace) =>
+  <E>(
+    cause: Cause.Cause<E>
+  ): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => failCauseSync(() => cause).traced(trace)
+)
+
+/** @internal */
+export const failCauseSync = Debug.methodWithTrace((trace, restore) =>
+  <E>(
+    evaluate: LazyArg<Cause.Cause<E>>
+  ): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => {
     const op = Object.create(proto)
-    op._tag = OpCodes.OP_ENSURING
-    op.channel = self
-    op.finalizer = finalizer
-    return op
+    op._tag = OpCodes.OP_FAIL
+    op.error = restore(evaluate)
+    return op.traced(trace)
   }
 )
 
 /** @internal */
-export const fail = <E>(error: E): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => {
-  return failCause(Cause.fail(error))
-}
-
-/** @internal */
-export const failSync = <E>(
-  evaluate: LazyArg<E>
-): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => {
-  return failCauseSync(() => Cause.fail(evaluate()))
-}
-
-/** @internal */
-export const failCause = <E>(
-  cause: Cause.Cause<E>
-): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => {
-  return failCauseSync(() => cause)
-}
-
-/** @internal */
-export const failCauseSync = <E>(
-  evaluate: LazyArg<Cause.Cause<E>>
-): Channel.Channel<never, unknown, unknown, unknown, E, never, never> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_FAIL
-  op.error = evaluate
-  return op
-}
-
-/** @internal */
-export const flatMap = dual<
+export const flatMap = Debug.dualWithTrace<
   <OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
     f: (d: OutDone) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
   ) => <Env, InErr, InElem, InDone, OutErr, OutElem>(
@@ -651,28 +690,29 @@ export const flatMap = dual<
   >
 >(
   2,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (d: OutDone) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
-  ): Channel.Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone2
-  > => {
-    const op = Object.create(proto)
-    op._tag = OpCodes.OP_FOLD
-    op.channel = self
-    op.k = new ContinuationKImpl(f, failCause)
-    return op
-  }
+  (trace, restore) =>
+    <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+      f: (d: OutDone) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
+    ): Channel.Channel<
+      Env | Env1,
+      InErr & InErr1,
+      InElem & InElem1,
+      InDone & InDone1,
+      OutErr | OutErr1,
+      OutElem | OutElem1,
+      OutDone2
+    > => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_FOLD
+      op.channel = self
+      op.k = new ContinuationKImpl(restore(f), failCause)
+      return op.traced(trace)
+    }
 )
 
 /** @internal */
-export const foldCauseChannel = dual<
+export const foldCauseChannel = Debug.dualWithTrace<
   <
     Env1,
     Env2,
@@ -741,65 +781,68 @@ export const foldCauseChannel = dual<
   >
 >(
   3,
-  <
-    Env,
-    InErr,
-    InElem,
-    InDone,
-    OutElem,
-    Env1,
-    Env2,
-    InErr1,
-    InErr2,
-    InElem1,
-    InElem2,
-    InDone1,
-    InDone2,
-    OutErr,
-    OutErr2,
-    OutErr3,
-    OutElem1,
-    OutElem2,
-    OutDone,
-    OutDone2,
-    OutDone3
-  >(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    onError: (
-      c: Cause.Cause<OutErr>
-    ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-    onSuccess: (
-      o: OutDone
-    ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
-  ): Channel.Channel<
-    Env | Env1 | Env2,
-    InErr & InErr1 & InErr2,
-    InElem & InElem1 & InElem2,
-    InDone & InDone1 & InDone2,
-    OutErr2 | OutErr3,
-    OutElem | OutElem1 | OutElem2,
-    OutDone2 | OutDone3
-  > => {
+  (trace, restore) =>
+    <
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutElem,
+      Env1,
+      Env2,
+      InErr1,
+      InErr2,
+      InElem1,
+      InElem2,
+      InDone1,
+      InDone2,
+      OutErr,
+      OutErr2,
+      OutErr3,
+      OutElem1,
+      OutElem2,
+      OutDone,
+      OutDone2,
+      OutDone3
+    >(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+      onError: (
+        c: Cause.Cause<OutErr>
+      ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
+      onSuccess: (
+        o: OutDone
+      ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    ): Channel.Channel<
+      Env | Env1 | Env2,
+      InErr & InErr1 & InErr2,
+      InElem & InElem1 & InElem2,
+      InDone & InDone1 & InDone2,
+      OutErr2 | OutErr3,
+      OutElem | OutElem1 | OutElem2,
+      OutDone2 | OutDone3
+    > => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_FOLD
+      op.channel = self
+      op.k = new ContinuationKImpl(restore(onSuccess), restore(onError) as any)
+      return op.traced(trace)
+    }
+)
+
+/** @internal */
+export const fromEffect = Debug.methodWithTrace((trace) =>
+  <R, E, A>(
+    effect: Effect.Effect<R, E, A>
+  ): Channel.Channel<R, unknown, unknown, unknown, E, never, A> => {
     const op = Object.create(proto)
-    op._tag = OpCodes.OP_FOLD
-    op.channel = self
-    op.k = new ContinuationKImpl(onSuccess, onError as any)
-    return op
+    op._tag = OpCodes.OP_FROM_EFFECT
+    op.effect = () => effect
+    return op.traced(trace)
   }
 )
 
 /** @internal */
-export const fromEffect = <R, E, A>(
-  effect: Effect.Effect<R, E, A>
-): Channel.Channel<R, unknown, unknown, unknown, E, never, A> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_FROM_EFFECT
-  op.effect = () => effect
-  return op
-}
-
-/** @internal */
-export const pipeTo = dual<
+export const pipeTo = Debug.dualWithTrace<
   <Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
     that: Channel.Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
   ) => <Env, InErr, InElem, InDone>(
@@ -811,20 +854,21 @@ export const pipeTo = dual<
   ) => Channel.Channel<Env2 | Env, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
 >(
   2,
-  <Env, InErr, InElem, InDone, Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
-  ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> => {
-    const op = Object.create(proto)
-    op._tag = OpCodes.OP_PIPE_TO
-    op.left = () => self
-    op.right = () => that
-    return op
-  }
+  (trace) =>
+    <Env, InErr, InElem, InDone, Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+      that: Channel.Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
+    ): Channel.Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2> => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_PIPE_TO
+      op.left = () => self
+      op.right = () => that
+      return op.traced(trace)
+    }
 )
 
 /** @internal */
-export const provideContext = dual<
+export const provideContext = Debug.dualWithTrace<
   <Env>(
     env: Context.Context<Env>
   ) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
@@ -836,144 +880,164 @@ export const provideContext = dual<
   ) => Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 >(
   2,
-  <InErr, InElem, InDone, OutErr, OutElem, OutDone, Env>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    env: Context.Context<Env>
-  ): Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+  (trace) =>
+    <InErr, InElem, InDone, OutErr, OutElem, OutDone, Env>(
+      self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+      env: Context.Context<Env>
+    ): Channel.Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+      const op = Object.create(proto)
+      op._tag = OpCodes.OP_PROVIDE
+      op.context = () => env
+      op.inner = self
+      return op.traced(trace)
+    }
+)
+
+/** @internal */
+export const readOrFail = Debug.methodWithTrace((trace) =>
+  <In, E>(
+    error: E
+  ): Channel.Channel<never, unknown, In, unknown, E, never, In> => {
     const op = Object.create(proto)
-    op._tag = OpCodes.OP_PROVIDE
-    op.context = () => env
-    op.inner = self
-    return op
+    op._tag = OpCodes.OP_READ
+    op.more = succeed
+    op.done = new ContinuationKImpl(() => fail(error), () => fail(error))
+    return op.traced(trace)
   }
 )
 
 /** @internal */
-export const readOrFail = <In, E>(
-  error: E
-): Channel.Channel<never, unknown, In, unknown, E, never, In> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_READ
-  op.more = succeed
-  op.done = new ContinuationKImpl(() => fail(error), () => fail(error))
-  return op
-}
+export const readWith = Debug.methodWithTrace((trace, restore) =>
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone,
+    Env2,
+    OutErr2,
+    OutElem2,
+    OutDone2,
+    Env3,
+    OutErr3,
+    OutElem3,
+    OutDone3
+  >(
+    input: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    error: (error: InErr) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
+    done: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+  ): Channel.Channel<
+    Env | Env2 | Env3,
+    InErr,
+    InElem,
+    InDone,
+    OutErr | OutErr2 | OutErr3,
+    OutElem | OutElem2 | OutElem3,
+    OutDone | OutDone2 | OutDone3
+  > =>
+    readWithCause(
+      restore(input),
+      (cause) => Either.match(Cause.failureOrCause(cause), restore(error), failCause),
+      restore(done)
+    )
+)
 
 /** @internal */
-export const readWith = <
-  Env,
-  InErr,
-  InElem,
-  InDone,
-  OutErr,
-  OutElem,
-  OutDone,
-  Env2,
-  OutErr2,
-  OutElem2,
-  OutDone2,
-  Env3,
-  OutErr3,
-  OutElem3,
-  OutDone3
->(
-  input: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  error: (error: InErr) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
-  done: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
-): Channel.Channel<
-  Env | Env2 | Env3,
-  InErr,
-  InElem,
-  InDone,
-  OutErr | OutErr2 | OutErr3,
-  OutElem | OutElem2 | OutElem3,
-  OutDone | OutDone2 | OutDone3
-> => {
-  return readWithCause(input, (cause) => pipe(Cause.failureOrCause(cause), Either.match(error, failCause)), done)
-}
+export const readWithCause = Debug.methodWithTrace((trace, restore) =>
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone,
+    Env2,
+    OutErr2,
+    OutElem2,
+    OutDone2,
+    Env3,
+    OutErr3,
+    OutElem3,
+    OutDone3
+  >(
+    input: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    halt: (cause: Cause.Cause<InErr>) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
+    done: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+  ): Channel.Channel<
+    Env | Env2 | Env3,
+    InErr,
+    InElem,
+    InDone,
+    OutErr | OutErr2 | OutErr3,
+    OutElem | OutElem2 | OutElem3,
+    OutDone | OutDone2 | OutDone3
+  > => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_READ
+    op.more = restore(input)
+    op.done = new ContinuationKImpl(restore(done), restore(halt) as any)
+    return op.traced(trace)
+  }
+)
 
 /** @internal */
-export const readWithCause = <
-  Env,
-  InErr,
-  InElem,
-  InDone,
-  OutErr,
-  OutElem,
-  OutDone,
-  Env2,
-  OutErr2,
-  OutElem2,
-  OutDone2,
-  Env3,
-  OutErr3,
-  OutElem3,
-  OutDone3
->(
-  input: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  halt: (cause: Cause.Cause<InErr>) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
-  done: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
-): Channel.Channel<
-  Env | Env2 | Env3,
-  InErr,
-  InElem,
-  InDone,
-  OutErr | OutErr2 | OutErr3,
-  OutElem | OutElem2 | OutElem3,
-  OutDone | OutDone2 | OutDone3
-> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_READ
-  op.more = input
-  op.done = new ContinuationKImpl(done, halt as any)
-  return op
-}
+export const succeed = Debug.methodWithTrace((trace) =>
+  <A>(
+    value: A
+  ): Channel.Channel<never, unknown, unknown, unknown, never, never, A> => sync(() => value).traced(trace)
+)
 
 /** @internal */
-export const succeed = <A>(
-  value: A
-): Channel.Channel<never, unknown, unknown, unknown, never, never, A> => {
-  return sync(() => value)
-}
+export const succeedNow = Debug.methodWithTrace((trace) =>
+  <OutDone>(
+    result: OutDone
+  ): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_SUCCEED_NOW
+    op.terminal = result
+    return op.traced(trace)
+  }
+)
 
 /** @internal */
-export const succeedNow = <OutDone>(
-  result: OutDone
-): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_SUCCEED_NOW
-  op.terminal = result
-  return op
-}
+export const suspend = Debug.methodWithTrace((trace, restore) =>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    evaluate: LazyArg<Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
+  ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_SUSPEND
+    op.channel = restore(evaluate)
+    return op.traced(trace)
+  }
+)
+
+export const sync = Debug.methodWithTrace((trace, restore) =>
+  <OutDone>(
+    evaluate: LazyArg<OutDone>
+  ): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_SUCCEED
+    op.evaluate = restore(evaluate)
+    return op.traced(trace)
+  }
+)
 
 /** @internal */
-export const suspend = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  evaluate: LazyArg<Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
-): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_SUSPEND
-  op.channel = evaluate
-  return op
-}
-
-export const sync = <OutDone>(
-  evaluate: LazyArg<OutDone>
-): Channel.Channel<never, unknown, unknown, unknown, never, never, OutDone> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_SUCCEED
-  op.evaluate = evaluate
-  return op
-}
+export const unit = Debug.methodWithTrace((trace) =>
+  (): Channel.Channel<never, unknown, unknown, unknown, never, never, void> => succeedNow(void 0).traced(trace)
+)
 
 /** @internal */
-export const unit = (): Channel.Channel<never, unknown, unknown, unknown, never, never, void> => succeedNow(undefined)
-
-/** @internal */
-export const write = <OutElem>(
-  out: OutElem
-): Channel.Channel<never, unknown, unknown, unknown, never, OutElem, void> => {
-  const op = Object.create(proto)
-  op._tag = OpCodes.OP_EMIT
-  op.out = out
-  return op
-}
+export const write = Debug.methodWithTrace((trace) =>
+  <OutElem>(
+    out: OutElem
+  ): Channel.Channel<never, unknown, unknown, unknown, never, OutElem, void> => {
+    const op = Object.create(proto)
+    op._tag = OpCodes.OP_EMIT
+    op.out = out
+    return op.traced(trace)
+  }
+)

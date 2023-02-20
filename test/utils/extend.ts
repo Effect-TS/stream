@@ -1,5 +1,7 @@
 import * as Duration from "@effect/data/Duration"
+import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
+import * as Exit from "@effect/io/Exit"
 import * as TestEnvironment from "@effect/io/internal_effect_untraced/testing/testEnvironment"
 import * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
@@ -10,6 +12,15 @@ import * as V from "vitest"
 export type API = TestAPI<{}>
 
 export const it: API = V.it
+
+const runTest = <E, A>(effect: Effect.Effect<never, E, A>): Promise<A> =>
+  Effect.runPromiseExit(effect).then((exit) => {
+    if (Exit.isFailure(exit)) {
+      throw { message: Cause.pretty(exit.cause) }
+    } else {
+      return exit.value
+    }
+  })
 
 export const effect = (() => {
   const f = <E, A>(
@@ -23,7 +34,7 @@ export const effect = (() => {
         pipe(
           Effect.suspendSucceed(self),
           Effect.provideLayer(TestEnvironment.testContext()),
-          Effect.runPromise
+          runTest
         ),
       timeout
     )
@@ -40,7 +51,7 @@ export const effect = (() => {
           pipe(
             Effect.suspendSucceed(self),
             Effect.provideLayer(TestEnvironment.testContext()),
-            Effect.runPromise
+            runTest
           ),
         timeout
       )
@@ -56,7 +67,7 @@ export const effect = (() => {
           pipe(
             Effect.suspendSucceed(self),
             Effect.provideLayer(TestEnvironment.testContext()),
-            Effect.runPromise
+            runTest
           ),
         timeout
       )
@@ -74,7 +85,7 @@ export const live = <E, A>(
     () =>
       pipe(
         Effect.suspendSucceed(self),
-        Effect.runPromise
+        runTest
       ),
     timeout
   )
@@ -109,7 +120,7 @@ export const scoped = <E, A>(
         Effect.suspendSucceed(self),
         Effect.scoped,
         Effect.provideLayer(TestEnvironment.testContext()),
-        Effect.runPromise
+        runTest
       ),
     timeout
   )
@@ -126,7 +137,7 @@ export const scopedLive = <E, A>(
       pipe(
         Effect.suspendSucceed(self),
         Effect.scoped,
-        Effect.runPromise
+        runTest
       ),
     timeout
   )

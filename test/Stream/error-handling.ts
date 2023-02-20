@@ -199,11 +199,12 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.make(3, 4)
       const result = yield* $(pipe(
         stream1,
-        Stream.catchSomeCause((cause) =>
-          Cause.isFailType(cause) && cause.error === "boom" ?
+        Stream.catchSomeCause((annotatedCause) => {
+          const cause = Cause.unannotate(annotatedCause)
+          return Cause.isFailType(cause) && cause.error === "boom" ?
             Option.some(stream2) :
             Option.none()
-        ),
+        }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
