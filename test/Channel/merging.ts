@@ -1,3 +1,5 @@
+import { constTrue, pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -6,8 +8,6 @@ import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as it from "@effect/stream/test/utils/extend"
-import { constTrue, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Channel", () => {

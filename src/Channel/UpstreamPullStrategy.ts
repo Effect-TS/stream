@@ -1,8 +1,8 @@
 /**
  * @since 1.0.0
  */
+import type * as Option from "@effect/data/Option"
 import * as internal from "@effect/stream/internal/channel/upstreamPullStrategy"
-import type * as Option from "@fp-ts/core/Option"
 
 /**
  * @since 1.0.0

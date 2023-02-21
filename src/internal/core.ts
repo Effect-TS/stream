@@ -1,5 +1,9 @@
 import * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
+import * as Either from "@effect/data/Either"
+import { constVoid, identity } from "@effect/data/Function"
+import type { LazyArg } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import type * as Effect from "@effect/io/Effect"
@@ -14,10 +18,6 @@ import type { ErasedContinuationK } from "@effect/stream/internal/channel/contin
 import { ContinuationKImpl } from "@effect/stream/internal/channel/continuation"
 import * as upstreamPullStrategy from "@effect/stream/internal/channel/upstreamPullStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/channel"
-import * as Either from "@fp-ts/core/Either"
-import { constVoid, identity } from "@fp-ts/core/Function"
-import type { LazyArg } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 
 /** @internal */
 const ChannelSymbolKey = "@effect/stream/Channel"

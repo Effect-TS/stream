@@ -1,10 +1,10 @@
 import * as Chunk from "@effect/data/Chunk"
+import * as Either from "@effect/data/Either"
+import { identity, pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
-import * as Either from "@fp-ts/core/Either"
-import { identity, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

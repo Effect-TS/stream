@@ -1,10 +1,10 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Equal from "@effect/data/Equal"
+import { pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Stream from "@effect/stream/Stream"
-import { pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 import * as util from "node:util"
 
 // See original test here:

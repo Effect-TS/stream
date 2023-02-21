@@ -1,6 +1,11 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Context from "@effect/data/Context"
+import * as Either from "@effect/data/Either"
 import * as Equal from "@effect/data/Equal"
+import { constVoid, identity, pipe } from "@effect/data/Function"
+import type { LazyArg } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
+import type { Predicate } from "@effect/data/Predicate"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
@@ -27,11 +32,6 @@ import * as core from "@effect/stream/internal/core"
 import * as ChannelStateOpCodes from "@effect/stream/internal/opCodes/channelState"
 import * as MergeDecisionOpCodes from "@effect/stream/internal/opCodes/mergeDecision"
 import * as MergeStateOpCodes from "@effect/stream/internal/opCodes/mergeState"
-import * as Either from "@fp-ts/core/Either"
-import { constVoid, identity, pipe } from "@fp-ts/core/Function"
-import type { LazyArg } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
-import type { Predicate } from "@fp-ts/core/Predicate"
 
 /** @internal */
 export const acquireUseRelease = Debug.methodWithTrace((trace, restore) =>

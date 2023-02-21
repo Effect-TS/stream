@@ -1,6 +1,8 @@
 import * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
+import { identity, pipe } from "@effect/data/Function"
 import * as MRef from "@effect/data/MutableRef"
+import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
 import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
@@ -22,8 +24,6 @@ import * as ChannelStateOpCodes from "@effect/stream/internal/opCodes/channelSta
 import * as ChildExecutorDecisionOpCodes from "@effect/stream/internal/opCodes/childExecutorDecision"
 import * as ContinuationOpCodes from "@effect/stream/internal/opCodes/continuation"
 import * as UpstreamPullStrategyOpCodes from "@effect/stream/internal/opCodes/upstreamPullStrategy"
-import { identity, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 
 export type ErasedChannel<R> = Channel.Channel<
   R,

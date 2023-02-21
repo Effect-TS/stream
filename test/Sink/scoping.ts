@@ -1,9 +1,9 @@
+import { pipe } from "@effect/data/Function"
 import * as Effect from "@effect/io/Effect"
 import * as Ref from "@effect/io/Ref"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Sink", () => {

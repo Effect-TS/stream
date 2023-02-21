@@ -1,6 +1,6 @@
 import * as Chunk from "@effect/data/Chunk"
-import { constUndefined } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
+import { constUndefined } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 
 /** @internal */
 export class RingBuffer<A> {

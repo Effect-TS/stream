@@ -1,3 +1,4 @@
+import { pipe } from "@effect/data/Function"
 import { bodyWithTrace, dualWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Hub from "@effect/io/Hub"
@@ -8,7 +9,6 @@ import * as Synchronized from "@effect/io/Ref/Synchronized"
 import * as stream from "@effect/stream/internal/stream"
 import type { Stream } from "@effect/stream/Stream"
 import type * as SubscriptionRef from "@effect/stream/SubscriptionRef"
-import { pipe } from "@fp-ts/core/Function"
 
 /** @internal */
 const SubscriptionRefSymbolKey = "@effect/stream/SubscriptionRef"

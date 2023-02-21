@@ -2,10 +2,10 @@
  * @since 1.0.0
  */
 import type * as Chunk from "@effect/data/Chunk"
+import type * as Option from "@effect/data/Option"
 import type * as Cause from "@effect/io/Cause"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
-import type * as Option from "@fp-ts/core/Option"
 
 /**
  * An `Emit<R, E, A, B>` represents an asynchronous callback that can be

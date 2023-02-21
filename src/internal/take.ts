@@ -1,11 +1,11 @@
 import * as Chunk from "@effect/data/Chunk"
+import { constFalse, constTrue, dual, pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
 import { dualWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as Take from "@effect/stream/Take"
-import { constFalse, constTrue, dual, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 
 /** @internal */
 const TakeSymbolKey = "@effect/stream/Take"

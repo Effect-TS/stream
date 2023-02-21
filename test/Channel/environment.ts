@@ -1,10 +1,10 @@
 import * as Context from "@effect/data/Context"
 import * as Equal from "@effect/data/Equal"
+import { pipe } from "@effect/data/Function"
 import * as Hash from "@effect/data/Hash"
 import * as Effect from "@effect/io/Effect"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 const NumberServiceSymbolKey = "@effect/stream/test/NumberService"

@@ -1,11 +1,11 @@
 /**
  * @since 1.0.0
  */
+import type { Predicate } from "@effect/data/Predicate"
 import type * as Queue from "@effect/io/Queue"
 import * as internal from "@effect/stream/internal/groupBy"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Take from "@effect/stream/Take"
-import type { Predicate } from "@fp-ts/core/Predicate"
 
 /**
  * @since 1.0.0

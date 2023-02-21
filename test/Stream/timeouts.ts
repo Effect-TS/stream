@@ -1,5 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
+import * as Either from "@effect/data/Either"
+import { pipe } from "@effect/data/Function"
 import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
@@ -8,8 +10,6 @@ import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
-import * as Either from "@fp-ts/core/Either"
-import { pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

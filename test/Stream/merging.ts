@@ -1,5 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
+import * as Either from "@effect/data/Either"
+import { constVoid, pipe } from "@effect/data/Function"
 import * as HashSet from "@effect/data/HashSet"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -9,8 +11,6 @@ import * as TestServices from "@effect/io/internal_effect_untraced/testing/testS
 import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
-import * as Either from "@fp-ts/core/Either"
-import { constVoid, pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

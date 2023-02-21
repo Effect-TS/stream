@@ -1,3 +1,5 @@
+import * as Either from "@effect/data/Either"
+import { pipe } from "@effect/data/Function"
 import * as Cause from "@effect/io/Cause"
 import { bodyWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
@@ -5,8 +7,6 @@ import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Ref from "@effect/io/Ref"
 import type * as SingleProducerAsyncInput from "@effect/stream/Channel/SingleProducerAsyncInput"
-import * as Either from "@fp-ts/core/Either"
-import { pipe } from "@fp-ts/core/Function"
 
 /** @internal */
 type State<Err, Elem, _Done> =
