@@ -1,5 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
+import { pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
@@ -8,8 +10,6 @@ import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {

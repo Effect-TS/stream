@@ -1,11 +1,11 @@
 import * as Chunk from "@effect/data/Chunk"
+import { absurd, constTrue, pipe } from "@effect/data/Function"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Ref from "@effect/io/Ref"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
-import { absurd, constTrue, pipe } from "@fp-ts/core/Function"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Sink", () => {

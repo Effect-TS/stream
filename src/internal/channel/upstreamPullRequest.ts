@@ -1,6 +1,6 @@
+import { dual } from "@effect/data/Function"
 import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import * as OpCodes from "@effect/stream/internal/opCodes/upstreamPullRequest"
-import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const UpstreamPullRequestSymbolKey = "@effect/stream/Channel/UpstreamPullRequest"

@@ -1,5 +1,8 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
+import * as Either from "@effect/data/Either"
+import { constTrue, constVoid, pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -15,9 +18,6 @@ import * as Stream from "@effect/stream/Stream"
 import * as Take from "@effect/stream/Take"
 import { chunkCoordination } from "@effect/stream/test/utils/coordination"
 import * as it from "@effect/stream/test/utils/extend"
-import * as Either from "@fp-ts/core/Either"
-import { constTrue, constVoid, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
 import { assert, describe } from "vitest"
 
 Stream.onError

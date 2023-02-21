@@ -1,10 +1,10 @@
+import type * as Either from "@effect/data/Either"
+import { dual } from "@effect/data/Function"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Fiber from "@effect/io/Fiber"
 import type * as MergeState from "@effect/stream/Channel/MergeState"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeState"
-import type * as Either from "@fp-ts/core/Either"
-import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const MergeStateSymbolKey = "@effect/stream/Channel/MergeState"

@@ -1,11 +1,11 @@
 /**
  * @since 1.0.0
  */
+import type * as Either from "@effect/data/Either"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Fiber from "@effect/io/Fiber"
 import * as internal from "@effect/stream/internal/channel/mergeState"
-import type * as Either from "@fp-ts/core/Either"
 
 /**
  * @since 1.0.0

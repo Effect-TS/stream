@@ -1,4 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
+import { constVoid, pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
+import * as ReadonlyArray from "@effect/data/ReadonlyArray"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Ref from "@effect/io/Ref"
@@ -7,9 +10,6 @@ import * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDeci
 import * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import * as it from "@effect/stream/test/utils/extend"
-import { constVoid, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
-import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray"
 import { assert, describe } from "vitest"
 
 interface First {

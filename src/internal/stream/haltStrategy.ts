@@ -1,6 +1,6 @@
+import { dual } from "@effect/data/Function"
 import * as OpCodes from "@effect/stream/internal/opCodes/haltStrategy"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
-import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 export const Left: HaltStrategy.HaltStrategy = {

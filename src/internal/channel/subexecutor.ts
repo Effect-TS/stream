@@ -1,3 +1,4 @@
+import { pipe } from "@effect/data/Function"
 import { bodyWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -5,7 +6,6 @@ import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecuto
 import type * as UpstreamPullRequest from "@effect/stream/Channel/UpstreamPullRequest"
 import type * as UpstreamPullStrategy from "@effect/stream/Channel/UpstreamPullStrategy"
 import type { ErasedChannel, ErasedExecutor } from "@effect/stream/internal/channel/channelExecutor"
-import { pipe } from "@fp-ts/core/Function"
 
 /** @internal */
 export interface Subexecutor<R> {

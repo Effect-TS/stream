@@ -8,8 +8,8 @@ import * as Random from "@effect/io/Random"
 import * as Stream from "@effect/stream/Stream"
 import * as SubscriptionRef from "@effect/stream/SubscriptionRef"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@fp-ts/core/Function"
-import * as Number from "@fp-ts/core/Number"
+import { pipe } from "@effect/data/Function"
+import * as Number from "@effect/data/Number"
 import { assert, describe } from "vitest"
 
 describe.concurrent("SubscriptionRef", () => {

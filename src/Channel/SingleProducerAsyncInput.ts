@@ -1,11 +1,11 @@
 /**
  * @since 1.0.0
  */
+import type * as Either from "@effect/data/Either"
 import type * as Cause from "@effect/io/Cause"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import * as internal from "@effect/stream/internal/channel/singleProducerAsyncInput"
-import type * as Either from "@fp-ts/core/Either"
 
 /**
  * An MVar-like abstraction for sending data to channels asynchronously which is

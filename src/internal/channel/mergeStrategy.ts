@@ -1,6 +1,6 @@
+import { dual } from "@effect/data/Function"
 import type * as MergeStrategy from "@effect/stream/Channel/MergeStrategy"
 import * as OpCodes from "@effect/stream/internal/opCodes/mergeStrategy"
-import { dual } from "@fp-ts/core/Function"
 
 /** @internal */
 const MergeStrategySymbolKey = "@effect/stream/Channel/MergeStrategy"

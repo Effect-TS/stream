@@ -1,4 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
+import { dual, pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
+import type { Predicate } from "@effect/data/Predicate"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -14,9 +17,6 @@ import * as stream from "@effect/stream/internal/stream"
 import * as take from "@effect/stream/internal/take"
 import type * as Stream from "@effect/stream/Stream"
 import type * as Take from "@effect/stream/Take"
-import { dual, pipe } from "@fp-ts/core/Function"
-import * as Option from "@fp-ts/core/Option"
-import type { Predicate } from "@fp-ts/core/Predicate"
 
 /** @internal */
 const GroupBySymbolKey = "@effect/stream/GroupBy"
