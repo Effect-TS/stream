@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.4.0
+
+### Minor Changes
+
+- [#58](https://github.com/Effect-TS/stream/pull/58) [`be07ce6`](https://github.com/Effect-TS/stream/commit/be07ce66bc0693e4cbaa1c38ef38afb3e1e8aa52) Thanks [@IMax153](https://github.com/IMax153)! - remove @fp-ts/core following merge into @effect/d
+
+### Patch Changes
+
+- [#45](https://github.com/Effect-TS/stream/pull/45) [`d082e91`](https://github.com/Effect-TS/stream/commit/d082e914ce384c005cc0452e3c1d3a03fe0fc516) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - add tracing to Channel
+
 ## 0.3.1
 
 ### Patch Changes
