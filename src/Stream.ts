@@ -4,6 +4,11 @@
 import type * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
 import type * as Duration from "@effect/data/Duration"
+import type * as Either from "@effect/data/Either"
+import type { LazyArg } from "@effect/data/Function"
+import type * as Option from "@effect/data/Option"
+import type { Predicate, Refinement } from "@effect/data/Predicate"
+import type * as Order from "@effect/data/typeclass/Order"
 import type * as Cause from "@effect/io/Cause"
 import type * as Deferred from "@effect/io/Deferred"
 import type * as Effect from "@effect/io/Effect"
@@ -21,11 +26,6 @@ import type * as Sink from "@effect/stream/Sink"
 import type * as Emit from "@effect/stream/Stream/Emit"
 import type * as HaltStrategy from "@effect/stream/Stream/HaltStrategy"
 import type * as Take from "@effect/stream/Take"
-import type * as Either from "@effect/data/Either"
-import type { LazyArg } from "@effect/data/Function"
-import type * as Option from "@effect/data/Option"
-import type { Predicate, Refinement } from "@effect/data/Predicate"
-import type * as Order from "@effect/data/typeclass/Order"
 
 /**
  * @since 1.0.0
