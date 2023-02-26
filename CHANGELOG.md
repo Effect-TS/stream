@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.5.0
+
+### Minor Changes
+
+- [#59](https://github.com/Effect-TS/stream/pull/59) [`b392b40`](https://github.com/Effect-TS/stream/commit/b392b4095d362b12ac5d9e0ca076b65d07f14300) Thanks [@tstelzer](https://github.com/tstelzer)! - update @effect/data and @effect/io
+
 ## 0.4.0
 
 ### Minor Changes
