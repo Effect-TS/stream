@@ -1,13 +1,13 @@
 /**
  * @since 1.0.0
  */
+import type * as Option from "@effect/data/Option"
 import type * as Effect from "@effect/io/Effect"
 import type * as Hub from "@effect/io/Hub"
 import * as Ref from "@effect/io/Ref"
 import * as Synchronized from "@effect/io/Ref/Synchronized"
 import * as internal from "@effect/stream/internal/subscriptionRef"
 import type * as Stream from "@effect/stream/Stream"
-import type * as Option from "@effect/data/Option"
 
 /**
  * @since 1.0.0
