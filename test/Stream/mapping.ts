@@ -19,7 +19,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => n * 2
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.map(f), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.map(f)))
       }))
@@ -78,7 +78,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => Chunk.of(n)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapConcat(f), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
       }))
@@ -89,7 +89,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => Chunk.of(n)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapConcatChunk(f), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
       }))
@@ -100,7 +100,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => Chunk.of(n)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapConcatChunkEffect((n) => Effect.succeed(f(n))), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
       }))
@@ -122,7 +122,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => Chunk.of(n)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapConcatEffect((n) => Effect.succeed(f(n))), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.flatMap((n) => f(n))))
       }))
@@ -167,7 +167,7 @@ describe.concurrent("Stream", () => {
       const chunk = Chunk.make(1, 2, 3, 4, 5)
       const stream = Stream.fromIterable(chunk)
       const f = (n: number) => Effect.succeed(n * 2)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapEffect(f), Stream.runCollect),
         result2: pipe(chunk, Effect.forEach(f))
       }))
@@ -198,7 +198,7 @@ describe.concurrent("Stream", () => {
       const chunk = Chunk.make(1, 2, 3, 4, 5)
       const stream = Stream.fromIterable(chunk)
       const f = (n: number) => Effect.succeed(n * 2)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapEffectPar(f, parallelism), Stream.runCollect),
         result2: pipe(chunk, Effect.forEachPar(f), Effect.withParallelism(parallelism))
       }))
@@ -243,7 +243,7 @@ describe.concurrent("Stream", () => {
       const n = 4096
       const chunk = Chunk.make(1, 2, 3, 4, 5)
       const stream = Stream.fromChunk(chunk)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapEffect(Effect.succeed), Stream.runCollect),
         result2: pipe(stream, Stream.mapEffectPar(Effect.succeed, n), Stream.runCollect)
       }))

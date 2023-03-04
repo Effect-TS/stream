@@ -81,7 +81,7 @@ describe.concurrent("Stream", () => {
   it.effect("sliding - is mostly equivalent to ZStream#grouped when stepSize and chunkSize are equal", () =>
     Effect.gen(function*($) {
       const stream = Stream.range(1, 6)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.slidingSize(3, 3), Stream.runCollect),
         result2: pipe(stream, Stream.grouped(3), Stream.runCollect)
       }))

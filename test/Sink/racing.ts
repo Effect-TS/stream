@@ -25,7 +25,7 @@ const sinkRaceLaw = <E, A, L>(
   sink2: Sink.Sink<never, E, A, L, A>
 ): Effect.Effect<never, never, boolean> =>
   pipe(
-    Effect.struct({
+    Effect.all({
       result1: pipe(stream, Stream.run(sink1), Effect.either),
       result2: pipe(stream, Stream.run(sink2), Effect.either),
       result3: pipe(stream, Stream.run(pipe(sink1, Sink.raceBoth(sink2))), Effect.either)

@@ -25,7 +25,7 @@ const zipParLaw = <A, B, C, E>(
   sink2: Sink.Sink<never, E, A, A, C>
 ): Effect.Effect<never, never, boolean> =>
   pipe(
-    Effect.struct({
+    Effect.all({
       zb: pipe(stream, Stream.run(sink1), Effect.either),
       zc: pipe(stream, Stream.run(sink2), Effect.either),
       zbc: pipe(stream, Stream.run(pipe(sink1, Sink.zipPar(sink2))), Effect.either)

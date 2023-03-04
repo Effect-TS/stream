@@ -10,7 +10,7 @@ describe.concurrent("Stream", () => {
   it.effect("scan", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.scan(0, (acc, curr) => acc + curr), Stream.runCollect),
         result2: pipe(
           Stream.runCollect(stream),

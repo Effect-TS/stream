@@ -28,7 +28,7 @@ const program = Effect.gen(function*($) {
     Stream.concat(Stream.make(Option.none))
   )
   const { result1, result2 } = yield* $(pipe(
-    Effect.struct({
+    Effect.all({
       result1: pipe(
         stream,
         Stream.zipWithPreviousAndNext,

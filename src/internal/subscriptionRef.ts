@@ -84,7 +84,7 @@ export const get = methodWithTrace((trace) =>
 export const make = methodWithTrace((trace) =>
   <A>(value: A): Effect.Effect<never, never, SubscriptionRef.SubscriptionRef<A>> =>
     pipe(
-      Effect.tuple(
+      Effect.all(
         Hub.unbounded<A>(),
         Ref.make(value),
         Effect.makeSemaphore(1)

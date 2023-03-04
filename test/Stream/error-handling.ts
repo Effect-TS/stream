@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const xss = Stream.fromIterable(pipe(Chunk.range(1, 10), Chunk.map(Either.right)))
       const stream = pipe(xss, Stream.concat(Stream.succeed(Either.left("Ouch"))), Stream.concat(xss))
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: Stream.runCollect(stream),
         result2: pipe(Stream.absolve(stream), Stream.either, Stream.runCollect)
       }))
@@ -58,7 +58,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const xss = Stream.fromIterable(pipe(Chunk.range(1, 10), Chunk.map(Either.right)))
       const stream = pipe(xss, Stream.concat(Stream.fail("Ouch")))
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: Effect.exit(Stream.runCollect(stream)),
         result2: pipe(stream, Stream.either, Stream.absolve, Stream.runCollect, Effect.exit)
       }))

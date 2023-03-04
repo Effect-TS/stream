@@ -12,7 +12,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => n === 4
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.find(f), Stream.runCollect),
         result2: pipe(
           stream,
@@ -28,7 +28,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => Effect.succeed(n === 4)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.findEffect(f), Stream.runCollect),
         result2: pipe(
           stream,

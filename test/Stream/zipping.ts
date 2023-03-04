@@ -181,7 +181,7 @@ describe.concurrent("Stream", () => {
   it.effect("zipWithIndex", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: Stream.runCollect(Stream.zipWithIndex(stream)),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.zipWithIndex))
       }))
@@ -332,7 +332,7 @@ describe.concurrent("Stream", () => {
   it.it("zipWithNext - should output the same values as zipping with the tail plus the last element", () =>
     fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
-      const { result1, result2 } = await Effect.runPromise(Effect.struct({
+      const { result1, result2 } = await Effect.runPromise(Effect.all({
         result1: pipe(
           stream,
           Stream.zipWithNext,
@@ -388,7 +388,7 @@ describe.concurrent("Stream", () => {
   it.it("zipWithPrevious - should output same values as first element plus zipping with init", () =>
     fc.assert(fc.asyncProperty(fc.array(chunkArb(fc.integer())), async (chunks) => {
       const stream = Stream.fromChunks(...chunks)
-      const { result1, result2 } = await Effect.runPromise(Effect.struct({
+      const { result1, result2 } = await Effect.runPromise(Effect.all({
         result1: pipe(
           stream,
           Stream.zipWithPrevious,
@@ -432,7 +432,7 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.make(Option.none()))
       )
       const { result1, result2 } = await pipe(
-        Effect.struct({
+        Effect.all({
           result1: pipe(
             stream,
             Stream.zipWithPreviousAndNext,
