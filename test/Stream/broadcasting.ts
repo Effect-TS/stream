@@ -17,7 +17,7 @@ describe.concurrent("Stream", () => {
           Stream.range(0, 5),
           Stream.broadcast(2, 12),
           Effect.flatMap((streams) =>
-            Effect.struct({
+            Effect.all({
               result1: Stream.runCollect(streams[0]),
               result2: Stream.runCollect(streams[1])
             })
@@ -38,7 +38,7 @@ describe.concurrent("Stream", () => {
           Stream.concat(Stream.fail("boom")),
           Stream.broadcast(2, 12),
           Effect.flatMap((streams) =>
-            Effect.struct({
+            Effect.all({
               result1: pipe(streams[0], Stream.runCollect, Effect.either),
               result2: pipe(streams[1], Stream.runCollect, Effect.either)
             })

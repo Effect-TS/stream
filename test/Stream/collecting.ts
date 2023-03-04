@@ -90,7 +90,7 @@ describe.concurrent("Stream", () => {
         Option.none() as Option.Option<number>,
         Option.some(2)
       )
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.collectSome, Stream.runCollect),
         result2: pipe(stream, Stream.runCollect, Effect.map(Chunk.filterMap(identity)))
       }))

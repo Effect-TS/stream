@@ -93,7 +93,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMap - left identity", () =>
     Effect.gen(function*($) {
       const f = (n: number) => Stream.succeed(n * 2)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(Stream.make(1), Stream.flatMap(f), Stream.runCollect),
         result2: Stream.runCollect(f(1))
       }))
@@ -102,7 +102,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("flatMap - right identity", () =>
     Effect.gen(function*($) {
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(Stream.make(1), Stream.flatMap((n) => Stream.make(n)), Stream.runCollect),
         result2: Stream.runCollect(Stream.make(1))
       }))
@@ -114,7 +114,7 @@ describe.concurrent("Stream", () => {
       const stream = Stream.range(0, 5)
       const f = (n: number) => Stream.succeed(n * 2)
       const g = (n: number) => Stream.succeed(String(n))
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.flatMap(f), Stream.flatMap(g), Stream.runCollect),
         result2: pipe(stream, Stream.flatMap((n) => pipe(f(n), Stream.flatMap(g))), Stream.runCollect)
       }))
@@ -286,7 +286,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMapPar - guarantee ordering", () =>
     Effect.gen(function*($) {
       const stream = Stream.fromIterable([1, 2, 3, 4, 5])
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.flatMap((n) => Stream.make(n, n)), Stream.runCollect),
         result2: pipe(stream, Stream.flatMapPar((n) => Stream.make(n, n), 1), Stream.runCollect)
       }))
@@ -296,7 +296,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMapPar - consistency with flatMap", () =>
     Effect.gen(function*($) {
       const stream = Stream.fromIterable([1, 2, 3, 4, 5])
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(
           stream,
           Stream.flatMap((n) => Stream.make(n, n)),

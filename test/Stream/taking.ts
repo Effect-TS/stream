@@ -12,7 +12,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const take = 3
       const stream = Stream.range(1, 6)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.take(take), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.take(take)))
       }))
@@ -53,7 +53,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const take = 3
       const stream = Stream.range(1, 6)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.takeRight(take), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.takeRight(take)))
       }))
@@ -64,7 +64,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.range(1, 6)
       const f = (n: number) => n % 3 === 0
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.takeUntil(f), Stream.runCollect),
         result2: pipe(
           Stream.runCollect(stream),
@@ -84,7 +84,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.range(1, 6)
       const f = (n: number) => Effect.succeed(n % 3 === 0)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.takeUntilEffect(f), Stream.runCollect),
         result2: pipe(
           Stream.runCollect(stream),
@@ -122,7 +122,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.range(1, 6)
       const f = (n: number) => n <= 3
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.takeWhile(f), Stream.runCollect),
         result2: pipe(Stream.runCollect(stream), Effect.map(Chunk.takeWhile(f)))
       }))

@@ -11,7 +11,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const n = 2
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.drop(n), Stream.runCollect),
         result2: pipe(stream, Stream.runCollect, Effect.map(Chunk.drop(n)))
       }))
@@ -34,7 +34,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const n = 2
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.dropRight(n), Stream.runCollect),
         result2: pipe(stream, Stream.runCollect, Effect.map(Chunk.dropRight(n)))
       }))
@@ -57,7 +57,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => n < 3
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.dropUntil(f), Stream.runCollect),
         result2: pipe(
           Stream.runCollect(stream),
@@ -71,7 +71,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => n < 3
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.dropWhile(f), Stream.runCollect),
         result2: pipe(stream, Stream.runCollect, Effect.map(Chunk.dropWhile(f)))
       }))

@@ -14,7 +14,7 @@ describe.concurrent("Stream", () => {
   it.effect("when - returns the stream if the condition is satisfied", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.when(constTrue), Stream.runCollect),
         result2: Stream.runCollect(stream)
       }))

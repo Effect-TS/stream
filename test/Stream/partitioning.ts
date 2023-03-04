@@ -33,7 +33,7 @@ describe.concurrent("Stream", () => {
         Stream.range(0, 6),
         Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n))),
         Effect.flatMap(([evens, odds]) =>
-          Effect.struct({
+          Effect.all({
             result1: Stream.runCollect(evens),
             result2: Stream.runCollect(odds)
           })
@@ -51,7 +51,7 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom")),
         Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n))),
         Effect.flatMap(([evens, odds]) =>
-          Effect.struct({
+          Effect.all({
             result1: Effect.either(Stream.runCollect(evens)),
             result2: Effect.either(Stream.runCollect(odds))
           })

@@ -15,7 +15,7 @@ describe.concurrent("Stream", () => {
         Chunk.make(7, 8, 9),
         Chunk.of(10)
       )
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(
           Stream.range(0, 10),
           Stream.split((n) => n % 4 === 0),
@@ -40,7 +40,7 @@ describe.concurrent("Stream", () => {
   it.effect("split - is equivalent to identity when the predicate is not satisfied", () =>
     Effect.gen(function*($) {
       const stream = Stream.range(1, 11)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.split((n) => n % 11 === 0), Stream.runCollect),
         result2: pipe(
           Stream.runCollect(stream),

@@ -11,7 +11,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => n % 2 === 0
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.filter(f), Stream.runCollect),
         result2: pipe(stream, Stream.runCollect, Effect.map(Chunk.filter(f)))
       }))
@@ -22,7 +22,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
       const f = (n: number) => Effect.succeed(n % 2 === 0)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.filterEffect(f), Stream.runCollect),
         result2: pipe(stream, Stream.runCollect, Effect.flatMap(Effect.filter(f)))
       }))

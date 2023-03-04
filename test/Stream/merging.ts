@@ -113,7 +113,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream1 = Stream.make(1, 2, 3, 4)
       const stream2 = Stream.make(5, 6, 7, 8)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(
           stream1,
           Stream.merge(stream2),

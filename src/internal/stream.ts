@@ -139,7 +139,7 @@ export const aggregateWithinEither = dual<
     sink: Sink.Sink<R2, E2, A | A2, A2, B>,
     schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream.Stream<R | R2 | R3, E | E2, Either.Either<C, B>> => {
-    const layer = Effect.tuple(
+    const layer = Effect.all(
       Handoff.make<HandoffSignal.HandoffSignal<E | E2, A>>(),
       Ref.make<SinkEndReason.SinkEndReason>(SinkEndReason.SchedulEnd),
       Ref.make(Chunk.empty<A | A2>()),
@@ -279,7 +279,7 @@ export const aggregateWithinEither = dual<
                     switch (reason._tag) {
                       case SinkEndReason.OP_SCHEDULE_END: {
                         return pipe(
-                          Effect.tuple(
+                          Effect.all(
                             Ref.get(consumed),
                             forkSink,
                             pipe(timeout(Option.some(b)), Effect.forkIn(scope))
@@ -1505,7 +1505,7 @@ export const combineChunks = dual<
     )
   return new StreamImpl(
     pipe(
-      Effect.tuple(
+      Effect.all(
         Handoff.make<Take.Take<E, A>>(),
         Handoff.make<Take.Take<E2, A2>>(),
         Handoff.make<void>(),

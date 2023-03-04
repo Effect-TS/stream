@@ -11,7 +11,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream1 = Stream.make(1, 2, 3)
       const stream2 = Stream.make(4, 5, 6)
-      const { result1, result2 } = yield* $(Effect.struct({
+      const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(
           stream1,
           Stream.runCollect,
