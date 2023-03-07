@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-22.11";
+      url = "github:nixos/nixpkgs/nixpkgs-unstable";
     };
   };
 
@@ -31,10 +31,6 @@
           nodejs-16_x
           nodePackages.pnpm
         ];
-        shellHook = ''
-          pnpm install;
-          pnpm run build;
-        '';
       };
     });
   };
