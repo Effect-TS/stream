@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.7.0
+
+### Minor Changes
+
+- [#64](https://github.com/Effect-TS/stream/pull/64) [`96454be`](https://github.com/Effect-TS/stream/commit/96454be9ac5bdd55e8b926ffa31a9fe937753914) Thanks [@IMax153](https://github.com/IMax153)! - upgrade dependencies
+
 ## 0.6.0
 
 ### Minor Changes
