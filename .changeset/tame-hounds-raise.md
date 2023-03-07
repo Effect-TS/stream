@@ -1,5 +1,5 @@
 ---
-"@effect/stream": patch
+"@effect/stream": minor
 ---
 
 upgrade dependencies
