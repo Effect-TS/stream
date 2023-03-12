@@ -16,7 +16,7 @@ describe.concurrent("Sink", () => {
       )
       const result = yield* $(Stream.runCollect(stream))
       assert.deepStrictEqual(
-        Array.from(result.map((chunk) => Array.from(chunk))),
+        Array.from(Chunk.map(result, (chunk) => Array.from(chunk))),
         [[1, 2, 3], [4]]
       )
     }))
@@ -29,7 +29,7 @@ describe.concurrent("Sink", () => {
       )
       const result = yield* $(Stream.runCollect(stream))
       assert.deepStrictEqual(
-        Array.from(result.map((chunk) => Array.from(chunk))),
+        Array.from(Chunk.map(result, (chunk) => Array.from(chunk))),
         [[1, 2, 3, 4], []]
       )
     }))
@@ -42,7 +42,7 @@ describe.concurrent("Sink", () => {
       )
       const result = yield* $(Stream.runCollect(stream))
       assert.deepStrictEqual(
-        Array.from(result.map((chunk) => Array.from(chunk))),
+        Array.from(Chunk.map(result, (chunk) => Array.from(chunk))),
         [[]]
       )
     }))
@@ -62,7 +62,7 @@ describe.concurrent("Sink", () => {
       )
       const result = yield* $(Stream.runCollect(stream))
       assert.deepStrictEqual(
-        Array.from(result.map((set) => Array.from(set))),
+        Array.from(Chunk.map(result, (set) => Array.from(set))),
         [[1, 2, 3], [4]]
       )
     }))
@@ -75,7 +75,7 @@ describe.concurrent("Sink", () => {
       )
       const result = yield* $(Stream.runCollect(stream))
       assert.deepStrictEqual(
-        Array.from(result.map((set) => Array.from(set))),
+        Array.from(Chunk.map(result, (set) => Array.from(set))),
         [[]]
       )
     }))
@@ -111,7 +111,7 @@ describe.concurrent("Sink", () => {
         )
       )
       assert.deepStrictEqual(
-        Array.from(result.map((chunk) => Array.from(chunk))),
+        Array.from(Chunk.map(result, (chunk) => Array.from(chunk))),
         [[[1, 2], [2, 4]], [[0, 3], [2, 2]], [[1, 4], [2, 5]]]
       )
     }))
@@ -130,7 +130,7 @@ describe.concurrent("Sink", () => {
         )
       )
       assert.deepStrictEqual(
-        Array.from(result.map((chunk) => Array.from(chunk))),
+        Array.from(Chunk.map(result, (chunk) => Array.from(chunk))),
         [[[0, 18], [1, 12], [2, 15]]]
       )
     }))
@@ -149,7 +149,7 @@ describe.concurrent("Sink", () => {
         )
       )
       assert.deepStrictEqual(
-        Array.from(result.map((chunk) => Array.from(chunk))),
+        Array.from(Chunk.map(result, (chunk) => Array.from(chunk))),
         [[]]
       )
     }))

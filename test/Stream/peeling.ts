@@ -32,7 +32,7 @@ describe.concurrent("Stream", () => {
       const sink = Sink.fold<Chunk.Chunk<number>, number>(
         Chunk.empty(),
         constTrue,
-        (acc, curr) => acc.append(curr)
+        Chunk.append
       )
       const result = yield* $(pipe(
         stream,

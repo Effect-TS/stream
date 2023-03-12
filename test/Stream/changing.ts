@@ -18,7 +18,7 @@ describe.concurrent("Stream", () => {
         stream,
         Stream.runCollect,
         Effect.map(Chunk.reduce(Chunk.empty<number>(), (acc, n) =>
-          acc.length === 0 || acc.unsafeGet(0) !== n ? acc.append(n) : acc))
+          acc.length === 0 || Chunk.unsafeGet(acc, 0) !== n ? Chunk.append(acc, n) : acc))
       ))
       assert.deepStrictEqual(Array.from(result), Array.from(expected))
     }))
@@ -35,7 +35,7 @@ describe.concurrent("Stream", () => {
         stream,
         Stream.runCollect,
         Effect.map(Chunk.reduce(Chunk.empty<number>(), (acc, n) =>
-          acc.length === 0 || acc.unsafeGet(0) !== n ? acc.append(n) : acc))
+          acc.length === 0 || Chunk.unsafeGet(acc, 0) !== n ? Chunk.append(acc, n) : acc))
       ))
       assert.deepStrictEqual(Array.from(result), Array.from(expected))
     }))

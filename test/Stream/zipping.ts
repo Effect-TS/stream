@@ -29,7 +29,7 @@ const OrderByKey: Order.Order<readonly [number, number]> = pipe(
 export const splitChunks = <A>(chunks: Chunk.Chunk<Chunk.Chunk<A>>): fc.Arbitrary<Chunk.Chunk<Chunk.Chunk<A>>> => {
   const split = (chunks: Chunk.Chunk<Chunk.Chunk<A>>): fc.Arbitrary<Chunk.Chunk<Chunk.Chunk<A>>> =>
     fc.integer({ min: 0, max: Math.max(chunks.length - 1, 0) }).chain((i) => {
-      const chunk = chunks.unsafeGet(i)
+      const chunk = Chunk.unsafeGet(chunks, i)
       return fc.integer({ min: 0, max: Math.max(chunk.length - 1, 0) }).map((j) => {
         const [left, right] = pipe(chunk, Chunk.splitAt(j))
         return pipe(
