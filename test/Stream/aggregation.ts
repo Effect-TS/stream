@@ -29,7 +29,7 @@ describe.concurrent("Stream", () => {
         pipe(
           Stream.make(1, 1, 1, 1),
           Stream.aggregate(
-            Sink.foldUntil(Chunk.empty<number>(), 3, (acc, curr) => acc.prepend(curr))
+            Sink.foldUntil(Chunk.empty<number>(), 3, Chunk.prepend)
           ),
           Stream.runCollect
         )
@@ -74,7 +74,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const sink = Sink.foldEffect(Chunk.empty<number>(), constTrue, (acc, curr) => {
         if (curr === 1) {
-          return Effect.succeed(acc.prepend(curr))
+          return Effect.succeed(Chunk.prepend(acc, curr))
         }
         return pipe(
           Deferred.succeed<never, void>(latch, void 0),
@@ -125,7 +125,7 @@ describe.concurrent("Stream", () => {
             Chunk.empty<number>(),
             4,
             (_, n) => n,
-            (acc, curr) => acc.append(curr)
+            (acc, curr) => Chunk.append(acc, curr)
           )),
           Stream.runCollect
         )
@@ -305,7 +305,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const sink = Sink.foldEffect(Chunk.empty<number>(), constTrue, (acc, curr) => {
         if (curr === 1) {
-          return Effect.succeed(acc.prepend(curr))
+          return Effect.succeed(Chunk.prepend(acc, curr))
         }
         return pipe(
           Deferred.succeed<never, void>(latch, void 0),
@@ -361,7 +361,7 @@ describe.concurrent("Stream", () => {
               Chunk.empty<number>(),
               4,
               (_, n) => n,
-              (acc, curr) => acc.append(curr)
+              (acc, curr) => Chunk.append(acc, curr)
             ),
             Schedule.spaced(Duration.millis(100))
           ),

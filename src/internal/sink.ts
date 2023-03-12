@@ -1566,7 +1566,7 @@ export const mkString = (): Sink.Sink<never, never, unknown, never, string> =>
     const strings: Array<string> = []
     return pipe(
       foldLeftChunks<void, unknown>(void 0, (_, elems) =>
-        elems.forEach((elem) => {
+        Chunk.forEach(elems, (elem) => {
           strings.push(String(elem))
         })),
       map(() => strings.join(""))
