@@ -1475,6 +1475,17 @@ export const flattenTake: <R, E, E2, A>(
 export const forever: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.forever
 
 /**
+ * Creates a stream from an `AsyncIterable`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const fromAsyncIterable: <E, A>(
+  iterable: AsyncIterable<A>,
+  onError: (e: unknown) => E
+) => Stream<never, E, A> = internal.fromAsyncIterable
+
+/**
  * Creates a stream from a `Channel`.
  *
  * @since 1.0.0

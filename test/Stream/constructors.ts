@@ -1,7 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
 import * as Either from "@effect/data/Either"
-import { pipe } from "@effect/data/Function"
+import { identity, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
@@ -195,6 +195,19 @@ describe.concurrent("Stream", () => {
         Stream.runCollect
       ))
       assert.isTrue(Array.from(result).every((array) => array.length <= 2))
+    }))
+
+  it.effect("fromAsyncIterable", () =>
+    Effect.gen(function*($) {
+      async function* asyncIterable() {
+        yield 1
+        yield 2
+        yield 3
+      }
+
+      const stream = Stream.fromAsyncIterable(asyncIterable(), identity)
+      const result = yield* $(Stream.runCollect(stream))
+      assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
   it.effect("iterate", () =>
