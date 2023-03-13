@@ -2767,6 +2767,25 @@ export const forever = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R,
   new StreamImpl(channel.repeated(self.channel))
 
 /** @internal */
+export const fromAsyncIterable = <E, A>(
+  iterable: AsyncIterable<A>,
+  onError: (e: unknown) => E
+) =>
+  pipe(
+    Effect.acquireRelease(
+      Effect.sync(() => iterable[Symbol.asyncIterator]()),
+      (iterator) => iterator.return ? Effect.promise(() => iterator.return!()) : Effect.unit()
+    ),
+    Effect.map((iterator) =>
+      repeatEffectOption(pipe(
+        Effect.tryCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
+        Effect.flatMap((result) => result.done ? Effect.fail(Option.none()) : Effect.succeed(result.value))
+      ))
+    ),
+    unwrapScoped
+  )
+
+/** @internal */
 export const fromChannel = <R, E, A>(
   channel: Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
 ): Stream.Stream<R, E, A> => new StreamImpl(channel)
