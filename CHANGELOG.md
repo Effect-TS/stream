@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.8.0
+
+### Minor Changes
+
+- [#67](https://github.com/Effect-TS/stream/pull/67) [`1bc0a91`](https://github.com/Effect-TS/stream/commit/1bc0a913f53ef48d1adee92e2f368b541bbd4c47) Thanks [@tim-smart](https://github.com/tim-smart)! - update /data to 0.4.1
+
+### Patch Changes
+
+- [#68](https://github.com/Effect-TS/stream/pull/68) [`4ab719a`](https://github.com/Effect-TS/stream/commit/4ab719a3acb92210c1345c085164be1a5e068cc2) Thanks [@tim-smart](https://github.com/tim-smart)! - add Stream.fromAsyncIterable
+
 ## 0.7.0
 
 ### Minor Changes
