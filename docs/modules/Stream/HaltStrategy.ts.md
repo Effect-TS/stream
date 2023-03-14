@@ -82,12 +82,10 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const match: <Z>(
-  onLeft: () => Z,
-  onRight: () => Z,
-  onBoth: () => Z,
-  onEither: () => Z
-) => (self: HaltStrategy) => Z
+export declare const match: {
+  <Z>(onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z): (self: HaltStrategy) => Z
+  <Z>(self: HaltStrategy, onLeft: () => Z, onRight: () => Z, onBoth: () => Z, onEither: () => Z): Z
+}
 ```
 
 Added in v1.0.0

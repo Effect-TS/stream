@@ -51,7 +51,7 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const Continue: ChildExecutorDecision
+export declare const Continue: (_: void) => ChildExecutorDecision
 ```
 
 Added in v1.0.0
@@ -61,7 +61,7 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const Yield: ChildExecutorDecision
+export declare const Yield: (_: void) => ChildExecutorDecision
 ```
 
 Added in v1.0.0
@@ -75,11 +75,10 @@ Folds over a `ChildExecutorDecision` to produce a value of type `A`.
 **Signature**
 
 ```ts
-export declare const match: <A>(
-  onContinue: () => A,
-  onClose: (value: unknown) => A,
-  onYield: () => A
-) => (self: ChildExecutorDecision) => A
+export declare const match: {
+  <A>(onContinue: () => A, onClose: (value: unknown) => A, onYield: () => A): (self: ChildExecutorDecision) => A
+  <A>(self: ChildExecutorDecision, onContinue: () => A, onClose: (value: unknown) => A, onYield: () => A): A
+}
 ```
 
 Added in v1.0.0

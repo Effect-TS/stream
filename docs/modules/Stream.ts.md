@@ -33,6 +33,7 @@ Added in v1.0.0
   - [failCauseSync](#failcausesync)
   - [failSync](#failsync)
   - [finalizer](#finalizer)
+  - [fromAsyncIterable](#fromasynciterable)
   - [fromChannel](#fromchannel)
   - [fromChunk](#fromchunk)
   - [fromChunkHub](#fromchunkhub)
@@ -82,6 +83,23 @@ Added in v1.0.0
   - [unwrap](#unwrap)
   - [unwrapScoped](#unwrapscoped)
   - [whenCase](#whencase)
+- [context](#context)
+  - [context](#context-1)
+  - [contextWith](#contextwith)
+  - [contextWithEffect](#contextwitheffect)
+  - [contextWithStream](#contextwithstream)
+  - [contramapContext](#contramapcontext)
+  - [provideContext](#providecontext)
+  - [provideLayer](#providelayer)
+  - [provideService](#provideservice)
+  - [provideServiceEffect](#provideserviceeffect)
+  - [provideServiceStream](#provideservicestream)
+  - [provideSomeLayer](#providesomelayer)
+  - [service](#service)
+  - [serviceWith](#servicewith)
+  - [serviceWithEffect](#servicewitheffect)
+  - [serviceWithStream](#servicewithstream)
+  - [updateService](#updateservice)
 - [destructors](#destructors)
   - [run](#run)
   - [runCollect](#runcollect)
@@ -113,30 +131,17 @@ Added in v1.0.0
   - [toHub](#tohub)
   - [toPull](#topull)
   - [toQueue](#toqueue)
+  - [toQueueCapacity](#toqueuecapacity)
   - [toQueueDropping](#toqueuedropping)
+  - [toQueueDroppingCapacity](#toqueuedroppingcapacity)
   - [toQueueOfElements](#toqueueofelements)
+  - [toQueueOfElementsCapacity](#toqueueofelementscapacity)
   - [toQueueSliding](#toqueuesliding)
+  - [toQueueSlidingCapacity](#toqueueslidingcapacity)
   - [toQueueUnbounded](#toqueueunbounded)
 - [elements](#elements)
   - [find](#find)
   - [findEffect](#findeffect)
-- [environment](#environment)
-  - [environment](#environment-1)
-  - [environmentWith](#environmentwith)
-  - [environmentWithEffect](#environmentwitheffect)
-  - [environmentWithStream](#environmentwithstream)
-  - [provideEnvironment](#provideenvironment)
-  - [provideLayer](#providelayer)
-  - [provideService](#provideservice)
-  - [provideServiceEffect](#provideserviceeffect)
-  - [provideServiceStream](#provideservicestream)
-  - [provideSomeEnvironment](#providesomeenvironment)
-  - [provideSomeLayer](#providesomelayer)
-  - [service](#service)
-  - [serviceWith](#servicewith)
-  - [serviceWithEffect](#servicewitheffect)
-  - [serviceWithStream](#servicewithstream)
-  - [updateService](#updateservice)
 - [error handling](#error-handling)
   - [catchAll](#catchall)
   - [catchAllCause](#catchallcause)
@@ -160,6 +165,7 @@ Added in v1.0.0
 - [grouping](#grouping)
   - [groupAdjacentBy](#groupadjacentby)
   - [groupBy](#groupby)
+  - [groupByBuffer](#groupbybuffer)
 - [logging](#logging)
   - [log](#log)
   - [logDebug](#logdebug)
@@ -194,6 +200,7 @@ Added in v1.0.0
   - [mapEffect](#mapeffect)
   - [mapEffectPar](#mapeffectpar)
   - [mapEffectParByKey](#mapeffectparbykey)
+  - [mapEffectParByKeyBuffer](#mapeffectparbykeybuffer)
   - [mapEffectParUnordered](#mapeffectparunordered)
   - [mapError](#maperror)
   - [mapErrorCause](#maperrorcause)
@@ -203,7 +210,9 @@ Added in v1.0.0
   - [branchAfter](#branchafter)
   - [flatMap](#flatmap)
   - [flatMapPar](#flatmappar)
+  - [flatMapParBuffer](#flatmapparbuffer)
   - [flatMapParSwitch](#flatmapparswitch)
+  - [flatMapParSwitchBuffer](#flatmapparswitchbuffer)
   - [flatten](#flatten)
   - [flattenChunks](#flattenchunks)
   - [flattenEffect](#flatteneffect)
@@ -211,7 +220,9 @@ Added in v1.0.0
   - [flattenExitOption](#flattenexitoption)
   - [flattenIterables](#flatteniterables)
   - [flattenPar](#flattenpar)
+  - [flattenParBuffer](#flattenparbuffer)
   - [flattenParUnbounded](#flattenparunbounded)
+  - [flattenParUnboundedBuffer](#flattenparunboundedbuffer)
   - [flattenTake](#flattentake)
   - [tap](#tap)
   - [tapError](#taperror)
@@ -274,6 +285,7 @@ Added in v1.0.0
   - [ensuring](#ensuring)
   - [forever](#forever)
   - [groupByKey](#groupbykey)
+  - [groupByKeyBuffer](#groupbykeybuffer)
   - [grouped](#grouped)
   - [groupedWithin](#groupedwithin)
   - [haltAfter](#haltafter)
@@ -295,14 +307,18 @@ Added in v1.0.0
   - [mergeHaltEither](#mergehalteither)
   - [mergeHaltLeft](#mergehaltleft)
   - [mergeHaltRight](#mergehaltright)
+  - [mergeHaltStrategy](#mergehaltstrategy)
   - [mergeLeft](#mergeleft)
   - [mergeRight](#mergeright)
   - [mergeWith](#mergewith)
+  - [mergeWithHaltStrategy](#mergewithhaltstrategy)
   - [mkString](#mkstring)
   - [onDone](#ondone)
   - [onError](#onerror)
   - [partition](#partition)
+  - [partitionBuffer](#partitionbuffer)
   - [partitionEither](#partitioneither)
+  - [partitionEitherBuffer](#partitioneitherbuffer)
   - [peel](#peel)
   - [pipeThrough](#pipethrough)
   - [pipeThroughChannel](#pipethroughchannel)
@@ -326,6 +342,7 @@ Added in v1.0.0
   - [scheduleEither](#scheduleeither)
   - [scheduleWith](#schedulewith)
   - [sliding](#sliding)
+  - [slidingSize](#slidingsize)
   - [some](#some)
   - [someOrElse](#someorelse)
   - [someOrFail](#someorfail)
@@ -338,9 +355,13 @@ Added in v1.0.0
   - [takeWhile](#takewhile)
   - [tapErrorCause](#taperrorcause)
   - [throttleEnforce](#throttleenforce)
+  - [throttleEnforceBurst](#throttleenforceburst)
   - [throttleEnforceEffect](#throttleenforceeffect)
+  - [throttleEnforceEffectBurst](#throttleenforceeffectburst)
   - [throttleShape](#throttleshape)
+  - [throttleShapeBurst](#throttleshapeburst)
   - [throttleShapeEffect](#throttleshapeeffect)
+  - [throttleShapeEffectBurst](#throttleshapeeffectburst)
   - [timeout](#timeout)
   - [timeoutFail](#timeoutfail)
   - [timeoutFailCause](#timeoutfailcause)
@@ -638,6 +659,21 @@ when it ends.
 
 ```ts
 export declare const finalizer: <R, _>(finalizer: Effect.Effect<R, never, _>) => Stream<R, never, void>
+```
+
+Added in v1.0.0
+
+## fromAsyncIterable
+
+Creates a stream from an `AsyncIterable`.
+
+**Signature**
+
+```ts
+export declare const fromAsyncIterable: <E, A>(
+  iterable: AsyncIterable<A>,
+  onError: (e: unknown) => E
+) => Stream<never, E, A>
 ```
 
 Added in v1.0.0
@@ -1331,6 +1367,274 @@ export declare const whenCase: <A, R, E, A2>(
 
 Added in v1.0.0
 
+# context
+
+## context
+
+Accesses the whole context of the stream.
+
+**Signature**
+
+```ts
+export declare const context: <R>() => Stream<R, never, Context.Context<R>>
+```
+
+Added in v1.0.0
+
+## contextWith
+
+Accesses the context of the stream.
+
+**Signature**
+
+```ts
+export declare const contextWith: <R, A>(f: (env: Context.Context<R>) => A) => Stream<R, never, A>
+```
+
+Added in v1.0.0
+
+## contextWithEffect
+
+Accesses the context of the stream in the context of an effect.
+
+**Signature**
+
+```ts
+export declare const contextWithEffect: <R0, R, E, A>(
+  f: (env: Context.Context<R0>) => Effect.Effect<R, E, A>
+) => Stream<R0 | R, E, A>
+```
+
+Added in v1.0.0
+
+## contextWithStream
+
+Accesses the context of the stream in the context of a stream.
+
+**Signature**
+
+```ts
+export declare const contextWithStream: <R0, R, E, A>(
+  f: (env: Context.Context<R0>) => Stream<R, E, A>
+) => Stream<R0 | R, E, A>
+```
+
+Added in v1.0.0
+
+## contramapContext
+
+Transforms the context being provided to the stream with the specified
+function.
+
+**Signature**
+
+```ts
+export declare const contramapContext: {
+  <R0, R>(f: (env: Context.Context<R0>) => Context.Context<R>): <E, A>(self: Stream<R, E, A>) => Stream<R0, E, A>
+  <E, A, R0, R>(self: Stream<R, E, A>, f: (env: Context.Context<R0>) => Context.Context<R>): Stream<R0, E, A>
+}
+```
+
+Added in v1.0.0
+
+## provideContext
+
+Provides the stream with its required context, which eliminates its
+dependency on `R`.
+
+**Signature**
+
+```ts
+export declare const provideContext: {
+  <R>(context: Context.Context<R>): <E, A>(self: Stream<R, E, A>) => Stream<never, E, A>
+  <E, A, R>(self: Stream<R, E, A>, context: Context.Context<R>): Stream<never, E, A>
+}
+```
+
+Added in v1.0.0
+
+## provideLayer
+
+Provides a `Layer` to the stream, which translates it to another level.
+
+**Signature**
+
+```ts
+export declare const provideLayer: {
+  <RIn, E2, ROut>(layer: Layer.Layer<RIn, E2, ROut>): <E, A>(self: Stream<ROut, E, A>) => Stream<RIn, E2 | E, A>
+  <E, A, RIn, E2, ROut>(self: Stream<ROut, E, A>, layer: Layer.Layer<RIn, E2, ROut>): Stream<RIn, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## provideService
+
+Provides the stream with the single service it requires. If the stream
+requires more than one service use `Stream.provideContext` instead.
+
+**Signature**
+
+```ts
+export declare const provideService: {
+  <T extends Context.Tag<any>>(tag: T, resource: Context.Tag.Service<T>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<Exclude<R, Context.Tag.Service<T>>, E, A>
+  <R, E, A, T extends Context.Tag<any>>(self: Stream<R, E, A>, tag: T, resource: Context.Tag.Service<T>): Stream<
+    Exclude<R, Context.Tag.Service<T>>,
+    E,
+    A
+  >
+}
+```
+
+Added in v1.0.0
+
+## provideServiceEffect
+
+Provides the stream with the single service it requires. If the stream
+requires more than one service use `Stream.provideContext` instead.
+
+**Signature**
+
+```ts
+export declare const provideServiceEffect: {
+  <T extends Context.Tag<any>, R2, E2>(tag: T, effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
+  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+    self: Stream<R, E, A>,
+    tag: T,
+    effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
+  ): Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## provideServiceStream
+
+Provides the stream with the single service it requires. If the stream
+requires more than one service use `Stream.provideContext` instead.
+
+**Signature**
+
+```ts
+export declare const provideServiceStream: {
+  <T extends Context.Tag<any>, R2, E2>(tag: T, stream: Stream<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
+  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+    self: Stream<R, E, A>,
+    tag: T,
+    stream: Stream<R2, E2, Context.Tag.Service<T>>
+  ): Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## provideSomeLayer
+
+Splits the context into two parts, providing one part using the
+specified layer and leaving the remainder `R0`.
+
+**Signature**
+
+```ts
+export declare const provideSomeLayer: {
+  <RIn, E2, ROut>(layer: Layer.Layer<RIn, E2, ROut>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<RIn | Exclude<R, ROut>, E2 | E, A>
+  <R, E, A, RIn, E2, ROut>(self: Stream<R, E, A>, layer: Layer.Layer<RIn, E2, ROut>): Stream<
+    RIn | Exclude<R, ROut>,
+    E | E2,
+    A
+  >
+}
+```
+
+Added in v1.0.0
+
+## service
+
+Accesses the specified service in the context of the effect.
+
+**Signature**
+
+```ts
+export declare const service: <T>(tag: Context.Tag<T>) => Stream<T, never, T>
+```
+
+Added in v1.0.0
+
+## serviceWith
+
+Accesses the specified service in the context of the stream.
+
+**Signature**
+
+```ts
+export declare const serviceWith: <T extends Context.Tag<any>, A>(
+  tag: T,
+  f: (service: Context.Tag.Service<T>) => A
+) => Stream<Context.Tag.Service<T>, never, A>
+```
+
+Added in v1.0.0
+
+## serviceWithEffect
+
+Accesses the specified service in the context of the stream in the
+context of an effect.
+
+**Signature**
+
+```ts
+export declare const serviceWithEffect: <T extends Context.Tag<any>, R, E, A>(
+  tag: T,
+  f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
+) => Stream<R | Context.Tag.Service<T>, E, A>
+```
+
+Added in v1.0.0
+
+## serviceWithStream
+
+Accesses the specified service in the context of the stream in the
+context of a stream.
+
+**Signature**
+
+```ts
+export declare const serviceWithStream: <T extends Context.Tag<any>, R, E, A>(
+  tag: T,
+  f: (service: Context.Tag.Service<T>) => Stream<R, E, A>
+) => Stream<R | Context.Tag.Service<T>, E, A>
+```
+
+Added in v1.0.0
+
+## updateService
+
+Updates the specified service within the context of the `Stream`.
+
+**Signature**
+
+```ts
+export declare const updateService: (<T extends Context.Tag<any>>(
+  tag: T,
+  f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>
+) => <R, E, A>(self: Stream<R, E, A>) => Stream<T | R, E, A>) &
+  (<R, E, A, T extends Context.Tag<any>>(
+    self: Stream<R, E, A>,
+    tag: T,
+    f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>
+  ) => Stream<R | T, E, A>)
+```
+
+Added in v1.0.0
+
 # destructors
 
 ## run
@@ -1340,9 +1644,12 @@ Runs the sink on the stream to produce either the sink's result or an error.
 **Signature**
 
 ```ts
-export declare const run: <R2, E2, A, Z>(
-  sink: Sink.Sink<R2, E2, A, unknown, Z>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, Z>
+export declare const run: {
+  <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, unknown, Z>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<R2 | R, E2 | E, Z>
+  <R, E, R2, E2, A, Z>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A, unknown, Z>): Effect.Effect<R | R2, E | E2, Z>
+}
 ```
 
 Added in v1.0.0
@@ -1391,10 +1698,10 @@ the stream to a value of type `S`.
 **Signature**
 
 ```ts
-export declare const runFold: <S, A>(
-  s: S,
-  f: (s: S, a: A) => S
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R, E, S>
+export declare const runFold: {
+  <S, A>(s: S, f: (s: S, a: A) => S): <R, E>(self: Stream<R, E, A>) => Effect.Effect<R, E, S>
+  <R, E, S, A>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Effect.Effect<R, E, S>
+}
 ```
 
 Added in v1.0.0
@@ -1406,10 +1713,16 @@ Executes an effectful fold over the stream of values.
 **Signature**
 
 ```ts
-export declare const runFoldEffect: <S, A, R2, E2>(
-  s: S,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, S>
+export declare const runFoldEffect: {
+  <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<R2 | R, E2 | E, S>
+  <R, E, S, A, R2, E2>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): Effect.Effect<
+    R | R2,
+    E | E2,
+    S
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1422,10 +1735,10 @@ represents the scope of the stream.
 **Signature**
 
 ```ts
-export declare const runFoldScoped: <S, A>(
-  s: S,
-  f: (s: S, a: A) => S
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, E, S>
+export declare const runFoldScoped: {
+  <S, A>(s: S, f: (s: S, a: A) => S): <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, E, S>
+  <R, E, S, A>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Effect.Effect<Scope.Scope | R, E, S>
+}
 ```
 
 Added in v1.0.0
@@ -1438,10 +1751,16 @@ value that represents the scope of the stream.
 **Signature**
 
 ```ts
-export declare const runFoldScopedEffect: <S, A, R2, E2>(
-  s: S,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, S>
+export declare const runFoldScopedEffect: {
+  <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, S>
+  <R, E, S, A, R2, E2>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): Effect.Effect<
+    Scope.Scope | R | R2,
+    E | E2,
+    S
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1454,11 +1773,10 @@ early when the condition is not fulfilled. Example:
 **Signature**
 
 ```ts
-export declare const runFoldWhile: <S, A>(
-  s: S,
-  cont: Predicate<S>,
-  f: (s: S, a: A) => S
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R, E, S>
+export declare const runFoldWhile: {
+  <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S): <R, E>(self: Stream<R, E, A>) => Effect.Effect<R, E, S>
+  <R, E, S, A>(self: Stream<R, E, A>, s: S, cont: Predicate<S>, f: (s: S, a: A) => S): Effect.Effect<R, E, S>
+}
 ```
 
 Added in v1.0.0
@@ -1471,11 +1789,17 @@ when the condition is not fulfilled.
 **Signature**
 
 ```ts
-export declare const runFoldWhileEffect: <S, A, R2, E2>(
-  s: S,
-  cont: Predicate<S>,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, S>
+export declare const runFoldWhileEffect: {
+  <S, A, R2, E2>(s: S, cont: Predicate<S>, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<R2 | R, E2 | E, S>
+  <R, E, S, A, R2, E2>(
+    self: Stream<R, E, A>,
+    s: S,
+    cont: Predicate<S>,
+    f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+  ): Effect.Effect<R | R2, E | E2, S>
+}
 ```
 
 Added in v1.0.0
@@ -1489,11 +1813,16 @@ is not fulfilled.
 **Signature**
 
 ```ts
-export declare const runFoldWhileScoped: <S, A>(
-  s: S,
-  cont: Predicate<S>,
-  f: (s: S, a: A) => S
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, E, S>
+export declare const runFoldWhileScoped: {
+  <S, A>(s: S, cont: Predicate<S>, f: (s: S, a: A) => S): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, E, S>
+  <R, E, S, A>(self: Stream<R, E, A>, s: S, cont: Predicate<S>, f: (s: S, a: A) => S): Effect.Effect<
+    Scope.Scope | R,
+    E,
+    S
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1507,11 +1836,17 @@ the condition is not fulfilled.
 **Signature**
 
 ```ts
-export declare const runFoldWhileScopedEffect: <S, A, R2, E2>(
-  s: S,
-  cont: Predicate<S>,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, S>
+export declare const runFoldWhileScopedEffect: {
+  <S, A, R2, E2>(s: S, cont: Predicate<S>, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, S>
+  <R, E, S, A, R2, E2>(
+    self: Stream<R, E, A>,
+    s: S,
+    cont: Predicate<S>,
+    f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+  ): Effect.Effect<Scope.Scope | R | R2, E | E2, S>
+}
 ```
 
 Added in v1.0.0
@@ -1524,9 +1859,16 @@ callback.
 **Signature**
 
 ```ts
-export declare const runForEach: <A, R2, E2, _>(
-  f: (a: A) => Effect.Effect<R2, E2, _>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, void>
+export declare const runForEach: {
+  <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<R2 | R, E2 | E, void>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, _>): Effect.Effect<
+    R | R2,
+    E | E2,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1539,9 +1881,16 @@ callback.
 **Signature**
 
 ```ts
-export declare const runForEachChunk: <A, R2, E2, _>(
-  f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, void>
+export declare const runForEachChunk: {
+  <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<R2 | R, E2 | E, void>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>): Effect.Effect<
+    R | R2,
+    E | E2,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1554,9 +1903,16 @@ finalization order can be controlled.
 **Signature**
 
 ```ts
-export declare const runForEachChunkScoped: <A, R2, E2, _>(
-  f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
+export declare const runForEachChunkScoped: {
+  <A, R2, E2, _>(f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>): Effect.Effect<
+    Scope.Scope | R | R2,
+    E | E2,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1569,9 +1925,16 @@ order can be controlled.
 **Signature**
 
 ```ts
-export declare const runForEachScoped: <A, R2, E2, _>(
-  f: (a: A) => Effect.Effect<R2, E2, _>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
+export declare const runForEachScoped: {
+  <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, _>): Effect.Effect<
+    Scope.Scope | R | R2,
+    E | E2,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1584,9 +1947,16 @@ and terminating consumption when the callback returns `false`.
 **Signature**
 
 ```ts
-export declare const runForEachWhile: <A, R2, E2>(
-  f: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, void>
+export declare const runForEachWhile: {
+  <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<R2 | R, E2 | E, void>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, boolean>): Effect.Effect<
+    R | R2,
+    E | E2,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1599,9 +1969,16 @@ finalization order can be controlled.
 **Signature**
 
 ```ts
-export declare const runForEachWhileScoped: <A, R2, E2>(
-  f: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
+export declare const runForEachWhileScoped: {
+  <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, boolean>): Effect.Effect<
+    Scope.Scope | R | R2,
+    E | E2,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1627,9 +2004,10 @@ also be signalled.
 **Signature**
 
 ```ts
-export declare const runIntoHub: <E, A>(
-  hub: Hub.Hub<Take.Take<E, A>>
-) => <R>(self: Stream<R, E, A>) => Effect.Effect<R, never, void>
+export declare const runIntoHub: {
+  <E, A>(hub: Hub.Hub<Take.Take<E, A>>): <R>(self: Stream<R, E, A>) => Effect.Effect<R, never, void>
+  <R, E, A>(self: Stream<R, E, A>, hub: Hub.Hub<Take.Take<E, A>>): Effect.Effect<R, never, void>
+}
 ```
 
 Added in v1.0.0
@@ -1642,9 +2020,10 @@ allow for scope composition.
 **Signature**
 
 ```ts
-export declare const runIntoHubScoped: <E, A>(
-  hub: Hub.Hub<Take.Take<E, A>>
-) => <R>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>
+export declare const runIntoHubScoped: {
+  <E, A>(hub: Hub.Hub<Take.Take<E, A>>): <R>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>
+  <R, E, A>(self: Stream<R, E, A>, hub: Hub.Hub<Take.Take<E, A>>): Effect.Effect<Scope.Scope | R, never, void>
+}
 ```
 
 Added in v1.0.0
@@ -1657,9 +2036,10 @@ will also be signalled.
 **Signature**
 
 ```ts
-export declare const runIntoQueue: <E, A>(
-  queue: Queue.Enqueue<Take.Take<E, A>>
-) => <R>(self: Stream<R, E, A>) => Effect.Effect<R, never, void>
+export declare const runIntoQueue: {
+  <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>): <R>(self: Stream<R, E, A>) => Effect.Effect<R, never, void>
+  <R, E, A>(self: Stream<R, E, A>, queue: Queue.Enqueue<Take.Take<E, A>>): Effect.Effect<R, never, void>
+}
 ```
 
 Added in v1.0.0
@@ -1672,9 +2052,16 @@ to allow for scope composition.
 **Signature**
 
 ```ts
-export declare const runIntoQueueElementsScoped: <E, A>(
-  queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>
-) => <R>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>
+export declare const runIntoQueueElementsScoped: {
+  <E, A>(queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>): <R>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, void>
+  <R, E, A>(self: Stream<R, E, A>, queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    void
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1687,9 +2074,12 @@ to allow for scope composition.
 **Signature**
 
 ```ts
-export declare const runIntoQueueScoped: <E, A>(
-  queue: Queue.Enqueue<Take.Take<E, A>>
-) => <R>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>
+export declare const runIntoQueueScoped: {
+  <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>): <R>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, void>
+  <R, E, A>(self: Stream<R, E, A>, queue: Queue.Enqueue<Take.Take<E, A>>): Effect.Effect<Scope.Scope | R, never, void>
+}
 ```
 
 Added in v1.0.0
@@ -1712,9 +2102,16 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const runScoped: <R2, E2, A, A2>(
-  sink: Sink.Sink<R2, E2, A, unknown, A2>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, A2>
+export declare const runScoped: {
+  <R2, E2, A, A2>(sink: Sink.Sink<R2, E2, A, unknown, A2>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, A2>
+  <R, E, R2, E2, A, A2>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A, unknown, A2>): Effect.Effect<
+    Scope.Scope | R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1739,9 +2136,12 @@ the hub will never again produce values and should be discarded.
 **Signature**
 
 ```ts
-export declare const toHub: (
-  capacity: number
-) => <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Hub.Hub<Take.Take<E, A>>>
+export declare const toHub: {
+  (capacity: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Hub.Hub<Take.Take<E, A>>>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<Scope.Scope | R, never, Hub.Hub<Take.Take<E, A>>>
+}
 ```
 
 Added in v1.0.0
@@ -1771,9 +2171,30 @@ the queue will never again produce values and should be discarded.
 **Signature**
 
 ```ts
-export declare const toQueue: (
-  capacity?: number | undefined
-) => <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+export declare const toQueue: <R, E, A>(
+  self: Stream<R, E, A>
+) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+```
+
+Added in v1.0.0
+
+## toQueueCapacity
+
+Like `toQueue`, but with a configurable `capacity` parameter.
+
+**Signature**
+
+```ts
+export declare const toQueueCapacity: {
+  (capacity: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Queue.Dequeue<Take.Take<E, A>>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1787,9 +2208,30 @@ discarded.
 **Signature**
 
 ```ts
-export declare const toQueueDropping: (
-  capacity?: number | undefined
-) => <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+export declare const toQueueDropping: <R, E, A>(
+  self: Stream<R, E, A>
+) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+```
+
+Added in v1.0.0
+
+## toQueueDroppingCapacity
+
+Like `toQueueDropping`, but with a configurable `capacity` parameter.
+
+**Signature**
+
+```ts
+export declare const toQueueDroppingCapacity: {
+  (capacity: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Queue.Dequeue<Take.Take<E, A>>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1802,11 +2244,30 @@ closed, the queue will never again produce values and should be discarded.
 **Signature**
 
 ```ts
-export declare const toQueueOfElements: (
-  capacity?: number | undefined
-) => <R, E, A>(
+export declare const toQueueOfElements: <R, E, A>(
   self: Stream<R, E, A>
 ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
+```
+
+Added in v1.0.0
+
+## toQueueOfElementsCapacity
+
+Like `toQueueOfElements`, but with a configurable `capacity` parameter.
+
+**Signature**
+
+```ts
+export declare const toQueueOfElementsCapacity: {
+  (capacity: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1819,9 +2280,30 @@ closed, the queue will never again produce values and should be discarded.
 **Signature**
 
 ```ts
-export declare const toQueueSliding: (
-  capacity?: number | undefined
-) => <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+export declare const toQueueSliding: <R, E, A>(
+  self: Stream<R, E, A>
+) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+```
+
+Added in v1.0.0
+
+## toQueueSlidingCapacity
+
+Like `toQueueSliding`, but with a configurable `capacity` parameter.
+
+**Signature**
+
+```ts
+export declare const toQueueSlidingCapacity: {
+  (capacity: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Queue.Dequeue<Take.Take<E, A>>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1854,6 +2336,8 @@ predicate.
 export declare const find: {
   <A, B extends A>(refinement: Refinement<A, B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
   <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A, B extends A>(self: Stream<R, E, A>, refinement: Refinement<A, B>): Stream<R, E, B>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
 }
 ```
 
@@ -1867,237 +2351,16 @@ effectful predicate.
 **Signature**
 
 ```ts
-export declare const findEffect: <A, R2, E2>(
-  predicate: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-```
-
-Added in v1.0.0
-
-# environment
-
-## environment
-
-Accesses the whole environment of the stream.
-
-**Signature**
-
-```ts
-export declare const environment: <R>() => Stream<R, never, Context.Context<R>>
-```
-
-Added in v1.0.0
-
-## environmentWith
-
-Accesses the environment of the stream.
-
-**Signature**
-
-```ts
-export declare const environmentWith: <R, A>(f: (env: Context.Context<R>) => A) => Stream<R, never, A>
-```
-
-Added in v1.0.0
-
-## environmentWithEffect
-
-Accesses the environment of the stream in the context of an effect.
-
-**Signature**
-
-```ts
-export declare const environmentWithEffect: <R0, R, E, A>(
-  f: (env: Context.Context<R0>) => Effect.Effect<R, E, A>
-) => Stream<R0 | R, E, A>
-```
-
-Added in v1.0.0
-
-## environmentWithStream
-
-Accesses the environment of the stream in the context of a stream.
-
-**Signature**
-
-```ts
-export declare const environmentWithStream: <R0, R, E, A>(
-  f: (env: Context.Context<R0>) => Stream<R, E, A>
-) => Stream<R0 | R, E, A>
-```
-
-Added in v1.0.0
-
-## provideEnvironment
-
-Provides the stream with its required environment, which eliminates its
-dependency on `R`.
-
-**Signature**
-
-```ts
-export declare const provideEnvironment: <R>(
-  environment: Context.Context<R>
-) => <E, A>(self: Stream<R, E, A>) => Stream<never, E, A>
-```
-
-Added in v1.0.0
-
-## provideLayer
-
-Provides a `Layer` to the stream, which translates it to another level.
-
-**Signature**
-
-```ts
-export declare const provideLayer: <RIn, E2, ROut>(
-  layer: Layer.Layer<RIn, E2, ROut>
-) => <E, A>(self: Stream<ROut, E, A>) => Stream<RIn, E2 | E, A>
-```
-
-Added in v1.0.0
-
-## provideService
-
-Provides the stream with the single service it requires. If the stream
-requires more than one service use `Stream.provideEnvironment` instead.
-
-**Signature**
-
-```ts
-export declare const provideService: <T>(
-  tag: Context.Tag<T>
-) => (resource: T) => <R, E, A>(self: Stream<R, E, A>) => Stream<Exclude<R, T>, E, A>
-```
-
-Added in v1.0.0
-
-## provideServiceEffect
-
-Provides the stream with the single service it requires. If the stream
-requires more than one service use `Stream.provideEnvironment` instead.
-
-**Signature**
-
-```ts
-export declare const provideServiceEffect: <T>(
-  tag: Context.Tag<T>
-) => <R2, E2>(
-  effect: Effect.Effect<R2, E2, T>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, T>, E2 | E, A>
-```
-
-Added in v1.0.0
-
-## provideServiceStream
-
-Provides the stream with the single service it requires. If the stream
-requires more than one service use `Stream.provideEnvironment` instead.
-
-**Signature**
-
-```ts
-export declare const provideServiceStream: <T>(
-  tag: Context.Tag<T>
-) => <R2, E2>(stream: Stream<R2, E2, T>) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, T>, E2 | E, A>
-```
-
-Added in v1.0.0
-
-## provideSomeEnvironment
-
-Transforms the environment being provided to the stream with the specified
-function.
-
-**Signature**
-
-```ts
-export declare const provideSomeEnvironment: <R0, R>(
-  f: (env: Context.Context<R0>) => Context.Context<R>
-) => <E, A>(self: Stream<R, E, A>) => Stream<R0, E, A>
-```
-
-Added in v1.0.0
-
-## provideSomeLayer
-
-Splits the environment into two parts, providing one part using the
-specified layer and leaving the remainder `R0`.
-
-**Signature**
-
-```ts
-export declare const provideSomeLayer: <RIn, E2, ROut>(
-  layer: Layer.Layer<RIn, E2, ROut>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<RIn | Exclude<R, ROut>, E2 | E, A>
-```
-
-Added in v1.0.0
-
-## service
-
-Accesses the specified service in the environment of the effect.
-
-**Signature**
-
-```ts
-export declare const service: <T>(tag: Context.Tag<T>) => Stream<T, never, T>
-```
-
-Added in v1.0.0
-
-## serviceWith
-
-Accesses the specified service in the environment of the stream.
-
-**Signature**
-
-```ts
-export declare const serviceWith: <T>(tag: Context.Tag<T>) => <A>(f: (service: T) => A) => Stream<T, never, A>
-```
-
-Added in v1.0.0
-
-## serviceWithEffect
-
-Accesses the specified service in the environment of the stream in the
-context of an effect.
-
-**Signature**
-
-```ts
-export declare const serviceWithEffect: <T>(
-  tag: Context.Tag<T>
-) => <R, E, A>(f: (service: T) => Effect.Effect<R, E, A>) => Stream<T | R, E, A>
-```
-
-Added in v1.0.0
-
-## serviceWithStream
-
-Accesses the specified service in the environment of the stream in the
-context of a stream.
-
-**Signature**
-
-```ts
-export declare const serviceWithStream: <T>(
-  tag: Context.Tag<T>
-) => <R, E, A>(f: (service: T) => Stream<R, E, A>) => Stream<T | R, E, A>
-```
-
-Added in v1.0.0
-
-## updateService
-
-Updates the specified service within the environment of the `Stream`.
-
-**Signature**
-
-```ts
-export declare const updateService: <T>(
-  tag: Context.Tag<T>
-) => (f: (service: T) => T) => <R, E, A>(self: Stream<R, E, A>) => Stream<T | R, E, A>
+export declare const findEffect: {
+  <A, R2, E2>(predicate: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, predicate: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<
+    R | R2,
+    E | E2,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2128,9 +2391,16 @@ interruption if the stream is uninterruptible.
 **Signature**
 
 ```ts
-export declare const catchAllCause: <E, R2, E2, A2>(
-  f: (cause: Cause.Cause<E>) => Stream<R2, E2, A2>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2, A2 | A>
+export declare const catchAllCause: {
+  <E, R2, E2, A2>(f: (cause: Cause.Cause<E>) => Stream<R2, E2, A2>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2, A2 | A>
+  <R, A, E, R2, E2, A2>(self: Stream<R, E, A>, f: (cause: Cause.Cause<E>) => Stream<R2, E2, A2>): Stream<
+    R | R2,
+    E2,
+    A | A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2143,9 +2413,16 @@ one fails with some typed error.
 **Signature**
 
 ```ts
-export declare const catchSome: <E, R2, E2, A2>(
-  pf: (error: E) => Option.Option<Stream<R2, E2, A2>>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A2 | A>
+export declare const catchSome: {
+  <E, R2, E2, A2>(pf: (error: E) => Option.Option<Stream<R2, E2, A2>>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E | E2, A2 | A>
+  <R, A, E, R2, E2, A2>(self: Stream<R, E, A>, pf: (error: E) => Option.Option<Stream<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A | A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2159,9 +2436,15 @@ including interruption if the stream is uninterruptible.
 **Signature**
 
 ```ts
-export declare const catchSomeCause: <E, R2, E2, A2>(
-  pf: (cause: Cause.Cause<E>) => Option.Option<Stream<R2, E2, A2>>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A2 | A>
+export declare const catchSomeCause: {
+  <E, R2, E2, A2>(pf: (cause: Cause.Cause<E>) => Option.Option<Stream<R2, E2, A2>>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E | E2, A2 | A>
+  <R, A, E, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    pf: (cause: Cause.Cause<E>) => Option.Option<Stream<R2, E2, A2>>
+  ): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -2187,7 +2470,10 @@ specified function to convert the `E` into a defect.
 **Signature**
 
 ```ts
-export declare const orDieWith: <E>(f: (e: E) => unknown) => <R, A>(self: Stream<R, E, A>) => Stream<R, never, A>
+export declare const orDieWith: {
+  <E>(f: (e: E) => unknown): <R, A>(self: Stream<R, E, A>) => Stream<R, never, A>
+  <R, A, E>(self: Stream<R, E, A>, f: (e: E) => unknown): Stream<R, never, A>
+}
 ```
 
 Added in v1.0.0
@@ -2201,9 +2487,10 @@ See also `Stream.catchAll`.
 **Signature**
 
 ```ts
-export declare const orElse: <R2, E2, A2>(
-  that: LazyArg<Stream<R2, E2, A2>>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2, A2 | A>
+export declare const orElse: {
+  <R2, E2, A2>(that: LazyArg<Stream<R2, E2, A2>>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: LazyArg<Stream<R2, E2, A2>>): Stream<R | R2, E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -2217,9 +2504,16 @@ See also `Stream.catchAll`.
 **Signature**
 
 ```ts
-export declare const orElseEither: <R2, E2, A2>(
-  that: LazyArg<Stream<R2, E2, A2>>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2, Either.Either<A, A2>>
+export declare const orElseEither: {
+  <R2, E2, A2>(that: LazyArg<Stream<R2, E2, A2>>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2, Either.Either<A, A2>>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: LazyArg<Stream<R2, E2, A2>>): Stream<
+    R | R2,
+    E2,
+    Either.Either<A, A2>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2233,7 +2527,10 @@ See also `Stream.catchAll`.
 **Signature**
 
 ```ts
-export declare const orElseFail: <E2>(error: LazyArg<E2>) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+export declare const orElseFail: {
+  <E2>(error: LazyArg<E2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+  <R, E, A, E2>(self: Stream<R, E, A>, error: LazyArg<E2>): Stream<R, E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -2245,9 +2542,10 @@ Produces the specified element if this stream is empty.
 **Signature**
 
 ```ts
-export declare const orElseIfEmpty: <A2>(
-  element: LazyArg<A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+export declare const orElseIfEmpty: {
+  <A2>(element: LazyArg<A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+  <R, E, A, A2>(self: Stream<R, E, A>, element: LazyArg<A2>): Stream<R, E, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -2259,9 +2557,10 @@ Produces the specified chunk if this stream is empty.
 **Signature**
 
 ```ts
-export declare const orElseIfEmptyChunk: <A2>(
-  chunk: LazyArg<Chunk.Chunk<A2>>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+export declare const orElseIfEmptyChunk: {
+  <A2>(chunk: LazyArg<Chunk.Chunk<A2>>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+  <R, E, A, A2>(self: Stream<R, E, A>, chunk: LazyArg<Chunk.Chunk<A2>>): Stream<R, E, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -2273,9 +2572,10 @@ Switches to the provided stream in case this one is empty.
 **Signature**
 
 ```ts
-export declare const orElseIfEmptyStream: <R2, E2, A2>(
-  stream: LazyArg<Stream<R2, E2, A2>>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const orElseIfEmptyStream: {
+  <R2, E2, A2>(stream: LazyArg<Stream<R2, E2, A2>>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, stream: LazyArg<Stream<R2, E2, A2>>): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -2290,9 +2590,16 @@ See also `Stream.catchAll`.
 **Signature**
 
 ```ts
-export declare const orElseOptional: <R2, E2, A2>(
-  that: LazyArg<Stream<R2, Option.Option<E2>, A2>>
-) => <R, E, A>(self: Stream<R, Option.Option<E>, A>) => Stream<R2 | R, Option.Option<E2 | E>, A2 | A>
+export declare const orElseOptional: {
+  <R2, E2, A2>(that: LazyArg<Stream<R2, Option.Option<E2>, A2>>): <R, E, A>(
+    self: Stream<R, Option.Option<E>, A>
+  ) => Stream<R2 | R, Option.Option<E2 | E>, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, Option.Option<E>, A>, that: LazyArg<Stream<R2, Option.Option<E2>, A2>>): Stream<
+    R | R2,
+    Option.Option<E | E2>,
+    A | A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2304,9 +2611,10 @@ Succeeds with the specified value if this one fails with a typed error.
 **Signature**
 
 ```ts
-export declare const orElseSucceed: <A2>(
-  value: LazyArg<A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, never, A2 | A>
+export declare const orElseSucceed: {
+  <A2>(value: LazyArg<A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, never, A2 | A>
+  <R, E, A, A2>(self: Stream<R, E, A>, value: LazyArg<A2>): Stream<R, never, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -2318,9 +2626,10 @@ Keeps some of the errors, and terminates the fiber with the rest
 **Signature**
 
 ```ts
-export declare const refineOrDie: <E, E2>(
-  pf: (error: E) => Option.Option<E2>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+export declare const refineOrDie: {
+  <E, E2>(pf: (error: E) => Option.Option<E2>): <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+  <R, A, E, E2>(self: Stream<R, E, A>, pf: (error: E) => Option.Option<E2>): Stream<R, E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -2333,10 +2642,12 @@ specified function to convert the `E` into a defect.
 **Signature**
 
 ```ts
-export declare const refineOrDieWith: <E, E2>(
-  pf: (error: E) => Option.Option<E2>,
-  f: (error: E) => unknown
-) => <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+export declare const refineOrDieWith: {
+  <E, E2>(pf: (error: E) => Option.Option<E2>, f: (error: E) => unknown): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E2, A>
+  <R, A, E, E2>(self: Stream<R, E, A>, pf: (error: E) => Option.Option<E2>, f: (error: E) => unknown): Stream<R, E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -2353,6 +2664,8 @@ Filters the elements emitted by this stream using the provided function.
 export declare const filter: {
   <A, B extends A>(refinement: Refinement<A, B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
   <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+  <R, E, A, B extends A>(self: Stream<R, E, A>, refinement: Refinement<A, B>): Stream<R, E, B>
 }
 ```
 
@@ -2365,9 +2678,10 @@ Effectfully filters the elements emitted by this stream.
 **Signature**
 
 ```ts
-export declare const filterEffect: <A, R2, E2>(
-  f: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const filterEffect: {
+  <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -2382,9 +2696,10 @@ specified function.
 **Signature**
 
 ```ts
-export declare const groupAdjacentBy: <A, K>(
-  f: (a: A) => K
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, readonly [K, Chunk.NonEmptyChunk<A>]>
+export declare const groupAdjacentBy: {
+  <A, K>(f: (a: A) => K): <R, E>(self: Stream<R, E, A>) => Stream<R, E, readonly [K, Chunk.NonEmptyChunk<A>]>
+  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K): Stream<R, E, readonly [K, Chunk.NonEmptyChunk<A>]>
+}
 ```
 
 Added in v1.0.0
@@ -2396,10 +2711,38 @@ More powerful version of `Stream.groupByKey`.
 **Signature**
 
 ```ts
-export declare const groupBy: <A, R2, E2, K, V>(
-  f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-  bufferSize?: number | undefined
-) => <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
+export declare const groupBy: {
+  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>): <R, E>(
+    self: Stream<R, E, A>
+  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
+  <R, E, A, R2, E2, K, V>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>): GroupBy.GroupBy<
+    R | R2,
+    E | E2,
+    K,
+    V
+  >
+}
+```
+
+Added in v1.0.0
+
+## groupByBuffer
+
+Like `groupBy`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const groupByBuffer: {
+  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>, bufferSize: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
+  <R, E, A, R2, E2, K, V>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
+    bufferSize: number
+  ): GroupBy.GroupBy<R | R2, E | E2, K, V>
+}
 ```
 
 Added in v1.0.0
@@ -2643,7 +2986,10 @@ Maps the success values of this stream to the specified constant value.
 **Signature**
 
 ```ts
-export declare const as: <B>(value: B) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, B>
+export declare const as: {
+  <B>(value: B): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, value: B): Stream<R, E, B>
+}
 ```
 
 Added in v1.0.0
@@ -2655,7 +3001,10 @@ Transforms the elements of this stream using the supplied function.
 **Signature**
 
 ```ts
-export declare const map: <A, B>(f: (a: A) => B) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+export declare const map: {
+  <A, B>(f: (a: A) => B): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, f: (a: A) => B): Stream<R, E, B>
+}
 ```
 
 Added in v1.0.0
@@ -2667,10 +3016,10 @@ Statefully maps over the elements of this stream to produce new elements.
 **Signature**
 
 ```ts
-export declare const mapAccum: <S, A, A2>(
-  s: S,
-  f: (s: S, a: A) => readonly [S, A2]
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+export declare const mapAccum: {
+  <S, A, A2>(s: S, f: (s: S, a: A) => readonly [S, A2]): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+  <R, E, S, A, A2>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => readonly [S, A2]): Stream<R, E, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2683,10 +3032,16 @@ new elements.
 **Signature**
 
 ```ts
-export declare const mapAccumEffect: <S, A, R2, E2, A2>(
-  s: S,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, readonly [S, A2]>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapAccumEffect: {
+  <S, A, R2, E2, A2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, readonly [S, A2]>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, S, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    s: S,
+    f: (s: S, a: A) => Effect.Effect<R2, E2, readonly [S, A2]>
+  ): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2698,9 +3053,10 @@ Transforms the chunks emitted by this stream.
 **Signature**
 
 ```ts
-export declare const mapChunks: <A, B>(
-  f: (chunk: Chunk.Chunk<A>) => Chunk.Chunk<B>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+export declare const mapChunks: {
+  <A, B>(f: (chunk: Chunk.Chunk<A>) => Chunk.Chunk<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, f: (chunk: Chunk.Chunk<A>) => Chunk.Chunk<B>): Stream<R, E, B>
+}
 ```
 
 Added in v1.0.0
@@ -2712,9 +3068,15 @@ Effectfully transforms the chunks emitted by this stream.
 **Signature**
 
 ```ts
-export declare const mapChunksEffect: <A, R2, E2, B>(
-  f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, Chunk.Chunk<B>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, B>
+export declare const mapChunksEffect: {
+  <A, R2, E2, B>(f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, Chunk.Chunk<B>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, B>
+  <R, E, A, R2, E2, B>(
+    self: Stream<R, E, A>,
+    f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, Chunk.Chunk<B>>
+  ): Stream<R | R2, E | E2, B>
+}
 ```
 
 Added in v1.0.0
@@ -2727,7 +3089,10 @@ output of this stream.
 **Signature**
 
 ```ts
-export declare const mapConcat: <A, A2>(f: (a: A) => Iterable<A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+export declare const mapConcat: {
+  <A, A2>(f: (a: A) => Iterable<A2>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+  <R, E, A, A2>(self: Stream<R, E, A>, f: (a: A) => Iterable<A2>): Stream<R, E, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2740,9 +3105,10 @@ this stream.
 **Signature**
 
 ```ts
-export declare const mapConcatChunk: <A, A2>(
-  f: (a: A) => Chunk.Chunk<A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+export declare const mapConcatChunk: {
+  <A, A2>(f: (a: A) => Chunk.Chunk<A2>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+  <R, E, A, A2>(self: Stream<R, E, A>, f: (a: A) => Chunk.Chunk<A2>): Stream<R, E, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2755,9 +3121,16 @@ output of this stream.
 **Signature**
 
 ```ts
-export declare const mapConcatChunkEffect: <A, R2, E2, A2>(
-  f: (a: A) => Effect.Effect<R2, E2, Chunk.Chunk<A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapConcatChunkEffect: {
+  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, Chunk.Chunk<A2>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, Chunk.Chunk<A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2770,9 +3143,16 @@ into the output of this stream.
 **Signature**
 
 ```ts
-export declare const mapConcatEffect: <A, R2, E2, A2>(
-  f: (a: A) => Effect.Effect<R2, E2, Iterable<A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapConcatEffect: {
+  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, Iterable<A2>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, Iterable<A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2784,9 +3164,10 @@ Maps over elements of the stream with the specified effectful function.
 **Signature**
 
 ```ts
-export declare const mapEffect: <A, R2, E2, A2>(
-  f: (a: A) => Effect.Effect<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapEffect: {
+  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2800,11 +3181,16 @@ will be emitted in the original order.
 **Signature**
 
 ```ts
-export declare const mapEffectPar: (
-  n: number
-) => <A, R2, E2, A2>(
-  f: (a: A) => Effect.Effect<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapEffectPar: {
+  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2821,10 +3207,38 @@ maintained.
 **Signature**
 
 ```ts
-export declare const mapEffectParByKey: <A, K>(
-  f: (a: A) => K,
-  bufferSize?: number | undefined
-) => <R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapEffectParByKey: {
+  <R2, E2, A2, A, K>(f: (a: A) => Effect.Effect<R2, E2, A2>, keyBy: (a: A) => K): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, R2, E2, A2, A, K>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>, keyBy: (a: A) => K): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
+```
+
+Added in v1.0.0
+
+## mapEffectParByKeyBuffer
+
+Like `mapEffectParByKey`, but with a `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const mapEffectParByKeyBuffer: {
+  <R2, E2, A2, A, K>(f: (a: A) => Effect.Effect<R2, E2, A2>, keyBy: (a: A) => K, bufferSize: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, R2, E2, A2, A, K>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    keyBy: (a: A) => K,
+    bufferSize: number
+  ): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2838,11 +3252,16 @@ not enforced by this combinator, and elements may be reordered.
 **Signature**
 
 ```ts
-export declare const mapEffectParUnordered: (
-  n: number
-) => <A, R2, E2, A2>(
-  f: (a: A) => Effect.Effect<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mapEffectParUnordered: {
+  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2854,7 +3273,10 @@ Transforms the errors emitted by this stream using `f`.
 **Signature**
 
 ```ts
-export declare const mapError: <E, E2>(f: (error: E) => E2) => <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+export declare const mapError: {
+  <E, E2>(f: (error: E) => E2): <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+  <R, A, E, E2>(self: Stream<R, E, A>, f: (error: E) => E2): Stream<R, E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -2866,9 +3288,10 @@ Transforms the full causes of failures emitted by this stream.
 **Signature**
 
 ```ts
-export declare const mapErrorCause: <E, E2>(
-  f: (cause: Cause.Cause<E>) => Cause.Cause<E2>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+export declare const mapErrorCause: {
+  <E, E2>(f: (cause: Cause.Cause<E>) => Cause.Cause<E2>): <R, A>(self: Stream<R, E, A>) => Stream<R, E2, A>
+  <R, A, E, E2>(self: Stream<R, E, A>, f: (cause: Cause.Cause<E>) => Cause.Cause<E2>): Stream<R, E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -2879,7 +3302,7 @@ Added in v1.0.0
 
 A `Stream<R, E, A>` is a description of a program that, when evaluated, may
 emit zero or more values of type `A`, may fail with errors of type `E`, and
-uses an environment of type `R`. One way to think of `Stream` is as a
+uses an context of type `R`. One way to think of `Stream` is as a
 `Effect` program that could emit multiple values.
 
 `Stream` is a purely functional _pull_ based stream. Pull based streams offer
@@ -2915,10 +3338,16 @@ the following elements through that.
 **Signature**
 
 ```ts
-export declare const branchAfter: <A, R2, E2, A2>(
-  n: number,
-  f: (input: Chunk.Chunk<A>) => Stream<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const branchAfter: {
+  <A, R2, E2, A2>(n: number, f: (input: Chunk.Chunk<A>) => Stream<R2, E2, A2>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (input: Chunk.Chunk<A>) => Stream<R2, E2, A2>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2931,9 +3360,10 @@ streams produced by passing each element of this stream to `f0`
 **Signature**
 
 ```ts
-export declare const flatMap: <A, R2, E2, A2>(
-  f: (a: A) => Stream<R2, E2, A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const flatMap: {
+  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -2948,10 +3378,33 @@ buffered in memory by this operator.
 **Signature**
 
 ```ts
-export declare const flatMapPar: (
-  n: number,
-  bufferSize?: number | undefined
-) => <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const flatMapPar: {
+  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+}
+```
+
+Added in v1.0.0
+
+## flatMapParBuffer
+
+Like `flatMapPar`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const flatMapParBuffer: {
+  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2968,10 +3421,33 @@ operator.
 **Signature**
 
 ```ts
-export declare const flatMapParSwitch: (
-  n: number,
-  bufferSize?: number | undefined
-) => <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const flatMapParSwitch: {
+  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+}
+```
+
+Added in v1.0.0
+
+## flatMapParSwitchBuffer
+
+Like `flatMapParSwitch`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const flatMapParSwitchBuffer: {
+  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3072,10 +3548,25 @@ concurrent merge. Up to `n` streams may be consumed in parallel and up to
 **Signature**
 
 ```ts
-export declare const flattenPar: (
-  n: number,
-  bufferSize?: number | undefined
-) => <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+export declare const flattenPar: {
+  (n: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## flattenParBuffer
+
+Like `flattenPar`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const flattenParBuffer: {
+  (n: number, bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number, bufferSize: number): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3087,9 +3578,24 @@ Like `Stream.flattenPar`, but executes all streams concurrently.
 **Signature**
 
 ```ts
-export declare const flattenParUnbounded: (
-  bufferSize?: number | undefined
-) => <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+export declare const flattenParUnbounded: <R, E, R2, E2, A>(
+  self: Stream<R, E, Stream<R2, E2, A>>
+) => Stream<R | R2, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenParUnboundedBuffer
+
+Like `Stream.flattenParUnbounded`, but with `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const flattenParUnboundedBuffer: {
+  (bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, bufferSize: number): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3114,9 +3620,10 @@ Adds an effect to consumption of every element of the stream.
 **Signature**
 
 ```ts
-export declare const tap: <A, R2, E2, _>(
-  f: (a: A) => Effect.Effect<R2, E2, _>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const tap: {
+  <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, _>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3128,9 +3635,10 @@ Returns a stream that effectfully "peeks" at the failure of the stream.
 **Signature**
 
 ```ts
-export declare const tapError: <E, R2, E2, _>(
-  f: (error: E) => Effect.Effect<R2, E2, _>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
+export declare const tapError: {
+  <E, R2, E2, _>(f: (error: E) => Effect.Effect<R2, E2, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
+  <R, A, E, R2, E2, _>(self: Stream<R, E, A>, f: (error: E) => Effect.Effect<R2, E2, _>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3143,9 +3651,10 @@ to emitting them.
 **Signature**
 
 ```ts
-export declare const tapSink: <R2, E2, A>(
-  sink: Sink.Sink<R2, E2, A, unknown, unknown>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const tapSink: {
+  <R2, E2, A>(sink: Sink.Sink<R2, E2, A, unknown, unknown>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, R2, E2, A>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A, unknown, unknown>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3203,9 +3712,10 @@ Any sink can be used here, but see `Sink.foldWeightedEffect` and
 **Signature**
 
 ```ts
-export declare const aggregate: <R2, E2, A, A2, B>(
-  sink: Sink.Sink<R2, E2, A | A2, A2, B>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, B>
+export declare const aggregate: {
+  <R2, E2, A, A2, B>(sink: Sink.Sink<R2, E2, A | A2, A2, B>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, B>
+  <R, E, R2, E2, A, A2, B>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A | A2, A2, B>): Stream<R | R2, E | E2, B>
+}
 ```
 
 Added in v1.0.0
@@ -3217,10 +3727,17 @@ Like `aggregateWithinEither`, but only returns the `Right` results.
 **Signature**
 
 ```ts
-export declare const aggregateWithin: <R2, E2, A, A2, B, R3, C>(
-  sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-  schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
+export declare const aggregateWithin: {
+  <R2, E2, A, A2, B, R3, C>(
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
+  <R, E, R2, E2, A, A2, B, R3, C>(
+    self: Stream<R, E, A>,
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  ): Stream<R | R2 | R3, E | E2, B>
+}
 ```
 
 Added in v1.0.0
@@ -3241,10 +3758,17 @@ between pulls.
 **Signature**
 
 ```ts
-export declare const aggregateWithinEither: <R2, E2, A, A2, B, R3, C>(
-  sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-  schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
+export declare const aggregateWithinEither: {
+  <R2, E2, A, A2, B, R3, C>(
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
+  <R, E, R2, E2, A, A2, B, R3, C>(
+    self: Stream<R, E, A>,
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  ): Stream<R | R2 | R3, E | E2, Either.Either<C, B>>
+}
 ```
 
 Added in v1.0.0
@@ -3258,12 +3782,16 @@ chunks before the slowest downstream stream.
 **Signature**
 
 ```ts
-export declare const broadcast: <N extends number>(
-  n: N,
-  maximumLag: number
-) => <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Stream<never, E, A>, N>>
+export declare const broadcast: {
+  <N extends number>(n: N, maximumLag: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Stream<never, E, A>, N>>
+  <R, E, A, N extends number>(self: Stream<R, E, A>, n: N, maximumLag: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Stream.DynamicTuple<Stream<never, E, A>, N>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3277,9 +3805,10 @@ same elements as this stream. The driver stream will only ever advance the
 **Signature**
 
 ```ts
-export declare const broadcastDynamic: (
-  maximumLag: number
-) => <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Stream<never, E, A>>
+export declare const broadcastDynamic: {
+  (maximumLag: number): <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Stream<never, E, A>>
+  <R, E, A>(self: Stream<R, E, A>, maximumLag: number): Effect.Effect<Scope.Scope | R, never, Stream<never, E, A>>
+}
 ```
 
 Added in v1.0.0
@@ -3295,12 +3824,16 @@ Queues can unsubscribe from upstream by shutting down.
 **Signature**
 
 ```ts
-export declare const broadcastedQueues: <N extends number>(
-  n: N,
-  maximumLag: number
-) => <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>>
+export declare const broadcastedQueues: {
+  <N extends number>(n: N, maximumLag: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>>
+  <R, E, A, N extends number>(self: Stream<R, E, A>, n: N, maximumLag: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3316,11 +3849,16 @@ Queues can unsubscribe from upstream by shutting down.
 **Signature**
 
 ```ts
-export declare const broadcastedQueuesDynamic: (
-  maximumLag: number
-) => <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>>
+export declare const broadcastedQueuesDynamic: {
+  (maximumLag: number): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>>
+  <R, E, A>(self: Stream<R, E, A>, maximumLag: number): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3333,7 +3871,10 @@ buffering up to `capacity` elements in a queue.
 **Signature**
 
 ```ts
-export declare const buffer: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const buffer: {
+  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3346,7 +3887,10 @@ buffering up to `capacity` chunks in a queue.
 **Signature**
 
 ```ts
-export declare const bufferChunks: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const bufferChunks: {
+  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3359,7 +3903,10 @@ buffering up to `capacity` chunks in a dropping queue.
 **Signature**
 
 ```ts
-export declare const bufferChunksDropping: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const bufferChunksDropping: {
+  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3372,7 +3919,10 @@ buffering up to `capacity` chunks in a sliding queue.
 **Signature**
 
 ```ts
-export declare const bufferChunksSliding: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const bufferChunksSliding: {
+  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3385,7 +3935,10 @@ buffering up to `capacity` elements in a dropping queue.
 **Signature**
 
 ```ts
-export declare const bufferDropping: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const bufferDropping: {
+  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3398,7 +3951,10 @@ buffering up to `capacity` elements in a sliding queue.
 **Signature**
 
 ```ts
-export declare const bufferSliding: (capacity: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const bufferSliding: {
+  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3439,7 +3995,10 @@ two elements are equal.
 **Signature**
 
 ```ts
-export declare const changesWith: <A>(f: (x: A, y: A) => boolean) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const changesWith: {
+  <A>(f: (x: A, y: A) => boolean): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, f: (x: A, y: A) => boolean): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3453,9 +4012,12 @@ determine whether two elements are equal.
 **Signature**
 
 ```ts
-export declare const changesWithEffect: <A, R2, E2>(
-  f: (x: A, y: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const changesWithEffect: {
+  <A, R2, E2>(f: (x: A, y: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, f: (x: A, y: A) => Effect.Effect<R2, E2, boolean>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3495,7 +4057,10 @@ Performs a filter and map in a single step.
 **Signature**
 
 ```ts
-export declare const collect: <A, B>(pf: (a: A) => Option.Option<B>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+export declare const collect: {
+  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
+}
 ```
 
 Added in v1.0.0
@@ -3507,9 +4072,16 @@ Performs an effectful filter and map in a single step.
 **Signature**
 
 ```ts
-export declare const collectEffect: <A, R2, E2, A2>(
-  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const collectEffect: {
+  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3654,15 +4226,27 @@ implementation.
 **Signature**
 
 ```ts
-export declare const combine: <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
-  that: Stream<R2, E2, A2>,
-  s: S,
-  f: (
+export declare const combine: {
+  <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
+    that: Stream<R2, E2, A2>,
     s: S,
-    pullLeft: Effect.Effect<R3, Option.Option<E>, A>,
-    pullRight: Effect.Effect<R4, Option.Option<E2>, A2>
-  ) => Effect.Effect<R5, never, Exit.Exit<Option.Option<E2 | E>, readonly [A3, S]>>
-) => <R>(self: Stream<R, E, A>) => Stream<R2 | R3 | R4 | R5 | R, E2 | E, A3>
+    f: (
+      s: S,
+      pullLeft: Effect.Effect<R3, Option.Option<E>, A>,
+      pullRight: Effect.Effect<R4, Option.Option<E2>, A2>
+    ) => Effect.Effect<R5, never, Exit.Exit<Option.Option<E2 | E>, readonly [A3, S]>>
+  ): <R>(self: Stream<R, E, A>) => Stream<R2 | R3 | R4 | R5 | R, E2 | E, A3>
+  <R, R2, E2, A2, S, R3, E, A, R4, R5, A3>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    s: S,
+    f: (
+      s: S,
+      pullLeft: Effect.Effect<R3, Option.Option<E>, A>,
+      pullRight: Effect.Effect<R4, Option.Option<E2>, A2>
+    ) => Effect.Effect<R5, never, Exit.Exit<Option.Option<E2 | E>, readonly [A3, S]>>
+  ): Stream<R | R2 | R3 | R4 | R5, E2 | E, A3>
+}
 ```
 
 Added in v1.0.0
@@ -3678,15 +4262,27 @@ being specified by `s`.
 **Signature**
 
 ```ts
-export declare const combineChunks: <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
-  that: Stream<R2, E2, A2>,
-  s: S,
-  f: (
+export declare const combineChunks: {
+  <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
+    that: Stream<R2, E2, A2>,
     s: S,
-    pullLeft: Effect.Effect<R3, Option.Option<E>, Chunk.Chunk<A>>,
-    pullRight: Effect.Effect<R4, Option.Option<E2>, Chunk.Chunk<A2>>
-  ) => Effect.Effect<R5, never, Exit.Exit<Option.Option<E2 | E>, readonly [Chunk.Chunk<A3>, S]>>
-) => <R>(self: Stream<R, E, A>) => Stream<R2 | R3 | R4 | R5 | R, E2 | E, A3>
+    f: (
+      s: S,
+      pullLeft: Effect.Effect<R3, Option.Option<E>, Chunk.Chunk<A>>,
+      pullRight: Effect.Effect<R4, Option.Option<E2>, Chunk.Chunk<A2>>
+    ) => Effect.Effect<R5, never, Exit.Exit<Option.Option<E2 | E>, readonly [Chunk.Chunk<A3>, S]>>
+  ): <R>(self: Stream<R, E, A>) => Stream<R2 | R3 | R4 | R5 | R, E2 | E, A3>
+  <R, R2, E2, A2, S, R3, E, A, R4, R5, A3>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    s: S,
+    f: (
+      s: S,
+      pullLeft: Effect.Effect<R3, Option.Option<E>, Chunk.Chunk<A>>,
+      pullRight: Effect.Effect<R4, Option.Option<E2>, Chunk.Chunk<A2>>
+    ) => Effect.Effect<R5, never, Exit.Exit<Option.Option<E2 | E>, readonly [Chunk.Chunk<A3>, S]>>
+  ): Stream<R | R2 | R3 | R4 | R5, E2 | E, A3>
+}
 ```
 
 Added in v1.0.0
@@ -3700,9 +4296,10 @@ specified stream.
 **Signature**
 
 ```ts
-export declare const concat: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const concat: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -3718,9 +4315,10 @@ See also `Stream.zip` for the more common point-wise variant.
 **Signature**
 
 ```ts
-export declare const cross: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+export declare const cross: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, readonly [A, A2]>
+}
 ```
 
 Added in v1.0.0
@@ -3736,9 +4334,10 @@ See also `Stream.zipLeft` for the more common point-wise variant.
 **Signature**
 
 ```ts
-export declare const crossLeft: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const crossLeft: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3755,9 +4354,10 @@ See also `Stream.zipRight` for the more common point-wise variant.
 **Signature**
 
 ```ts
-export declare const crossRight: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const crossRight: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -3773,10 +4373,16 @@ See also `Stream.zipWith` for the more common point-wise variant.
 **Signature**
 
 ```ts
-export declare const crossWith: <R2, E2, B, A, C>(
-  that: Stream<R2, E2, B>,
-  f: (a: A, b: B) => C
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, C>
+export declare const crossWith: {
+  <R2, E2, B, A, C>(that: Stream<R2, E2, B>, f: (a: A, b: B) => C): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, C>
+  <R, E, R2, E2, B, A, C>(self: Stream<R, E, A>, that: Stream<R2, E2, B>, f: (a: A, b: B) => C): Stream<
+    R | R2,
+    E | E2,
+    C
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3796,7 +4402,10 @@ has paused typing so as to not prematurely recommend results.
 **Signature**
 
 ```ts
-export declare const debounce: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const debounce: {
+  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3810,13 +4419,20 @@ function will receive the indices of the queues in the resulting list.
 **Signature**
 
 ```ts
-export declare const distributedWith: <N extends number, A>(
-  n: N,
-  maximumLag: number,
-  decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
-) => <R, E>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
+export declare const distributedWith: {
+  <N extends number, A>(n: N, maximumLag: number, decide: (a: A) => Effect.Effect<never, never, Predicate<number>>): <
+    R,
+    E
+  >(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
+  <R, E, N extends number, A>(
+    self: Stream<R, E, A>,
+    n: N,
+    maximumLag: number,
+    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  ): Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
+}
 ```
 
 Added in v1.0.0
@@ -3833,17 +4449,24 @@ will continue but no longer backpressure on them.
 **Signature**
 
 ```ts
-export declare const distributedWithDynamic: <E, A, _>(
-  maximumLag: number,
-  decide: (a: A) => Effect.Effect<never, never, Predicate<number>>,
-  done?: ((exit: Exit.Exit<Option.Option<E>, never>) => Effect.Effect<never, never, _>) | undefined
-) => <R>(
-  self: Stream<R, E, A>
-) => Effect.Effect<
-  Scope.Scope | R,
-  never,
-  Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
->
+export declare const distributedWithDynamic: {
+  <E, A, _>(maximumLag: number, decide: (a: A) => Effect.Effect<never, never, Predicate<number>>): <R>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
+  >
+  <R, E, A, _>(
+    self: Stream<R, E, A>,
+    maximumLag: number,
+    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  ): Effect.Effect<
+    Scope.Scope | R,
+    never,
+    Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3870,9 +4493,10 @@ If `other` fails, this stream will fail with that error.
 **Signature**
 
 ```ts
-export declare const drainFork: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const drainFork: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3884,7 +4508,10 @@ Drops the specified number of elements from this stream.
 **Signature**
 
 ```ts
-export declare const drop: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const drop: {
+  (n: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, n: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3896,7 +4523,10 @@ Drops the last specified number of elements from this stream.
 **Signature**
 
 ```ts
-export declare const dropRight: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const dropRight: {
+  (n: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, n: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3909,7 +4539,10 @@ Drops all elements of the stream until the specified predicate evaluates to
 **Signature**
 
 ```ts
-export declare const dropUntil: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const dropUntil: {
+  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3922,9 +4555,16 @@ evaluates to `true`.
 **Signature**
 
 ```ts
-export declare const dropUntilEffect: <A, R2, E2>(
-  predicate: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const dropUntilEffect: {
+  <A, R2, E2>(predicate: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, predicate: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<
+    R | R2,
+    E | E2,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3937,7 +4577,10 @@ evaluates to `true`.
 **Signature**
 
 ```ts
-export declare const dropWhile: <A>(f: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const dropWhile: {
+  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -3950,9 +4593,16 @@ produces an effect that evalutates to `true`
 **Signature**
 
 ```ts
-export declare const dropWhileEffect: <A, R2, E2>(
-  predicate: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const dropWhileEffect: {
+  <A, R2, E2>(predicate: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, predicate: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<
+    R | R2,
+    E | E2,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -3978,9 +4628,10 @@ Executes the provided finalizer after this stream's finalizers run.
 **Signature**
 
 ```ts
-export declare const ensuring: <R2, _>(
-  finalizer: Effect.Effect<R2, never, _>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const ensuring: {
+  <R2, _>(finalizer: Effect.Effect<R2, never, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, A, R2, _>(self: Stream<R, E, A>, finalizer: Effect.Effect<R2, never, _>): Stream<R | R2, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4017,7 +4668,7 @@ stream of words:
 ```ts
 import * as GroupBy from '@effect/stream/GroupBy'
 import * as Stream from '@effect/stream/Stream'
-import { pipe } from '@fp-ts/data/Function'
+import { pipe } from '@effect/data/Function'
 
 pipe(
   Stream.fromIterable(['hello', 'world', 'hi', 'holla']),
@@ -4035,10 +4686,25 @@ pipe(
 **Signature**
 
 ```ts
-export declare const groupByKey: <A, K>(
-  f: (a: A) => K,
-  bufferSize?: number | undefined
-) => <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
+export declare const groupByKey: {
+  <A, K>(f: (a: A) => K): <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
+  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K): GroupBy.GroupBy<R, E, K, A>
+}
+```
+
+Added in v1.0.0
+
+## groupByKeyBuffer
+
+Like `groupByKey`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const groupByKeyBuffer: {
+  <A, K>(f: (a: A) => K, bufferSize: number): <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
+  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K, bufferSize: number): GroupBy.GroupBy<R, E, K, A>
+}
 ```
 
 Added in v1.0.0
@@ -4050,7 +4716,10 @@ Partitions the stream with specified `chunkSize`.
 **Signature**
 
 ```ts
-export declare const grouped: (chunkSize: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+export declare const grouped: {
+  (chunkSize: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, chunkSize: number): Stream<R, E, Chunk.Chunk<A>>
+}
 ```
 
 Added in v1.0.0
@@ -4063,10 +4732,10 @@ Partitions the stream with the specified `chunkSize` or until the specified
 **Signature**
 
 ```ts
-export declare const groupedWithin: (
-  chunkSize: number,
-  duration: Duration.Duration
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+export declare const groupedWithin: {
+  (chunkSize: number, duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, chunkSize: number, duration: Duration.Duration): Stream<R, E, Chunk.Chunk<A>>
+}
 ```
 
 Added in v1.0.0
@@ -4082,7 +4751,10 @@ given duration completes. See `interruptAfter` for this behavior.
 **Signature**
 
 ```ts
-export declare const haltAfter: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const haltAfter: {
+  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4101,9 +4773,10 @@ If the effect completes with a failure, the stream will emit that failure.
 **Signature**
 
 ```ts
-export declare const haltWhen: <R2, E2, _>(
-  effect: Effect.Effect<R2, E2, _>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const haltWhen: {
+  <R2, E2, _>(effect: Effect.Effect<R2, E2, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, effect: Effect.Effect<R2, E2, _>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -4117,9 +4790,10 @@ If the promise completes with a failure, the stream will emit that failure.
 **Signature**
 
 ```ts
-export declare const haltWhenDeferred: <E2, _>(
-  deferred: Deferred.Deferred<E2, _>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+export declare const haltWhenDeferred: {
+  <E2, _>(deferred: Deferred.Deferred<E2, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+  <R, E, A, E2, _>(self: Stream<R, E, A>, deferred: Deferred.Deferred<E2, _>): Stream<R, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -4146,9 +4820,10 @@ pulled.
 **Signature**
 
 ```ts
-export declare const interleave: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const interleave: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4166,10 +4841,16 @@ ignored.
 **Signature**
 
 ```ts
-export declare const interleaveWith: <R2, E2, A2, R3, E3>(
-  that: Stream<R2, E2, A2>,
-  decider: Stream<R3, E3, boolean>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E3 | E, A2 | A>
+export declare const interleaveWith: {
+  <R2, E2, A2, R3, E3>(that: Stream<R2, E2, A2>, decider: Stream<R3, E3, boolean>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R3 | R, E2 | E3 | E, A2 | A>
+  <R, E, A, R2, E2, A2, R3, E3>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    decider: Stream<R3, E3, boolean>
+  ): Stream<R | R2 | R3, E | E2 | E3, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4182,9 +4863,10 @@ evaluation of this stream after the given `Duration`.
 **Signature**
 
 ```ts
-export declare const interruptAfter: (
-  duration: Duration.Duration
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const interruptAfter: {
+  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4202,9 +4884,10 @@ returned stream will emit that failure.
 **Signature**
 
 ```ts
-export declare const interruptWhen: <R2, E2, _>(
-  effect: Effect.Effect<R2, E2, _>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const interruptWhen: {
+  <R2, E2, _>(effect: Effect.Effect<R2, E2, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, effect: Effect.Effect<R2, E2, _>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -4220,9 +4903,10 @@ If the promise completes with a failure, the stream will emit that failure.
 **Signature**
 
 ```ts
-export declare const interruptWhenDeferred: <E2, _>(
-  deferred: Deferred.Deferred<E2, _>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+export declare const interruptWhenDeferred: {
+  <E2, _>(deferred: Deferred.Deferred<E2, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+  <R, E, A, E2, _>(self: Stream<R, E, A>, deferred: Deferred.Deferred<E2, _>): Stream<R, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -4234,7 +4918,10 @@ Intersperse stream with provided `element`.
 **Signature**
 
 ```ts
-export declare const intersperse: <A2>(element: A2) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+export declare const intersperse: {
+  <A2>(element: A2): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+  <R, E, A, A2>(self: Stream<R, E, A>, element: A2): Stream<R, E, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4246,11 +4933,10 @@ Intersperse the specified element, also adding a prefix and a suffix.
 **Signature**
 
 ```ts
-export declare const intersperseAffixes: <A2, A3, A4>(
-  start: A2,
-  middle: A3,
-  end: A4
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A3 | A4 | A>
+export declare const intersperseAffixes: {
+  <A2, A3, A4>(start: A2, middle: A3, end: A4): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A3 | A4 | A>
+  <R, E, A, A2, A3, A4>(self: Stream<R, E, A>, start: A2, middle: A3, end: A4): Stream<R, E, A | A2 | A3 | A4>
+}
 ```
 
 Added in v1.0.0
@@ -4263,10 +4949,10 @@ specified pair of functions, `f` and `g`.
 **Signature**
 
 ```ts
-export declare const mapBoth: <E, E2, A, A2>(
-  f: (e: E) => E2,
-  g: (a: A) => A2
-) => <R>(self: Stream<R, E, A>) => Stream<R, E2, A2>
+export declare const mapBoth: {
+  <E, E2, A, A2>(f: (e: E) => E2, g: (a: A) => A2): <R>(self: Stream<R, E, A>) => Stream<R, E2, A2>
+  <R, E, E2, A, A2>(self: Stream<R, E, A>, f: (e: E) => E2, g: (a: A) => A2): Stream<R, E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -4281,10 +4967,10 @@ no termination strategy is specified.
 **Signature**
 
 ```ts
-export declare const merge: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>,
-  strategy?: HaltStrategy.Left | HaltStrategy.Right | HaltStrategy.Both | HaltStrategy.Either | undefined
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const merge: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4328,9 +5014,12 @@ eithers.
 **Signature**
 
 ```ts
-export declare const mergeEither: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, Either.Either<A, A2>>
+export declare const mergeEither: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, Either.Either<A, A2>>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, Either.Either<A, A2>>
+}
 ```
 
 Added in v1.0.0
@@ -4343,9 +5032,10 @@ will terminate when either stream terminates.
 **Signature**
 
 ```ts
-export declare const mergeHaltEither: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const mergeHaltEither: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4358,9 +5048,10 @@ will terminate when this stream terminates.
 **Signature**
 
 ```ts
-export declare const mergeHaltLeft: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const mergeHaltLeft: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4373,9 +5064,31 @@ will terminate when the specified stream terminates.
 **Signature**
 
 ```ts
-export declare const mergeHaltRight: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const mergeHaltRight: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+}
+```
+
+Added in v1.0.0
+
+## mergeHaltStrategy
+
+Like `merge`, but with a configurable `strategy` parameter.
+
+**Signature**
+
+```ts
+export declare const mergeHaltStrategy: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>, strategy: HaltStrategy.HaltStrategy): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, strategy: HaltStrategy.HaltStrategy): Stream<
+    R | R2,
+    E | E2,
+    A | A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4388,9 +5101,10 @@ from the right stream.
 **Signature**
 
 ```ts
-export declare const mergeLeft: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const mergeLeft: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -4403,9 +5117,10 @@ from the left stream.
 **Signature**
 
 ```ts
-export declare const mergeRight: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const mergeRight: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -4421,12 +5136,43 @@ no termination strategy is specified.
 **Signature**
 
 ```ts
-export declare const mergeWith: <R2, E2, A2, A, A3, A4>(
-  that: Stream<R2, E2, A2>,
-  left: (a: A) => A3,
-  right: (a2: A2) => A4,
-  strategy?: HaltStrategy.Left | HaltStrategy.Right | HaltStrategy.Both | HaltStrategy.Either | undefined
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3 | A4>
+export declare const mergeWith: {
+  <R2, E2, A2, A, A3, A4>(that: Stream<R2, E2, A2>, left: (a: A) => A3, right: (a2: A2) => A4): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A3 | A4>
+  <R, E, R2, E2, A2, A, A3, A4>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A4
+  ): Stream<R | R2, E | E2, A3 | A4>
+}
+```
+
+Added in v1.0.0
+
+## mergeWithHaltStrategy
+
+Like `mergeWith`, but with a configurable `strategy` parameter.
+
+**Signature**
+
+```ts
+export declare const mergeWithHaltStrategy: {
+  <R2, E2, A2, A, A3, A4>(
+    that: Stream<R2, E2, A2>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A4,
+    strategy: HaltStrategy.HaltStrategy
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3 | A4>
+  <R, E, R2, E2, A2, A, A3, A4>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A4,
+    strategy: HaltStrategy.HaltStrategy
+  ): Stream<R | R2, E | E2, A3 | A4>
+}
 ```
 
 Added in v1.0.0
@@ -4451,9 +5197,10 @@ Runs the specified effect if this stream ends.
 **Signature**
 
 ```ts
-export declare const onDone: <R2, _>(
-  cleanup: () => Effect.Effect<R2, never, _>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const onDone: {
+  <R2, _>(cleanup: () => Effect.Effect<R2, never, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, A, R2, _>(self: Stream<R, E, A>, cleanup: () => Effect.Effect<R2, never, _>): Stream<R | R2, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4469,9 +5216,16 @@ effect will not be interrupted.
 **Signature**
 
 ```ts
-export declare const onError: <E, R2, _>(
-  cleanup: (cause: Cause.Cause<E>) => Effect.Effect<R2, never, _>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const onError: {
+  <E, R2, _>(cleanup: (cause: Cause.Cause<E>) => Effect.Effect<R2, never, _>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, A>
+  <R, A, E, R2, _>(self: Stream<R, E, A>, cleanup: (cause: Cause.Cause<E>) => Effect.Effect<R2, never, _>): Stream<
+    R | R2,
+    E,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4486,12 +5240,37 @@ further than the slower one.
 **Signature**
 
 ```ts
-export declare const partition: <A>(
-  predicate: Predicate<A>,
-  bufferSize?: number | undefined
-) => <R, E>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
+export declare const partition: {
+  <A>(predicate: Predicate<A>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Effect.Effect<
+    Scope.Scope | R,
+    E,
+    readonly [Stream<never, E, A>, Stream<never, E, A>]
+  >
+}
+```
+
+Added in v1.0.0
+
+## partitionBuffer
+
+Like `partition`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const partitionBuffer: {
+  <A>(predicate: Predicate<A>, bufferSize: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>, bufferSize: number): Effect.Effect<
+    Scope.Scope | R,
+    E,
+    readonly [Stream<never, E, A>, Stream<never, E, A>]
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4504,12 +5283,36 @@ up to buffer elements further than the slower one.
 **Signature**
 
 ```ts
-export declare const partitionEither: <A, R2, E2, A2, A3>(
-  predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-  bufferSize?: number | undefined
-) => <R, E>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
+export declare const partitionEither: {
+  <A, R2, E2, A2, A3>(predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
+  <R, E, A, R2, E2, A2, A3>(
+    self: Stream<R, E, A>,
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
+  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
+}
+```
+
+Added in v1.0.0
+
+## partitionEitherBuffer
+
+Like `partitionEither`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const partitionEitherBuffer: {
+  <A, R2, E2, A2, A3>(predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>, bufferSize: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
+  <R, E, A, R2, E2, A2, A3>(
+    self: Stream<R, E, A>,
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    bufferSize: number
+  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
+}
 ```
 
 Added in v1.0.0
@@ -4524,9 +5327,16 @@ valid only within the scope.
 **Signature**
 
 ```ts
-export declare const peel: <R2, E2, A, Z>(
-  sink: Sink.Sink<R2, E2, A, A, Z>
-) => <R, E>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Z, Stream<never, E, A>]>
+export declare const peel: {
+  <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Z, Stream<never, E, A>]>
+  <R, E, R2, E2, A, Z>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A, A, Z>): Effect.Effect<
+    Scope.Scope | R | R2,
+    E | E2,
+    readonly [Z, Stream<never, E, A>]
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4540,9 +5350,10 @@ See also `Stream.transduce`.
 **Signature**
 
 ```ts
-export declare const pipeThrough: <R2, E2, A, L, Z>(
-  sink: Sink.Sink<R2, E2, A, L, Z>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, L>
+export declare const pipeThrough: {
+  <R2, E2, A, L, Z>(sink: Sink.Sink<R2, E2, A, L, Z>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, L>
+  <R, E, R2, E2, A, L, Z>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A, L, Z>): Stream<R | R2, E | E2, L>
+}
 ```
 
 Added in v1.0.0
@@ -4554,9 +5365,15 @@ Pipes all the values from this stream through the provided channel.
 **Signature**
 
 ```ts
-export declare const pipeThroughChannel: <R2, E, E2, A, A2>(
-  channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
-) => <R>(self: Stream<R, E, A>) => Stream<R2 | R, E2, A2>
+export declare const pipeThroughChannel: {
+  <R2, E, E2, A, A2>(channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>): <R>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2, A2>
+  <R, R2, E, E2, A, A2>(
+    self: Stream<R, E, A>,
+    channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
+  ): Stream<R | R2, E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -4569,9 +5386,15 @@ through any error emitted by this stream unchanged.
 **Signature**
 
 ```ts
-export declare const pipeThroughChannelOrFail: <R2, E, E2, A, A2>(
-  channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
-) => <R>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A2>
+export declare const pipeThroughChannelOrFail: {
+  <R2, E, E2, A, A2>(chan: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>): <R>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E | E2, A2>
+  <R, R2, E, E2, A, A2>(
+    self: Stream<R, E, A>,
+    chan: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
+  ): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -4596,7 +5419,10 @@ last chunk might contain less than `n` elements.
 **Signature**
 
 ```ts
-export declare const rechunk: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const rechunk: {
+  (n: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, n: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4609,9 +5435,10 @@ execute normally, and then repeat again according to the provided schedule.
 **Signature**
 
 ```ts
-export declare const repeat: <R2, B>(
-  schedule: Schedule.Schedule<R2, unknown, B>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const repeat: {
+  <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, A, R2, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, unknown, B>): Stream<R | R2, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4625,9 +5452,16 @@ The schedule output will be emitted at the end of each repetition.
 **Signature**
 
 ```ts
-export declare const repeatEither: <R2, B>(
-  schedule: Schedule.Schedule<R2, unknown, B>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>>
+export declare const repeatEither: {
+  <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, Either.Either<B, A>>
+  <R, E, A, R2, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, unknown, B>): Stream<
+    R | R2,
+    E,
+    Either.Either<B, A>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4643,9 +5477,10 @@ stream.
 **Signature**
 
 ```ts
-export declare const repeatElements: <R2, B>(
-  schedule: Schedule.Schedule<R2, unknown, B>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const repeatElements: {
+  <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, A, R2, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, unknown, B>): Stream<R | R2, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4662,9 +5497,16 @@ in the stream.
 **Signature**
 
 ```ts
-export declare const repeatElementsEither: <R2, B>(
-  schedule: Schedule.Schedule<R2, unknown, B>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>>
+export declare const repeatElementsEither: {
+  <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, Either.Either<B, A>>
+  <R, E, A, R2, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, unknown, B>): Stream<
+    R | R2,
+    E,
+    Either.Either<B, A>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4685,11 +5527,17 @@ single type. For example, `Either` or similar data type.
 **Signature**
 
 ```ts
-export declare const repeatElementsWith: <R2, B, A, C>(
-  schedule: Schedule.Schedule<R2, unknown, B>,
-  f: (a: A) => C,
-  g: (b: B) => C
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
+export declare const repeatElementsWith: {
+  <R2, B, A, C>(schedule: Schedule.Schedule<R2, unknown, B>, f: (a: A) => C, g: (b: B) => C): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, C>
+  <R, E, R2, B, A, C>(
+    self: Stream<R, E, A>,
+    schedule: Schedule.Schedule<R2, unknown, B>,
+    f: (a: A) => C,
+    g: (b: B) => C
+  ): Stream<R | R2, E, C>
+}
 ```
 
 Added in v1.0.0
@@ -4704,11 +5552,17 @@ be unified with the stream elements using the provided functions.
 **Signature**
 
 ```ts
-export declare const repeatWith: <R2, B, A, C>(
-  schedule: Schedule.Schedule<R2, unknown, B>,
-  f: (a: A) => C,
-  g: (b: B) => C
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
+export declare const repeatWith: {
+  <R2, B, A, C>(schedule: Schedule.Schedule<R2, unknown, B>, f: (a: A) => C, g: (b: B) => C): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, C>
+  <R, E, R2, B, A, C>(
+    self: Stream<R, E, A>,
+    schedule: Schedule.Schedule<R2, unknown, B>,
+    f: (a: A) => C,
+    g: (b: B) => C
+  ): Stream<R | R2, E, C>
+}
 ```
 
 Added in v1.0.0
@@ -4726,9 +5580,10 @@ stream again.
 **Signature**
 
 ```ts
-export declare const retry: <R2, E, _>(
-  schedule: Schedule.Schedule<R2, E, _>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const retry: {
+  <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, A, R2, E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream<R | R2, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4752,9 +5607,10 @@ Fails with given error 'e' if value is `Left`.
 **Signature**
 
 ```ts
-export declare const rightOrFail: <E2>(
-  error: LazyArg<E2>
-) => <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, E2 | E, A2>
+export declare const rightOrFail: {
+  <E2>(error: LazyArg<E2>): <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, E2 | E, A2>
+  <R, E, A, A2, E2>(self: Stream<R, E, Either.Either<A, A2>>, error: LazyArg<E2>): Stream<R, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -4767,7 +5623,10 @@ intermediate results of type `S` given an initial S.
 **Signature**
 
 ```ts
-export declare const scan: <S, A>(s: S, f: (s: S, a: A) => S) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, S>
+export declare const scan: {
+  <S, A>(s: S, f: (s: S, a: A) => S): <R, E>(self: Stream<R, E, A>) => Stream<R, E, S>
+  <R, E, S, A>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Stream<R, E, S>
+}
 ```
 
 Added in v1.0.0
@@ -4780,10 +5639,16 @@ all intermediate results of type `S` given an initial S.
 **Signature**
 
 ```ts
-export declare const scanEffect: <S, A, R2, E2>(
-  s: S,
-  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, S>
+export declare const scanEffect: {
+  <S, A, R2, E2>(s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, S>
+  <R, E, S, A, R2, E2>(self: Stream<R, E, A>, s: S, f: (s: S, a: A) => Effect.Effect<R2, E2, S>): Stream<
+    R | R2,
+    E | E2,
+    S
+  >
+}
 ```
 
 Added in v1.0.0
@@ -4798,9 +5663,10 @@ See also `Stream.scan`.
 **Signature**
 
 ```ts
-export declare const scanReduce: <A2, A>(
-  f: (a2: A2 | A, a: A) => A2
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+export declare const scanReduce: {
+  <A2, A>(f: (a2: A2 | A, a: A) => A2): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2 | A>
+  <R, E, A2, A>(self: Stream<R, E, A>, f: (a2: A2 | A, a: A) => A2): Stream<R, E, A2 | A>
+}
 ```
 
 Added in v1.0.0
@@ -4829,9 +5695,10 @@ Schedules the output of the stream using the provided `schedule`.
 **Signature**
 
 ```ts
-export declare const schedule: <R2, A>(
-  schedule: Schedule.Schedule<R2, A, unknown>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+export declare const schedule: {
+  <R2, A>(schedule: Schedule.Schedule<R2, A, unknown>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, R2, A>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, unknown>): Stream<R | R2, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4844,9 +5711,12 @@ its output at the end (if `schedule` is finite).
 **Signature**
 
 ```ts
-export declare const scheduleEither: <R2, A, B>(
-  schedule: Schedule.Schedule<R2, A, B>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>>
+export declare const scheduleEither: {
+  <R2, A, B>(schedule: Schedule.Schedule<R2, A, B>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, Either.Either<B, A>>
+  <R, E, R2, A, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, B>): Stream<R | R2, E, Either.Either<B, A>>
+}
 ```
 
 Added in v1.0.0
@@ -4860,11 +5730,17 @@ to align the stream and schedule outputs on the same type.
 **Signature**
 
 ```ts
-export declare const scheduleWith: <R2, A, B, C>(
-  schedule: Schedule.Schedule<R2, A, B>,
-  f: (a: A) => C,
-  g: (b: B) => C
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
+export declare const scheduleWith: {
+  <R2, A, B, C>(schedule: Schedule.Schedule<R2, A, B>, f: (a: A) => C, g: (b: B) => C): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, C>
+  <R, E, R2, A, B, C>(
+    self: Stream<R, E, A>,
+    schedule: Schedule.Schedule<R2, A, B>,
+    f: (a: A) => C,
+    g: (b: B) => C
+  ): Stream<R | R2, E, C>
+}
 ```
 
 Added in v1.0.0
@@ -4875,7 +5751,7 @@ Emits a sliding window of `n` elements.
 
 ```ts
 import * as Stream from '@effect/stream/Stream'
-import { pipe } from '@fp-ts/data/Function'
+import { pipe } from '@effect/data/Function'
 
 pipe(Stream.make(1, 2, 3, 4), Stream.sliding(2), Stream.runCollect)
 // => Chunk(Chunk(1, 2), Chunk(2, 3), Chunk(3, 4))
@@ -4884,10 +5760,25 @@ pipe(Stream.make(1, 2, 3, 4), Stream.sliding(2), Stream.runCollect)
 **Signature**
 
 ```ts
-export declare const sliding: (
-  chunkSize: number,
-  stepSize?: number | undefined
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+export declare const sliding: {
+  (chunkSize: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, chunkSize: number): Stream<R, E, Chunk.Chunk<A>>
+}
+```
+
+Added in v1.0.0
+
+## slidingSize
+
+Like `sliding`, but with a configurable `stepSize` parameter.
+
+**Signature**
+
+```ts
+export declare const slidingSize: {
+  (chunkSize: number, stepSize: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, chunkSize: number, stepSize: number): Stream<R, E, Chunk.Chunk<A>>
+}
 ```
 
 Added in v1.0.0
@@ -4911,9 +5802,10 @@ Extracts the optional value, or returns the given 'default'.
 **Signature**
 
 ```ts
-export declare const someOrElse: <A2>(
-  fallback: LazyArg<A2>
-) => <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A2 | A>
+export declare const someOrElse: {
+  <A2>(fallback: LazyArg<A2>): <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A2 | A>
+  <R, E, A, A2>(self: Stream<R, E, Option.Option<A>>, fallback: LazyArg<A2>): Stream<R, E, A | A2>
+}
 ```
 
 Added in v1.0.0
@@ -4925,9 +5817,10 @@ Extracts the optional value, or fails with the given error 'e'.
 **Signature**
 
 ```ts
-export declare const someOrFail: <E2>(
-  error: LazyArg<E2>
-) => <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E2 | E, A>
+export declare const someOrFail: {
+  <E2>(error: LazyArg<E2>): <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E2 | E, A>
+  <R, E, A, E2>(self: Stream<R, E, Option.Option<A>>, error: LazyArg<E2>): Stream<R, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -4938,7 +5831,7 @@ Splits elements based on a predicate.
 
 ```ts
 import * as Stream from '@effect/stream/Stream'
-import { pipe } from '@fp-ts/data/Function'
+import { pipe } from '@effect/data/Function'
 
 pipe(
   Stream.range(1, 10),
@@ -4951,9 +5844,10 @@ pipe(
 **Signature**
 
 ```ts
-export declare const split: <A>(
-  predicate: Predicate<A>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+export declare const split: {
+  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, Chunk.Chunk<A>>
+}
 ```
 
 Added in v1.0.0
@@ -4965,9 +5859,10 @@ Splits elements on a delimiter and transforms the splits into desired output.
 **Signature**
 
 ```ts
-export declare const splitOnChunk: <A>(
-  delimiter: Chunk.Chunk<A>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+export declare const splitOnChunk: {
+  <A>(delimiter: Chunk.Chunk<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, delimiter: Chunk.Chunk<A>): Stream<R, E, Chunk.Chunk<A>>
+}
 ```
 
 Added in v1.0.0
@@ -4979,7 +5874,10 @@ Takes the specified number of elements from this stream.
 **Signature**
 
 ```ts
-export declare const take: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const take: {
+  (n: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, n: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4991,7 +5889,10 @@ Takes the last specified number of elements from this stream.
 **Signature**
 
 ```ts
-export declare const takeRight: (n: number) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const takeRight: {
+  (n: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, n: number): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5004,7 +5905,10 @@ Takes all elements of the stream until the specified predicate evaluates to
 **Signature**
 
 ```ts
-export declare const takeUntil: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const takeUntil: {
+  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5017,9 +5921,16 @@ evaluates to `true`.
 **Signature**
 
 ```ts
-export declare const takeUntilEffect: <A, R2, E2>(
-  predicate: (a: A) => Effect.Effect<R2, E2, boolean>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const takeUntilEffect: {
+  <A, R2, E2>(predicate: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, predicate: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<
+    R | R2,
+    E | E2,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5032,7 +5943,10 @@ evaluates to `true`.
 **Signature**
 
 ```ts
-export declare const takeWhile: <A>(predicate: Predicate<A>) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const takeWhile: {
+  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5045,9 +5959,16 @@ stream.
 **Signature**
 
 ```ts
-export declare const tapErrorCause: <E, R2, E2, _>(
-  f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
+export declare const tapErrorCause: {
+  <E, R2, E2, _>(f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E | E2, A>
+  <R, A, E, R2, E2, _>(self: Stream<R, E, A>, f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>): Stream<
+    R | R2,
+    E | E2,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5064,11 +5985,40 @@ constraints are dropped. The weight of each chunk is determined by the
 **Signature**
 
 ```ts
-export declare const throttleEnforce: (
-  units: number,
-  duration: Duration.Duration,
-  burst?: number | undefined
-) => <A>(costFn: (chunk: Chunk.Chunk<A>) => number) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const throttleEnforce: {
+  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => number,
+    units: number,
+    duration: Duration.Duration
+  ): Stream<R, E, A>
+}
+```
+
+Added in v1.0.0
+
+## throttleEnforceBurst
+
+Like `throttleEnforce`, but with a configurable `burst` parameter.
+
+**Signature**
+
+```ts
+export declare const throttleEnforceBurst: {
+  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration, burst: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => number,
+    units: number,
+    duration: Duration.Duration,
+    burst: number
+  ): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5085,13 +6035,45 @@ constraints are dropped. The weight of each chunk is determined by the
 **Signature**
 
 ```ts
-export declare const throttleEnforceEffect: (
-  units: number,
-  duration: Duration.Duration,
-  burst?: number | undefined
-) => <A, R2, E2>(
-  costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const throttleEnforceEffect: {
+  <A, R2, E2>(
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration
+  ): Stream<R | R2, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## throttleEnforceEffectBurst
+
+Like `throttleEnforceEffect`, but with a configurable `burst` parameter.
+
+**Signature**
+
+```ts
+export declare const throttleEnforceEffectBurst: {
+  <A, R2, E2>(
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration,
+    burst: number
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration,
+    burst: number
+  ): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -5107,11 +6089,40 @@ the `costFn` function.
 **Signature**
 
 ```ts
-export declare const throttleShape: (
-  units: number,
-  duration: Duration.Duration,
-  burst?: number | undefined
-) => <A>(costFn: (chunk: Chunk.Chunk<A>) => number) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const throttleShape: {
+  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => number,
+    units: number,
+    duration: Duration.Duration
+  ): Stream<R, E, A>
+}
+```
+
+Added in v1.0.0
+
+## throttleShapeBurst
+
+Like `throttleShape`, but with a configurable `burst` parameter.
+
+**Signature**
+
+```ts
+export declare const throttleShapeBurst: {
+  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration, burst: number): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => number,
+    units: number,
+    duration: Duration.Duration,
+    burst: number
+  ): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5127,13 +6138,45 @@ the `costFn` effectful function.
 **Signature**
 
 ```ts
-export declare const throttleShapeEffect: (
-  units: number,
-  duration: Duration.Duration,
-  burst?: number | undefined
-) => <A, R2, E2>(
-  costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const throttleShapeEffect: {
+  <A, R2, E2>(
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration
+  ): Stream<R | R2, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## throttleShapeEffectBurst
+
+Like `throttleShapeEffect`, but with a configurable `burst` parameter.
+
+**Signature**
+
+```ts
+export declare const throttleShapeEffectBurst: {
+  <A, R2, E2>(
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration,
+    burst: number
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(
+    self: Stream<R, E, A>,
+    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+    units: number,
+    duration: Duration.Duration,
+    burst: number
+  ): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -5145,7 +6188,10 @@ Ends the stream if it does not produce a value after the specified duration.
 **Signature**
 
 ```ts
-export declare const timeout: (duration: Duration.Duration) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const timeout: {
+  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5158,10 +6204,10 @@ duration.
 **Signature**
 
 ```ts
-export declare const timeoutFail: <E2>(
-  error: LazyArg<E2>,
-  duration: Duration.Duration
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+export declare const timeoutFail: {
+  <E2>(error: LazyArg<E2>, duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+  <R, E, A, E2>(self: Stream<R, E, A>, error: LazyArg<E2>, duration: Duration.Duration): Stream<R, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -5174,10 +6220,16 @@ duration.
 **Signature**
 
 ```ts
-export declare const timeoutFailCause: <E2>(
-  cause: LazyArg<Cause.Cause<E2>>,
-  duration: Duration.Duration
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+export declare const timeoutFailCause: {
+  <E2>(cause: LazyArg<Cause.Cause<E2>>, duration: Duration.Duration): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E2 | E, A>
+  <R, E, A, E2>(self: Stream<R, E, A>, cause: LazyArg<Cause.Cause<E2>>, duration: Duration.Duration): Stream<
+    R,
+    E | E2,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5190,10 +6242,16 @@ duration.
 **Signature**
 
 ```ts
-export declare const timeoutTo: <R2, E2, A2>(
-  duration: Duration.Duration,
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
+export declare const timeoutTo: {
+  <R2, E2, A2>(duration: Duration.Duration, that: Stream<R2, E2, A2>): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, duration: Duration.Duration, that: Stream<R2, E2, A2>): Stream<
+    R | R2,
+    E | E2,
+    A | A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5205,9 +6263,10 @@ Applies the transducer to the stream and emits its outputs.
 **Signature**
 
 ```ts
-export declare const transduce: <R2, E2, A, Z>(
-  sink: Sink.Sink<R2, E2, A, A, Z>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, Z>
+export declare const transduce: {
+  <R2, E2, A, Z>(sink: Sink.Sink<R2, E2, A, A, Z>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, Z>
+  <R, E, R2, E2, A, Z>(self: Stream<R, E, A>, sink: Sink.Sink<R2, E2, A, A, Z>): Stream<R | R2, E | E2, Z>
+}
 ```
 
 Added in v1.0.0
@@ -5220,7 +6279,10 @@ returns an empty stream.
 **Signature**
 
 ```ts
-export declare const when: (predicate: LazyArg<boolean>) => <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+export declare const when: {
+  (predicate: LazyArg<boolean>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, predicate: LazyArg<boolean>): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -5233,9 +6295,16 @@ effectful value, otherwise returns an empty stream.
 **Signature**
 
 ```ts
-export declare const whenCaseEffect: <A, R2, E2, A2>(
-  pf: (a: A) => Option.Option<Stream<R2, E2, A2>>
-) => <R, E>(self: Effect.Effect<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const whenCaseEffect: {
+  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Stream<R2, E2, A2>>): <R, E>(
+    self: Effect.Effect<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Effect.Effect<R, E, A>, pf: (a: A) => Option.Option<Stream<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5248,9 +6317,10 @@ returns an empty stream.
 **Signature**
 
 ```ts
-export declare const whenEffect: <R2, E2>(
-  effect: Effect.Effect<R2, E2, boolean>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const whenEffect: {
+  <R2, E2>(effect: Effect.Effect<R2, E2, boolean>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, A>, effect: Effect.Effect<R2, E2, boolean>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -5267,9 +6337,10 @@ The new stream will end when one of the sides ends.
 **Signature**
 
 ```ts
-export declare const zip: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+export declare const zip: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, readonly [A, A2]>
+}
 ```
 
 Added in v1.0.0
@@ -5285,11 +6356,16 @@ have different lengths and one of the streams has ended before the other.
 **Signature**
 
 ```ts
-export declare const zipAll: <R2, E2, A2, A>(
-  that: Stream<R2, E2, A2>,
-  defaultLeft: A,
-  defaultRight: A2
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+export declare const zipAll: {
+  <R2, E2, A2, A>(that: Stream<R2, E2, A2>, defaultLeft: A, defaultRight: A2): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+  <R, E, R2, E2, A2, A>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, defaultLeft: A, defaultRight: A2): Stream<
+    R | R2,
+    E | E2,
+    readonly [A, A2]
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5305,10 +6381,10 @@ this one.
 **Signature**
 
 ```ts
-export declare const zipAllLeft: <R2, E2, A2, A>(
-  that: Stream<R2, E2, A2>,
-  defaultLeft: A
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const zipAllLeft: {
+  <R2, E2, A2, A>(that: Stream<R2, E2, A2>, defaultLeft: A): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, R2, E2, A2, A>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, defaultLeft: A): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -5324,10 +6400,12 @@ other one.
 **Signature**
 
 ```ts
-export declare const zipAllRight: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>,
-  defaultRight: A2
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const zipAllRight: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>, defaultRight: A2): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, defaultRight: A2): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -5347,13 +6425,21 @@ streams are sorted by distinct keys.
 **Signature**
 
 ```ts
-export declare const zipAllSortedByKey: <K>(
-  order: Order.Order<K>
-) => <R2, E2, A2, A>(
-  that: Stream<R2, E2, readonly [K, A2]>,
-  defaultLeft: A,
-  defaultRight: A2
-) => <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>
+export declare const zipAllSortedByKey: {
+  <R2, E2, A2, A, K>(that: Stream<R2, E2, readonly [K, A2]>, defaultLeft: A, defaultRight: A2, order: Order.Order<K>): <
+    R,
+    E
+  >(
+    self: Stream<R, E, readonly [K, A]>
+  ) => Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>
+  <R, E, R2, E2, A2, A, K>(
+    self: Stream<R, E, readonly [K, A]>,
+    that: Stream<R2, E2, readonly [K, A2]>,
+    defaultLeft: A,
+    defaultRight: A2,
+    order: Order.Order<K>
+  ): Stream<R | R2, E | E2, readonly [K, readonly [A, A2]]>
+}
 ```
 
 Added in v1.0.0
@@ -5372,12 +6458,17 @@ streams are sorted by distinct keys.
 **Signature**
 
 ```ts
-export declare const zipAllSortedByKeyLeft: <K>(
-  order: Order.Order<K>
-) => <R2, E2, A2, A>(
-  that: Stream<R2, E2, readonly [K, A2]>,
-  defaultLeft: A
-) => <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A]>
+export declare const zipAllSortedByKeyLeft: {
+  <R2, E2, A2, A, K>(that: Stream<R2, E2, readonly [K, A2]>, defaultLeft: A, order: Order.Order<K>): <R, E>(
+    self: Stream<R, E, readonly [K, A]>
+  ) => Stream<R2 | R, E2 | E, readonly [K, A]>
+  <R, E, R2, E2, A2, A, K>(
+    self: Stream<R, E, readonly [K, A]>,
+    that: Stream<R2, E2, readonly [K, A2]>,
+    defaultLeft: A,
+    order: Order.Order<K>
+  ): Stream<R | R2, E | E2, readonly [K, A]>
+}
 ```
 
 Added in v1.0.0
@@ -5396,12 +6487,17 @@ streams are sorted by distinct keys.
 **Signature**
 
 ```ts
-export declare const zipAllSortedByKeyRight: <K>(
-  order: Order.Order<K>
-) => <R2, E2, A2>(
-  that: Stream<R2, E2, readonly [K, A2]>,
-  defaultRight: A2
-) => <R, E, A>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A2]>
+export declare const zipAllSortedByKeyRight: {
+  <R2, E2, A2, K>(that: Stream<R2, E2, readonly [K, A2]>, defaultRight: A2, order: Order.Order<K>): <R, E, A>(
+    self: Stream<R, E, readonly [K, A]>
+  ) => Stream<R2 | R, E2 | E, readonly [K, A2]>
+  <R, E, A, R2, E2, A2, K>(
+    self: Stream<R, E, readonly [K, A]>,
+    that: Stream<R2, E2, readonly [K, A2]>,
+    defaultRight: A2,
+    order: Order.Order<K>
+  ): Stream<R | R2, E | E2, readonly [K, A2]>
+}
 ```
 
 Added in v1.0.0
@@ -5421,14 +6517,23 @@ streams are sorted by distinct keys.
 **Signature**
 
 ```ts
-export declare const zipAllSortedByKeyWith: <K>(
-  order: Order.Order<K>
-) => <R2, E2, A, A3, A2>(
-  that: Stream<R2, E2, readonly [K, A2]>,
-  left: (a: A) => A3,
-  right: (a2: A2) => A3,
-  both: (a: A, a2: A2) => A3
-) => <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A3]>
+export declare const zipAllSortedByKeyWith: {
+  <R2, E2, A, A3, A2, K>(
+    that: Stream<R2, E2, readonly [K, A2]>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A3,
+    both: (a: A, a2: A2) => A3,
+    order: Order.Order<K>
+  ): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A3]>
+  <R, E, R2, E2, A, A3, A2, K>(
+    self: Stream<R, E, readonly [K, A]>,
+    that: Stream<R2, E2, readonly [K, A2]>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A3,
+    both: (a: A, a2: A2) => A3,
+    order: Order.Order<K>
+  ): Stream<R | R2, E | E2, readonly [K, A3]>
+}
 ```
 
 Added in v1.0.0
@@ -5444,12 +6549,21 @@ lengths and one of the streams has ended before the other.
 **Signature**
 
 ```ts
-export declare const zipAllWith: <R2, E2, A2, A, A3>(
-  that: Stream<R2, E2, A2>,
-  left: (a: A) => A3,
-  right: (a2: A2) => A3,
-  both: (a: A, a2: A2) => A3
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+export declare const zipAllWith: {
+  <R2, E2, A2, A, A3>(
+    that: Stream<R2, E2, A2>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A3,
+    both: (a: A, a2: A2) => A3
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+  <R, E, R2, E2, A2, A, A3>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    left: (a: A) => A3,
+    right: (a2: A2) => A3,
+    both: (a: A, a2: A2) => A3
+  ): Stream<R | R2, E | E2, A3>
+}
 ```
 
 Added in v1.0.0
@@ -5464,9 +6578,16 @@ The new stream will end when one of the sides ends.
 **Signature**
 
 ```ts
-export declare const zipFlatten: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A extends readonly any[]>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [...A, A2]>
+export declare const zipFlatten: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A extends readonly any[]>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, readonly [...A, A2]>
+  <R, E, A extends readonly any[], R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<
+    R | R2,
+    E | E2,
+    readonly [...A, A2]
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5484,9 +6605,10 @@ used for zipping.
 **Signature**
 
 ```ts
-export declare const zipLatest: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+export declare const zipLatest: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, readonly [A, A2]>
+}
 ```
 
 Added in v1.0.0
@@ -5504,10 +6626,16 @@ used for zipping.
 **Signature**
 
 ```ts
-export declare const zipLatestWith: <R2, E2, A2, A, A3>(
-  that: Stream<R2, E2, A2>,
-  f: (a: A, a2: A2) => A3
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+export declare const zipLatestWith: {
+  <R2, E2, A2, A, A3>(that: Stream<R2, E2, A2>, f: (a: A, a2: A2) => A3): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A3>
+  <R, E, R2, E2, A2, A, A3>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, f: (a: A, a2: A2) => A3): Stream<
+    R | R2,
+    E | E2,
+    A3
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5522,9 +6650,10 @@ The new stream will end when one of the sides ends.
 **Signature**
 
 ```ts
-export declare const zipLeft: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const zipLeft: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -5539,9 +6668,10 @@ The new stream will end when one of the sides ends.
 **Signature**
 
 ```ts
-export declare const zipRight: <R2, E2, A2>(
-  that: Stream<R2, E2, A2>
-) => <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+export declare const zipRight: {
+  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
+}
 ```
 
 Added in v1.0.0
@@ -5556,10 +6686,16 @@ The new stream will end when one of the sides ends.
 **Signature**
 
 ```ts
-export declare const zipWith: <R2, E2, A2, A, A3>(
-  that: Stream<R2, E2, A2>,
-  f: (a: A, a2: A2) => A3
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+export declare const zipWith: {
+  <R2, E2, A2, A, A3>(that: Stream<R2, E2, A2>, f: (a: A, a2: A2) => A3): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A3>
+  <R, E, R2, E2, A2, A, A3>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, f: (a: A, a2: A2) => A3): Stream<
+    R | R2,
+    E | E2,
+    A3
+  >
+}
 ```
 
 Added in v1.0.0
@@ -5574,13 +6710,23 @@ The new stream will end when one of the sides ends.
 **Signature**
 
 ```ts
-export declare const zipWithChunks: <R2, E2, A2, A, A3>(
-  that: Stream<R2, E2, A2>,
-  f: (
-    left: Chunk.Chunk<A>,
-    right: Chunk.Chunk<A2>
-  ) => readonly [Chunk.Chunk<A3>, Either.Either<Chunk.Chunk<A>, Chunk.Chunk<A2>>]
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+export declare const zipWithChunks: {
+  <R2, E2, A2, A, A3>(
+    that: Stream<R2, E2, A2>,
+    f: (
+      left: Chunk.Chunk<A>,
+      right: Chunk.Chunk<A2>
+    ) => readonly [Chunk.Chunk<A3>, Either.Either<Chunk.Chunk<A>, Chunk.Chunk<A2>>]
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+  <R, E, R2, E2, A2, A, A3>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    f: (
+      left: Chunk.Chunk<A>,
+      right: Chunk.Chunk<A2>
+    ) => readonly [Chunk.Chunk<A3>, Either.Either<Chunk.Chunk<A>, Chunk.Chunk<A2>>]
+  ): Stream<R | R2, E | E2, A3>
+}
 ```
 
 Added in v1.0.0
