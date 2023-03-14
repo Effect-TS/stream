@@ -1376,6 +1376,31 @@ export const flattenEffect: <R, E, R2, E2, A>(
 ) => Stream<R | R2, E | E2, A> = internal.flattenEffect
 
 /**
+ * Flattens `Effect` values into the stream's structure, preserving all
+ * information about the effect.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+export const flattenEffectPar: {
+  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+} = internal.flattenEffectPar
+
+/**
+ * Flattens `Effect` values into the stream's structure, preserving all
+ * information about the effect. The element order is
+ * not enforced by this combinator, and elements may be reordered.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+export const flattenEffectParUnordered: {
+  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+} = internal.flattenEffectParUnordered
+
+/**
  * Flattens `Exit` values. `Exit.Failure` values translate to stream
  * failures while `Exit.Success` values translate to stream elements.
  *
@@ -2364,13 +2389,13 @@ export const mapErrorCause: {
  */
 export const mapEffectPar: {
   <A, R2, E2, A2>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
   <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 } = internal.mapEffectPar
 
@@ -2387,13 +2412,13 @@ export const mapEffectPar: {
  */
 export const mapEffectParByKey: {
   <R2, E2, A2, A, K>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K
+    keyBy: (a: A) => K,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K
+    keyBy: (a: A) => K,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 } = _groupBy.mapEffectParByKey
 
@@ -2405,15 +2430,15 @@ export const mapEffectParByKey: {
  */
 export const mapEffectParByKeyBuffer: {
   <R2, E2, A2, A, K>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 } = _groupBy.mapEffectParByKeyBuffer
 
@@ -2427,13 +2452,13 @@ export const mapEffectParByKeyBuffer: {
  */
 export const mapEffectParUnordered: {
   <A, R2, E2, A2>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
   <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 } = internal.mapEffectParUnordered
 
