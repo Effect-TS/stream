@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.10.0
+
+### Minor Changes
+
+- [#73](https://github.com/Effect-TS/stream/pull/73) [`fa28bf8`](https://github.com/Effect-TS/stream/commit/fa28bf8ca92b29bedc5017164f56e0c8661e75da) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Rename repeatForever, improve types of flatMapPar variants
+
+### Patch Changes
+
+- [#73](https://github.com/Effect-TS/stream/pull/73) [`fa28bf8`](https://github.com/Effect-TS/stream/commit/fa28bf8ca92b29bedc5017164f56e0c8661e75da) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Add flattenEffectPar variants
+
 ## 0.9.0
 
 ### Minor Changes
