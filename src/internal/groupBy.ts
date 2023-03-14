@@ -71,9 +71,9 @@ export const evaluateBuffer = dual<
   ): Stream.Stream<R | R2, E | E2, A> =>
     stream.flatMapParBuffer(
       self.grouped,
-      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue))),
       Number.POSITIVE_INFINITY,
-      bufferSize
+      bufferSize,
+      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue)))
     )
 )
 

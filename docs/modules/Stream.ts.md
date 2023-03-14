@@ -69,7 +69,7 @@ Added in v1.0.0
   - [repeatEffectChunkOption](#repeateffectchunkoption)
   - [repeatEffectOption](#repeateffectoption)
   - [repeatEffectWithSchedule](#repeateffectwithschedule)
-  - [repeatForever](#repeatforever)
+  - [repeatValue](#repeatvalue)
   - [scoped](#scoped)
   - [succeed](#succeed)
   - [suspend](#suspend)
@@ -1178,14 +1178,14 @@ export declare const repeatEffectWithSchedule: <R, E, A, R2, _>(
 
 Added in v1.0.0
 
-## repeatForever
+## repeatValue
 
 Repeats the provided value infinitely.
 
 **Signature**
 
 ```ts
-export declare const repeatForever: <A>(value: A) => Stream<never, never, A>
+export declare const repeatValue: <A>(value: A) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -3379,10 +3379,10 @@ buffered in memory by this operator.
 
 ```ts
 export declare const flatMapPar: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number): <R, E>(
+  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
 }
 ```
 
@@ -3396,10 +3396,10 @@ Like `flatMapPar`, but with a configurable `bufferSize` parameter.
 
 ```ts
 export declare const flatMapParBuffer: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): <R, E>(
+  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2
@@ -3422,10 +3422,10 @@ operator.
 
 ```ts
 export declare const flatMapParSwitch: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number): <R, E>(
+  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
 }
 ```
 
@@ -3439,10 +3439,10 @@ Like `flatMapParSwitch`, but with a configurable `bufferSize` parameter.
 
 ```ts
 export declare const flatMapParSwitchBuffer: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): <R, E>(
+  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2

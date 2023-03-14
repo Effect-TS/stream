@@ -2521,43 +2521,43 @@ export const flatMap = dual<
 /** @internal */
 export const flatMapPar = dual<
   <A, R2, E2, A2>(
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   3,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
-    n: number
-  ): Stream.Stream<R | R2, E | E2, A2> => flatMapParBuffer(self, f, n, 16)
+    n: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
+  ): Stream.Stream<R | R2, E | E2, A2> => flatMapParBuffer(self, n, 16, f)
 )
 
 /** @internal */
 export const flatMapParBuffer = dual<
   <A, R2, E2, A2>(
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   4,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ): Stream.Stream<R | R2, E | E2, A2> =>
     new StreamImpl(
       pipe(
@@ -2571,43 +2571,43 @@ export const flatMapParBuffer = dual<
 /** @internal */
 export const flatMapParSwitch = dual<
   <A, R2, E2, A2>(
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   3,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
-    n: number
-  ): Stream.Stream<R | R2, E | E2, A2> => flatMapParSwitchBuffer(self, f, n, 16)
+    n: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
+  ): Stream.Stream<R | R2, E | E2, A2> => flatMapParSwitchBuffer(self, n, 16, f)
 )
 
 /** @internal */
 export const flatMapParSwitchBuffer = dual<
   <A, R2, E2, A2>(
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   4,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Stream.Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream.Stream<R2, E2, A2>
   ): Stream.Stream<R | R2, E | E2, A2> =>
     new StreamImpl(
       pipe(
@@ -2733,7 +2733,7 @@ export const flattenParBuffer = dual<
     self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
     n: number,
     bufferSize: number
-  ): Stream.Stream<R | R2, E | E2, A> => flatMapParBuffer(self, identity, n, bufferSize)
+  ): Stream.Stream<R | R2, E | E2, A> => flatMapParBuffer(self, n, bufferSize, identity)
 )
 
 /** @internal */
@@ -2755,7 +2755,7 @@ export const flattenParUnboundedBuffer = dual<
   <R, E, R2, E2, A>(
     self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
     bufferSize: number
-  ): Stream.Stream<R | R2, E | E2, A> => flatMapParBuffer(self, identity, Number.POSITIVE_INFINITY, bufferSize)
+  ): Stream.Stream<R | R2, E | E2, A> => flatMapParBuffer(self, Number.POSITIVE_INFINITY, bufferSize, identity)
 )
 
 /** @internal */
@@ -3760,7 +3760,7 @@ export const mapEffectParUnordered = dual<
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, A2>,
     n: number
-  ): Stream.Stream<R | R2, E | E2, A2> => flatMapPar(self, (a) => fromEffect(f(a)), n)
+  ): Stream.Stream<R | R2, E | E2, A2> => flatMapPar(self, n, (a) => fromEffect(f(a)))
 )
 
 /** @internal */
@@ -5018,7 +5018,7 @@ export const repeatElementsWith = dual<
 )
 
 /** @internal */
-export const repeatForever = <A>(value: A): Stream.Stream<never, never, A> =>
+export const repeatValue = <A>(value: A): Stream.Stream<never, never, A> =>
   new StreamImpl(
     channel.repeated(core.write(Chunk.of(value)))
   )

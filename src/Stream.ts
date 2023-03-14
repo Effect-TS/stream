@@ -1280,10 +1280,10 @@ export const flatMap: {
  */
 export const flatMapPar: {
   <A, R2, E2, A2>(
-    f: (a: A) => Stream<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Stream<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
 } = internal.flatMapPar
 
 /**
@@ -1294,15 +1294,15 @@ export const flatMapPar: {
  */
 export const flatMapParBuffer: {
   <A, R2, E2, A2>(
-    f: (a: A) => Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
   <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    f: (a: A) => Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 } = internal.flatMapParBuffer
 
@@ -1319,10 +1319,10 @@ export const flatMapParBuffer: {
  */
 export const flatMapParSwitch: {
   <A, R2, E2, A2>(
-    f: (a: A) => Stream<R2, E2, A2>,
-    n: number
+    n: number,
+    f: (a: A) => Stream<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
 } = internal.flatMapParSwitch
 
 /**
@@ -1333,15 +1333,15 @@ export const flatMapParSwitch: {
  */
 export const flatMapParSwitchBuffer: {
   <A, R2, E2, A2>(
-    f: (a: A) => Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream<R2, E2, A2>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
   <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    f: (a: A) => Stream<R2, E2, A2>,
     n: number,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Stream<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 } = internal.flatMapParSwitchBuffer
 
@@ -3302,7 +3302,7 @@ export const repeatElementsWith: {
  * @since 1.0.0
  * @category constructors
  */
-export const repeatForever: <A>(value: A) => Stream<never, never, A> = internal.repeatForever
+export const repeatValue: <A>(value: A) => Stream<never, never, A> = internal.repeatValue
 
 /**
  * Repeats the entire stream using the specified schedule. The stream will
