@@ -71,9 +71,9 @@ export const evaluateBuffer = dual<
   ): Stream.Stream<R | R2, E | E2, A> =>
     stream.flatMapParBuffer(
       self.grouped,
-      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue))),
       Number.POSITIVE_INFINITY,
-      bufferSize
+      bufferSize,
+      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue)))
     )
 )
 
@@ -411,43 +411,43 @@ export const groupByKeyBuffer = dual<
 /** @internal */
 export const mapEffectParByKey = dual<
   <R2, E2, A2, A, K>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K
+    keyBy: (a: A) => K,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K
+    keyBy: (a: A) => K,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   3,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
-    keyBy: (a: A) => K
-  ): Stream.Stream<R | R2, E | E2, A2> => mapEffectParByKeyBuffer(self, f, keyBy, 16)
+    keyBy: (a: A) => K,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
+  ): Stream.Stream<R | R2, E | E2, A2> => mapEffectParByKeyBuffer(self, keyBy, 16, f)
 )
 
 /** @internal */
 export const mapEffectParByKeyBuffer = dual<
   <R2, E2, A2, A, K>(
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   4,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): Stream.Stream<R | R2, E | E2, A2> =>
     pipe(
       groupByKeyBuffer(self, keyBy, bufferSize),

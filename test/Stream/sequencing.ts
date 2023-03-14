@@ -288,7 +288,7 @@ describe.concurrent("Stream", () => {
       const stream = Stream.fromIterable([1, 2, 3, 4, 5])
       const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.flatMap((n) => Stream.make(n, n)), Stream.runCollect),
-        result2: pipe(stream, Stream.flatMapPar((n) => Stream.make(n, n), 1), Stream.runCollect)
+        result2: pipe(stream, Stream.flatMapPar(1, (n) => Stream.make(n, n)), Stream.runCollect)
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
     }))
@@ -304,7 +304,7 @@ describe.concurrent("Stream", () => {
         ),
         result2: pipe(
           stream,
-          Stream.flatMapPar((n) => Stream.make(n, n), 100),
+          Stream.flatMapPar(100, (n) => Stream.make(n, n)),
           Stream.runCollect
         )
       }))
@@ -317,13 +317,13 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const fiber = yield* $(pipe(
         Stream.make(void 0),
-        Stream.flatMapPar(() =>
+        Stream.flatMapPar(1, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
-          ), 1),
+          )),
         Stream.runDrain,
         Effect.fork
       ))
@@ -353,7 +353,7 @@ describe.concurrent("Stream", () => {
             )
           )
         ),
-        Stream.flatMapPar(identity, 2),
+        Stream.flatMapPar(2, identity),
         Stream.runDrain,
         Effect.either
       ))
@@ -372,13 +372,13 @@ describe.concurrent("Stream", () => {
           Deferred.await(latch),
           Effect.zipRight(Effect.fail("Ouch"))
         ))),
-        Stream.flatMapPar(() =>
+        Stream.flatMapPar(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
-          ), 2),
+          )),
         Stream.runDrain,
         Effect.either
       ))
@@ -404,7 +404,7 @@ describe.concurrent("Stream", () => {
             Effect.zipRight(Effect.die(defect))
           ))
         ),
-        Stream.flatMapPar(identity, 2),
+        Stream.flatMapPar(2, identity),
         Stream.runDrain,
         Effect.exit
       ))
@@ -424,13 +424,13 @@ describe.concurrent("Stream", () => {
           Deferred.await(latch),
           Effect.zipRight(Effect.die(defect))
         ))),
-        Stream.flatMapPar(() =>
+        Stream.flatMapPar(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
-          ), 2),
+          )),
         Stream.runDrain,
         Effect.exit
       ))
@@ -452,7 +452,7 @@ describe.concurrent("Stream", () => {
           ),
           () => push("Outer Release")
         ),
-        Stream.flatMapPar(identity, 2),
+        Stream.flatMapPar(2, identity),
         Stream.runDrain
       ))
       const result = yield* $(Ref.get(ref))
@@ -470,7 +470,7 @@ describe.concurrent("Stream", () => {
       const semaphore = yield* $(Effect.makeSemaphore(1))
       yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.flatMapParSwitch((n) => {
+        Stream.flatMapParSwitch(1, (n) => {
           if (n > 3) {
             return pipe(
               Stream.acquireRelease(Effect.unit(), () => Ref.set(ref, true)),
@@ -481,7 +481,7 @@ describe.concurrent("Stream", () => {
             Stream.scoped(withPermitsScoped(1)(semaphore)),
             Stream.flatMap(() => Stream.never())
           )
-        }, 1),
+        }),
         Stream.runDrain
       ))
       const result = yield* $(semaphore.withPermits(1)(Ref.get(ref)))
@@ -494,7 +494,7 @@ describe.concurrent("Stream", () => {
       const semaphore = yield* $(Effect.makeSemaphore(4))
       yield* $(pipe(
         Stream.range(1, 13),
-        Stream.flatMapParSwitch((n) => {
+        Stream.flatMapParSwitch(4, (n) => {
           if (n > 8) {
             return pipe(
               Stream.acquireRelease(
@@ -508,7 +508,7 @@ describe.concurrent("Stream", () => {
             Stream.scoped(withPermitsScoped(1)(semaphore)),
             Stream.flatMap(() => Stream.never())
           )
-        }, 4),
+        }),
         Stream.runDrain
       ))
       const result = yield* $(pipe(
@@ -522,7 +522,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Stream.never(), Stream.make(1)),
-        Stream.flatMapParSwitch(identity, 2),
+        Stream.flatMapParSwitch(2, identity),
         Stream.take(1),
         Stream.runCollect
       ))
@@ -535,13 +535,13 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const fiber = yield* $(pipe(
         Stream.make(void 0),
-        Stream.flatMapParSwitch(() =>
+        Stream.flatMapParSwitch(1, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
-          ), 1),
+          )),
         Stream.runCollect,
         Effect.fork
       ))
@@ -571,7 +571,7 @@ describe.concurrent("Stream", () => {
             )
           )
         ),
-        Stream.flatMapParSwitch(identity, 2),
+        Stream.flatMapParSwitch(2, identity),
         Stream.runDrain,
         Effect.either
       ))
@@ -590,13 +590,13 @@ describe.concurrent("Stream", () => {
           Deferred.await(latch),
           Effect.zipRight(Effect.fail("Ouch"))
         ))),
-        Stream.flatMapParSwitch(() =>
+        Stream.flatMapParSwitch(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
-          ), 2),
+          )),
         Stream.runDrain,
         Effect.either
       ))
@@ -626,7 +626,7 @@ describe.concurrent("Stream", () => {
             )
           )
         ),
-        Stream.flatMapParSwitch(identity, 2),
+        Stream.flatMapParSwitch(2, identity),
         Stream.runDrain,
         Effect.exit
       ))
@@ -646,13 +646,13 @@ describe.concurrent("Stream", () => {
           Deferred.await(latch),
           Effect.zipRight(Effect.die(error))
         ))),
-        Stream.flatMapParSwitch(() =>
+        Stream.flatMapParSwitch(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never()),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
-          ), 2),
+          )),
         Stream.runDrain,
         Effect.exit
       ))
@@ -674,7 +674,7 @@ describe.concurrent("Stream", () => {
           ),
           () => push("Outer Release")
         ),
-        Stream.flatMapParSwitch(identity, 2),
+        Stream.flatMapParSwitch(2, identity),
         Stream.runDrain
       ))
       const result = yield* $(Ref.get(ref))

@@ -69,7 +69,7 @@ Added in v1.0.0
   - [repeatEffectChunkOption](#repeateffectchunkoption)
   - [repeatEffectOption](#repeateffectoption)
   - [repeatEffectWithSchedule](#repeateffectwithschedule)
-  - [repeatForever](#repeatforever)
+  - [repeatValue](#repeatvalue)
   - [scoped](#scoped)
   - [succeed](#succeed)
   - [suspend](#suspend)
@@ -216,6 +216,8 @@ Added in v1.0.0
   - [flatten](#flatten)
   - [flattenChunks](#flattenchunks)
   - [flattenEffect](#flatteneffect)
+  - [flattenEffectPar](#flatteneffectpar)
+  - [flattenEffectParUnordered](#flatteneffectparunordered)
   - [flattenExit](#flattenexit)
   - [flattenExitOption](#flattenexitoption)
   - [flattenIterables](#flatteniterables)
@@ -1178,14 +1180,14 @@ export declare const repeatEffectWithSchedule: <R, E, A, R2, _>(
 
 Added in v1.0.0
 
-## repeatForever
+## repeatValue
 
 Repeats the provided value infinitely.
 
 **Signature**
 
 ```ts
-export declare const repeatForever: <A>(value: A) => Stream<never, never, A>
+export declare const repeatValue: <A>(value: A) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -3182,10 +3184,10 @@ will be emitted in the original order.
 
 ```ts
 export declare const mapEffectPar: {
-  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): <R, E>(
+  <A, R2, E2, A2>(n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2
@@ -3208,10 +3210,10 @@ maintained.
 
 ```ts
 export declare const mapEffectParByKey: {
-  <R2, E2, A2, A, K>(f: (a: A) => Effect.Effect<R2, E2, A2>, keyBy: (a: A) => K): <R, E>(
+  <R2, E2, A2, A, K>(keyBy: (a: A) => K, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, R2, E2, A2, A, K>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>, keyBy: (a: A) => K): Stream<
+  <R, E, R2, E2, A2, A, K>(self: Stream<R, E, A>, keyBy: (a: A) => K, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2
@@ -3229,14 +3231,14 @@ Like `mapEffectParByKey`, but with a `bufferSize` parameter.
 
 ```ts
 export declare const mapEffectParByKeyBuffer: {
-  <R2, E2, A2, A, K>(f: (a: A) => Effect.Effect<R2, E2, A2>, keyBy: (a: A) => K, bufferSize: number): <R, E>(
+  <R2, E2, A2, A, K>(keyBy: (a: A) => K, bufferSize: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, A2>,
     keyBy: (a: A) => K,
-    bufferSize: number
+    bufferSize: number,
+    f: (a: A) => Effect.Effect<R2, E2, A2>
   ): Stream<R | R2, E | E2, A2>
 }
 ```
@@ -3253,10 +3255,10 @@ not enforced by this combinator, and elements may be reordered.
 
 ```ts
 export declare const mapEffectParUnordered: {
-  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): <R, E>(
+  <A, R2, E2, A2>(n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>, n: number): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2
@@ -3379,10 +3381,10 @@ buffered in memory by this operator.
 
 ```ts
 export declare const flatMapPar: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number): <R, E>(
+  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
 }
 ```
 
@@ -3396,10 +3398,10 @@ Like `flatMapPar`, but with a configurable `bufferSize` parameter.
 
 ```ts
 export declare const flatMapParBuffer: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): <R, E>(
+  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2
@@ -3422,10 +3424,10 @@ operator.
 
 ```ts
 export declare const flatMapParSwitch: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number): <R, E>(
+  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
 }
 ```
 
@@ -3439,10 +3441,10 @@ Like `flatMapParSwitch`, but with a configurable `bufferSize` parameter.
 
 ```ts
 export declare const flatMapParSwitchBuffer: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): <R, E>(
+  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>, n: number, bufferSize: number): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A2
@@ -3489,6 +3491,39 @@ information about the effect.
 export declare const flattenEffect: <R, E, R2, E2, A>(
   self: Stream<R, E, Effect.Effect<R2, E2, A>>
 ) => Stream<R | R2, E | E2, A>
+```
+
+Added in v1.0.0
+
+## flattenEffectPar
+
+Flattens `Effect` values into the stream's structure, preserving all
+information about the effect.
+
+**Signature**
+
+```ts
+export declare const flattenEffectPar: {
+  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## flattenEffectParUnordered
+
+Flattens `Effect` values into the stream's structure, preserving all
+information about the effect. The element order is
+not enforced by this combinator, and elements may be reordered.
+
+**Signature**
+
+```ts
+export declare const flattenEffectParUnordered: {
+  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
