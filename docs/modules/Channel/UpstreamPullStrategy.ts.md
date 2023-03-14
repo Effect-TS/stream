@@ -62,10 +62,17 @@ Folds an `UpstreamPullStrategy<A>` into a value of type `Z`.
 **Signature**
 
 ```ts
-export declare const match: <A, Z>(
-  onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
-  onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
-) => (self: UpstreamPullStrategy<A>) => Z
+export declare const match: {
+  <A, Z>(
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ): (self: UpstreamPullStrategy<A>) => Z
+  <A, Z>(
+    self: UpstreamPullStrategy<A>,
+    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
+    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  ): Z
+}
 ```
 
 Added in v1.0.0

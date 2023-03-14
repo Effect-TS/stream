@@ -16,6 +16,7 @@ Added in v1.0.0
   - [make](#make)
 - [destructors](#destructors)
   - [evaluate](#evaluate)
+  - [evaluateBuffer](#evaluatebuffer)
 - [models](#models)
   - [GroupBy (interface)](#groupby-interface)
 - [symbols](#symbols)
@@ -53,10 +54,37 @@ arbitrary order.
 **Signature**
 
 ```ts
-export declare const evaluate: <K, E, V, R2, E2, A>(
-  f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-  bufferSize?: number | undefined
-) => <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
+export declare const evaluate: {
+  <K, E, V, R2, E2, A>(f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>): <R>(
+    self: GroupBy<R, E, K, V>
+  ) => Stream.Stream<R2 | R, E | E2, A>
+  <R, K, E, V, R2, E2, A>(
+    self: GroupBy<R, E, K, V>,
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+  ): Stream.Stream<R | R2, E | E2, A>
+}
+```
+
+Added in v1.0.0
+
+## evaluateBuffer
+
+Like `evaluate`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const evaluateBuffer: {
+  <K, E, V, R2, E2, A>(
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    bufferSize: number
+  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
+  <R, K, E, V, R2, E2, A>(
+    self: GroupBy<R, E, K, V>,
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    bufferSize: number
+  ): Stream.Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -110,7 +138,10 @@ Filter the groups to be processed.
 **Signature**
 
 ```ts
-export declare const filter: <K>(predicate: Predicate<K>) => <R, E, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+export declare const filter: {
+  <K>(predicate: Predicate<K>): <R, E, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+  <R, E, V, K>(self: GroupBy<R, E, K, V>, predicate: Predicate<K>): GroupBy<R, E, K, V>
+}
 ```
 
 Added in v1.0.0
@@ -122,7 +153,10 @@ Only consider the first `n` groups found in the `Stream`.
 **Signature**
 
 ```ts
-export declare const first: (n: number) => <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+export declare const first: {
+  (n: number): <R, E, K, V>(self: GroupBy<R, E, K, V>) => GroupBy<R, E, K, V>
+  <R, E, K, V>(self: GroupBy<R, E, K, V>, n: number): GroupBy<R, E, K, V>
+}
 ```
 
 Added in v1.0.0

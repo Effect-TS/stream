@@ -45,6 +45,21 @@ Added in v1.0.0
   - [write](#write)
   - [writeAll](#writeall)
   - [writeChunk](#writechunk)
+- [context](#context)
+  - [context](#context-1)
+  - [contextWith](#contextwith)
+  - [contextWithChannel](#contextwithchannel)
+  - [contextWithEffect](#contextwitheffect)
+  - [contramapContext](#contramapcontext)
+  - [provideContext](#providecontext)
+  - [provideLayer](#providelayer)
+  - [provideService](#provideservice)
+  - [provideSomeLayer](#providesomelayer)
+  - [service](#service)
+  - [serviceWith](#servicewith)
+  - [serviceWithChannel](#servicewithchannel)
+  - [serviceWithEffect](#servicewitheffect)
+  - [updateService](#updateservice)
 - [destructors](#destructors)
   - [run](#run)
   - [runCollect](#runcollect)
@@ -54,21 +69,6 @@ Added in v1.0.0
   - [toQueue](#toqueue)
   - [toSink](#tosink)
   - [toStream](#tostream)
-- [environment](#environment)
-  - [environment](#environment-1)
-  - [environmentWith](#environmentwith)
-  - [environmentWithChannel](#environmentwithchannel)
-  - [environmentWithEffect](#environmentwitheffect)
-  - [provideEnvironment](#provideenvironment)
-  - [provideLayer](#providelayer)
-  - [provideService](#provideservice)
-  - [provideSomeEnvironment](#providesomeenvironment)
-  - [provideSomeLayer](#providesomelayer)
-  - [service](#service)
-  - [serviceWith](#servicewith)
-  - [serviceWithChannel](#servicewithchannel)
-  - [serviceWithEffect](#servicewitheffect)
-  - [updateService](#updateservice)
 - [error handling](#error-handling)
   - [catchAll](#catchall)
   - [catchAllCause](#catchallcause)
@@ -88,6 +88,9 @@ Added in v1.0.0
   - [mapOutEffect](#mapouteffect)
   - [mapOutEffectPar](#mapouteffectpar)
   - [mergeMap](#mergemap)
+  - [mergeMapBuffer](#mergemapbuffer)
+  - [mergeMapBufferStrategy](#mergemapbufferstrategy)
+  - [mergeMapStrategy](#mergemapstrategy)
 - [models](#models)
   - [Channel (interface)](#channel-interface)
   - [ChannelException (interface)](#channelexception-interface)
@@ -641,6 +644,270 @@ export declare const writeChunk: <OutElem>(
 
 Added in v1.0.0
 
+# context
+
+## context
+
+Accesses the whole context of the channel.
+
+**Signature**
+
+```ts
+export declare const context: <Env>() => Channel<Env, unknown, unknown, unknown, never, never, Context.Context<Env>>
+```
+
+Added in v1.0.0
+
+## contextWith
+
+Accesses the context of the channel with the specified function.
+
+**Signature**
+
+```ts
+export declare const contextWith: <Env, OutDone>(
+  f: (env: Context.Context<Env>) => OutDone
+) => Channel<Env, unknown, unknown, unknown, never, never, OutDone>
+```
+
+Added in v1.0.0
+
+## contextWithChannel
+
+Accesses the context of the channel in the context of a channel.
+
+**Signature**
+
+```ts
+export declare const contextWithChannel: <Env, Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+  f: (env: Context.Context<Env>) => Channel<Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+) => Channel<Env | Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+```
+
+Added in v1.0.0
+
+## contextWithEffect
+
+Accesses the context of the channel in the context of an effect.
+
+**Signature**
+
+```ts
+export declare const contextWithEffect: <Env, Env1, OutErr, OutDone>(
+  f: (env: Context.Context<Env>) => Effect.Effect<Env1, OutErr, OutDone>
+) => Channel<Env | Env1, unknown, unknown, unknown, OutErr, never, OutDone>
+```
+
+Added in v1.0.0
+
+## contramapContext
+
+Transforms the context being provided to the channel with the specified
+function.
+
+**Signature**
+
+```ts
+export declare const contramapContext: {
+  <Env0, Env>(f: (env: Context.Context<Env0>) => Context.Context<Env>): <
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <InErr, InElem, InDone, OutErr, OutElem, OutDone, Env0, Env>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (env: Context.Context<Env0>) => Context.Context<Env>
+  ): Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## provideContext
+
+Provides the channel with its required context, which eliminates its
+dependency on `Env`.
+
+**Signature**
+
+```ts
+export declare const provideContext: {
+  <Env>(env: Context.Context<Env>): <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <InErr, InElem, InDone, OutErr, OutElem, OutDone, Env>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    env: Context.Context<Env>
+  ): Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## provideLayer
+
+Provides a layer to the channel, which translates it to another level.
+
+**Signature**
+
+```ts
+export declare const provideLayer: {
+  <Env0, Env, OutErr2>(layer: Layer.Layer<Env0, OutErr2, Env>): <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env0, InErr, InElem, InDone, OutErr2 | OutErr, OutElem, OutDone>
+  <InErr, InElem, InDone, OutErr, OutElem, OutDone, Env0, Env, OutErr2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    layer: Layer.Layer<Env0, OutErr2, Env>
+  ): Channel<Env0, InErr, InElem, InDone, OutErr | OutErr2, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## provideService
+
+Provides the effect with the single service it requires. If the effect
+requires more than one service use `provideContext` instead.
+
+**Signature**
+
+```ts
+export declare const provideService: {
+  <T extends Context.Tag<any>>(tag: T, service: Context.Tag.Service<T>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any>>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    tag: T,
+    service: Context.Tag.Service<T>
+  ): Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## provideSomeLayer
+
+Splits the context into two parts, providing one part using the
+specified layer and leaving the remainder `Env0`.
+
+**Signature**
+
+```ts
+export declare const provideSomeLayer: {
+  <Env0, Env2, OutErr2>(layer: Layer.Layer<Env0, OutErr2, Env2>): <R, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<R, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env0 | Exclude<R, Env2>, InErr, InElem, InDone, OutErr2 | OutErr, OutElem, OutDone>
+  <R, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env0, Env2, OutErr2>(
+    self: Channel<R, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    layer: Layer.Layer<Env0, OutErr2, Env2>
+  ): Channel<Env0 | Exclude<R, Env2>, InErr, InElem, InDone, OutErr | OutErr2, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## service
+
+Accesses the specified service in the context of the channel.
+
+**Signature**
+
+```ts
+export declare const service: <T>(tag: Context.Tag<T>) => Channel<T, unknown, unknown, unknown, never, never, T>
+```
+
+Added in v1.0.0
+
+## serviceWith
+
+Accesses the specified service in the context of the channel.
+
+**Signature**
+
+```ts
+export declare const serviceWith: <T>(
+  tag: Context.Tag<T>
+) => <OutDone>(f: (resource: T) => OutDone) => Channel<T, unknown, unknown, unknown, never, never, OutDone>
+```
+
+Added in v1.0.0
+
+## serviceWithChannel
+
+Accesses the specified service in the context of the channel in the
+context of a channel.
+
+**Signature**
+
+```ts
+export declare const serviceWithChannel: <T>(
+  tag: Context.Tag<T>
+) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+  f: (resource: T) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+) => Channel<T | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+```
+
+Added in v1.0.0
+
+## serviceWithEffect
+
+Accesses the specified service in the context of the channel in the
+context of an effect.
+
+**Signature**
+
+```ts
+export declare const serviceWithEffect: <T>(
+  tag: Context.Tag<T>
+) => <Env, OutErr, OutDone>(
+  f: (resource: T) => Effect.Effect<Env, OutErr, OutDone>
+) => Channel<T | Env, unknown, unknown, unknown, OutErr, never, OutDone>
+```
+
+Added in v1.0.0
+
+## updateService
+
+Updates a service in the context of this channel.
+
+**Signature**
+
+```ts
+export declare const updateService: {
+  <T extends Context.Tag<any>>(tag: T, f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>): <
+    R,
+    InErr,
+    InDone,
+    OutElem,
+    OutErr,
+    OutDone
+  >(
+    self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
+  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
+    self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
+    tag: T,
+    f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
+  ): Channel<R | T, InErr, unknown, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
 # destructors
 
 ## run
@@ -761,226 +1028,6 @@ export declare const toStream: <Env, OutErr, OutElem, OutDone>(
 
 Added in v1.0.0
 
-# environment
-
-## environment
-
-Accesses the whole environment of the channel.
-
-**Signature**
-
-```ts
-export declare const environment: <Env>() => Channel<Env, unknown, unknown, unknown, never, never, Context.Context<Env>>
-```
-
-Added in v1.0.0
-
-## environmentWith
-
-Accesses the environment of the channel with the specified function.
-
-**Signature**
-
-```ts
-export declare const environmentWith: <Env, OutDone>(
-  f: (env: Context.Context<Env>) => OutDone
-) => Channel<Env, unknown, unknown, unknown, never, never, OutDone>
-```
-
-Added in v1.0.0
-
-## environmentWithChannel
-
-Accesses the environment of the channel in the context of a channel.
-
-**Signature**
-
-```ts
-export declare const environmentWithChannel: <Env, Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  f: (env: Context.Context<Env>) => Channel<Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env | Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## environmentWithEffect
-
-Accesses the environment of the channel in the context of an effect.
-
-**Signature**
-
-```ts
-export declare const environmentWithEffect: <Env, Env1, OutErr, OutDone>(
-  f: (env: Context.Context<Env>) => Effect.Effect<Env1, OutErr, OutDone>
-) => Channel<Env | Env1, unknown, unknown, unknown, OutErr, never, OutDone>
-```
-
-Added in v1.0.0
-
-## provideEnvironment
-
-Provides the channel with its required environment, which eliminates its
-dependency on `Env`.
-
-**Signature**
-
-```ts
-export declare const provideEnvironment: <Env>(
-  env: Context.Context<Env>
-) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<never, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## provideLayer
-
-Provides a layer to the channel, which translates it to another level.
-
-**Signature**
-
-```ts
-export declare const provideLayer: <R0, R, OutErr2>(
-  layer: Layer.Layer<R0, OutErr2, R>
-) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<R, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<R0, InErr, InElem, InDone, OutErr2 | OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## provideService
-
-Provides the effect with the single service it requires. If the effect
-requires more than one service use `provideEnvironment` instead.
-
-**Signature**
-
-```ts
-export declare const provideService: <T>(
-  tag: Context.Tag<T>
-) => <T1 extends T>(
-  service: T1
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Exclude<Env, T>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## provideSomeEnvironment
-
-Transforms the environment being provided to the channel with the specified
-function.
-
-**Signature**
-
-```ts
-export declare const provideSomeEnvironment: <Env0, Env>(
-  f: (env: Context.Context<Env0>) => Context.Context<Env>
-) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## provideSomeLayer
-
-Splits the environment into two parts, providing one part using the
-specified layer and leaving the remainder `Env0`.
-
-**Signature**
-
-```ts
-export declare const provideSomeLayer: <Env0, Env2, OutErr2>(
-  layer: Layer.Layer<Env0, OutErr2, Env2>
-) => <R, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<R, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env0 | Exclude<R, Env2>, InErr, InElem, InDone, OutErr2 | OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## service
-
-Accesses the specified service in the environment of the channel.
-
-**Signature**
-
-```ts
-export declare const service: <T>(tag: Context.Tag<T>) => Channel<T, unknown, unknown, unknown, never, never, T>
-```
-
-Added in v1.0.0
-
-## serviceWith
-
-Accesses the specified service in the environment of the channel.
-
-**Signature**
-
-```ts
-export declare const serviceWith: <T>(
-  tag: Context.Tag<T>
-) => <OutDone>(f: (resource: T) => OutDone) => Channel<T, unknown, unknown, unknown, never, never, OutDone>
-```
-
-Added in v1.0.0
-
-## serviceWithChannel
-
-Accesses the specified service in the environment of the channel in the
-context of a channel.
-
-**Signature**
-
-```ts
-export declare const serviceWithChannel: <T>(
-  tag: Context.Tag<T>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  f: (resource: T) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<T | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
-## serviceWithEffect
-
-Accesses the specified service in the environment of the channel in the
-context of an effect.
-
-**Signature**
-
-```ts
-export declare const serviceWithEffect: <T>(
-  tag: Context.Tag<T>
-) => <Env, OutErr, OutDone>(
-  f: (resource: T) => Effect.Effect<Env, OutErr, OutDone>
-) => Channel<T | Env, unknown, unknown, unknown, OutErr, never, OutDone>
-```
-
-Added in v1.0.0
-
-## updateService
-
-Updates a service in the environment of this channel.
-
-**Signature**
-
-```ts
-export declare const updateService: <T>(
-  tag: Context.Tag<T>
-) => <T1 extends T>(
-  f: (resource: T) => T1
-) => <R, InErr, InDone, OutElem, OutErr, OutDone>(
-  self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
-) => Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
-```
-
-Added in v1.0.0
-
 # error handling
 
 ## catchAll
@@ -992,19 +1039,33 @@ using the fallback channel returned by the specified error handler.
 **Signature**
 
 ```ts
-export declare const catchAll: <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
-  f: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1,
-  OutElem1 | OutElem,
-  OutDone1 | OutDone
->
+export declare const catchAll: {
+  <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
+    f: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem1 | OutElem,
+    OutDone1 | OutDone
+  >
+  <Env, InErr, InElem, InDone, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem | OutElem1,
+    OutDone | OutDone1
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1018,19 +1079,33 @@ using the fallback channel returned by the specified error handler.
 **Signature**
 
 ```ts
-export declare const catchAllCause: <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
-  f: (cause: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1,
-  OutElem1 | OutElem,
-  OutDone1 | OutDone
->
+export declare const catchAllCause: {
+  <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
+    f: (cause: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem1 | OutElem,
+    OutDone1 | OutDone
+  >
+  <Env, InErr, InElem, InDone, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (cause: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem | OutElem1,
+    OutDone | OutDone1
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1043,11 +1118,15 @@ unchecked and not a part of the type of the channel.
 **Signature**
 
 ```ts
-export declare const orDie: <E>(
-  error: LazyArg<E>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+export declare const orDie: {
+  <E>(error: LazyArg<E>): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, E>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    error: LazyArg<E>
+  ): Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1060,11 +1139,15 @@ specified function to convert the `OutErr` into a defect.
 **Signature**
 
 ```ts
-export declare const orDieWith: <OutErr>(
-  f: (e: OutErr) => unknown
-) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+export declare const orDieWith: {
+  <OutErr>(f: (e: OutErr) => unknown): <Env, InErr, InElem, InDone, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutElem, OutDone, OutErr>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (e: OutErr) => unknown
+  ): Channel<Env, InErr, InElem, InDone, never, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1078,19 +1161,33 @@ fallback channel.
 **Signature**
 
 ```ts
-export declare const orElse: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: LazyArg<Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1,
-  OutElem1 | OutElem,
-  OutDone1 | OutDone
->
+export declare const orElse: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: LazyArg<Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem1 | OutElem,
+    OutDone1 | OutDone
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: LazyArg<Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1,
+    OutElem | OutElem1,
+    OutDone | OutDone1
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1123,11 +1220,15 @@ specified constant value.
 **Signature**
 
 ```ts
-export declare const as: <OutDone2>(
-  value: OutDone2
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+export declare const as: {
+  <OutDone2>(value: OutDone2): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, OutDone2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    value: OutDone2
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+}
 ```
 
 Added in v1.0.0
@@ -1153,11 +1254,15 @@ to the terminal value of this channel.
 **Signature**
 
 ```ts
-export declare const map: <OutDone, OutDone2>(
-  f: (out: OutDone) => OutDone2
-) => <Env, InErr, InElem, InDone, OutErr, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+export declare const map: {
+  <OutDone, OutDone2>(f: (out: OutDone) => OutDone2): <Env, InErr, InElem, InDone, OutErr, OutElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, OutDone2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (out: OutDone) => OutDone2
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+}
 ```
 
 Added in v1.0.0
@@ -1171,11 +1276,22 @@ effectful function to the terminal value of this channel.
 **Signature**
 
 ```ts
-export declare const mapEffect: <Env1, OutErr1, OutDone, OutDone1>(
-  f: (o: OutDone) => Effect.Effect<Env1, OutErr1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem, OutDone1>
+export declare const mapEffect: {
+  <Env1, OutErr1, OutDone, OutDone1>(f: (o: OutDone) => Effect.Effect<Env1, OutErr1, OutDone1>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem, OutDone1>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, Env1, OutErr1, OutDone, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (o: OutDone) => Effect.Effect<Env1, OutErr1, OutDone1>
+  ): Channel<Env | Env1, InErr, InElem, InDone, OutErr | OutErr1, OutElem, OutDone1>
+}
 ```
 
 Added in v1.0.0
@@ -1189,11 +1305,15 @@ to the failure value of this channel.
 **Signature**
 
 ```ts
-export declare const mapError: <OutErr, OutErr2>(
-  f: (err: OutErr) => OutErr2
-) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone>
+export declare const mapError: {
+  <OutErr, OutErr2>(f: (err: OutErr) => OutErr2): <Env, InErr, InElem, InDone, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutElem, OutDone, OutErr, OutErr2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (err: OutErr) => OutErr2
+  ): Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1206,11 +1326,22 @@ of the channel failure.
 **Signature**
 
 ```ts
-export declare const mapErrorCause: <OutErr, OutErr2>(
-  f: (cause: Cause.Cause<OutErr>) => Cause.Cause<OutErr2>
-) => <Env, InErr, InElem, InDone, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone>
+export declare const mapErrorCause: {
+  <OutErr, OutErr2>(f: (cause: Cause.Cause<OutErr>) => Cause.Cause<OutErr2>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutElem, OutDone, OutErr, OutErr2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (cause: Cause.Cause<OutErr>) => Cause.Cause<OutErr2>
+  ): Channel<Env, InErr, InElem, InDone, OutErr2, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1222,11 +1353,15 @@ Maps the output of this channel using the specified function.
 **Signature**
 
 ```ts
-export declare const mapOut: <OutElem, OutElem2>(
-  f: (o: OutElem) => OutElem2
-) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem2, OutDone>
+export declare const mapOut: {
+  <OutElem, OutElem2>(f: (o: OutElem) => OutElem2): <Env, InErr, InElem, InDone, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem2, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, OutElem2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (o: OutElem) => OutElem2
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem2, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1239,11 +1374,22 @@ gets applied to each emitted output element.
 **Signature**
 
 ```ts
-export declare const mapOutEffect: <OutElem, Env1, OutErr1, OutElem1>(
-  f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>
-) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem1, OutDone>
+export declare const mapOutEffect: {
+  <OutElem, Env1, OutErr1, OutElem1>(f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem1, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, OutErr1, OutElem1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>
+  ): Channel<Env | Env1, InErr, InElem, InDone, OutErr | OutErr1, OutElem1, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1257,13 +1403,23 @@ mapping them in parallel.
 **Signature**
 
 ```ts
-export declare const mapOutEffectPar: (
-  n: number
-) => <OutElem, Env1, OutErr1, OutElem1>(
-  f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>
-) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem1, OutDone>
+export declare const mapOutEffectPar: {
+  <OutElem, Env1, OutErr1, OutElem1>(f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>, n: number): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem1, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, OutErr1, OutElem1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>,
+    n: number
+  ): Channel<Env | Env1, InErr, InElem, InDone, OutErr | OutErr1, OutElem1, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1278,15 +1434,99 @@ created. See `Channel.mergeAll`.
 **Signature**
 
 ```ts
-export declare const mergeMap: (
-  n: number,
-  bufferSize?: number | undefined,
-  mergeStrategy?: MergeStrategy.BackPressure | MergeStrategy.BufferSliding | undefined
-) => <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-  f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>
-) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
+export declare const mergeMap: {
+  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number
+  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number
+  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+}
+```
+
+Added in v1.0.0
+
+## mergeMapBuffer
+
+Like `mergeMap`, but with a configurable `bufferSize` parameter.
+
+**Signature**
+
+```ts
+export declare const mergeMapBuffer: {
+  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number,
+    bufferSize: number
+  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number,
+    bufferSize: number
+  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+}
+```
+
+Added in v1.0.0
+
+## mergeMapBufferStrategy
+
+Like `mergeMap`, but with a configurable `bufferSize` and `mergeStrategy` parameter.
+
+**Signature**
+
+```ts
+export declare const mergeMapBufferStrategy: {
+  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number,
+    bufferSize: number,
+    mergeStrategy: MergeStrategy.MergeStrategy
+  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number,
+    bufferSize: number,
+    mergeStrategy: MergeStrategy.MergeStrategy
+  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+}
+```
+
+Added in v1.0.0
+
+## mergeMapStrategy
+
+Like `mergeMap`, but with a configurable `mergeStrategy` parameter.
+
+**Signature**
+
+```ts
+export declare const mergeMapStrategy: {
+  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number,
+    mergeStrategy: MergeStrategy.MergeStrategy
+  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+    n: number,
+    mergeStrategy: MergeStrategy.MergeStrategy
+  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+}
 ```
 
 Added in v1.0.0
@@ -1321,7 +1561,9 @@ Channels compose in a variety of ways:
 
 ```ts
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> {}
+  extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> {
+  traced(trace: Debug.Trace): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1335,6 +1577,7 @@ executed.
 
 ```ts
 export interface ChannelException<E> {
+  readonly _tag: 'ChannelException'
   readonly [ChannelExceptionTypeId]: ChannelExceptionTypeId
   readonly error: E
 }
@@ -1370,19 +1613,33 @@ the created channel (including yielding its terminal value).
 **Signature**
 
 ```ts
-export declare const flatMap: <OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
-  f: (d: OutDone) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  OutDone2
->
+export declare const flatMap: {
+  <OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
+    f: (d: OutDone) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    OutDone2
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (d: OutDone) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone2>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    OutDone2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1485,11 +1742,15 @@ are filtered and transformed by the specified partial function.
 **Signature**
 
 ```ts
-export declare const collect: <Env, InErr, InElem, InDone, OutErr, OutElem, OutElem2, OutDone>(
-  pf: (o: OutElem) => Option.Option<OutElem2>
-) => (
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem2, OutDone>
+export declare const collect: {
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutElem2, OutDone>(pf: (o: OutElem) => Option.Option<OutElem2>): (
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem2, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutElem2, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    pf: (o: OutElem) => Option.Option<OutElem2>
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem2, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1504,11 +1765,17 @@ of the newly returned channel.
 **Signature**
 
 ```ts
-export declare const concatMap: <OutElem, OutElem2, Env2, InErr2, InElem2, InDone2, OutErr2, _>(
-  f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, _>
-) => <Env, InErr, InElem, InDone, OutErr, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, unknown>
+export declare const concatMap: {
+  <OutElem, OutElem2, Env2, InErr2, InElem2, InDone2, OutErr2, _>(
+    f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, _>
+  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, unknown>
+  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, OutElem2, Env2, InErr2, InElem2, InDone2, OutErr2, _>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, _>
+  ): Channel<Env | Env2, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr | OutErr2, OutElem2, unknown>
+}
 ```
 
 Added in v1.0.0
@@ -1525,24 +1792,37 @@ the returned channel.
 **Signature**
 
 ```ts
-export declare const concatMapWith: <
-  OutElem,
-  OutElem2,
-  OutDone,
-  OutDone2,
-  OutDone3,
-  Env2,
-  InErr2,
-  InElem2,
-  InDone2,
-  OutErr2
->(
-  f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
-  g: (o: OutDone, o1: OutDone) => OutDone,
-  h: (o: OutDone, o2: OutDone2) => OutDone3
-) => <Env, InErr, InElem, InDone, OutErr>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
-) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, OutDone3>
+export declare const concatMapWith: {
+  <OutElem, OutElem2, OutDone, OutDone2, OutDone3, Env2, InErr2, InElem2, InDone2, OutErr2>(
+    f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
+    g: (o: OutDone, o1: OutDone) => OutDone,
+    h: (o: OutDone, o2: OutDone2) => OutDone3
+  ): <Env, InErr, InElem, InDone, OutErr>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+  ) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, OutDone3>
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutElem2,
+    OutDone,
+    OutDone2,
+    OutDone3,
+    Env2,
+    InErr2,
+    InElem2,
+    InDone2,
+    OutErr2
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>,
+    f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
+    g: (o: OutDone, o1: OutDone) => OutDone,
+    h: (o: OutDone, o2: OutDone2) => OutDone3
+  ): Channel<Env | Env2, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr | OutErr2, OutElem2, OutDone3>
+}
 ```
 
 Added in v1.0.0
@@ -1559,28 +1839,45 @@ the returned channel.
 **Signature**
 
 ```ts
-export declare const concatMapWithCustom: <
-  OutElem,
-  OutElem2,
-  OutDone,
-  OutDone2,
-  OutDone3,
-  Env2,
-  InErr2,
-  InElem2,
-  InDone2,
-  OutErr2
->(
-  f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
-  g: (o: OutDone, o1: OutDone) => OutDone,
-  h: (o: OutDone, o2: OutDone2) => OutDone3,
-  onPull: (
-    upstreamPullRequest: UpstreamPullRequest.UpstreamPullRequest<OutElem>
-  ) => UpstreamPullStrategy.UpstreamPullStrategy<OutElem2>,
-  onEmit: (elem: OutElem2) => ChildExecutorDecision.ChildExecutorDecision
-) => <Env, InErr, InElem, InDone, OutErr>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
-) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, OutDone3>
+export declare const concatMapWithCustom: {
+  <OutElem, OutElem2, OutDone, OutDone2, OutDone3, Env2, InErr2, InElem2, InDone2, OutErr2>(
+    f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
+    g: (o: OutDone, o1: OutDone) => OutDone,
+    h: (o: OutDone, o2: OutDone2) => OutDone3,
+    onPull: (
+      upstreamPullRequest: UpstreamPullRequest.UpstreamPullRequest<OutElem>
+    ) => UpstreamPullStrategy.UpstreamPullStrategy<OutElem2>,
+    onEmit: (elem: OutElem2) => ChildExecutorDecision.ChildExecutorDecision
+  ): <Env, InErr, InElem, InDone, OutErr>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>
+  ) => Channel<Env2 | Env, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr2 | OutErr, OutElem2, OutDone3>
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutElem2,
+    OutDone,
+    OutDone2,
+    OutDone3,
+    Env2,
+    InErr2,
+    InElem2,
+    InDone2,
+    OutErr2
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone2>,
+    f: (o: OutElem) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone>,
+    g: (o: OutDone, o1: OutDone) => OutDone,
+    h: (o: OutDone, o2: OutDone2) => OutDone3,
+    onPull: (
+      upstreamPullRequest: UpstreamPullRequest.UpstreamPullRequest<OutElem>
+    ) => UpstreamPullStrategy.UpstreamPullStrategy<OutElem2>,
+    onEmit: (elem: OutElem2) => ChildExecutorDecision.ChildExecutorDecision
+  ): Channel<Env | Env2, InErr & InErr2, InElem & InElem2, InDone & InDone2, OutErr | OutErr2, OutElem2, OutDone3>
+}
 ```
 
 Added in v1.0.0
@@ -1617,11 +1914,15 @@ function to the input channel's done value.
 **Signature**
 
 ```ts
-export declare const contramap: <InDone0, InDone>(
-  f: (a: InDone0) => InDone
-) => <Env, InErr, InElem, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+export declare const contramap: {
+  <InDone0, InDone>(f: (a: InDone0) => InDone): <Env, InErr, InElem, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, OutErr, OutElem, OutDone, InDone0, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InDone0) => InDone
+  ): Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1634,11 +1935,21 @@ effectual function to the input channel's done value.
 **Signature**
 
 ```ts
-export declare const contramapEffect: <Env1, InErr, InDone0, InDone>(
-  f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
-) => <Env, InElem, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+export declare const contramapEffect: {
+  <Env1, InErr, InDone0, InDone>(f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>): <
+    Env,
+    InElem,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+  <Env, InElem, OutErr, OutElem, OutDone, Env1, InErr, InDone0, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
+  ): Channel<Env | Env1, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1651,11 +1962,15 @@ function to the input channel's error value.
 **Signature**
 
 ```ts
-export declare const contramapError: <InErr0, InErr>(
-  f: (a: InErr0) => InErr
-) => <Env, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+export declare const contramapError: {
+  <InErr0, InErr>(f: (a: InErr0) => InErr): <Env, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InElem, InDone, OutErr, OutElem, OutDone, InErr0, InErr>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InErr0) => InErr
+  ): Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1668,11 +1983,21 @@ effectual function to the input channel's error value.
 **Signature**
 
 ```ts
-export declare const contramapErrorEffect: <Env1, InErr0, InErr, InDone>(
-  f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
-) => <Env, InElem, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+export declare const contramapErrorEffect: {
+  <Env1, InErr0, InErr, InDone>(f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>): <
+    Env,
+    InElem,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InElem, OutErr, OutElem, OutDone, Env1, InErr0, InErr, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
+  ): Channel<Env | Env1, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1685,11 +2010,15 @@ function to the input channel's output elements.
 **Signature**
 
 ```ts
-export declare const contramapIn: <InElem0, InElem>(
-  f: (a: InElem0) => InElem
-) => <Env, InErr, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+export declare const contramapIn: {
+  <InElem0, InElem>(f: (a: InElem0) => InElem): <Env, InErr, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InDone, OutErr, OutElem, OutDone, InElem0, InElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InElem0) => InElem
+  ): Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1702,11 +2031,21 @@ effectual function to the input channel's output elements.
 **Signature**
 
 ```ts
-export declare const contramapInEffect: <Env1, InErr, InElem0, InElem>(
-  f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
-) => <Env, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+export declare const contramapInEffect: {
+  <Env1, InErr, InElem0, InElem>(f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>): <
+    Env,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+  <Env, InDone, OutErr, OutElem, OutDone, Env1, InErr, InElem0, InElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
+  ): Channel<Env | Env1, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1754,11 +2093,20 @@ this channel's input.
 **Signature**
 
 ```ts
-export declare const embedInput: <InErr, InElem, InDone>(
-  input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
-) => <Env, OutErr, OutElem, OutDone>(
-  self: Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+export declare const embedInput: {
+  <InErr, InElem, InDone>(input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>): <
+    Env,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, OutErr, OutElem, OutDone, InErr, InElem, InDone>(
+    self: Channel<Env, unknown, unknown, unknown, OutErr, OutElem, OutDone>,
+    input: SingleProducerAsyncInput.AsyncInputProducer<InErr, InElem, InDone>
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1787,11 +2135,15 @@ regardless of whether or not it completes).
 **Signature**
 
 ```ts
-export declare const ensuring: <Env1, Z>(
-  finalizer: Effect.Effect<Env1, never, Z>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+export declare const ensuring: {
+  <Env1, Z>(finalizer: Effect.Effect<Env1, never, Z>): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, Z>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    finalizer: Effect.Effect<Env1, never, Z>
+  ): Channel<Env | Env1, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1805,11 +2157,21 @@ regardless of whether or not it completes).
 **Signature**
 
 ```ts
-export declare const ensuringWith: <Env2, OutErr, OutDone>(
-  finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
-) => <Env, InErr, InElem, InDone, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+export declare const ensuringWith: {
+  <Env2, OutErr, OutDone>(finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutElem
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutElem, Env2, OutErr, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    finalizer: (e: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env2, never, unknown>
+  ): Channel<Env | Env2, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
 ```
 
 Added in v1.0.0
@@ -1821,37 +2183,74 @@ Folds over the result of this channel including any cause of termination.
 **Signature**
 
 ```ts
-export declare const foldCauseChannel: <
-  Env1,
-  Env2,
-  InErr1,
-  InErr2,
-  InElem1,
-  InElem2,
-  InDone1,
-  InDone2,
-  OutErr,
-  OutErr2,
-  OutErr3,
-  OutElem1,
-  OutElem2,
-  OutDone,
-  OutDone2,
-  OutDone3
->(
-  onError: (c: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-  onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
-) => <Env, InErr, InElem, InDone, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env2 | Env,
-  InErr & InErr1 & InErr2,
-  InElem & InElem1 & InElem2,
-  InDone & InDone1 & InDone2,
-  OutErr2 | OutErr3,
-  OutElem1 | OutElem2 | OutElem,
-  OutDone2 | OutDone3
->
+export declare const foldCauseChannel: {
+  <
+    Env1,
+    Env2,
+    InErr1,
+    InErr2,
+    InElem1,
+    InElem2,
+    InDone1,
+    InDone2,
+    OutErr,
+    OutErr2,
+    OutErr3,
+    OutElem1,
+    OutElem2,
+    OutDone,
+    OutDone2,
+    OutDone3
+  >(
+    onError: (c: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
+    onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+  ): <Env, InErr, InElem, InDone, OutElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env2 | Env,
+    InErr & InErr1 & InErr2,
+    InElem & InElem1 & InElem2,
+    InDone & InDone1 & InDone2,
+    OutErr2 | OutErr3,
+    OutElem1 | OutElem2 | OutElem,
+    OutDone2 | OutDone3
+  >
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutElem,
+    Env1,
+    Env2,
+    InErr1,
+    InErr2,
+    InElem1,
+    InElem2,
+    InDone1,
+    InDone2,
+    OutErr,
+    OutErr2,
+    OutErr3,
+    OutElem1,
+    OutElem2,
+    OutDone,
+    OutDone2,
+    OutDone3
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    onError: (c: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
+    onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+  ): Channel<
+    Env | Env1 | Env2,
+    InErr & InErr1 & InErr2,
+    InElem & InElem1 & InElem2,
+    InDone & InDone1 & InDone2,
+    OutErr2 | OutErr3,
+    OutElem | OutElem1 | OutElem2,
+    OutDone2 | OutDone3
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1863,37 +2262,74 @@ Folds over the result of this channel.
 **Signature**
 
 ```ts
-export declare const foldChannel: <
-  Env1,
-  Env2,
-  InErr1,
-  InErr2,
-  InElem1,
-  InElem2,
-  InDone1,
-  InDone2,
-  OutErr,
-  OutErr1,
-  OutErr2,
-  OutElem1,
-  OutElem2,
-  OutDone,
-  OutDone1,
-  OutDone2
->(
-  onError: (oErr: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-  onSuccess: (oErr: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
-) => <Env, InErr, InElem, InDone, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env2 | Env,
-  InErr & InErr1 & InErr2,
-  InElem & InElem1 & InElem2,
-  InDone & InDone1 & InDone2,
-  OutErr1 | OutErr2,
-  OutElem1 | OutElem2 | OutElem,
-  OutDone1 | OutDone2
->
+export declare const foldChannel: {
+  <
+    Env1,
+    Env2,
+    InErr1,
+    InErr2,
+    InElem1,
+    InElem2,
+    InDone1,
+    InDone2,
+    OutErr,
+    OutErr1,
+    OutErr2,
+    OutElem1,
+    OutElem2,
+    OutDone,
+    OutDone1,
+    OutDone2
+  >(
+    onError: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    onSuccess: (done: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
+  ): <Env, InErr, InElem, InDone, OutElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env2 | Env,
+    InErr & InErr1 & InErr2,
+    InElem & InElem1 & InElem2,
+    InDone & InDone1 & InDone2,
+    OutErr1 | OutErr2,
+    OutElem1 | OutElem2 | OutElem,
+    OutDone1 | OutDone2
+  >
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutElem,
+    Env1,
+    Env2,
+    InErr1,
+    InErr2,
+    InElem1,
+    InElem2,
+    InDone1,
+    InDone2,
+    OutErr,
+    OutErr1,
+    OutErr2,
+    OutElem1,
+    OutElem2,
+    OutDone,
+    OutDone1,
+    OutDone2
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    onError: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    onSuccess: (done: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
+  ): Channel<
+    Env | Env1 | Env2,
+    InErr & InErr1 & InErr2,
+    InElem & InElem1 & InElem2,
+    InDone & InDone1 & InDone2,
+    OutErr1 | OutErr2,
+    OutElem | OutElem1 | OutElem2,
+    OutDone1 | OutDone2
+  >
+}
 ```
 
 Added in v1.0.0
@@ -1911,11 +2347,23 @@ its terminal value.
 **Signature**
 
 ```ts
-export declare const interruptWhen: <Env1, OutErr1, OutDone1>(
-  effect: Effect.Effect<Env1, OutErr1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem, OutDone1 | OutDone>
+export declare const interruptWhen: {
+  <Env1, OutErr1, OutDone1>(effect: Effect.Effect<Env1, OutErr1, OutDone1>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem, OutDone1 | OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, OutErr1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    effect: Effect.Effect<Env1, OutErr1, OutDone1>
+  ): Channel<Env | Env1, InErr, InElem, InDone, OutErr | OutErr1, OutElem, OutDone | OutDone1>
+}
 ```
 
 Added in v1.0.0
@@ -1932,11 +2380,23 @@ underlying channel.
 **Signature**
 
 ```ts
-export declare const interruptWhenDeferred: <OutErr1, OutDone1>(
-  deferred: Deferred.Deferred<OutErr1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem, OutDone1 | OutDone>
+export declare const interruptWhenDeferred: {
+  <OutErr1, OutDone1>(deferred: Deferred.Deferred<OutErr1, OutDone1>): <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr1 | OutErr, OutElem, OutDone1 | OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, OutErr1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    deferred: Deferred.Deferred<OutErr1, OutDone1>
+  ): Channel<Env, InErr, InElem, InDone, OutErr | OutErr1, OutElem, OutDone | OutDone1>
+}
 ```
 
 Added in v1.0.0
@@ -2064,19 +2524,31 @@ channel using the back pressuring merge strategy. See `Channel.mergeAll`.
 **Signature**
 
 ```ts
-export declare const mergeOut: (
-  n: number
-) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem1, OutDone, Z>(
-  self: Channel<
-    Env,
-    InErr,
-    InElem,
-    InDone,
-    OutErr,
-    Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    OutDone
-  >
-) => Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+export declare const mergeOut: {
+  (n: number): <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem1, OutDone, Z>(
+    self: Channel<
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+      OutDone
+    >
+  ) => Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+  <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem1, OutDone, Z>(
+    self: Channel<
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
+      OutDone
+    >,
+    n: number
+  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
+}
 ```
 
 Added in v1.0.0
@@ -2091,20 +2563,44 @@ to merge each completed subchannel's result value. See
 **Signature**
 
 ```ts
-export declare const mergeOutWith: <OutDone1>(
-  n: number,
-  f: (o1: OutDone1, o2: OutDone1) => OutDone1
-) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem1>(
-  self: Channel<
+export declare const mergeOutWith: {
+  <OutDone1>(n: number, f: (o1: OutDone1, o2: OutDone1) => OutDone1): <
     Env,
+    Env1,
     InErr,
+    InErr1,
     InElem,
+    InElem1,
     InDone,
+    InDone1,
     OutErr,
-    Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-    OutDone1
-  >
-) => Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, OutDone1>
+    OutErr1,
+    OutElem1
+  >(
+    self: Channel<
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+      OutDone1
+    >
+  ) => Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, OutDone1>
+  <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem1, OutDone1>(
+    self: Channel<
+      Env,
+      InErr,
+      InElem,
+      InDone,
+      OutErr,
+      Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+      OutDone1
+    >,
+    n: number,
+    f: (o1: OutDone1, o2: OutDone1) => OutDone1
+  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, OutDone1>
+}
 ```
 
 Added in v1.0.0
@@ -2119,37 +2615,64 @@ decisions.
 **Signature**
 
 ```ts
-export declare const mergeWith: <
-  Env1,
-  InErr1,
-  InElem1,
-  InDone1,
-  OutErr,
-  OutErr1,
-  OutErr2,
-  OutErr3,
-  OutElem1,
-  OutDone,
-  OutDone1,
-  OutDone2,
-  OutDone3
->(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-  leftDone: (
-    exit: Exit.Exit<OutErr, OutDone>
-  ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>,
-  rightDone: (ex: Exit.Exit<OutErr1, OutDone1>) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
-) => <Env, InErr, InElem, InDone, OutElem>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr2 | OutErr3,
-  OutElem1 | OutElem,
-  OutDone2 | OutDone3
->
+export declare const mergeWith: {
+  <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutErr2, OutErr3, OutElem1, OutDone, OutDone1, OutDone2, OutDone3>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    leftDone: (
+      exit: Exit.Exit<OutErr, OutDone>
+    ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>,
+    rightDone: (
+      ex: Exit.Exit<OutErr1, OutDone1>
+    ) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
+  ): <Env, InErr, InElem, InDone, OutElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr2 | OutErr3,
+    OutElem1 | OutElem,
+    OutDone2 | OutDone3
+  >
+  <
+    Env,
+    InErr,
+    InElem,
+    InDone,
+    OutElem,
+    Env1,
+    InErr1,
+    InElem1,
+    InDone1,
+    OutErr,
+    OutErr1,
+    OutErr2,
+    OutErr3,
+    OutElem1,
+    OutDone,
+    OutDone1,
+    OutDone2,
+    OutDone3
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    leftDone: (
+      exit: Exit.Exit<OutErr, OutDone>
+    ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>,
+    rightDone: (
+      ex: Exit.Exit<OutErr1, OutDone1>
+    ) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr2 | OutErr3,
+    OutElem | OutElem1,
+    OutDone2 | OutDone3
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2164,11 +2687,17 @@ the specified channel.
 **Signature**
 
 ```ts
-export declare const pipeTo: <Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
-  that: Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
-) => <Env, InErr, InElem, InDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr | OutErr2, OutElem2, OutDone2>
+export declare const pipeTo: {
+  <Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
+    that: Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
+  ): <Env, InErr, InElem, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
+  <Env, InErr, InElem, InDone, Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env2, OutErr, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
+  ): Channel<Env | Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
+}
 ```
 
 Added in v1.0.0
@@ -2182,11 +2711,17 @@ them to the other channel for observation.
 **Signature**
 
 ```ts
-export declare const pipeToOrFail: <Env2, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
-  that: Channel<Env2, never, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
-) => <Env, InErr, InElem, InDone, OutErr>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr2 | OutErr, OutElem2, OutDone2>
+export declare const pipeToOrFail: {
+  <Env2, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
+    that: Channel<Env2, never, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
+  ): <Env, InErr, InElem, InDone, OutErr>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env2 | Env, InErr, InElem, InDone, OutErr2 | OutErr, OutElem2, OutDone2>
+  <Env, InErr, InElem, InDone, OutErr, Env2, OutElem, OutDone, OutErr2, OutElem2, OutDone2>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env2, never, OutElem, OutDone, OutErr2, OutElem2, OutDone2>
+  ): Channel<Env | Env2, InErr, InElem, InDone, OutErr | OutErr2, OutElem2, OutDone2>
+}
 ```
 
 Added in v1.0.0
@@ -2216,19 +2751,33 @@ the terminal values of both channels.
 **Signature**
 
 ```ts
-export declare const zip: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  readonly [OutDone, OutDone1]
->
+export declare const zip: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    readonly [OutDone, OutDone1]
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    readonly [OutDone, OutDone1]
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2242,19 +2791,33 @@ terminal value of this channel.
 **Signature**
 
 ```ts
-export declare const zipLeft: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  OutDone
->
+export declare const zipLeft: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    OutDone
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    OutDone
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2267,19 +2830,33 @@ when both succeeds finishes with a tuple of both channel's done value.
 **Signature**
 
 ```ts
-export declare const zipPar: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  readonly [OutDone, OutDone1]
->
+export declare const zipPar: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    readonly [OutDone, OutDone1]
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    readonly [OutDone, OutDone1]
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2292,19 +2869,33 @@ when both succeeds finishes with the first one's done value.
 **Signature**
 
 ```ts
-export declare const zipParLeft: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  OutDone
->
+export declare const zipParLeft: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    OutDone
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    OutDone
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2317,19 +2908,33 @@ when both succeeds finishes with the second one's done value.
 **Signature**
 
 ```ts
-export declare const zipParRight: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  OutDone1
->
+export declare const zipParRight: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    OutDone1
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    OutDone1
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2343,19 +2948,33 @@ terminal value of that channel.
 **Signature**
 
 ```ts
-export declare const zipRight: <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-  that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<
-  Env1 | Env,
-  InErr & InErr1,
-  InElem & InElem1,
-  InDone & InDone1,
-  OutErr1 | OutErr,
-  OutElem1 | OutElem,
-  OutDone1
->
+export declare const zipRight: {
+  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<
+    Env1 | Env,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr1 | OutErr,
+    OutElem1 | OutElem,
+    OutDone1
+  >
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+  ): Channel<
+    Env | Env1,
+    InErr & InErr1,
+    InElem & InElem1,
+    InDone & InDone1,
+    OutErr | OutErr1,
+    OutElem | OutElem1,
+    OutDone1
+  >
+}
 ```
 
 Added in v1.0.0

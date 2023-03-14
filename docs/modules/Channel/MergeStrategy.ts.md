@@ -38,7 +38,7 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const BackPressure: MergeStrategy
+export declare const BackPressure: (_: void) => MergeStrategy
 ```
 
 Added in v1.0.0
@@ -48,7 +48,7 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const BufferSliding: MergeStrategy
+export declare const BufferSliding: (_: void) => MergeStrategy
 ```
 
 Added in v1.0.0
@@ -62,7 +62,10 @@ Folds an `MergeStrategy` into a value of type `A`.
 **Signature**
 
 ```ts
-export declare const match: <A>(onBackPressure: () => A, onBufferSliding: () => A) => (self: MergeStrategy) => A
+export declare const match: {
+  <A>(onBackPressure: () => A, onBufferSliding: () => A): (self: MergeStrategy) => A
+  <A>(self: MergeStrategy, onBackPressure: () => A, onBufferSliding: () => A): A
+}
 ```
 
 Added in v1.0.0

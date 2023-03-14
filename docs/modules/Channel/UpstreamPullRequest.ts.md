@@ -62,10 +62,12 @@ Folds an `UpstreamPullRequest<A>` into a value of type `Z`.
 **Signature**
 
 ```ts
-export declare const match: <A, Z>(
-  onPulled: (value: A) => Z,
-  onNoUpstream: (activeDownstreamCount: number) => Z
-) => (self: UpstreamPullRequest<A>) => Z
+export declare const match: {
+  <A, Z>(onPulled: (value: A) => Z, onNoUpstream: (activeDownstreamCount: number) => Z): (
+    self: UpstreamPullRequest<A>
+  ) => Z
+  <A, Z>(self: UpstreamPullRequest<A>, onPulled: (value: A) => Z, onNoUpstream: (activeDownstreamCount: number) => Z): Z
+}
 ```
 
 Added in v1.0.0
