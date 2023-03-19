@@ -131,7 +131,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
 
                   const drainer = (): Effect.Effect<Env, never, unknown> =>
                     Effect.flatMap(bridgeInput.awaitRead(), () =>
-                      Effect.suspendSucceed(() => {
+                      Effect.suspend(() => {
                         const state = inputExecutor.run() as ChannelState.Primitive
                         switch (state._tag) {
                           case ChannelStateOpCodes.OP_DONE: {
@@ -171,7 +171,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                         Effect.sync(() =>
                           this.addFinalizer((exit) =>
                             Effect.flatMap(Fiber.interrupt(fiber), () =>
-                              Effect.suspendSucceed(() => {
+                              Effect.suspend(() => {
                                 const effect = this.restorePipe(exit, inputExecutor)
                                 return effect !== undefined ? effect : Effect.unit()
                               }))
@@ -1112,7 +1112,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
           const emitEffect = current.onEmit(current.upstream.getEmit())
           if (readStack.length === 0) {
             if (emitEffect === undefined) {
-              return Effect.suspendSucceed(onSuccess)
+              return Effect.suspend(onSuccess)
             }
             return pipe(
               emitEffect as Effect.Effect<never, never, void>,
@@ -1120,7 +1120,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
             ).traced(trace)
           }
           if (emitEffect === undefined) {
-            return Effect.suspendSucceed(() => read()).traced(trace)
+            return Effect.suspend(() => read()).traced(trace)
           }
           return pipe(
             emitEffect as Effect.Effect<never, never, void>,
@@ -1132,7 +1132,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
           const doneEffect = current.onDone(current.upstream.getDone())
           if (readStack.length === 0) {
             if (doneEffect === undefined) {
-              return Effect.suspendSucceed(onSuccess).traced(trace)
+              return Effect.suspend(onSuccess).traced(trace)
             }
             return pipe(
               doneEffect as Effect.Effect<never, never, void>,
@@ -1140,7 +1140,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
             ).traced(trace)
           }
           if (doneEffect === undefined) {
-            return Effect.suspendSucceed(() => read()).traced(trace)
+            return Effect.suspend(() => read()).traced(trace)
           }
           return pipe(
             doneEffect as Effect.Effect<never, never, void>,
@@ -1153,7 +1153,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
           return pipe(
             current.onEffect(state.effect as Effect.Effect<never, never, void>) as Effect.Effect<never, never, void>,
             Effect.catchAllCause((cause) =>
-              Effect.suspendSucceed(() => {
+              Effect.suspend(() => {
                 const doneEffect = current.onDone(Exit.failCause(cause)) as Effect.Effect<never, never, void>
                 return doneEffect === undefined ? Effect.unit() : doneEffect
               })
@@ -1165,7 +1165,7 @@ export const readUpstream = Debug.methodWithTrace((trace) =>
         case ChannelStateOpCodes.OP_READ: {
           readStack.push(current)
           readStack.push(state)
-          return Effect.suspendSucceed(() => read()).traced(trace)
+          return Effect.suspend(() => read()).traced(trace)
         }
       }
     }
@@ -1188,7 +1188,7 @@ export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
     Effect.acquireUseRelease(
       Effect.sync(() => new ChannelExecutor(self, void 0, identity)),
       (exec) =>
-        Effect.suspendSucceed(() =>
+        Effect.suspend(() =>
           pipe(
             runScopedInterpret(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec),
             Effect.intoDeferred(deferred),
