@@ -2479,7 +2479,7 @@ export const toPull = Debug.methodWithTrace((trace) =>
           return finalize === undefined ? Effect.unit() : finalize
         }
       ),
-      (exec) => Effect.suspendSucceed(() => interpretToPull(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec))
+      (exec) => Effect.suspend(() => interpretToPull(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec))
     ).traced(trace)
 )
 

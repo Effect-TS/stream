@@ -2778,7 +2778,7 @@ export const fromAsyncIterable = <E, A>(
     ),
     Effect.map((iterator) =>
       repeatEffectOption(pipe(
-        Effect.tryCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
+        Effect.attemptCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
         Effect.flatMap((result) => result.done ? Effect.fail(Option.none()) : Effect.succeed(result.value))
       ))
     ),
@@ -2868,7 +2868,7 @@ export const fromHubScoped = methodWithTrace((trace) =>
     maxChunkSize = DefaultChunkSize
   ): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
     pipe(
-      Effect.suspendSucceed(() =>
+      Effect.suspend(() =>
         pipe(
           Hub.subscribe(hub),
           Effect.map((queue) => fromQueueWithShutdown(queue, maxChunkSize))
@@ -3545,7 +3545,7 @@ export const mapAccumEffect = dual<
         core.readWith(
           (input: Chunk.Chunk<A>) =>
             pipe(
-              Effect.suspendSucceed(() => {
+              Effect.suspend(() => {
                 const outputs: Array<A2> = []
                 const emit = (output: A2) =>
                   Effect.sync(() => {
