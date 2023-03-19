@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 patchedDependencies:
   docs-ts@0.6.10:
-    hash: xlixozi5tp7fzjxdl3rsrdvw4m
+    hash: alihhvcrtsrut2eluv4xs2qime
     path: patches/docs-ts@0.6.10.patch
 
 specifiers:
@@ -82,7 +82,7 @@ devDependencies:
   babel-plugin-annotate-pure-calls: 0.4.0_@babel+core@7.21.3
   concurrently: 7.6.0
   cpx: 1.5.0
-  docs-ts: 0.6.10_xlixozi5tp7fzjxdl3rsrdvw4m_za2cb7z32ksq5gw6txs6br4sn4
+  docs-ts: 0.6.10_alihhvcrtsrut2eluv4xs2qime_za2cb7z32ksq5gw6txs6br4sn4
   eslint: 8.36.0
   eslint-import-resolver-typescript: 3.5.3_eakrjjutlgqjxe5ydhtnd4qdmy
   eslint-plugin-codegen: 0.17.0
@@ -2738,7 +2738,7 @@ packages:
       path-type: 4.0.0
     dev: true
 
-  /docs-ts/0.6.10_xlixozi5tp7fzjxdl3rsrdvw4m_za2cb7z32ksq5gw6txs6br4sn4:
+  /docs-ts/0.6.10_alihhvcrtsrut2eluv4xs2qime_za2cb7z32ksq5gw6txs6br4sn4:
     resolution: {integrity: sha512-DTX9c5AJ92ojMOKqqvwF8t77C8Gdgs9FPB8seymHs+F+Wl6aapc3ZkHUM+p8o+jwcBmPoihxssdK903dfwQ1JQ==}
     hasBin: true
     peerDependencies:
@@ -4591,7 +4591,7 @@ packages:
   /jsonfile/4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: true
 
   /kind-of/3.2.2:
