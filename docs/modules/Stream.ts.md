@@ -75,6 +75,7 @@ Added in v1.0.0
   - [suspend](#suspend)
   - [sync](#sync)
   - [tick](#tick)
+  - [toChannel](#tochannel)
   - [unfold](#unfold)
   - [unfoldChunk](#unfoldchunk)
   - [unfoldChunkEffect](#unfoldchunkeffect)
@@ -1250,6 +1251,20 @@ A stream that emits Unit values spaced by the specified duration.
 
 ```ts
 export declare const tick: (interval: Duration.Duration) => Stream<never, never, void>
+```
+
+Added in v1.0.0
+
+## toChannel
+
+Creates a channel from a `Stream`.
+
+**Signature**
+
+```ts
+export declare const toChannel: <R, E, A>(
+  stream: Stream<R, E, A>
+) => Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
 ```
 
 Added in v1.0.0
