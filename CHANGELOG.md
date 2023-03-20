@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.12.1
+
+### Patch Changes
+
+- [#81](https://github.com/Effect-TS/stream/pull/81) [`da67205`](https://github.com/Effect-TS/stream/commit/da67205061a634e7685a52208791d4005aa4b91b) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Add Stream.toChannel
+
 ## 0.12.0
 
 ### Minor Changes
