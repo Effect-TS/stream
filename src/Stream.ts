@@ -1521,6 +1521,16 @@ export const fromChannel: <R, E, A>(
 ) => Stream<R, E, A> = internal.fromChannel
 
 /**
+ * Creates a channel from a `Stream`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const toChannel: <R, E, A>(
+  stream: Stream<R, E, A>
+) => Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> = internal.toChannel
+
+/**
  * Creates a stream from a `Chunk` of values.
  *
  * @since 1.0.0

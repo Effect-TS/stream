@@ -2791,6 +2791,11 @@ export const fromChannel = <R, E, A>(
 ): Stream.Stream<R, E, A> => new StreamImpl(channel)
 
 /** @internal */
+export const toChannel = <R, E, A>(
+  stream: Stream.Stream<R, E, A>
+): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> => stream.channel
+
+/** @internal */
 export const fromChunk = <A>(chunk: Chunk.Chunk<A>): Stream.Stream<never, never, A> =>
   new StreamImpl(Chunk.isEmpty(chunk) ? core.unit() : core.write(chunk))
 
