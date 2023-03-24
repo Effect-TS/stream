@@ -4630,18 +4630,18 @@ export const provideLayer = dual<
 
 /** @internal */
 export const provideService = dual<
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     resource: Context.Tag.Service<T>
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<Exclude<R, Context.Tag.Service<T>>, E, A>,
-  <R, E, A, T extends Context.Tag<any>>(
+  <R, E, A, T extends Context.Tag<any, any>>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     resource: Context.Tag.Service<T>
   ) => Stream.Stream<Exclude<R, Context.Tag.Service<T>>, E, A>
 >(
   3,
-  <R, E, A, T extends Context.Tag<any>>(
+  <R, E, A, T extends Context.Tag<any, any>>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     resource: Context.Tag.Service<T>
@@ -4650,18 +4650,18 @@ export const provideService = dual<
 
 /** @internal */
 export const provideServiceEffect = dual<
-  <T extends Context.Tag<any>, R2, E2>(
+  <T extends Context.Tag<any, any>, R2, E2>(
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>,
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
   ) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
 >(
   3,
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
@@ -4670,18 +4670,18 @@ export const provideServiceEffect = dual<
 
 /** @internal */
 export const provideServiceStream = dual<
-  <T extends Context.Tag<any>, R2, E2>(
+  <T extends Context.Tag<any, any>, R2, E2>(
     tag: T,
     stream: Stream.Stream<R2, E2, Context.Tag.Service<T>>
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>,
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     stream: Stream.Stream<R2, E2, Context.Tag.Service<T>>
   ) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
 >(
   3,
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     stream: Stream.Stream<R2, E2, Context.Tag.Service<T>>
@@ -5862,25 +5862,25 @@ export const scoped = <R, E, A>(
   new StreamImpl(channel.ensuring(channel.scoped(pipe(effect, Effect.map(Chunk.of))), Effect.unit()))
 
 /** @internal */
-export const service = <T>(tag: Context.Tag<T>): Stream.Stream<T, never, T> => serviceWith(tag, identity)
+export const service = <I, S>(tag: Context.Tag<I, S>): Stream.Stream<I, never, S> => serviceWith(tag, identity)
 
 /** @internal */
-export const serviceWith = <T extends Context.Tag<any>, A>(
+export const serviceWith = <T extends Context.Tag<any, any>, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => A
-): Stream.Stream<Context.Tag.Service<T>, never, A> => fromEffect(Effect.serviceWith(tag, f))
+): Stream.Stream<Context.Tag.Identifier<T>, never, A> => fromEffect(Effect.serviceWith(tag, f))
 
 /** @internal */
-export const serviceWithEffect = <T extends Context.Tag<any>, R, E, A>(
+export const serviceWithEffect = <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-): Stream.Stream<R | Context.Tag.Service<T>, E, A> => fromEffect(Effect.serviceWithEffect(tag, f))
+): Stream.Stream<R | Context.Tag.Identifier<T>, E, A> => fromEffect(Effect.serviceWithEffect(tag, f))
 
 /** @internal */
-export const serviceWithStream = <T extends Context.Tag<any>, R, E, A>(
+export const serviceWithStream = <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Stream.Stream<R, E, A>
-): Stream.Stream<R | Context.Tag.Service<T>, E, A> => flatMap(service(tag), f)
+): Stream.Stream<R | Context.Tag.Identifier<T>, E, A> => flatMap(service(tag), f)
 
 /** @internal */
 export const some = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, Option.Option<E>, A> =>
@@ -7007,18 +7007,18 @@ export const unwrapScoped = <R, E, R2, E2, A>(
 
 /** @internal */
 export const updateService = dual<
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<T | R, E, A>,
-  <R, E, A, T extends Context.Tag<any>>(
+  <R, E, A, T extends Context.Tag<any, any>>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ) => Stream.Stream<T | R, E, A>
 >(
   3,
-  <R, E, A, T extends Context.Tag<any>>(
+  <R, E, A, T extends Context.Tag<any, any>>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>

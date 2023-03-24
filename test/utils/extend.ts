@@ -1,8 +1,8 @@
 import * as Duration from "@effect/data/Duration"
 import { pipe } from "@effect/data/Function"
-import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
+import { fiberFailure } from "@effect/io/internal_effect_untraced/runtime"
 import * as TestEnvironment from "@effect/io/internal_effect_untraced/testing/testEnvironment"
 import * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
@@ -16,9 +16,9 @@ export const it: API = V.it
 const runTest = <E, A>(effect: Effect.Effect<never, E, A>): Promise<A> =>
   Effect.runPromiseExit(effect).then((exit) => {
     if (Exit.isFailure(exit)) {
-      throw { message: Cause.pretty(exit.cause) }
+      return Promise.reject(fiberFailure(exit.cause))
     } else {
-      return exit.value
+      return Promise.resolve(exit.value)
     }
   })
 

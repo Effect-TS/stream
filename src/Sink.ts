@@ -1383,7 +1383,9 @@ export const refineOrDieWith: <E, E2>(
  * @since 1.0.0
  * @category context
  */
-export const service: <T>(tag: Context.Tag<T>) => Sink<T, never, unknown, never, T> = internal.service
+export const service: <T extends Context.Tag<any, any>>(
+  tag: T
+) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Context.Tag.Service<T>> = internal.service
 
 /**
  * Accesses the specified service in the context of the sink.
@@ -1391,10 +1393,10 @@ export const service: <T>(tag: Context.Tag<T>) => Sink<T, never, unknown, never,
  * @since 1.0.0
  * @category context
  */
-export const serviceWith: <T extends Context.Tag<any>, Z>(
+export const serviceWith: <T extends Context.Tag<any, any>, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Z
-) => Sink<Context.Tag.Service<T>, never, unknown, never, Z> = internal.serviceWith
+) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Z> = internal.serviceWith
 
 /**
  * Accesses the specified service in the context of the sink in the
@@ -1403,10 +1405,10 @@ export const serviceWith: <T extends Context.Tag<any>, Z>(
  * @since 1.0.0
  * @category context
  */
-export const serviceWithEffect: <T extends Context.Tag<any>, R, E, Z>(
+export const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, Z>
-) => Sink<T | R, E, unknown, never, Z> = internal.serviceWithEffect
+) => Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z> = internal.serviceWithEffect
 
 /**
  * Accesses the specified service in the context of the sink in the
@@ -1415,10 +1417,10 @@ export const serviceWithEffect: <T extends Context.Tag<any>, R, E, Z>(
  * @since 1.0.0
  * @category context
  */
-export const serviceWithSink: <T extends Context.Tag<any>, R, E, In, L, Z>(
+export const serviceWithSink: <T extends Context.Tag<any, any>, R, E, In, L, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Sink<R, E, In, L, Z>
-) => Sink<T | R, E, In, L, Z> = internal.serviceWithSink
+) => Sink<R | Context.Tag.Identifier<T>, E, In, L, Z> = internal.serviceWithSink
 
 /**
  * A sink that returns whether an element satisfies the specified predicate.

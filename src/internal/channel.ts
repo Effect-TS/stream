@@ -2272,25 +2272,25 @@ export const pipeToOrFail = Debug.dualWithTrace<
 
 /** @internal */
 export const provideService = Debug.dualWithTrace<
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     service: Context.Tag.Service<T>
   ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel.Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any>>(
+  ) => Channel.Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any, any>>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     tag: T,
     service: Context.Tag.Service<T>
-  ) => Channel.Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel.Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 >(
   3,
   (trace) =>
-    <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any>>(
+    <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any, any>>(
       self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
       tag: T,
       service: Context.Tag.Service<T>
-    ): Channel.Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
+    ): Channel.Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone> => {
       return core.flatMap(
         context<any>(),
         (context) => core.provideContext(self, Context.add(context, tag, service))
@@ -2428,34 +2428,36 @@ export const scoped = Debug.methodWithTrace((trace) =>
 
 /** @internal */
 export const service = Debug.methodWithTrace((trace) =>
-  <T>(tag: Context.Tag<T>): Channel.Channel<T, unknown, unknown, unknown, never, never, T> =>
+  <T extends Context.Tag<any, any>>(
+    tag: T
+  ): Channel.Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, Context.Tag.Service<T>> =>
     core.fromEffect(Effect.service(tag)).traced(trace)
 )
 
 /** @internal */
 export const serviceWith = Debug.methodWithTrace((trace, restore) =>
-  <T>(tag: Context.Tag<T>) =>
+  <T extends Context.Tag<any, any>>(tag: T) =>
     <OutDone>(
-      f: (resource: T) => OutDone
-    ): Channel.Channel<T, unknown, unknown, unknown, never, never, OutDone> =>
+      f: (resource: Context.Tag.Service<T>) => OutDone
+    ): Channel.Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, OutDone> =>
       map(service(tag), restore(f)).traced(trace)
 )
 
 /** @internal */
 export const serviceWithChannel = Debug.methodWithTrace((trace, restore) =>
-  <T>(tag: Context.Tag<T>) =>
+  <T extends Context.Tag<any, any>>(tag: T) =>
     <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-      f: (resource: T) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-    ): Channel.Channel<Env | T, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
+      f: (resource: Context.Tag.Service<T>) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+    ): Channel.Channel<Env | Context.Tag.Identifier<T>, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
       core.flatMap(service(tag), restore(f)).traced(trace)
 )
 
 /** @internal */
 export const serviceWithEffect = Debug.methodWithTrace((trace, restore) =>
-  <T>(tag: Context.Tag<T>) =>
+  <T extends Context.Tag<any, any>>(tag: T) =>
     <Env, OutErr, OutDone>(
-      f: (resource: T) => Effect.Effect<Env, OutErr, OutDone>
-    ): Channel.Channel<Env | T, unknown, unknown, unknown, OutErr, never, OutDone> =>
+      f: (resource: Context.Tag.Service<T>) => Effect.Effect<Env, OutErr, OutDone>
+    ): Channel.Channel<Env | Context.Tag.Identifier<T>, unknown, unknown, unknown, OutErr, never, OutDone> =>
       mapEffect(service(tag), restore(f)).traced(trace)
 )
 
@@ -2583,13 +2585,13 @@ export const unwrapScoped = Debug.methodWithTrace((trace) =>
 
 /** @internal */
 export const updateService = Debug.dualWithTrace<
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ) => <R, InErr, InDone, OutElem, OutErr, OutDone>(
     self: Channel.Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
   ) => Channel.Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
-  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
+  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any, any>>(
     self: Channel.Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
     tag: T,
     f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
@@ -2597,7 +2599,7 @@ export const updateService = Debug.dualWithTrace<
 >(
   3,
   (trace, restore) =>
-    <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
+    <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any, any>>(
       self: Channel.Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
       tag: T,
       f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>

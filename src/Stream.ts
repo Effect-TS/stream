@@ -3059,11 +3059,11 @@ export const provideLayer: {
  * @category context
  */
 export const provideService: {
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     resource: Context.Tag.Service<T>
   ): <R, E, A>(self: Stream<R, E, A>) => Stream<Exclude<R, Context.Tag.Service<T>>, E, A>
-  <R, E, A, T extends Context.Tag<any>>(
+  <R, E, A, T extends Context.Tag<any, any>>(
     self: Stream<R, E, A>,
     tag: T,
     resource: Context.Tag.Service<T>
@@ -3078,11 +3078,11 @@ export const provideService: {
  * @category context
  */
 export const provideServiceEffect: {
-  <T extends Context.Tag<any>, R2, E2>(
+  <T extends Context.Tag<any, any>, R2, E2>(
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
   ): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream<R, E, A>,
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
@@ -3097,11 +3097,11 @@ export const provideServiceEffect: {
  * @category context
  */
 export const provideServiceStream: {
-  <T extends Context.Tag<any>, R2, E2>(
+  <T extends Context.Tag<any, any>, R2, E2>(
     tag: T,
     stream: Stream<R2, E2, Context.Tag.Service<T>>
   ): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream<R, E, A>,
     tag: T,
     stream: Stream<R2, E2, Context.Tag.Service<T>>
@@ -3931,7 +3931,7 @@ export const scoped: <R, E, A>(effect: Effect.Effect<Scope.Scope | R, E, A>) => 
  * @since 1.0.0
  * @category context
  */
-export const service: <T>(tag: Context.Tag<T>) => Stream<T, never, T> = internal.service
+export const service: <I, S>(tag: Context.Tag<I, S>) => Stream<I, never, S> = internal.service
 
 /**
  * Accesses the specified service in the context of the stream.
@@ -3939,10 +3939,10 @@ export const service: <T>(tag: Context.Tag<T>) => Stream<T, never, T> = internal
  * @since 1.0.0
  * @category context
  */
-export const serviceWith: <T extends Context.Tag<any>, A>(
+export const serviceWith: <T extends Context.Tag<any, any>, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => A
-) => Stream<Context.Tag.Service<T>, never, A> = internal.serviceWith
+) => Stream<Context.Tag.Identifier<T>, never, A> = internal.serviceWith
 
 /**
  * Accesses the specified service in the context of the stream in the
@@ -3951,10 +3951,10 @@ export const serviceWith: <T extends Context.Tag<any>, A>(
  * @since 1.0.0
  * @category context
  */
-export const serviceWithEffect: <T extends Context.Tag<any>, R, E, A>(
+export const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-) => Stream<R | Context.Tag.Service<T>, E, A> = internal.serviceWithEffect
+) => Stream<R | Context.Tag.Identifier<T>, E, A> = internal.serviceWithEffect
 
 /**
  * Accesses the specified service in the context of the stream in the
@@ -3963,10 +3963,10 @@ export const serviceWithEffect: <T extends Context.Tag<any>, R, E, A>(
  * @since 1.0.0
  * @category context
  */
-export const serviceWithStream: <T extends Context.Tag<any>, R, E, A>(
+export const serviceWithStream: <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Stream<R, E, A>
-) => Stream<R | Context.Tag.Service<T>, E, A> = internal.serviceWithStream
+) => Stream<R | Context.Tag.Identifier<T>, E, A> = internal.serviceWithStream
 
 /**
  * Emits a sliding window of `n` elements.

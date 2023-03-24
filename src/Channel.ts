@@ -3,6 +3,10 @@
  */
 import type * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
+import type * as Either from "@effect/data/Either"
+import type { LazyArg } from "@effect/data/Function"
+import type * as Option from "@effect/data/Option"
+import type { Predicate } from "@effect/data/Predicate"
 import type * as Cause from "@effect/io/Cause"
 import type * as Debug from "@effect/io/Debug"
 import type * as Deferred from "@effect/io/Deferred"
@@ -25,10 +29,6 @@ import * as sink from "@effect/stream/internal/sink"
 import * as stream from "@effect/stream/internal/stream"
 import type * as Sink from "@effect/stream/Sink"
 import type * as Stream from "@effect/stream/Stream"
-import type * as Either from "@effect/data/Either"
-import type { LazyArg } from "@effect/data/Function"
-import type * as Option from "@effect/data/Option"
-import type { Predicate } from "@effect/data/Predicate"
 
 /**
  * @since 1.0.0
@@ -1784,17 +1784,17 @@ export const provideSomeLayer: {
  * @category context
  */
 export const provideService: {
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     service: Context.Tag.Service<T>
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any>>(
+  ) => Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any, any>>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     tag: T,
     service: Context.Tag.Service<T>
-  ): Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ): Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 } = channel.provideService
 
 /**
@@ -1939,7 +1939,9 @@ export const scoped: <R, E, A>(
  * @since 1.0.0
  * @category context
  */
-export const service: <T>(tag: Context.Tag<T>) => Channel<T, unknown, unknown, unknown, never, never, T> =
+export const service: <T extends Context.Tag<any, any>>(
+  tag: T
+) => Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, Context.Tag.Service<T>> =
   channel.service
 
 /**
@@ -1948,10 +1950,11 @@ export const service: <T>(tag: Context.Tag<T>) => Channel<T, unknown, unknown, u
  * @since 1.0.0
  * @category context
  */
-export const serviceWith: <T>(
-  tag: Context.Tag<T>
-) => <OutDone>(f: (resource: T) => OutDone) => Channel<T, unknown, unknown, unknown, never, never, OutDone> =
-  channel.serviceWith
+export const serviceWith: <T extends Context.Tag<any, any>>(
+  tag: T
+) => <OutDone>(
+  f: (resource: Context.Tag.Service<T>) => OutDone
+) => Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, OutDone> = channel.serviceWith
 
 /**
  * Accesses the specified service in the context of the channel in the
@@ -1960,11 +1963,12 @@ export const serviceWith: <T>(
  * @since 1.0.0
  * @category context
  */
-export const serviceWithChannel: <T>(
-  tag: Context.Tag<T>
+export const serviceWithChannel: <T extends Context.Tag<any, any>>(
+  tag: T
 ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  f: (resource: T) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<T | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> = channel.serviceWithChannel
+  f: (resource: Context.Tag.Service<T>) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+) => Channel<Env | Context.Tag.Identifier<T>, InErr, InElem, InDone, OutErr, OutElem, OutDone> =
+  channel.serviceWithChannel
 
 /**
  * Accesses the specified service in the context of the channel in the
@@ -1973,11 +1977,12 @@ export const serviceWithChannel: <T>(
  * @since 1.0.0
  * @category context
  */
-export const serviceWithEffect: <T>(
-  tag: Context.Tag<T>
+export const serviceWithEffect: <T extends Context.Tag<any, any>>(
+  tag: T
 ) => <Env, OutErr, OutDone>(
-  f: (resource: T) => Effect.Effect<Env, OutErr, OutDone>
-) => Channel<T | Env, unknown, unknown, unknown, OutErr, never, OutDone> = channel.serviceWithEffect
+  f: (resource: Context.Tag.Service<T>) => Effect.Effect<Env, OutErr, OutDone>
+) => Channel<Env | Context.Tag.Identifier<T>, unknown, unknown, unknown, OutErr, never, OutDone> =
+  channel.serviceWithEffect
 
 /**
  * Constructs a channel that succeeds immediately with the specified value.
@@ -2083,13 +2088,13 @@ export const unwrapScoped: <R, E, Env, InErr, InElem, InDone, OutErr, OutElem, O
  * @category context
  */
 export const updateService: {
-  <T extends Context.Tag<any>>(
+  <T extends Context.Tag<any, any>>(
     tag: T,
     f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ): <R, InErr, InDone, OutElem, OutErr, OutDone>(
     self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
   ) => Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
-  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
+  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any, any>>(
     self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
     tag: T,
     f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
