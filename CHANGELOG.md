@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.13.0
+
+### Minor Changes
+
+- [#83](https://github.com/Effect-TS/stream/pull/83) [`72aa089`](https://github.com/Effect-TS/stream/commit/72aa08928382a6d9e3ef4ce313f7079c568f8291) Thanks [@tim-smart](https://github.com/tim-smart)! - update dependencies
+
+- [#83](https://github.com/Effect-TS/stream/pull/83) [`72aa089`](https://github.com/Effect-TS/stream/commit/72aa08928382a6d9e3ef4ce313f7079c568f8291) Thanks [@tim-smart](https://github.com/tim-smart)! - update for new Tag api
+
 ## 0.12.1
 
 ### Patch Changes
