@@ -1805,25 +1805,27 @@ export const refineOrDieWith = dual<
 )
 
 /** @internal */
-export const service = <T>(tag: Context.Tag<T>): Sink.Sink<T, never, unknown, never, T> => serviceWith(tag, identity)
+export const service = <T extends Context.Tag<any, any>>(
+  tag: T
+): Sink.Sink<Context.Tag.Identifier<T>, never, unknown, never, Context.Tag.Service<T>> => serviceWith(tag, identity)
 
 /** @internal */
-export const serviceWith = <T extends Context.Tag<any>, Z>(
+export const serviceWith = <T extends Context.Tag<any, any>, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Z
-): Sink.Sink<Context.Tag.Service<T>, never, unknown, never, Z> => fromEffect(Effect.serviceWith(tag, f))
+): Sink.Sink<Context.Tag.Identifier<T>, never, unknown, never, Z> => fromEffect(Effect.serviceWith(tag, f))
 
 /** @internal */
-export const serviceWithEffect = <T extends Context.Tag<any>, R, E, Z>(
+export const serviceWithEffect = <T extends Context.Tag<any, any>, R, E, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, Z>
-): Sink.Sink<R | T, E, unknown, never, Z> => fromEffect(Effect.serviceWithEffect(tag, f))
+): Sink.Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z> => fromEffect(Effect.serviceWithEffect(tag, f))
 
 /** @internal */
-export const serviceWithSink = <T extends Context.Tag<any>, R, E, In, L, Z>(
+export const serviceWithSink = <T extends Context.Tag<any, any>, R, E, In, L, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Sink.Sink<R, E, In, L, Z>
-): Sink.Sink<R | T, E, In, L, Z> =>
+): Sink.Sink<R | Context.Tag.Identifier<T>, E, In, L, Z> =>
   new SinkImpl(pipe(Effect.serviceWith(tag, (service) => f(service).channel), channel.unwrap))
 
 /** @internal */

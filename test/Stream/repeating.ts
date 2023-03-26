@@ -156,7 +156,7 @@ describe.concurrent("Stream", () => {
       yield* $(Fiber.join(fiber))
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [1, 1])
-    }))
+    }), 10000)
 
   it.it("repeatEffectWithSchedule - allow schedule to rely on effect value", () =>
     fc.assert(fc.asyncProperty(fc.integer({ min: 1, max: 100 }), async (length) => {

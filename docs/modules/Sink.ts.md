@@ -1161,7 +1161,9 @@ Accesses the specified service in the context of the effect.
 **Signature**
 
 ```ts
-export declare const service: <T>(tag: Context.Tag<T>) => Sink<T, never, unknown, never, T>
+export declare const service: <T extends Context.Tag<any, any>>(
+  tag: T
+) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Context.Tag.Service<T>>
 ```
 
 Added in v1.0.0
@@ -1173,10 +1175,10 @@ Accesses the specified service in the context of the sink.
 **Signature**
 
 ```ts
-export declare const serviceWith: <T extends Context.Tag<any>, Z>(
+export declare const serviceWith: <T extends Context.Tag<any, any>, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Z
-) => Sink<Context.Tag.Service<T>, never, unknown, never, Z>
+) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Z>
 ```
 
 Added in v1.0.0
@@ -1189,10 +1191,10 @@ context of an effect.
 **Signature**
 
 ```ts
-export declare const serviceWithEffect: <T extends Context.Tag<any>, R, E, Z>(
+export declare const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, Z>
-) => Sink<T | R, E, unknown, never, Z>
+) => Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z>
 ```
 
 Added in v1.0.0
@@ -1205,10 +1207,10 @@ context of a sink.
 **Signature**
 
 ```ts
-export declare const serviceWithSink: <T extends Context.Tag<any>, R, E, In, L, Z>(
+export declare const serviceWithSink: <T extends Context.Tag<any, any>, R, E, In, L, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Sink<R, E, In, L, Z>
-) => Sink<T | R, E, In, L, Z>
+) => Sink<R | Context.Tag.Identifier<T>, E, In, L, Z>
 ```
 
 Added in v1.0.0

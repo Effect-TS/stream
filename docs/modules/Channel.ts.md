@@ -778,7 +778,7 @@ requires more than one service use `provideContext` instead.
 
 ```ts
 export declare const provideService: {
-  <T extends Context.Tag<any>>(tag: T, service: Context.Tag.Service<T>): <
+  <T extends Context.Tag<any, any>>(tag: T, service: Context.Tag.Service<T>): <
     Env,
     InErr,
     InElem,
@@ -788,12 +788,12 @@ export declare const provideService: {
     OutDone
   >(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any>>(
+  ) => Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, T extends Context.Tag<any, any>>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     tag: T,
     service: Context.Tag.Service<T>
-  ): Channel<Exclude<Env, Context.Tag.Service<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ): Channel<Exclude<Env, Context.Tag.Identifier<T>>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 }
 ```
 
@@ -827,7 +827,9 @@ Accesses the specified service in the context of the channel.
 **Signature**
 
 ```ts
-export declare const service: <T>(tag: Context.Tag<T>) => Channel<T, unknown, unknown, unknown, never, never, T>
+export declare const service: <T extends Context.Tag<any, any>>(
+  tag: T
+) => Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, Context.Tag.Service<T>>
 ```
 
 Added in v1.0.0
@@ -839,9 +841,11 @@ Accesses the specified service in the context of the channel.
 **Signature**
 
 ```ts
-export declare const serviceWith: <T>(
-  tag: Context.Tag<T>
-) => <OutDone>(f: (resource: T) => OutDone) => Channel<T, unknown, unknown, unknown, never, never, OutDone>
+export declare const serviceWith: <T extends Context.Tag<any, any>>(
+  tag: T
+) => <OutDone>(
+  f: (resource: Context.Tag.Service<T>) => OutDone
+) => Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, OutDone>
 ```
 
 Added in v1.0.0
@@ -854,11 +858,11 @@ context of a channel.
 **Signature**
 
 ```ts
-export declare const serviceWithChannel: <T>(
-  tag: Context.Tag<T>
+export declare const serviceWithChannel: <T extends Context.Tag<any, any>>(
+  tag: T
 ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  f: (resource: T) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<T | Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  f: (resource: Context.Tag.Service<T>) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+) => Channel<Env | Context.Tag.Identifier<T>, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ```
 
 Added in v1.0.0
@@ -871,11 +875,11 @@ context of an effect.
 **Signature**
 
 ```ts
-export declare const serviceWithEffect: <T>(
-  tag: Context.Tag<T>
+export declare const serviceWithEffect: <T extends Context.Tag<any, any>>(
+  tag: T
 ) => <Env, OutErr, OutDone>(
-  f: (resource: T) => Effect.Effect<Env, OutErr, OutDone>
-) => Channel<T | Env, unknown, unknown, unknown, OutErr, never, OutDone>
+  f: (resource: Context.Tag.Service<T>) => Effect.Effect<Env, OutErr, OutDone>
+) => Channel<Env | Context.Tag.Identifier<T>, unknown, unknown, unknown, OutErr, never, OutDone>
 ```
 
 Added in v1.0.0
@@ -888,7 +892,7 @@ Updates a service in the context of this channel.
 
 ```ts
 export declare const updateService: {
-  <T extends Context.Tag<any>>(tag: T, f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>): <
+  <T extends Context.Tag<any, any>>(tag: T, f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>): <
     R,
     InErr,
     InDone,
@@ -898,7 +902,7 @@ export declare const updateService: {
   >(
     self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
   ) => Channel<T | R, InErr, unknown, InDone, OutErr, OutElem, OutDone>
-  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any>>(
+  <R, InErr, InDone, OutElem, OutErr, OutDone, T extends Context.Tag<any, any>>(
     self: Channel<R, InErr, unknown, InDone, OutErr, OutElem, OutDone>,
     tag: T,
     f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>

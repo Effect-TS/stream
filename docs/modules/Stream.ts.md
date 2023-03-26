@@ -1494,10 +1494,10 @@ requires more than one service use `Stream.provideContext` instead.
 
 ```ts
 export declare const provideService: {
-  <T extends Context.Tag<any>>(tag: T, resource: Context.Tag.Service<T>): <R, E, A>(
+  <T extends Context.Tag<any, any>>(tag: T, resource: Context.Tag.Service<T>): <R, E, A>(
     self: Stream<R, E, A>
   ) => Stream<Exclude<R, Context.Tag.Service<T>>, E, A>
-  <R, E, A, T extends Context.Tag<any>>(self: Stream<R, E, A>, tag: T, resource: Context.Tag.Service<T>): Stream<
+  <R, E, A, T extends Context.Tag<any, any>>(self: Stream<R, E, A>, tag: T, resource: Context.Tag.Service<T>): Stream<
     Exclude<R, Context.Tag.Service<T>>,
     E,
     A
@@ -1516,10 +1516,10 @@ requires more than one service use `Stream.provideContext` instead.
 
 ```ts
 export declare const provideServiceEffect: {
-  <T extends Context.Tag<any>, R2, E2>(tag: T, effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
+  <T extends Context.Tag<any, any>, R2, E2>(tag: T, effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
     self: Stream<R, E, A>
   ) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream<R, E, A>,
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
@@ -1538,10 +1538,10 @@ requires more than one service use `Stream.provideContext` instead.
 
 ```ts
 export declare const provideServiceStream: {
-  <T extends Context.Tag<any>, R2, E2>(tag: T, stream: Stream<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
+  <T extends Context.Tag<any, any>, R2, E2>(tag: T, stream: Stream<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
     self: Stream<R, E, A>
   ) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
-  <R, E, A, T extends Context.Tag<any>, R2, E2>(
+  <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream<R, E, A>,
     tag: T,
     stream: Stream<R2, E2, Context.Tag.Service<T>>
@@ -1580,7 +1580,7 @@ Accesses the specified service in the context of the effect.
 **Signature**
 
 ```ts
-export declare const service: <T>(tag: Context.Tag<T>) => Stream<T, never, T>
+export declare const service: <I, S>(tag: Context.Tag<I, S>) => Stream<I, never, S>
 ```
 
 Added in v1.0.0
@@ -1592,10 +1592,10 @@ Accesses the specified service in the context of the stream.
 **Signature**
 
 ```ts
-export declare const serviceWith: <T extends Context.Tag<any>, A>(
+export declare const serviceWith: <T extends Context.Tag<any, any>, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => A
-) => Stream<Context.Tag.Service<T>, never, A>
+) => Stream<Context.Tag.Identifier<T>, never, A>
 ```
 
 Added in v1.0.0
@@ -1608,10 +1608,10 @@ context of an effect.
 **Signature**
 
 ```ts
-export declare const serviceWithEffect: <T extends Context.Tag<any>, R, E, A>(
+export declare const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-) => Stream<R | Context.Tag.Service<T>, E, A>
+) => Stream<R | Context.Tag.Identifier<T>, E, A>
 ```
 
 Added in v1.0.0
@@ -1624,10 +1624,10 @@ context of a stream.
 **Signature**
 
 ```ts
-export declare const serviceWithStream: <T extends Context.Tag<any>, R, E, A>(
+export declare const serviceWithStream: <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Stream<R, E, A>
-) => Stream<R | Context.Tag.Service<T>, E, A>
+) => Stream<R | Context.Tag.Identifier<T>, E, A>
 ```
 
 Added in v1.0.0
@@ -1639,11 +1639,11 @@ Updates the specified service within the context of the `Stream`.
 **Signature**
 
 ```ts
-export declare const updateService: (<T extends Context.Tag<any>>(
+export declare const updateService: (<T extends Context.Tag<any, any>>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>
 ) => <R, E, A>(self: Stream<R, E, A>) => Stream<T | R, E, A>) &
-  (<R, E, A, T extends Context.Tag<any>>(
+  (<R, E, A, T extends Context.Tag<any, any>>(
     self: Stream<R, E, A>,
     tag: T,
     f: (service: Context.Tag.Service<T>) => Context.Tag.Service<T>
