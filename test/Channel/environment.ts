@@ -46,7 +46,7 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         pipe(
-          Channel.fromEffect(Effect.service(NumberService)),
+          Channel.fromEffect(NumberService),
           Channel.provideService(NumberService, new NumberServiceImpl(100)),
           Channel.run
         )
@@ -58,11 +58,11 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         pipe(
-          Channel.fromEffect(Effect.service(NumberService)),
+          Channel.fromEffect(NumberService),
           Channel.provideService(NumberService, new NumberServiceImpl(100)),
           Channel.zip(
             pipe(
-              Channel.fromEffect(Effect.service(NumberService)),
+              Channel.fromEffect(NumberService),
               Channel.provideService(NumberService, new NumberServiceImpl(200))
             )
           ),
@@ -75,12 +75,12 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap(provide).provide", () =>
     Effect.gen(function*($) {
       const [chunk, value] = yield* $(pipe(
-        Channel.fromEffect(Effect.service(NumberService)),
+        Channel.fromEffect(NumberService),
         Channel.emitCollect,
         Channel.mapOut((tuple) => tuple[1]),
         Channel.concatMap((n) =>
           pipe(
-            Channel.fromEffect(pipe(Effect.service(NumberService), Effect.map((m) => [n, m] as const))),
+            Channel.fromEffect(pipe(NumberService, Effect.map((m) => [n, m] as const))),
             Channel.provideService(NumberService, new NumberServiceImpl(200)),
             Channel.flatMap(Channel.write)
           )
@@ -94,13 +94,13 @@ describe.concurrent("Channel", () => {
 
   it.effect("provide is modular", () =>
     Effect.gen(function*($) {
-      const channel1 = Channel.fromEffect(Effect.service(NumberService))
+      const channel1 = Channel.fromEffect(NumberService)
       const channel2 = pipe(
-        Effect.service(NumberService),
+        NumberService,
         Effect.provideContext(pipe(Context.empty(), Context.add(NumberService, new NumberServiceImpl(2)))),
         Channel.fromEffect
       )
-      const channel3 = Channel.fromEffect(Effect.service(NumberService))
+      const channel3 = Channel.fromEffect(NumberService)
       const [[result1, result2], result3] = yield* $(pipe(
         channel1,
         Channel.zip(channel2),

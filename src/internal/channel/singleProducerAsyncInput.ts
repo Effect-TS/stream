@@ -1,7 +1,7 @@
+import { bodyWithTrace, methodWithTrace } from "@effect/data/Debug"
 import * as Either from "@effect/data/Either"
 import { pipe } from "@effect/data/Function"
 import * as Cause from "@effect/io/Cause"
-import { bodyWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
