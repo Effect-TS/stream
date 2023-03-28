@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.14.0
+
+### Minor Changes
+
+- [#85](https://github.com/Effect-TS/stream/pull/85) [`08f673e`](https://github.com/Effect-TS/stream/commit/08f673edaaf907cb63424a0de6727bf3ddff7100) Thanks [@patroza](https://github.com/patroza)! - Update dependencies
+
 ## 0.13.0
 
 ### Minor Changes
