@@ -14,8 +14,8 @@ specifiers:
   '@effect-ts/build-utils': 0.40.7
   '@effect-ts/core': ^0.60.5
   '@effect/babel-plugin': ^0.2.0
-  '@effect/data': ~0.7.3
-  '@effect/io': ~0.15.0
+  '@effect/data': ~0.7.4
+  '@effect/io': ~0.15.1
   '@effect/language-service': 0.0.19
   '@repo-tooling/eslint-plugin-dprint': ^0.0.4
   '@rollup/pluginutils': ^5.0.2
@@ -54,8 +54,8 @@ specifiers:
   vitest: 0.29.7
 
 dependencies:
-  '@effect/data': 0.7.3
-  '@effect/io': 0.15.0
+  '@effect/data': 0.7.4
+  '@effect/io': 0.15.1
 
 devDependencies:
   '@babel/cli': 7.21.0_@babel+core@7.21.3
@@ -688,14 +688,14 @@ packages:
       '@babel/core': 7.21.3
     dev: true
 
-  /@effect/data/0.7.3:
-    resolution: {integrity: sha512-8cfgo9nNijImQj2kPCakVK71L8m8sUVUzEmEP5a92dSOk45FZCKErWFI9xPmkmzRSVtVQb4KBcuQblm0CPjuDw==}
+  /@effect/data/0.7.4:
+    resolution: {integrity: sha512-vHDyTq66H5JIFMysp11KawygR7ikc2do5FdRdvruLN4H6hFW7u404Bl/UVOu4MiKugHvV1MUaV2fy/dzOlwY7w==}
     dev: false
 
-  /@effect/io/0.15.0:
-    resolution: {integrity: sha512-dQRnb0cpXPk9Kqqm4OlVrhjN/AeIyIIp7hfZ5M2phictOeb1JhK1h49D0SghfIuO4hgK7NxAUcjT5+DtL4GjNA==}
+  /@effect/io/0.15.1:
+    resolution: {integrity: sha512-+y4xJsNSeDM0ULcHathoVGB6uxSUTXT0IBiwyZUdqhB7sgZpTrYoi5RUnQSgpI8cVLZr7ukfOVPHI/PMVt9DXw==}
     dependencies:
-      '@effect/data': 0.7.3
+      '@effect/data': 0.7.4
     dev: false
 
   /@effect/language-service/0.0.19:
