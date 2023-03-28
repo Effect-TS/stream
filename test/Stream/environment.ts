@@ -173,8 +173,8 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const messages: Array<string> = []
       const effect = Effect.acquireRelease(
-        pipe(Effect.service(StringService), Effect.tap((s) => Effect.sync(() => messages.push(s.string)))),
-        () => pipe(Effect.service(StringService), Effect.tap((s) => Effect.sync(() => messages.push(s.string))))
+        pipe(StringService, Effect.tap((s) => Effect.sync(() => messages.push(s.string)))),
+        () => pipe(StringService, Effect.tap((s) => Effect.sync(() => messages.push(s.string))))
       )
       const L0 = Layer.succeed(StringService, { string: "test0" })
       const L1 = Layer.succeed(StringService, { string: "test1" })

@@ -1,5 +1,5 @@
+import { bodyWithTrace } from "@effect/data/Debug"
 import { pipe } from "@effect/data/Function"
-import { bodyWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"

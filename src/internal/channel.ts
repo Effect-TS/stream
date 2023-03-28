@@ -1,5 +1,6 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Context from "@effect/data/Context"
+import * as Debug from "@effect/data/Debug"
 import * as Either from "@effect/data/Either"
 import * as Equal from "@effect/data/Equal"
 import { constVoid, identity, pipe } from "@effect/data/Function"
@@ -7,7 +8,6 @@ import type { LazyArg } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import type { Predicate } from "@effect/data/Predicate"
 import * as Cause from "@effect/io/Cause"
-import * as Debug from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -2431,7 +2431,7 @@ export const service = Debug.methodWithTrace((trace) =>
   <T extends Context.Tag<any, any>>(
     tag: T
   ): Channel.Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, Context.Tag.Service<T>> =>
-    core.fromEffect(Effect.service(tag)).traced(trace)
+    core.fromEffect(tag).traced(trace)
 )
 
 /** @internal */

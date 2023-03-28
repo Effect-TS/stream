@@ -1813,20 +1813,20 @@ export const service = <T extends Context.Tag<any, any>>(
 export const serviceWith = <T extends Context.Tag<any, any>, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Z
-): Sink.Sink<Context.Tag.Identifier<T>, never, unknown, never, Z> => fromEffect(Effect.serviceWith(tag, f))
+): Sink.Sink<Context.Tag.Identifier<T>, never, unknown, never, Z> => fromEffect(Effect.map(tag, f))
 
 /** @internal */
 export const serviceWithEffect = <T extends Context.Tag<any, any>, R, E, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, Z>
-): Sink.Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z> => fromEffect(Effect.serviceWithEffect(tag, f))
+): Sink.Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z> => fromEffect(Effect.flatMap(tag, f))
 
 /** @internal */
 export const serviceWithSink = <T extends Context.Tag<any, any>, R, E, In, L, Z>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Sink.Sink<R, E, In, L, Z>
 ): Sink.Sink<R | Context.Tag.Identifier<T>, E, In, L, Z> =>
-  new SinkImpl(pipe(Effect.serviceWith(tag, (service) => f(service).channel), channel.unwrap))
+  new SinkImpl(pipe(Effect.map(tag, (service) => f(service).channel), channel.unwrap))
 
 /** @internal */
 export const some = <In>(predicate: Predicate<In>): Sink.Sink<never, never, In, In, boolean> =>

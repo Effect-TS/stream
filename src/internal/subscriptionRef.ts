@@ -1,5 +1,5 @@
+import { bodyWithTrace, dualWithTrace, methodWithTrace } from "@effect/data/Debug"
 import { pipe } from "@effect/data/Function"
-import { bodyWithTrace, dualWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Effect from "@effect/io/Effect"
 import * as Hub from "@effect/io/Hub"
 import * as _circular from "@effect/io/internal_effect_untraced/effect/circular"

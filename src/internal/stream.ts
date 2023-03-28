@@ -1,5 +1,6 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Context from "@effect/data/Context"
+import { dualWithTrace, methodWithTrace } from "@effect/data/Debug"
 import * as Duration from "@effect/data/Duration"
 import * as Either from "@effect/data/Either"
 import * as Equal from "@effect/data/Equal"
@@ -10,7 +11,6 @@ import type { Predicate, Refinement } from "@effect/data/Predicate"
 import type * as Order from "@effect/data/typeclass/Order"
 import * as Cause from "@effect/io/Cause"
 import * as Clock from "@effect/io/Clock"
-import { dualWithTrace, methodWithTrace } from "@effect/io/Debug"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -5868,13 +5868,13 @@ export const service = <I, S>(tag: Context.Tag<I, S>): Stream.Stream<I, never, S
 export const serviceWith = <T extends Context.Tag<any, any>, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => A
-): Stream.Stream<Context.Tag.Identifier<T>, never, A> => fromEffect(Effect.serviceWith(tag, f))
+): Stream.Stream<Context.Tag.Identifier<T>, never, A> => fromEffect(Effect.map(tag, f))
 
 /** @internal */
 export const serviceWithEffect = <T extends Context.Tag<any, any>, R, E, A>(
   tag: T,
   f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-): Stream.Stream<R | Context.Tag.Identifier<T>, E, A> => fromEffect(Effect.serviceWithEffect(tag, f))
+): Stream.Stream<R | Context.Tag.Identifier<T>, E, A> => fromEffect(Effect.flatMap(tag, f))
 
 /** @internal */
 export const serviceWithStream = <T extends Context.Tag<any, any>, R, E, A>(
