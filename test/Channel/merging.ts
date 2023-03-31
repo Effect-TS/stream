@@ -1,5 +1,6 @@
 import { constTrue, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
+import { tuple } from "@effect/data/ReadonlyArray"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -34,7 +35,7 @@ describe.concurrent("Channel", () => {
         Channel.write(1),
         Channel.zipRight(
           pipe(
-            Effect.attempt(() => "whatever"),
+            Effect.try(() => "whatever"),
             Effect.refineOrDie((e) =>
               Cause.isRuntimeException(e) ?
                 Option.some(e) :
@@ -48,7 +49,7 @@ describe.concurrent("Channel", () => {
         Channel.write(2),
         Channel.zipRight(
           pipe(
-            Effect.attempt(constTrue),
+            Effect.try(constTrue),
             Effect.refineOrDie((e) =>
               Cause.isIllegalArgumentException(e) ?
                 Option.some(e) :
@@ -109,7 +110,7 @@ describe.concurrent("Channel", () => {
         Channel.runDrain,
         Effect.exit
       ))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(["boom", true] as const))
+      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(tuple("boom", true)))
     }))
 
   it.effect("mergeWith - interrupts losing side", () =>

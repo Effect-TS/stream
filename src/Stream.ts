@@ -6,9 +6,19 @@ import type * as Context from "@effect/data/Context"
 import type * as Duration from "@effect/data/Duration"
 import type * as Either from "@effect/data/Either"
 import type { LazyArg } from "@effect/data/Function"
+import { dual } from "@effect/data/Function"
+import type { TypeLambda } from "@effect/data/HKT"
 import type * as Option from "@effect/data/Option"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
+import type * as bicovariant from "@effect/data/typeclass/Bicovariant"
+import * as chainable from "@effect/data/typeclass/Chainable"
+import * as covariant from "@effect/data/typeclass/Covariant"
+import type * as flatMap_ from "@effect/data/typeclass/FlatMap"
+import type * as invariant from "@effect/data/typeclass/Invariant"
+import type * as monad from "@effect/data/typeclass/Monad"
+import * as of_ from "@effect/data/typeclass/Of"
 import type * as Order from "@effect/data/typeclass/Order"
+import type * as pointed from "@effect/data/typeclass/Pointed"
 import type * as Cause from "@effect/io/Cause"
 import type * as Deferred from "@effect/io/Deferred"
 import type * as Effect from "@effect/io/Effect"
@@ -68,6 +78,14 @@ export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
 declare module "@effect/data/Context" {
   interface Tag<Identifier, Service> extends Stream<Identifier, never, Service> {}
   interface TracedTag<Identifier, Service> extends Stream<Identifier, never, Service> {}
+}
+
+/**
+ * @category type lambdas
+ * @since 1.0.0
+ */
+export interface StreamTypeLambda extends TypeLambda {
+  readonly type: Stream<this["Out2"], this["Out1"], this["Target"]>
 }
 
 /**
@@ -5111,3 +5129,158 @@ export const zipWithPreviousAndNext: <R, E, A>(
  */
 export const zipWithIndex: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, readonly [A, number]> =
   internal.zipWithIndex
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const Bicovariant: bicovariant.Bicovariant<StreamTypeLambda> = {
+  bimap: mapBoth
+}
+
+const imap = covariant.imap<StreamTypeLambda>(map)
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const Covariant: covariant.Covariant<StreamTypeLambda> = {
+  imap,
+  map
+}
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const Invariant: invariant.Invariant<StreamTypeLambda> = {
+  imap
+}
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const Pointed: pointed.Pointed<StreamTypeLambda> = {
+  of: succeed,
+  imap,
+  map
+}
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const FlatMap: flatMap_.FlatMap<StreamTypeLambda> = {
+  flatMap
+}
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const Chainable: chainable.Chainable<StreamTypeLambda> = {
+  imap,
+  map,
+  flatMap
+}
+
+/**
+ * @category instances
+ * @since 1.0.0
+ */
+export const Monad: monad.Monad<StreamTypeLambda> = {
+  imap,
+  of: succeed,
+  map,
+  flatMap
+}
+
+/**
+ * @category do notation
+ * @since 1.0.0
+ */
+export const Do: <O = never, E = never>() => Stream<O, E, {}> = of_.Do(Pointed)
+
+/**
+ * @category do notation
+ * @since 1.0.0
+ */
+export const bind: {
+  <N extends string, A extends object, O2, E2, B>(
+    name: Exclude<N, keyof A>,
+    f: (a: A) => Stream<O2, E2, B>
+  ): <O1, E1>(
+    self: Stream<O1, E1, A>
+  ) => Stream<O2 | O1, E2 | E1, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O1_1, E1_1, A_1 extends object, N_1 extends string, O2_1, E2_1, B_1>(
+    self: Stream<O1_1, E1_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: (a: A_1) => Stream<O2_1, E2_1, B_1>
+  ): Stream<O1_1 | O2_1, E1_1 | E2_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+} = chainable.bind(Chainable)
+
+/**
+ * @category do notation
+ * @since 1.0.0
+ */
+export const bindDiscard: {
+  <N extends string, A extends object, O2, E2, B>(
+    name: Exclude<N, keyof A>,
+    f: Stream<O2, E2, B>
+  ): <O1, E1>(
+    self: Stream<O1, E1, A>
+  ) => Stream<O2 | O1, E2 | E1, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O1_1, E1_1, A_1 extends object, N_1 extends string, O2_1, E2_1, B_1>(
+    self: Stream<O1_1, E1_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: Stream<O2_1, E2_1, B_1>
+  ): Stream<O1_1 | O2_1, E1_1 | E2_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+} = dual<
+  <N extends string, A extends object, O2, E2, B>(
+    name: Exclude<N, keyof A>,
+    f: Stream<O2, E2, B>
+  ) => <O1, E1>(
+    self: Stream<O1, E1, A>
+  ) => Stream<O2 | O1, E2 | E1, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>,
+  <O1_1, E1_1, A_1 extends object, N_1 extends string, O2_1, E2_1, B_1>(
+    self: Stream<O1_1, E1_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: Stream<O2_1, E2_1, B_1>
+  ) => Stream<O1_1 | O2_1, E1_1 | E2_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+>(3, (self, name, f) => bind(self, name, () => f))
+
+const let_: {
+  <N extends string, A extends object, B>(
+    name: Exclude<N, keyof A>,
+    f: (a: A) => B
+  ): <O, E>(self: Stream<O, E, A>) => Stream<O, E, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O_1, E_1, A_1 extends object, N_1 extends string, B_1>(
+    self: Stream<O_1, E_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: (a: A_1) => B_1
+  ): Stream<O_1, E_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+} = covariant.let(Covariant)
+export {
+  /**
+   * @category do notation
+   * @since 1.0.0
+   */
+  let_ as let
+}
+
+/**
+ * @category do notation
+ * @since 1.0.0
+ */
+export const letDiscard: {
+  <N extends string, A extends object, B>(
+    name: Exclude<N, keyof A>,
+    b: B
+  ): <O, E>(self: Stream<O, E, A>) => Stream<O, E, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O_1, E_1, A_1 extends object, N_1 extends string, B_1>(
+    self: Stream<O_1, E_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    b: B_1
+  ): Stream<O_1, E_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+} = covariant.letDiscard(Covariant)

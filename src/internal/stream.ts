@@ -2780,7 +2780,7 @@ export const fromAsyncIterable = <E, A>(
     ),
     Effect.map((iterator) =>
       repeatEffectOption(pipe(
-        Effect.attemptCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
+        Effect.tryCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
         Effect.flatMap((result) => result.done ? Effect.fail(Option.none()) : Effect.succeed(result.value))
       ))
     ),

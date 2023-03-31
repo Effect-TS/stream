@@ -235,6 +235,11 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                 break
               }
 
+              case "Tag": {
+                this._currentChannel = core.fromEffect(this._currentChannel) as core.Primitive
+                break
+              }
+
               case ChannelOpCodes.OP_FOLD: {
                 this._doneStack.push(this._currentChannel.k as ErasedContinuation<Env>)
                 this._currentChannel = this._currentChannel.channel as core.Primitive

@@ -136,6 +136,12 @@ Added in v1.0.0
   - [toQueueSliding](#toqueuesliding)
   - [toQueueSlidingCapacity](#toqueueslidingcapacity)
   - [toQueueUnbounded](#toqueueunbounded)
+- [do notation](#do-notation)
+  - [Do](#do)
+  - [bind](#bind)
+  - [bindDiscard](#binddiscard)
+  - [let](#let)
+  - [letDiscard](#letdiscard)
 - [elements](#elements)
   - [find](#find)
   - [findEffect](#findeffect)
@@ -163,6 +169,14 @@ Added in v1.0.0
   - [groupAdjacentBy](#groupadjacentby)
   - [groupBy](#groupby)
   - [groupByBuffer](#groupbybuffer)
+- [instances](#instances)
+  - [Bicovariant](#bicovariant)
+  - [Chainable](#chainable)
+  - [Covariant](#covariant)
+  - [FlatMap](#flatmap)
+  - [Invariant](#invariant)
+  - [Monad](#monad)
+  - [Pointed](#pointed)
 - [logging](#logging)
   - [log](#log)
   - [logDebug](#logdebug)
@@ -229,6 +243,8 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [StreamTypeId](#streamtypeid)
   - [StreamTypeId (type alias)](#streamtypeid-type-alias)
+- [type lambdas](#type-lambdas)
+  - [StreamTypeLambda (interface)](#streamtypelambda-interface)
 - [utils](#utils)
   - [absolve](#absolve)
   - [aggregate](#aggregate)
@@ -2277,6 +2293,94 @@ export declare const toQueueUnbounded: <R, E, A>(
 
 Added in v1.0.0
 
+# do notation
+
+## Do
+
+**Signature**
+
+```ts
+export declare const Do: <O = never, E = never>() => Stream<O, E, {}>
+```
+
+Added in v1.0.0
+
+## bind
+
+**Signature**
+
+```ts
+export declare const bind: {
+  <N extends string, A extends object, O2, E2, B>(name: Exclude<N, keyof A>, f: (a: A) => Stream<O2, E2, B>): <O1, E1>(
+    self: Stream<O1, E1, A>
+  ) => Stream<O2 | O1, E2 | E1, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O1_1, E1_1, A_1 extends object, N_1 extends string, O2_1, E2_1, B_1>(
+    self: Stream<O1_1, E1_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: (a: A_1) => Stream<O2_1, E2_1, B_1>
+  ): Stream<O1_1 | O2_1, E1_1 | E2_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+}
+```
+
+Added in v1.0.0
+
+## bindDiscard
+
+**Signature**
+
+```ts
+export declare const bindDiscard: {
+  <N extends string, A extends object, O2, E2, B>(name: Exclude<N, keyof A>, f: Stream<O2, E2, B>): <O1, E1>(
+    self: Stream<O1, E1, A>
+  ) => Stream<O2 | O1, E2 | E1, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O1_1, E1_1, A_1 extends object, N_1 extends string, O2_1, E2_1, B_1>(
+    self: Stream<O1_1, E1_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: Stream<O2_1, E2_1, B_1>
+  ): Stream<O1_1 | O2_1, E1_1 | E2_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+}
+```
+
+Added in v1.0.0
+
+## let
+
+**Signature**
+
+```ts
+export declare const let: {
+  <N extends string, A extends object, B>(name: Exclude<N, keyof A>, f: (a: A) => B): <O, E>(
+    self: Stream<O, E, A>
+  ) => Stream<O, E, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O_1, E_1, A_1 extends object, N_1 extends string, B_1>(
+    self: Stream<O_1, E_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    f: (a: A_1) => B_1
+  ): Stream<O_1, E_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+}
+```
+
+Added in v1.0.0
+
+## letDiscard
+
+**Signature**
+
+```ts
+export declare const letDiscard: {
+  <N extends string, A extends object, B>(name: Exclude<N, keyof A>, b: B): <O, E>(
+    self: Stream<O, E, A>
+  ) => Stream<O, E, { [K in N | keyof A]: K extends keyof A ? A[K] : B }>
+  <O_1, E_1, A_1 extends object, N_1 extends string, B_1>(
+    self: Stream<O_1, E_1, A_1>,
+    name: Exclude<N_1, keyof A_1>,
+    b: B_1
+  ): Stream<O_1, E_1, { [K_1 in N_1 | keyof A_1]: K_1 extends keyof A_1 ? A_1[K_1] : B_1 }>
+}
+```
+
+Added in v1.0.0
+
 # elements
 
 ## find
@@ -2697,6 +2801,78 @@ export declare const groupByBuffer: {
     bufferSize: number
   ): GroupBy.GroupBy<R | R2, E | E2, K, V>
 }
+```
+
+Added in v1.0.0
+
+# instances
+
+## Bicovariant
+
+**Signature**
+
+```ts
+export declare const Bicovariant: bicovariant.Bicovariant<StreamTypeLambda>
+```
+
+Added in v1.0.0
+
+## Chainable
+
+**Signature**
+
+```ts
+export declare const Chainable: chainable.Chainable<StreamTypeLambda>
+```
+
+Added in v1.0.0
+
+## Covariant
+
+**Signature**
+
+```ts
+export declare const Covariant: covariant.Covariant<StreamTypeLambda>
+```
+
+Added in v1.0.0
+
+## FlatMap
+
+**Signature**
+
+```ts
+export declare const FlatMap: flatMap_.FlatMap<StreamTypeLambda>
+```
+
+Added in v1.0.0
+
+## Invariant
+
+**Signature**
+
+```ts
+export declare const Invariant: invariant.Invariant<StreamTypeLambda>
+```
+
+Added in v1.0.0
+
+## Monad
+
+**Signature**
+
+```ts
+export declare const Monad: monad.Monad<StreamTypeLambda>
+```
+
+Added in v1.0.0
+
+## Pointed
+
+**Signature**
+
+```ts
+export declare const Pointed: pointed.Pointed<StreamTypeLambda>
 ```
 
 Added in v1.0.0
@@ -3661,6 +3837,20 @@ Added in v1.0.0
 
 ```ts
 export type StreamTypeId = typeof StreamTypeId
+```
+
+Added in v1.0.0
+
+# type lambdas
+
+## StreamTypeLambda (interface)
+
+**Signature**
+
+```ts
+export interface StreamTypeLambda extends TypeLambda {
+  readonly type: Stream<this['Out2'], this['Out1'], this['Target']>
+}
 ```
 
 Added in v1.0.0
