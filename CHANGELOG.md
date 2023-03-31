@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.15.0
+
+### Minor Changes
+
+- [#87](https://github.com/Effect-TS/stream/pull/87) [`0ed176a`](https://github.com/Effect-TS/stream/commit/0ed176ac780b3ac154c5064173d402b562f66f6d) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Make Tag a valid Stream
+
+- [#87](https://github.com/Effect-TS/stream/pull/87) [`0ed176a`](https://github.com/Effect-TS/stream/commit/0ed176ac780b3ac154c5064173d402b562f66f6d) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Make Tag a valid Sink
+
+- [#87](https://github.com/Effect-TS/stream/pull/87) [`0ed176a`](https://github.com/Effect-TS/stream/commit/0ed176ac780b3ac154c5064173d402b562f66f6d) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Make Tag a valid Channel
+
 ## 0.14.0
 
 ### Minor Changes
