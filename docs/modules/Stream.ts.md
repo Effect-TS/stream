@@ -96,10 +96,6 @@ Added in v1.0.0
   - [provideServiceEffect](#provideserviceeffect)
   - [provideServiceStream](#provideservicestream)
   - [provideSomeLayer](#providesomelayer)
-  - [service](#service)
-  - [serviceWith](#servicewith)
-  - [serviceWithEffect](#servicewitheffect)
-  - [serviceWithStream](#servicewithstream)
   - [updateService](#updateservice)
 - [destructors](#destructors)
   - [run](#run)
@@ -1569,65 +1565,6 @@ export declare const provideSomeLayer: {
     A
   >
 }
-```
-
-Added in v1.0.0
-
-## service
-
-Accesses the specified service in the context of the effect.
-
-**Signature**
-
-```ts
-export declare const service: <I, S>(tag: Context.Tag<I, S>) => Stream<I, never, S>
-```
-
-Added in v1.0.0
-
-## serviceWith
-
-Accesses the specified service in the context of the stream.
-
-**Signature**
-
-```ts
-export declare const serviceWith: <T extends Context.Tag<any, any>, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => A
-) => Stream<Context.Tag.Identifier<T>, never, A>
-```
-
-Added in v1.0.0
-
-## serviceWithEffect
-
-Accesses the specified service in the context of the stream in the
-context of an effect.
-
-**Signature**
-
-```ts
-export declare const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-) => Stream<R | Context.Tag.Identifier<T>, E, A>
-```
-
-Added in v1.0.0
-
-## serviceWithStream
-
-Accesses the specified service in the context of the stream in the
-context of a stream.
-
-**Signature**
-
-```ts
-export declare const serviceWithStream: <T extends Context.Tag<any, any>, R, E, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Stream<R, E, A>
-) => Stream<R | Context.Tag.Identifier<T>, E, A>
 ```
 
 Added in v1.0.0
@@ -3336,10 +3273,7 @@ allow for rich and expressive composition of streams.
 **Signature**
 
 ```ts
-export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
-  /** @internal */
-  readonly channel: Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
-}
+export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
 ```
 
 Added in v1.0.0

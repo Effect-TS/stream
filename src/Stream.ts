@@ -59,9 +59,15 @@ export type StreamTypeId = typeof StreamTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
-  /** @internal */
-  readonly channel: Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
+export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
+declare module "@effect/data/Context" {
+  interface Tag<Identifier, Service> extends Stream<Identifier, never, Service> {}
+  interface TracedTag<Identifier, Service> extends Stream<Identifier, never, Service> {}
 }
 
 /**
@@ -3924,49 +3930,6 @@ export const scheduleWith: {
  */
 export const scoped: <R, E, A>(effect: Effect.Effect<Scope.Scope | R, E, A>) => Stream<Exclude<R, Scope.Scope>, E, A> =
   internal.scoped
-
-/**
- * Accesses the specified service in the context of the effect.
- *
- * @since 1.0.0
- * @category context
- */
-export const service: <I, S>(tag: Context.Tag<I, S>) => Stream<I, never, S> = internal.service
-
-/**
- * Accesses the specified service in the context of the stream.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWith: <T extends Context.Tag<any, any>, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => A
-) => Stream<Context.Tag.Identifier<T>, never, A> = internal.serviceWith
-
-/**
- * Accesses the specified service in the context of the stream in the
- * context of an effect.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-) => Stream<R | Context.Tag.Identifier<T>, E, A> = internal.serviceWithEffect
-
-/**
- * Accesses the specified service in the context of the stream in the
- * context of a stream.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWithStream: <T extends Context.Tag<any, any>, R, E, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Stream<R, E, A>
-) => Stream<R | Context.Tag.Identifier<T>, E, A> = internal.serviceWithStream
 
 /**
  * Emits a sliding window of `n` elements.
