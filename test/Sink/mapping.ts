@@ -64,7 +64,7 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapEffect((s: string) => Effect.attempt(() => Number.parseInt(s)))
+        Sink.contramapEffect((s: string) => Effect.try(() => Number.parseInt(s)))
       )
       const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink)))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
@@ -74,7 +74,7 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.fail("Ouch"),
-        Sink.contramapEffect((s: string) => Effect.attempt(() => Number.parseInt(s)))
+        Sink.contramapEffect((s: string) => Effect.try(() => Number.parseInt(s)))
       )
       const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either))
       assert.deepStrictEqual(result, Either.left("Ouch"))
@@ -85,7 +85,7 @@ describe.concurrent("Sink", () => {
       const sink = pipe(
         Sink.collectAll<number>(),
         Sink.contramapEffect((s: string) =>
-          Effect.attempt(() => {
+          Effect.try(() => {
             const result = Number.parseInt(s)
             if (Number.isNaN(result)) {
               throw Cause.RuntimeException(`Cannot parse "${s}" to an integer`)
@@ -105,7 +105,7 @@ describe.concurrent("Sink", () => {
         Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
-            Effect.forEach((s) => Effect.attempt(() => Number.parseInt(s)))
+            Effect.forEach((s) => Effect.try(() => Number.parseInt(s)))
           )
         )
       )
@@ -120,7 +120,7 @@ describe.concurrent("Sink", () => {
         Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
-            Effect.forEach((s) => Effect.attempt(() => Number.parseInt(s)))
+            Effect.forEach((s) => Effect.try(() => Number.parseInt(s)))
           )
         )
       )
@@ -136,7 +136,7 @@ describe.concurrent("Sink", () => {
           pipe(
             chunk,
             Effect.forEach((s) =>
-              Effect.attempt(() => {
+              Effect.try(() => {
                 const result = Number.parseInt(s)
                 if (Number.isNaN(result)) {
                   throw Cause.RuntimeException(`Cannot parse "${s}" to an integer`)

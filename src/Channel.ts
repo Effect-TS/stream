@@ -76,6 +76,17 @@ export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 
 /**
  * @since 1.0.0
+ * @category models
+ */
+declare module "@effect/data/Context" {
+  interface Tag<Identifier, Service> extends Channel<Identifier, unknown, unknown, unknown, never, never, Service> {}
+  interface TracedTag<Identifier, Service>
+    extends Channel<Identifier, unknown, unknown, unknown, never, never, Service>
+  {}
+}
+
+/**
+ * @since 1.0.0
  */
 export declare namespace Channel {
   /**
@@ -1932,57 +1943,6 @@ export const runDrain: <Env, InErr, InDone, OutElem, OutErr, OutDone>(
 export const scoped: <R, E, A>(
   effect: Effect.Effect<R | Scope.Scope, E, A>
 ) => Channel<Exclude<R, Scope.Scope>, unknown, unknown, unknown, E, A, unknown> = channel.scoped
-
-/**
- * Accesses the specified service in the context of the channel.
- *
- * @since 1.0.0
- * @category context
- */
-export const service: <T extends Context.Tag<any, any>>(
-  tag: T
-) => Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, Context.Tag.Service<T>> =
-  channel.service
-
-/**
- * Accesses the specified service in the context of the channel.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWith: <T extends Context.Tag<any, any>>(
-  tag: T
-) => <OutDone>(
-  f: (resource: Context.Tag.Service<T>) => OutDone
-) => Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, OutDone> = channel.serviceWith
-
-/**
- * Accesses the specified service in the context of the channel in the
- * context of a channel.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWithChannel: <T extends Context.Tag<any, any>>(
-  tag: T
-) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  f: (resource: Context.Tag.Service<T>) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-) => Channel<Env | Context.Tag.Identifier<T>, InErr, InElem, InDone, OutErr, OutElem, OutDone> =
-  channel.serviceWithChannel
-
-/**
- * Accesses the specified service in the context of the channel in the
- * context of an effect.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWithEffect: <T extends Context.Tag<any, any>>(
-  tag: T
-) => <Env, OutErr, OutDone>(
-  f: (resource: Context.Tag.Service<T>) => Effect.Effect<Env, OutErr, OutDone>
-) => Channel<Env | Context.Tag.Identifier<T>, unknown, unknown, unknown, OutErr, never, OutDone> =
-  channel.serviceWithEffect
 
 /**
  * Constructs a channel that succeeds immediately with the specified value.

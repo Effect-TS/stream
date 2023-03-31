@@ -394,7 +394,8 @@ export const groupByKeyBuffer = dual<
           ),
           Effect.flatMap((queue) =>
             pipe(
-              self.channel,
+              self,
+              stream.toChannel,
               core.pipeTo(loop(map, queue)),
               channel.drain,
               channelExecutor.runScoped,

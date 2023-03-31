@@ -46,7 +46,7 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         pipe(
-          Channel.fromEffect(NumberService),
+          NumberService,
           Channel.provideService(NumberService, new NumberServiceImpl(100)),
           Channel.run
         )
@@ -58,11 +58,11 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         pipe(
-          Channel.fromEffect(NumberService),
+          NumberService,
           Channel.provideService(NumberService, new NumberServiceImpl(100)),
           Channel.zip(
             pipe(
-              Channel.fromEffect(NumberService),
+              NumberService,
               Channel.provideService(NumberService, new NumberServiceImpl(200))
             )
           ),

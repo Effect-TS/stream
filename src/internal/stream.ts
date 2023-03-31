@@ -258,7 +258,7 @@ export const aggregateWithinEither = dual<
             Effect.zipRight(
               pipe(
                 handoffConsumer,
-                channel.pipeToOrFail(sink.channel),
+                channel.pipeToOrFail(_sink.toChannel(sink)),
                 core.collectElements,
                 channelExecutor.run,
                 Effect.forkIn(scope)
@@ -392,14 +392,15 @@ export const aggregateWithinEither = dual<
         }
         return unwrapScoped(
           pipe(
-            self.channel,
+            self,
+            toChannel,
             core.pipeTo(handoffProducer),
             channelExecutor.run,
             Effect.forkScoped,
             Effect.zipRight(
               pipe(
                 handoffConsumer,
-                channel.pipeToOrFail(sink.channel),
+                channel.pipeToOrFail(_sink.toChannel(sink)),
                 core.collectElements,
                 channelExecutor.run,
                 Effect.forkScoped,
@@ -669,10 +670,11 @@ export const branchAfter = dual<
         leftover: Chunk.Chunk<A>
       ): Channel.Channel<R | R2, never, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown> =>
         pipe(
-          prepend(leftover).channel,
-          core.pipeTo(f(prefix).channel)
+          prepend(leftover),
+          toChannel,
+          core.pipeTo(toChannel(f(prefix)))
         )
-      return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(bufferring(Chunk.empty<A>()))))
+      return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(bufferring(Chunk.empty<A>()))))
     })
 )
 
@@ -852,7 +854,7 @@ export const bufferChunksDropping = dual<
     Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
     (queue) => Queue.shutdown(queue)
   )
-  return new StreamImpl(bufferSignal(queue, self.channel))
+  return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
 /** @internal */
@@ -864,7 +866,7 @@ export const bufferChunksSliding = dual<
     Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
     (queue) => Queue.shutdown(queue)
   )
-  return new StreamImpl(bufferSignal(queue, self.channel))
+  return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
 /** @internal */
@@ -876,7 +878,7 @@ export const bufferDropping = dual<
     Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
     (queue) => Queue.shutdown(queue)
   )
-  return new StreamImpl(bufferSignal(queue, rechunk(1)(self).channel))
+  return new StreamImpl(bufferSignal(queue, toChannel(rechunk(1)(self))))
 })
 
 /** @internal */
@@ -888,7 +890,7 @@ export const bufferSliding = dual<
     Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
     (queue) => Queue.shutdown(queue)
   )
-  return new StreamImpl(bufferSignal(queue, pipe(self, rechunk(1)).channel))
+  return new StreamImpl(bufferSignal(queue, toChannel(pipe(self, rechunk(1)))))
 })
 
 /** @internal */
@@ -1040,7 +1042,7 @@ export const catchAllCause = dual<
     self: Stream.Stream<R, E, A>,
     f: (cause: Cause.Cause<E>) => Stream.Stream<R2, E2, A2>
   ): Stream.Stream<R | R2, E2, A | A2> =>
-    new StreamImpl<R | R2, E2, A | A2>(pipe(self.channel, core.catchAllCause((cause) => f(cause).channel)))
+    new StreamImpl<R | R2, E2, A | A2>(pipe(toChannel(self), core.catchAllCause((cause) => toChannel(f(cause)))))
 )
 
 /** @internal */
@@ -1107,7 +1109,7 @@ export const changesWith = dual<
       core.failCause,
       core.unit
     )
-  return new StreamImpl(pipe(self.channel, core.pipeTo(writer(Option.none()))))
+  return new StreamImpl(pipe(toChannel(self), core.pipeTo(writer(Option.none()))))
 })
 
 /** @internal */
@@ -1161,7 +1163,7 @@ export const changesWithEffect = dual<
         core.failCause,
         core.unit
       )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(writer(Option.none()))))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(writer(Option.none()))))
   }
 )
 
@@ -1233,7 +1235,7 @@ export const collectEffect = dual<
           )
         }
       }
-      return new StreamImpl(pipe(self.channel, core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))))
+      return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))))
     })
 )
 
@@ -1267,7 +1269,7 @@ export const collectWhile = <A, A2>(pf: (a: A) => Option.Option<A2>) => {
       core.fail,
       core.succeed
     )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop)))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
   }
 }
 
@@ -1328,7 +1330,7 @@ export const collectWhileEffect = dual<
           )
         }
       }
-      return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop(Chunk.empty<A>()[Symbol.iterator]()))))
+      return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop(Chunk.empty<A>()[Symbol.iterator]()))))
     })
 )
 
@@ -1404,7 +1406,7 @@ export const combine = dual<
         const latchR = yield* $(Handoff.make<void>())
         yield* $(
           pipe(
-            self.channel,
+            toChannel(self),
             channel.concatMap(channel.writeChunk),
             core.pipeTo(producer(left, latchL)),
             channelExecutor.runScoped,
@@ -1413,7 +1415,7 @@ export const combine = dual<
         )
         yield* $(
           pipe(
-            that.channel,
+            toChannel(that),
             channel.concatMap(channel.writeChunk),
             core.pipeTo(producer(right, latchR)),
             channelExecutor.runScoped,
@@ -1430,11 +1432,11 @@ export const combine = dual<
           Handoff.offer<void>(void 0),
           Effect.zipRight(pipe(Handoff.take(right), Effect.flatMap(Effect.done)))
         )
-        return unfoldEffect(s, (s) =>
+        return toChannel(unfoldEffect(s, (s) =>
           pipe(
             f(s, pullLeft, pullRight),
             Effect.flatMap((exit) => Effect.unsome(Effect.done(exit)))
-          )).channel
+          )))
       })
     )
   )
@@ -1513,7 +1515,7 @@ export const combineChunks = dual<
       ),
       Effect.tap(([left, _, latchL]) =>
         pipe(
-          self.channel,
+          toChannel(self),
           core.pipeTo(producer(left, latchL)),
           channelExecutor.runScoped,
           Effect.forkScoped
@@ -1521,7 +1523,7 @@ export const combineChunks = dual<
       ),
       Effect.tap(([_, right, __, latchR]) =>
         pipe(
-          that.channel,
+          toChannel(that),
           core.pipeTo(producer(right, latchR)),
           channelExecutor.runScoped,
           Effect.forkScoped
@@ -1548,11 +1550,11 @@ export const combineChunks = dual<
             )
           )
         )
-        return unfoldChunkEffect(s, (s) =>
+        return toChannel(unfoldChunkEffect(s, (s) =>
           pipe(
             f(s, pullLeft, pullRight),
             Effect.flatMap((exit) => Effect.unsome(Effect.done(exit)))
-          )).channel
+          )))
       }),
       channel.unwrapScoped
     )
@@ -1574,7 +1576,7 @@ export const concat = dual<
     self: Stream.Stream<R, E, A>,
     that: Stream.Stream<R2, E2, A2>
   ): Stream.Stream<R | R2, E | E2, A | A2> =>
-    new StreamImpl<R | R2, E | E2, A | A2>(pipe(self.channel, channel.zipRight(that.channel)))
+    new StreamImpl<R | R2, E | E2, A | A2>(pipe(toChannel(self), channel.zipRight(toChannel(that))))
 )
 
 /** @internal */
@@ -1808,7 +1810,7 @@ export const debounce = dual<
                 )),
                 channel.unwrapScoped
               )
-            return new StreamImpl(pipe(self.channel, core.pipeTo(debounceChannel)))
+            return new StreamImpl(pipe(toChannel(self), core.pipeTo(debounceChannel)))
           })
         )
       )
@@ -2116,7 +2118,7 @@ export const done = <E, A>(exit: Exit.Exit<E, A>): Stream.Stream<never, E, A> =>
 
 /** @internal */
 export const drain = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, never> =>
-  new StreamImpl(channel.drain(self.channel))
+  new StreamImpl(channel.drain(toChannel(self)))
 
 /** @internal */
 export const drainFork = dual<
@@ -2173,7 +2175,7 @@ export const drop = dual<
       core.fail,
       core.unit
     )
-  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop(n))))
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop(n))))
 })
 
 /** @internal */
@@ -2201,7 +2203,7 @@ export const dropRight = dual<
       core.fail,
       core.unit
     )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(reader)))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(reader)))
   })
 })
 
@@ -2250,7 +2252,7 @@ export const dropUntilEffect = dual<
       core.fail,
       core.unit
     )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop)))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
   }
 )
 
@@ -2270,7 +2272,7 @@ export const dropWhile = dual<
     core.fail,
     core.succeedNow
   )
-  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop)))
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
 })
 
 /** @internal */
@@ -2308,7 +2310,7 @@ export const dropWhileEffect = dual<
       core.fail,
       core.unit
     )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop)))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
   }
 )
 
@@ -2328,7 +2330,7 @@ export const ensuring = dual<
 >(
   2,
   <R, E, A, R2, _>(self: Stream.Stream<R, E, A>, finalizer: Effect.Effect<R2, never, _>): Stream.Stream<R | R2, E, A> =>
-    new StreamImpl(pipe(self.channel, channel.ensuring(finalizer)))
+    new StreamImpl(pipe(toChannel(self), channel.ensuring(finalizer)))
 )
 
 /** @internal */
@@ -2417,7 +2419,7 @@ export const filterEffect = dual<
       }
     }
     return new StreamImpl(
-      core.suspend(() => pipe(self.channel, core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))))
+      core.suspend(() => pipe(toChannel(self), core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))))
     )
   }
 )
@@ -2450,7 +2452,7 @@ export const find = dual<
     core.fail,
     core.unit
   )
-  return new StreamImpl(pipe(self.channel, core.pipeTo(loop)))
+  return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop)))
 })
 
 /** @internal */
@@ -2482,7 +2484,7 @@ export const findEffect = dual<
       core.fail,
       core.unit
     )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(loop)))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop)))
   }
 )
 
@@ -2503,11 +2505,11 @@ export const flatMap = dual<
   ): Stream.Stream<R | R2, E | E2, A2> =>
     new StreamImpl(
       pipe(
-        self.channel,
+        toChannel(self),
         channel.concatMap((as) =>
           pipe(
             as,
-            Chunk.map((a) => f(a).channel),
+            Chunk.map((a) => toChannel(f(a))),
             Chunk.reduce(
               core.unit() as Channel.Channel<R2, unknown, unknown, unknown, E2, Chunk.Chunk<A2>, unknown>,
               (left, right) => pipe(left, channel.zipRight(right))
@@ -2561,9 +2563,9 @@ export const flatMapParBuffer = dual<
   ): Stream.Stream<R | R2, E | E2, A2> =>
     new StreamImpl(
       pipe(
-        self.channel,
+        toChannel(self),
         channel.concatMap(channel.writeChunk),
-        channel.mergeMapBuffer((out) => f(out).channel, n, bufferSize)
+        channel.mergeMapBuffer((out) => toChannel(f(out)), n, bufferSize)
       )
     )
 )
@@ -2611,10 +2613,10 @@ export const flatMapParSwitchBuffer = dual<
   ): Stream.Stream<R | R2, E | E2, A2> =>
     new StreamImpl(
       pipe(
-        self.channel,
+        toChannel(self),
         channel.concatMap(channel.writeChunk),
         channel.mergeMapBufferStrategy(
-          (out) => f(out).channel,
+          (out) => toChannel(f(out)),
           n,
           bufferSize,
           MergeStrategy.BufferSliding()
@@ -2636,7 +2638,7 @@ export const flattenChunks = <R, E, A>(self: Stream.Stream<R, E, Chunk.Chunk<A>>
       core.failCause,
       core.unit
     )
-  return new StreamImpl(pipe(self.channel, core.pipeTo(flatten)))
+  return new StreamImpl(pipe(toChannel(self), core.pipeTo(flatten)))
 }
 
 /** @internal */
@@ -2692,7 +2694,7 @@ export const flattenExitOption = <R, E, E2, A>(
     (cause) => core.failCause<E | E2>(cause),
     () => core.unit()
   )
-  return new StreamImpl(pipe(self.channel, core.pipeTo(process)))
+  return new StreamImpl(pipe(toChannel(self), core.pipeTo(process)))
 }
 
 /** @internal */
@@ -2764,7 +2766,7 @@ export const flattenTake = <R, E, E2, A>(self: Stream.Stream<R, E, Take.Take<E2,
 
 /** @internal */
 export const forever = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> =>
-  new StreamImpl(channel.repeated(self.channel))
+  new StreamImpl(channel.repeated(toChannel(self)))
 
 /** @internal */
 export const fromAsyncIterable = <E, A>(
@@ -2778,7 +2780,7 @@ export const fromAsyncIterable = <E, A>(
     ),
     Effect.map((iterator) =>
       repeatEffectOption(pipe(
-        Effect.attemptCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
+        Effect.tryCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
         Effect.flatMap((result) => result.done ? Effect.fail(Option.none()) : Effect.succeed(result.value))
       ))
     ),
@@ -2793,7 +2795,8 @@ export const fromChannel = <R, E, A>(
 /** @internal */
 export const toChannel = <R, E, A>(
   stream: Stream.Stream<R, E, A>
-): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> => stream.channel
+): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> =>
+  Context.isGenericTag(stream) ? toChannel(fromEffect(stream)) : (stream as StreamImpl<R, E, A>).channel
 
 /** @internal */
 export const fromChunk = <A>(chunk: Chunk.Chunk<A>): Stream.Stream<never, never, A> =>
@@ -3050,7 +3053,7 @@ export const groupAdjacentBy = dual<
         core.failCause,
         () => pipe(buffer, Option.match(core.unit, (output) => core.write(Chunk.of(output))))
       )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(chunkAdjacent(Option.none()))))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(chunkAdjacent(Option.none()))))
   }
 )
 
@@ -3122,7 +3125,7 @@ export const haltWhen = dual<
     return new StreamImpl(
       pipe(
         Effect.forkScoped(effect),
-        Effect.map((fiber) => pipe(self.channel, core.pipeTo(writer(fiber)))),
+        Effect.map((fiber) => pipe(toChannel(self), core.pipeTo(writer(fiber)))),
         channel.unwrapScoped
       )
     )
@@ -3159,7 +3162,7 @@ export const haltWhenDeferred = dual<
       )),
       channel.unwrap
     )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(writer)))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(writer)))
   }
 )
 
@@ -3235,7 +3238,7 @@ export const interleaveWith = dual<
           Effect.zip(Handoff.make<Take.Take<E | E2, A | A2>>()),
           Effect.tap(([left]) =>
             pipe(
-              self.channel,
+              toChannel(self),
               channel.concatMap(channel.writeChunk),
               core.pipeTo(producer(left)),
               channelExecutor.runScoped,
@@ -3244,7 +3247,7 @@ export const interleaveWith = dual<
           ),
           Effect.tap(([_, right]) =>
             pipe(
-              that.channel,
+              toChannel(that),
               channel.concatMap(channel.writeChunk),
               core.pipeTo(producer(right)),
               channelExecutor.runScoped,
@@ -3284,7 +3287,7 @@ export const interleaveWith = dual<
                 core.unit
               )
             return pipe(
-              decider.channel,
+              toChannel(decider),
               channel.concatMap(channel.writeChunk),
               core.pipeTo(process(false, false))
             )
@@ -3302,7 +3305,7 @@ export const intersperse = dual<
 >(2, <R, E, A, A2>(self: Stream.Stream<R, E, A>, element: A2): Stream.Stream<R, E, A | A2> =>
   new StreamImpl(
     pipe(
-      self.channel,
+      toChannel(self),
       channel.pipeToOrFail(
         core.suspend(() => {
           const writer = (
@@ -3387,7 +3390,7 @@ export const interruptWhen = dual<
   <R, E, A, R2, E2, _>(
     self: Stream.Stream<R, E, A>,
     effect: Effect.Effect<R2, E2, _>
-  ): Stream.Stream<R | R2, E | E2, A> => new StreamImpl(pipe(self.channel, channel.interruptWhen(effect)))
+  ): Stream.Stream<R | R2, E | E2, A> => new StreamImpl(pipe(toChannel(self), channel.interruptWhen(effect)))
 )
 
 /** @internal */
@@ -3397,7 +3400,7 @@ export const interruptWhenDeferred = dual<
 >(
   2,
   <R, E, A, E2, _>(self: Stream.Stream<R, E, A>, deferred: Deferred.Deferred<E2, _>): Stream.Stream<R, E | E2, A> =>
-    new StreamImpl(pipe(self.channel, channel.interruptWhenDeferred(deferred)))
+    new StreamImpl(pipe(toChannel(self), channel.interruptWhenDeferred(deferred)))
 )
 
 /** @internal */
@@ -3495,7 +3498,7 @@ export const map = dual<
 >(
   2,
   <R, E, A, B>(self: Stream.Stream<R, E, A>, f: (a: A) => B): Stream.Stream<R, E, B> =>
-    new StreamImpl(pipe(self.channel, channel.mapOut(Chunk.map(f))))
+    new StreamImpl(pipe(toChannel(self), channel.mapOut(Chunk.map(f))))
 )
 
 /** @internal */
@@ -3521,7 +3524,7 @@ export const mapAccum = dual<
         core.fail,
         core.unit
       )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(accumulator(s))))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(accumulator(s))))
   }
 )
 
@@ -3579,7 +3582,7 @@ export const mapAccumEffect = dual<
           core.fail,
           core.unit
         )
-      return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(accumulator(s))))
+      return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(accumulator(s))))
     })
 )
 
@@ -3602,7 +3605,7 @@ export const mapChunks = dual<
 >(
   2,
   <R, E, A, B>(self: Stream.Stream<R, E, A>, f: (chunk: Chunk.Chunk<A>) => Chunk.Chunk<B>): Stream.Stream<R, E, B> =>
-    new StreamImpl(pipe(self.channel, channel.mapOut(f)))
+    new StreamImpl(pipe(toChannel(self), channel.mapOut(f)))
 )
 
 /** @internal */
@@ -3619,7 +3622,7 @@ export const mapChunksEffect = dual<
   <R, E, A, R2, E2, B>(
     self: Stream.Stream<R, E, A>,
     f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, Chunk.Chunk<B>>
-  ): Stream.Stream<R | R2, E | E2, B> => new StreamImpl(pipe(self.channel, channel.mapOutEffect(f)))
+  ): Stream.Stream<R | R2, E | E2, B> => new StreamImpl(pipe(toChannel(self), channel.mapOutEffect(f)))
 )
 
 /** @internal */
@@ -3714,7 +3717,7 @@ export const mapEffect = dual<
       }
     }
     return new StreamImpl(pipe(
-      self.channel,
+      toChannel(self),
       core.pipeTo(core.suspend(() => loop(Chunk.empty<A>()[Symbol.iterator]())))
     ))
   }
@@ -3740,7 +3743,7 @@ export const mapEffectPar = dual<
   ): Stream.Stream<R | R2, E | E2, A2> =>
     new StreamImpl(
       pipe(
-        self.channel,
+        toChannel(self),
         channel.concatMap(channel.writeChunk),
         channel.mapOutEffectPar(f, n),
         channel.mapOut(Chunk.of)
@@ -3759,7 +3762,7 @@ export const flattenEffectPar = dual<
   <R, E, A, R2, E2>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream.Stream<R | R2, E | E2, A> =>
     new StreamImpl(
       pipe(
-        self.channel,
+        toChannel(self),
         channel.concatMap(channel.writeChunk),
         channel.mapOutEffectPar(identity, n),
         channel.mapOut(Chunk.of)
@@ -3806,7 +3809,7 @@ export const mapError = dual<
 >(
   2,
   <R, A, E, E2>(self: Stream.Stream<R, E, A>, f: (error: E) => E2): Stream.Stream<R, E2, A> =>
-    new StreamImpl(pipe(self.channel, channel.mapError(f)))
+    new StreamImpl(pipe(toChannel(self), channel.mapError(f)))
 )
 
 /** @internal */
@@ -3818,7 +3821,7 @@ export const mapErrorCause = dual<
 >(
   2,
   <R, A, E, E2>(self: Stream.Stream<R, E, A>, f: (cause: Cause.Cause<E>) => Cause.Cause<E2>): Stream.Stream<R, E2, A> =>
-    new StreamImpl(pipe(self.channel, channel.mapErrorCause(f)))
+    new StreamImpl(pipe(toChannel(self), channel.mapErrorCause(f)))
 )
 
 /** @internal */
@@ -4027,8 +4030,8 @@ export const mergeWithHaltStrategy = dual<
 
     return new StreamImpl<R | R2, E | E2, A3 | A4>(
       channel.mergeWith(
-        map(self, left).channel,
-        map(that, right).channel,
+        toChannel(map(self, left)),
+        toChannel(map(that, right)),
         handler(strategy._tag === "Either" || strategy._tag === "Left"),
         handler(strategy._tag === "Either" || strategy._tag === "Right")
       )
@@ -4079,7 +4082,7 @@ export const onDone = dual<
     cleanup: () => Effect.Effect<R2, never, _>
   ): Stream.Stream<R | R2, E, A> =>
     new StreamImpl<R | R2, E, A>(
-      pipe(self.channel, core.ensuringWith((exit) => Exit.isSuccess(exit) ? cleanup() : Effect.unit()))
+      pipe(toChannel(self), core.ensuringWith((exit) => Exit.isSuccess(exit) ? cleanup() : Effect.unit()))
     )
 )
 
@@ -4094,7 +4097,7 @@ export const orDieWith = dual<
 >(
   2,
   <R, A, E>(self: Stream.Stream<R, E, A>, f: (e: E) => unknown): Stream.Stream<R, never, A> =>
-    new StreamImpl(pipe(self.channel, channel.orDieWith(f)))
+    new StreamImpl(pipe(toChannel(self), channel.orDieWith(f)))
 )
 
 /** @internal */
@@ -4112,7 +4115,7 @@ export const orElse = dual<
     self: Stream.Stream<R, E, A>,
     that: LazyArg<Stream.Stream<R2, E2, A2>>
   ): Stream.Stream<R | R2, E2, A | A2> =>
-    new StreamImpl<R | R2, E2, A | A2>(pipe(self.channel, channel.orElse(() => that().channel)))
+    new StreamImpl<R | R2, E2, A | A2>(pipe(toChannel(self), channel.orElse(() => toChannel(that()))))
 )
 
 /** @internal */
@@ -4189,9 +4192,9 @@ export const orElseIfEmptyStream = dual<
         )
       },
       core.fail,
-      () => core.suspend(() => stream().channel)
+      () => core.suspend(() => toChannel(stream()))
     )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(writer)))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(writer)))
   }
 )
 
@@ -4549,7 +4552,8 @@ export const pipeThrough = dual<
   <R, E, R2, E2, A, L, Z>(
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A, L, Z>
-  ): Stream.Stream<R | R2, E | E2, L> => new StreamImpl(pipe(self.channel, channel.pipeToOrFail(sink.channel)))
+  ): Stream.Stream<R | R2, E | E2, L> =>
+    new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(_sink.toChannel(sink))))
 )
 
 /** @internal */
@@ -4566,7 +4570,7 @@ export const pipeThroughChannel = dual<
   <R, R2, E, E2, A, A2>(
     self: Stream.Stream<R, E, A>,
     channel: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
-  ): Stream.Stream<R | R2, E2, A2> => new StreamImpl(pipe(self.channel, core.pipeTo(channel)))
+  ): Stream.Stream<R | R2, E2, A2> => new StreamImpl(pipe(toChannel(self), core.pipeTo(channel)))
 )
 
 /** @internal */
@@ -4583,7 +4587,7 @@ export const pipeThroughChannelOrFail = dual<
   <R, R2, E, E2, A, A2>(
     self: Stream.Stream<R, E, A>,
     chan: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown>
-  ): Stream.Stream<R | R2, E | E2, A2> => new StreamImpl(pipe(self.channel, channel.pipeToOrFail(chan)))
+  ): Stream.Stream<R | R2, E | E2, A2> => new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(chan)))
 )
 
 /** @internal */
@@ -4602,7 +4606,7 @@ export const provideContext = dual<
 >(
   2,
   <E, A, R>(self: Stream.Stream<R, E, A>, context: Context.Context<R>): Stream.Stream<never, E, A> =>
-    new StreamImpl(pipe(self.channel, core.provideContext(context)))
+    new StreamImpl(pipe(toChannel(self), core.provideContext(context)))
 )
 
 /** @internal */
@@ -4623,7 +4627,7 @@ export const provideLayer = dual<
     new StreamImpl(
       channel.unwrapScoped(pipe(
         Layer.build(layer),
-        Effect.map((env) => pipe(self.channel, core.provideContext(env)))
+        Effect.map((env) => pipe(toChannel(self), core.provideContext(env)))
       ))
     )
 )
@@ -4764,7 +4768,7 @@ export const rechunk = dual<
   suspend(() => {
     const target = Math.max(n, 1)
     const process = rechunkProcess<E, A>(new StreamRechunker(target), target)
-    return new StreamImpl(pipe(self.channel, core.pipeTo(process)))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(process)))
   }))
 
 /** @internal */
@@ -4863,7 +4867,7 @@ export const refineOrDieWith = dual<
   ): Stream.Stream<R, E2, A> =>
     new StreamImpl(
       pipe(
-        self.channel,
+        toChannel(self),
         channel.catchAll((error) =>
           pipe(
             pf(error),
@@ -5049,7 +5053,7 @@ export const repeatElementsWith = dual<
       }),
       channel.unwrap
     )
-    return new StreamImpl(pipe(self.channel, core.pipeTo(driver)))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(driver)))
   }
 )
 
@@ -5084,7 +5088,7 @@ export const repeatWith = dual<
       Schedule.driver(schedule),
       Effect.map((driver) => {
         const scheduleOutput = pipe(driver.last(), Effect.orDie, Effect.map(g))
-        const process = pipe(self, map(f)).channel
+        const process = pipe(self, map(f), toChannel)
         const loop: Channel.Channel<R | R2, unknown, unknown, unknown, E, Chunk.Chunk<C>, void> = pipe(
           driver.next(void 0),
           Effect.match(
@@ -5215,7 +5219,7 @@ export const run = dualWithTrace<
       self: Stream.Stream<R, E, A>,
       sink: Sink.Sink<R2, E2, A, unknown, Z>
     ): Effect.Effect<R | R2, E | E2, Z> =>
-      pipe(self.channel, channel.pipeToOrFail(sink.channel), channel.runDrain).traced(trace)
+      pipe(toChannel(self), channel.pipeToOrFail(_sink.toChannel(sink)), channel.runDrain).traced(trace)
 )
 
 /** @internal */
@@ -5587,7 +5591,7 @@ export const runIntoQueueElementsScoped = dualWithTrace<
             () => core.write(Exit.fail(Option.none()))
           )
       return pipe(
-        self.channel,
+        toChannel(self),
         core.pipeTo(writer),
         channel.mapOutEffect((exit) => pipe(Queue.offer(queue, exit))),
         channel.drain,
@@ -5620,7 +5624,7 @@ export const runIntoQueueScoped = dualWithTrace<
           () => core.write(_take.end)
         )
       return pipe(
-        self.channel,
+        toChannel(self),
         core.pipeTo(writer),
         channel.mapOutEffect((take) => pipe(Queue.offer(queue, take))),
         channel.drain,
@@ -5653,8 +5657,8 @@ export const runScoped = dualWithTrace<
       sink: Sink.Sink<R2, E2, A, unknown, A2>
     ): Effect.Effect<R | R2 | Scope.Scope, E | E2, A2> =>
       pipe(
-        self.channel,
-        channel.pipeToOrFail(sink.channel),
+        toChannel(self),
+        channel.pipeToOrFail(_sink.toChannel(sink)),
         channel.drain,
         channelExecutor.runScoped
       ).traced(trace)
@@ -5815,7 +5819,7 @@ export const scheduleWith = dual<
         core.fromEffect(Schedule.driver(schedule)),
         core.flatMap((driver) =>
           pipe(
-            self.channel,
+            toChannel(self),
             core.pipeTo(loop(driver, Chunk.empty<A>()[Symbol.iterator]()))
           )
         )
@@ -5846,10 +5850,10 @@ export const scanEffect = dual<
       pipe(
         core.write(Chunk.of(s)),
         core.flatMap(() =>
-          pipe(
+          toChannel(pipe(
             self,
             mapAccumEffect(s, (s, a) => pipe(f(s, a), Effect.map((s) => [s, s])))
-          ).channel
+          ))
         )
       )
     )
@@ -5860,27 +5864,6 @@ export const scoped = <R, E, A>(
   effect: Effect.Effect<R | Scope.Scope, E, A>
 ): Stream.Stream<Exclude<R | Scope.Scope, Scope.Scope>, E, A> =>
   new StreamImpl(channel.ensuring(channel.scoped(pipe(effect, Effect.map(Chunk.of))), Effect.unit()))
-
-/** @internal */
-export const service = <I, S>(tag: Context.Tag<I, S>): Stream.Stream<I, never, S> => serviceWith(tag, identity)
-
-/** @internal */
-export const serviceWith = <T extends Context.Tag<any, any>, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => A
-): Stream.Stream<Context.Tag.Identifier<T>, never, A> => fromEffect(Effect.map(tag, f))
-
-/** @internal */
-export const serviceWithEffect = <T extends Context.Tag<any, any>, R, E, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, A>
-): Stream.Stream<R | Context.Tag.Identifier<T>, E, A> => fromEffect(Effect.flatMap(tag, f))
-
-/** @internal */
-export const serviceWithStream = <T extends Context.Tag<any, any>, R, E, A>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Stream.Stream<R, E, A>
-): Stream.Stream<R | Context.Tag.Identifier<T>, E, A> => flatMap(service(tag), f)
 
 /** @internal */
 export const some = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, Option.Option<E>, A> =>
@@ -5977,7 +5960,7 @@ export const slidingSize = dual<
           (cause) => emitOnStreamEnd(queueSize, core.failCause(cause)),
           () => emitOnStreamEnd(queueSize, core.unit())
         )
-      return pipe(self.channel, core.pipeTo(reader(0)))
+      return pipe(toChannel(self), core.pipeTo(reader(0)))
     }))
   }
 )
@@ -6016,7 +5999,7 @@ export const split = dual<
         return pipe(split(Chunk.empty(), leftovers), channel.zipRight(core.unit()))
       }
     )
-  return new StreamImpl(pipe(self.channel, core.pipeTo(loop(Chunk.empty()))))
+  return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop(Chunk.empty()))))
 })
 
 /** @internal */
@@ -6077,7 +6060,7 @@ export const splitOnChunk = dual<
           )
         )
     )
-  return new StreamImpl(pipe(self.channel, core.pipeTo(next(Option.none(), 0))))
+  return new StreamImpl(pipe(toChannel(self), core.pipeTo(next(Option.none(), 0))))
 })
 
 /** @internal */
@@ -6089,7 +6072,7 @@ export const sync = <A>(evaluate: LazyArg<A>): Stream.Stream<never, never, A> =>
 
 /** @internal */
 export const suspend = <R, E, A>(stream: LazyArg<Stream.Stream<R, E, A>>): Stream.Stream<R, E, A> =>
-  new StreamImpl(core.suspend(() => stream().channel))
+  new StreamImpl(core.suspend(() => toChannel(stream())))
 
 /** @internal */
 export const take = dual<
@@ -6115,7 +6098,7 @@ export const take = dual<
     )
   return new StreamImpl(
     pipe(
-      self.channel,
+      toChannel(self),
       channel.pipeToOrFail(0 < n ? loop(n) : core.unit())
     )
   )
@@ -6143,7 +6126,7 @@ export const takeRight = dual<
           core.fail,
           () => pipe(core.write(queue.toChunk()), channel.zipRight(core.unit()))
         )
-        return pipe(self.channel, core.pipeTo(reader))
+        return pipe(toChannel(self), core.pipeTo(reader))
       }),
       channel.unwrap
     )
@@ -6167,7 +6150,7 @@ export const takeUntil = dual<
     core.fail,
     core.succeed
   )
-  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop)))
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
 })
 
 /** @internal */
@@ -6209,7 +6192,7 @@ export const takeUntilEffect = dual<
         channel.unwrap
       )
     }
-    return new StreamImpl(pipe(self.channel, core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))))
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop(Chunk.empty<A>()[Symbol.iterator]()))))
   }
 )
 
@@ -6230,7 +6213,7 @@ export const takeWhile = dual<
     core.fail,
     core.succeed
   )
-  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(loop)))
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
 })
 
 /** @internal */
@@ -6320,7 +6303,7 @@ export const tapSink = dual<
             () => core.fromEffect(pipe(Queue.offer(queue, _take.end)))
           )
         return pipe(
-          new StreamImpl(pipe(self.channel, core.pipeTo(loop))),
+          new StreamImpl(pipe(toChannel(self), core.pipeTo(loop))),
           mergeHaltStrategy(execute(pipe(right, run(sink))), haltStrategy.Both)
         )
       })
@@ -6457,7 +6440,7 @@ export const throttleEnforceEffectBurst = dual<
       Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
       channel.unwrap
     )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(throttled)))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(throttled)))
   }
 )
 
@@ -6598,7 +6581,7 @@ export const throttleShapeEffectBurst = dual<
       Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
       channel.unwrap
     )
-    return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(throttled)))
+    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(throttled)))
   }
 )
 
@@ -6730,7 +6713,7 @@ export const toPull = methodWithTrace((trace) =>
     self: Stream.Stream<R, E, A>
   ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> =>
     pipe(
-      channel.toPull(self.channel),
+      channel.toPull(toChannel(self)),
       Effect.map((pull) =>
         pipe(
           pull,
@@ -6928,7 +6911,8 @@ export const transduce = dual<
             )
         )
       const transducer: Channel.Channel<R | R2, never, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<Z>, void> = pipe(
-        sink.channel,
+        sink,
+        _sink.toChannel,
         core.collectElements,
         core.flatMap(([leftover, z]) =>
           pipe(
@@ -6943,7 +6927,7 @@ export const transduce = dual<
         )
       )
       return pipe(
-        self.channel,
+        toChannel(self),
         core.pipeTo(upstreamMarker),
         core.pipeTo(buffer),
         channel.pipeToOrFail(transducer)
@@ -8124,7 +8108,7 @@ export const zipWithNext = <R, E, A>(
           )
         )
     )
-  return new StreamImpl(pipe(self.channel, channel.pipeToOrFail(process(Option.none()))))
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(process(Option.none()))))
 }
 
 /** @internal */

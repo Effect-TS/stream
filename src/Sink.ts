@@ -42,9 +42,15 @@ export type SinkTypeId = typeof SinkTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {
-  /** @internal */
-  readonly channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
+export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {}
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
+declare module "@effect/data/Context" {
+  interface Tag<Identifier, Service> extends Sink<Identifier, never, unknown, never, Service> {}
+  interface TracedTag<Identifier, Service> extends Sink<Identifier, never, unknown, never, Service> {}
 }
 
 /**
@@ -1378,51 +1384,6 @@ export const refineOrDieWith: <E, E2>(
 ) => <R, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E2, In, L, Z> = internal.refineOrDieWith
 
 /**
- * Accesses the specified service in the context of the effect.
- *
- * @since 1.0.0
- * @category context
- */
-export const service: <T extends Context.Tag<any, any>>(
-  tag: T
-) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Context.Tag.Service<T>> = internal.service
-
-/**
- * Accesses the specified service in the context of the sink.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWith: <T extends Context.Tag<any, any>, Z>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Z
-) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Z> = internal.serviceWith
-
-/**
- * Accesses the specified service in the context of the sink in the
- * context of an effect.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, Z>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, Z>
-) => Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z> = internal.serviceWithEffect
-
-/**
- * Accesses the specified service in the context of the sink in the
- * context of a sink.
- *
- * @since 1.0.0
- * @category context
- */
-export const serviceWithSink: <T extends Context.Tag<any, any>, R, E, In, L, Z>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Sink<R, E, In, L, Z>
-) => Sink<R | Context.Tag.Identifier<T>, E, In, L, Z> = internal.serviceWithSink
-
-/**
  * A sink that returns whether an element satisfies the specified predicate.
  *
  * @since 1.0.0
@@ -1509,16 +1470,6 @@ export const take: <In>(n: number) => Sink<never, never, In, In, Chunk.Chunk<In>
  * @category constructors
  */
 export const timed: () => Sink<never, never, unknown, never, Duration.Duration> = internal.timed
-
-/**
- * Converts ths sink to its underlying `Channel`.
- *
- * @since 1.0.0
- * @category conversions
- */
-export const toChannel: <R, E, In, L, Z>(
-  self: Sink<R, E, In, L, Z>
-) => Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z> = internal.toChannel
 
 /**
  * Creates a sink produced from an effect.

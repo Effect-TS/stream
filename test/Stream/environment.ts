@@ -32,7 +32,7 @@ describe.concurrent("Stream", () => {
   it.effect("contextWith", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.service(StringService),
+        StringService,
         Stream.provideContext(
           pipe(
             Context.empty(),
@@ -115,7 +115,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("provide", () =>
     Effect.gen(function*($) {
-      const stream = Stream.service(StringService)
+      const stream = StringService
       const layer = Layer.succeed(StringService, { string: "test" })
       const result = yield* $(pipe(
         stream,
@@ -128,7 +128,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("provideServiceStream", () =>
     Effect.gen(function*($) {
-      const stream = Stream.service(StringService)
+      const stream = StringService
       const service = Stream.succeed<StringService>({ string: "test" })
       const result = yield* $(pipe(
         stream,
@@ -142,7 +142,7 @@ describe.concurrent("Stream", () => {
   it.effect("serviceWith", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.serviceWith(StringService, (service) => service.string),
+        Stream.map(StringService, (service) => service.string),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))
@@ -152,7 +152,7 @@ describe.concurrent("Stream", () => {
   it.effect("serviceWithEffect", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.serviceWithEffect(StringService, (service) => Effect.succeed(service.string)),
+        Stream.mapEffect(StringService, (service) => Effect.succeed(service.string)),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))
@@ -162,7 +162,7 @@ describe.concurrent("Stream", () => {
   it.effect("serviceWithStream", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.serviceWithStream(StringService, (service) => Stream.succeed(service.string)),
+        Stream.flatMap(StringService, (service) => Stream.succeed(service.string)),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))
