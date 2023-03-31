@@ -258,7 +258,7 @@ export const aggregateWithinEither = dual<
             Effect.zipRight(
               pipe(
                 handoffConsumer,
-                channel.pipeToOrFail(sink.channel),
+                channel.pipeToOrFail(_sink.toChannel(sink)),
                 core.collectElements,
                 channelExecutor.run,
                 Effect.forkIn(scope)
@@ -400,7 +400,7 @@ export const aggregateWithinEither = dual<
             Effect.zipRight(
               pipe(
                 handoffConsumer,
-                channel.pipeToOrFail(sink.channel),
+                channel.pipeToOrFail(_sink.toChannel(sink)),
                 core.collectElements,
                 channelExecutor.run,
                 Effect.forkScoped,
@@ -4552,7 +4552,8 @@ export const pipeThrough = dual<
   <R, E, R2, E2, A, L, Z>(
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A, L, Z>
-  ): Stream.Stream<R | R2, E | E2, L> => new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(sink.channel)))
+  ): Stream.Stream<R | R2, E | E2, L> =>
+    new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(_sink.toChannel(sink))))
 )
 
 /** @internal */
@@ -5218,7 +5219,7 @@ export const run = dualWithTrace<
       self: Stream.Stream<R, E, A>,
       sink: Sink.Sink<R2, E2, A, unknown, Z>
     ): Effect.Effect<R | R2, E | E2, Z> =>
-      pipe(toChannel(self), channel.pipeToOrFail(sink.channel), channel.runDrain).traced(trace)
+      pipe(toChannel(self), channel.pipeToOrFail(_sink.toChannel(sink)), channel.runDrain).traced(trace)
 )
 
 /** @internal */
@@ -5657,7 +5658,7 @@ export const runScoped = dualWithTrace<
     ): Effect.Effect<R | R2 | Scope.Scope, E | E2, A2> =>
       pipe(
         toChannel(self),
-        channel.pipeToOrFail(sink.channel),
+        channel.pipeToOrFail(_sink.toChannel(sink)),
         channel.drain,
         channelExecutor.runScoped
       ).traced(trace)
@@ -6910,7 +6911,8 @@ export const transduce = dual<
             )
         )
       const transducer: Channel.Channel<R | R2, never, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<Z>, void> = pipe(
-        sink.channel,
+        sink,
+        _sink.toChannel,
         core.collectElements,
         core.flatMap(([leftover, z]) =>
           pipe(

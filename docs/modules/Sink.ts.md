@@ -82,12 +82,6 @@ Added in v1.0.0
   - [unwrapScoped](#unwrapscoped)
 - [context](#context-1)
   - [provideContext](#providecontext)
-  - [service](#service)
-  - [serviceWith](#servicewith)
-  - [serviceWithEffect](#servicewitheffect)
-  - [serviceWithSink](#servicewithsink)
-- [conversions](#conversions)
-  - [toChannel](#tochannel)
 - [elements](#elements)
   - [findEffect](#findeffect)
 - [error handling](#error-handling)
@@ -1154,83 +1148,6 @@ export declare const provideContext: {
 
 Added in v1.0.0
 
-## service
-
-Accesses the specified service in the context of the effect.
-
-**Signature**
-
-```ts
-export declare const service: <T extends Context.Tag<any, any>>(
-  tag: T
-) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Context.Tag.Service<T>>
-```
-
-Added in v1.0.0
-
-## serviceWith
-
-Accesses the specified service in the context of the sink.
-
-**Signature**
-
-```ts
-export declare const serviceWith: <T extends Context.Tag<any, any>, Z>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Z
-) => Sink<Context.Tag.Identifier<T>, never, unknown, never, Z>
-```
-
-Added in v1.0.0
-
-## serviceWithEffect
-
-Accesses the specified service in the context of the sink in the
-context of an effect.
-
-**Signature**
-
-```ts
-export declare const serviceWithEffect: <T extends Context.Tag<any, any>, R, E, Z>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Effect.Effect<R, E, Z>
-) => Sink<R | Context.Tag.Identifier<T>, E, unknown, never, Z>
-```
-
-Added in v1.0.0
-
-## serviceWithSink
-
-Accesses the specified service in the context of the sink in the
-context of a sink.
-
-**Signature**
-
-```ts
-export declare const serviceWithSink: <T extends Context.Tag<any, any>, R, E, In, L, Z>(
-  tag: T,
-  f: (service: Context.Tag.Service<T>) => Sink<R, E, In, L, Z>
-) => Sink<R | Context.Tag.Identifier<T>, E, In, L, Z>
-```
-
-Added in v1.0.0
-
-# conversions
-
-## toChannel
-
-Converts ths sink to its underlying `Channel`.
-
-**Signature**
-
-```ts
-export declare const toChannel: <R, E, In, L, Z>(
-  self: Sink<R, E, In, L, Z>
-) => Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
-```
-
-Added in v1.0.0
-
 # elements
 
 ## findEffect
@@ -1937,10 +1854,7 @@ type `L` (i.e. any leftovers).
 **Signature**
 
 ```ts
-export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {
-  /** @internal */
-  readonly channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
-}
+export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {}
 ```
 
 Added in v1.0.0
