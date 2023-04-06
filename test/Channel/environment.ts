@@ -80,7 +80,8 @@ describe.concurrent("Channel", () => {
         Channel.mapOut((tuple) => tuple[1]),
         Channel.concatMap((n) =>
           pipe(
-            Channel.fromEffect(pipe(NumberService, Effect.map((m) => [n, m] as const))),
+            NumberService,
+            Effect.map((m) => [n, m] as const),
             Channel.provideService(NumberService, new NumberServiceImpl(200)),
             Channel.flatMap(Channel.write)
           )
