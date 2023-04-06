@@ -75,9 +75,8 @@ export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
  * @since 1.0.0
  * @category models
  */
-declare module "@effect/data/Context" {
-  interface Tag<Identifier, Service> extends Stream<Identifier, never, Service> {}
-  interface TracedTag<Identifier, Service> extends Stream<Identifier, never, Service> {}
+declare module "@effect/io/Effect" {
+  interface Effect<R, E, A> extends Stream<R, E, A> {}
 }
 
 /**

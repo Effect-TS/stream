@@ -78,11 +78,8 @@ export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
  * @since 1.0.0
  * @category models
  */
-declare module "@effect/data/Context" {
-  interface Tag<Identifier, Service> extends Channel<Identifier, unknown, unknown, unknown, never, never, Service> {}
-  interface TracedTag<Identifier, Service>
-    extends Channel<Identifier, unknown, unknown, unknown, never, never, Service>
-  {}
+declare module "@effect/io/Effect" {
+  interface Effect<R, E, A> extends Channel<R, unknown, unknown, unknown, never, E, A> {}
 }
 
 /**

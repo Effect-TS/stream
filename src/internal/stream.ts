@@ -2795,8 +2795,12 @@ export const fromChannel = <R, E, A>(
 /** @internal */
 export const toChannel = <R, E, A>(
   stream: Stream.Stream<R, E, A>
-): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> =>
-  Context.isGenericTag(stream) ? toChannel(fromEffect(stream)) : (stream as StreamImpl<R, E, A>).channel
+): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> => {
+  if (Effect.isEffect(stream)) {
+    return toChannel(fromEffect(stream)) as any
+  }
+  return (stream as StreamImpl<R, E, A>).channel
+}
 
 /** @internal */
 export const fromChunk = <A>(chunk: Chunk.Chunk<A>): Stream.Stream<never, never, A> =>
