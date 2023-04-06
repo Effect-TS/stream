@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.17.0
+
+### Minor Changes
+
+- [#92](https://github.com/Effect-TS/stream/pull/92) [`7099133`](https://github.com/Effect-TS/stream/commit/70991338c0d86fccc48c4892ab935950d59b4943) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Make Effect a valid Stream and Channel
+
 ## 0.16.0
 
 ### Minor Changes
