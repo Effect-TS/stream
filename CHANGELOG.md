@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.18.0
+
+### Minor Changes
+
+- [#94](https://github.com/Effect-TS/stream/pull/94) [`745041b`](https://github.com/Effect-TS/stream/commit/745041baab3e704e313450d4e3dc815d3e4973e1) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Update effect/data and effect/io
+
 ## 0.17.0
 
 ### Minor Changes
