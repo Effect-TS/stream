@@ -90,6 +90,8 @@ Added in v1.0.0
 - [models](#models)
   - [Channel (interface)](#channel-interface)
   - [ChannelException (interface)](#channelexception-interface)
+  - [ChannelUnify (interface)](#channelunify-interface)
+  - [ChannelUnifyBlacklist (interface)](#channelunifyblacklist-interface)
 - [refinements](#refinements)
   - [isChannelException](#ischannelexception)
 - [sequencing](#sequencing)
@@ -1499,6 +1501,9 @@ Channels compose in a variety of ways:
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> {
   traced(trace: Debug.Trace): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  [Unify.typeSymbol]?: unknown
+  [Unify.unifySymbol]?: ChannelUnify<this>
+  [Unify.blacklistSymbol]?: ChannelUnifyBlacklist
 }
 ```
 
@@ -1516,6 +1521,34 @@ export interface ChannelException<E> {
   readonly _tag: 'ChannelException'
   readonly [ChannelExceptionTypeId]: ChannelExceptionTypeId
   readonly error: E
+}
+```
+
+Added in v1.0.0
+
+## ChannelUnify (interface)
+
+**Signature**
+
+```ts
+export interface ChannelUnify<A extends { [Unify.typeSymbol]?: any }> extends Effect.EffectUnify<A> {
+  Channel?: () => A[Unify.typeSymbol] extends
+    | Channel<infer Env, infer InErr, infer InElem, infer InDone, infer OutErr, infer OutElem, infer OutDone>
+    | infer _
+    ? Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+    : never
+}
+```
+
+Added in v1.0.0
+
+## ChannelUnifyBlacklist (interface)
+
+**Signature**
+
+```ts
+export interface ChannelUnifyBlacklist extends Effect.EffectUnifyBlacklist {
+  Channel?: true
 }
 ```
 

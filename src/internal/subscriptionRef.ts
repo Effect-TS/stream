@@ -25,7 +25,9 @@ const subscriptionRefVariance = {
 
 /** @internal */
 class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
+  // @ts-ignore
   readonly [Ref.RefTypeId] = _ref.refVariance
+  // @ts-ignore
   readonly [Synchronized.SynchronizedTypeId] = _circular.synchronizedVariance
   readonly [SubscriptionRefTypeId] = subscriptionRefVariance
   constructor(

@@ -1,5 +1,5 @@
 import * as Chunk from "@effect/data/Chunk"
-import * as Context from "@effect/data/Context"
+import type * as Context from "@effect/data/Context"
 import * as Duration from "@effect/data/Duration"
 import * as Either from "@effect/data/Either"
 import { constTrue, dual, identity, pipe } from "@effect/data/Function"
@@ -1987,7 +1987,9 @@ export const timed = (): Sink.Sink<never, never, unknown, never, Duration.Durati
 export const toChannel = <R, E, In, L, Z>(
   self: Sink.Sink<R, E, In, L, Z>
 ): Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z> =>
-  Context.isGenericTag(self) ? toChannel(fromEffect(self)) : (self as SinkImpl<R, E, In, L, Z>).channel
+  Effect.isEffect(self) ?
+    toChannel(fromEffect(self as Effect.Effect<R, E, Z>)) :
+    (self as SinkImpl<R, E, In, L, Z>).channel
 
 /** @internal */
 export const unwrap = <R, E, R2, E2, In, L, Z>(
