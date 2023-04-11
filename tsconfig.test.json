@@ -4,7 +4,30 @@
     "tsBuildInfoFile": "build/tsbuildinfo/test.tsbuildinfo",
     "rootDir": "./",
     "noEmit": true,
-    "types": ["vitest/globals", "node"]
+    "types": [
+      "vitest/globals",
+      "node"
+    ],
+    "paths": {
+      "@effect/io/*": [
+        "./node_modules/@effect/io/src/*"
+      ],
+      "@effect/stream": [
+        "./src/index.ts"
+      ],
+      "@effect/stream/test/*": [
+        "./test/*"
+      ],
+      "@effect/stream/examples/*": [
+        "./examples/*"
+      ],
+      "@effect/stream/*": [
+        "./src/*"
+      ]
+    }
   },
-  "include": ["test/**/*.ts", "src/**/*.ts"]
+  "include": [
+    "test/**/*.ts",
+    "src/**/*.ts"
+  ]
 }

@@ -19,6 +19,7 @@ import type * as monad from "@effect/data/typeclass/Monad"
 import * as of_ from "@effect/data/typeclass/Of"
 import type * as Order from "@effect/data/typeclass/Order"
 import type * as pointed from "@effect/data/typeclass/Pointed"
+import type * as Unify from "@effect/data/Unify"
 import type * as Cause from "@effect/io/Cause"
 import type * as Deferred from "@effect/io/Deferred"
 import type * as Effect from "@effect/io/Effect"
@@ -69,7 +70,27 @@ export type StreamTypeId = typeof StreamTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
+export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
+  [Unify.typeSymbol]?: unknown
+  [Unify.unifySymbol]?: StreamUnify<this>
+  [Unify.blacklistSymbol]?: StreamUnifyBlacklist
+}
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
+export interface StreamUnify<A extends { [Unify.typeSymbol]?: any }> extends Effect.EffectUnify<A> {
+  Stream?: () => A[Unify.typeSymbol] extends Stream<infer R0, infer E0, infer A0> | infer _ ? Stream<R0, E0, A0> : never
+}
+
+/**
+ * @category models
+ * @since 1.0.0
+ */
+export interface StreamUnifyBlacklist extends Effect.EffectUnifyBlacklist {
+  Effect?: true
+}
 
 /**
  * @since 1.0.0
@@ -77,6 +98,9 @@ export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
  */
 declare module "@effect/io/Effect" {
   interface Effect<R, E, A> extends Stream<R, E, A> {}
+  interface EffectUnifyBlacklist {
+    Stream?: true
+  }
 }
 
 /**

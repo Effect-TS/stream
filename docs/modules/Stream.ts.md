@@ -217,6 +217,8 @@ Added in v1.0.0
   - [mapErrorCause](#maperrorcause)
 - [models](#models)
   - [Stream (interface)](#stream-interface)
+  - [StreamUnify (interface)](#streamunify-interface)
+  - [StreamUnifyBlacklist (interface)](#streamunifyblacklist-interface)
 - [sequencing](#sequencing)
   - [branchAfter](#branchafter)
   - [flatMap](#flatmap)
@@ -3449,7 +3451,35 @@ allow for rich and expressive composition of streams.
 **Signature**
 
 ```ts
-export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {}
+export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
+  [Unify.typeSymbol]?: unknown
+  [Unify.unifySymbol]?: StreamUnify<this>
+  [Unify.blacklistSymbol]?: StreamUnifyBlacklist
+}
+```
+
+Added in v1.0.0
+
+## StreamUnify (interface)
+
+**Signature**
+
+```ts
+export interface StreamUnify<A extends { [Unify.typeSymbol]?: any }> extends Effect.EffectUnify<A> {
+  Stream?: () => A[Unify.typeSymbol] extends Stream<infer R0, infer E0, infer A0> | infer _ ? Stream<R0, E0, A0> : never
+}
+```
+
+Added in v1.0.0
+
+## StreamUnifyBlacklist (interface)
+
+**Signature**
+
+```ts
+export interface StreamUnifyBlacklist extends Effect.EffectUnifyBlacklist {
+  Effect?: true
+}
 ```
 
 Added in v1.0.0

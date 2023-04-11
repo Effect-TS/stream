@@ -10,6 +10,7 @@ import type * as HashMap from "@effect/data/HashMap"
 import type * as HashSet from "@effect/data/HashSet"
 import type * as Option from "@effect/data/Option"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
+import type * as Unify from "@effect/data/Unify"
 import type * as Cause from "@effect/io/Cause"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
@@ -48,9 +49,36 @@ export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {}
  * @since 1.0.0
  * @category models
  */
-declare module "@effect/data/Context" {
-  interface Tag<Identifier, Service> extends Sink<Identifier, never, unknown, never, Service> {}
-  interface TracedTag<Identifier, Service> extends Sink<Identifier, never, unknown, never, Service> {}
+export interface SinkUnify<A extends { [Unify.typeSymbol]?: any }> extends Effect.EffectUnify<A> {
+  Sink?: () => A[Unify.typeSymbol] extends
+    | Sink<
+      infer R,
+      infer E,
+      infer In,
+      infer L,
+      infer Z
+    >
+    | infer _ ? Sink<R, E, In, L, Z>
+    : never
+}
+
+/**
+ * @category models
+ * @since 1.0.0
+ */
+export interface SinkUnifyBlacklist extends Effect.EffectUnifyBlacklist {
+  Sink?: true
+}
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
+declare module "@effect/io/Effect" {
+  interface Effect<R, E, A> extends Sink<R, E, unknown, never, A> {}
+  interface EffectUnifyBlacklist {
+    Sink?: true
+  }
 }
 
 /**
@@ -907,6 +935,16 @@ export const flatMap: {
 export const fromChannel: <R, E, In, L, Z>(
   channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
 ) => Sink<R, E, In, L, Z> = internal.fromChannel
+
+/**
+ * Creates a `Channel` from a Sink.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const toChannel: <R, E, In, L, Z>(
+  self: Sink<R, E, In, L, Z>
+) => Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z> = internal.toChannel
 
 /**
  * Creates a single-value sink produced from an effect.

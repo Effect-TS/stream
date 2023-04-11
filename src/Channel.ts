@@ -8,6 +8,7 @@ import type * as Either from "@effect/data/Either"
 import type { LazyArg } from "@effect/data/Function"
 import type * as Option from "@effect/data/Option"
 import type { Predicate } from "@effect/data/Predicate"
+import type * as Unify from "@effect/data/Unify"
 import type * as Cause from "@effect/io/Cause"
 import type * as Deferred from "@effect/io/Deferred"
 import type * as Effect from "@effect/io/Effect"
@@ -72,6 +73,36 @@ export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 {
   traced(trace: Debug.Trace): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  [Unify.typeSymbol]?: unknown
+  [Unify.unifySymbol]?: ChannelUnify<this>
+  [Unify.blacklistSymbol]?: ChannelUnifyBlacklist
+}
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
+export interface ChannelUnify<A extends { [Unify.typeSymbol]?: any }> extends Effect.EffectUnify<A> {
+  Channel?: () => A[Unify.typeSymbol] extends
+    | Channel<
+      infer Env,
+      infer InErr,
+      infer InElem,
+      infer InDone,
+      infer OutErr,
+      infer OutElem,
+      infer OutDone
+    >
+    | infer _ ? Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+    : never
+}
+
+/**
+ * @category models
+ * @since 1.0.0
+ */
+export interface ChannelUnifyBlacklist extends Effect.EffectUnifyBlacklist {
+  Channel?: true
 }
 
 /**
@@ -79,7 +110,10 @@ export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Channel<R, unknown, unknown, unknown, never, E, A> {}
+  interface Effect<R, E, A> extends Channel<R, unknown, unknown, unknown, E, never, A> {}
+  interface EffectUnifyBlacklist {
+    Channel?: true
+  }
 }
 
 /**

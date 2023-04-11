@@ -78,6 +78,7 @@ Added in v1.0.0
   - [sync](#sync)
   - [take](#take)
   - [timed](#timed)
+  - [toChannel](#tochannel)
   - [unwrap](#unwrap)
   - [unwrapScoped](#unwrapscoped)
 - [context](#context-1)
@@ -133,6 +134,8 @@ Added in v1.0.0
   - [mapLeftover](#mapleftover)
 - [models](#models)
   - [Sink (interface)](#sink-interface)
+  - [SinkUnify (interface)](#sinkunify-interface)
+  - [SinkUnifyBlacklist (interface)](#sinkunifyblacklist-interface)
 - [sequencing](#sequencing)
   - [flatMap](#flatmap)
 - [symbols](#symbols)
@@ -1102,6 +1105,20 @@ export declare const timed: () => Sink<never, never, unknown, never, Duration.Du
 
 Added in v1.0.0
 
+## toChannel
+
+Creates a `Channel` from a Sink.
+
+**Signature**
+
+```ts
+export declare const toChannel: <R, E, In, L, Z>(
+  self: Sink<R, E, In, L, Z>
+) => Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
+```
+
+Added in v1.0.0
+
 ## unwrap
 
 Creates a sink produced from an effect.
@@ -1855,6 +1872,32 @@ type `L` (i.e. any leftovers).
 
 ```ts
 export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {}
+```
+
+Added in v1.0.0
+
+## SinkUnify (interface)
+
+**Signature**
+
+```ts
+export interface SinkUnify<A extends { [Unify.typeSymbol]?: any }> extends Effect.EffectUnify<A> {
+  Sink?: () => A[Unify.typeSymbol] extends Sink<infer R, infer E, infer In, infer L, infer Z> | infer _
+    ? Sink<R, E, In, L, Z>
+    : never
+}
+```
+
+Added in v1.0.0
+
+## SinkUnifyBlacklist (interface)
+
+**Signature**
+
+```ts
+export interface SinkUnifyBlacklist extends Effect.EffectUnifyBlacklist {
+  Sink?: true
+}
 ```
 
 Added in v1.0.0

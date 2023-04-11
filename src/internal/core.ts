@@ -78,7 +78,6 @@ export type Primitive =
   | SucceedNow
   | Suspend
   | Traced
-  | Context.Tag<any, any>
 
 /** @internal */
 export interface BracketOut extends
