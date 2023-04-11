@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.19.0
+
+### Minor Changes
+
+- [#96](https://github.com/Effect-TS/stream/pull/96) [`ea1e2cf`](https://github.com/Effect-TS/stream/commit/ea1e2cfa29f1d0faffabbdd0c91e9cd13b726d6b) Thanks [@mikearnaldi](https://github.com/mikearnaldi)! - Implement Unify
+
 ## 0.18.0
 
 ### Minor Changes
