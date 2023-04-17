@@ -1,5 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Equal from "@effect/data/Equal"
+import { pipe } from "@effect/data/Function"
+import * as Number from "@effect/data/Number"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -8,8 +10,6 @@ import * as Random from "@effect/io/Random"
 import * as Stream from "@effect/stream/Stream"
 import * as SubscriptionRef from "@effect/stream/SubscriptionRef"
 import * as it from "@effect/stream/test/utils/extend"
-import { pipe } from "@effect/data/Function"
-import * as Number from "@effect/data/Number"
 import { assert, describe } from "vitest"
 
 describe.concurrent("SubscriptionRef", () => {
@@ -91,15 +91,15 @@ describe.concurrent("SubscriptionRef", () => {
         Effect.fork
       ))
       const result = yield* $(
-        Effect.collectAllPar(
-          Array.from({ length: 2 }, () => subscriber(subscriptionRef))
+        Effect.map(
+          Effect.allPar(
+            Array.from({ length: 2 }, () => subscriber(subscriptionRef))
+          ),
+          Chunk.unsafeFromArray
         )
       )
       yield* $(Fiber.interrupt(fiber))
-      const isSorted = pipe(
-        result,
-        Chunk.every((chunk) => Equal.equals(chunk, pipe(chunk, Chunk.sort(Number.Order))))
-      )
+      const isSorted = Chunk.every(result, (chunk) => Equal.equals(chunk, Chunk.sort(chunk, Number.Order)))
       assert.isTrue(isSorted)
     }))
 })

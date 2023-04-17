@@ -205,6 +205,7 @@ describe.concurrent("Stream", () => {
         Queue.take(output),
         Effect.flatMap(Take.done),
         Effect.replicateEffect(2),
+        Effect.map(Chunk.unsafeFromArray),
         Effect.map(Chunk.flatten)
       ))
       yield* $(Queue.offerAll(left, [Chunk.make(1), Chunk.make(2)]))
@@ -212,6 +213,7 @@ describe.concurrent("Stream", () => {
         Queue.take(output),
         Effect.flatMap(Take.done),
         Effect.replicateEffect(2),
+        Effect.map(Chunk.unsafeFromArray),
         Effect.map(Chunk.flatten)
       ))
       assert.deepStrictEqual(Array.from(chunk1), [[0, 0], [0, 1]])

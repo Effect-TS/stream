@@ -20,8 +20,7 @@ describe.concurrent("Stream", () => {
         Effect.scoped
       )
       const result = yield* $(pipe(
-        Array.from({ length: 100 }, () => stream),
-        Effect.collectAll,
+        Effect.all(Array.from({ length: 100 }, () => stream)),
         Effect.as(0)
       ))
       assert.strictEqual(result, 0)

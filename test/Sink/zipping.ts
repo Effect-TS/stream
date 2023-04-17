@@ -76,7 +76,7 @@ describe.concurrent("Sink", () => {
       const success1 = yield* $(Random.nextBoolean())
       const success2 = yield* $(Random.nextBoolean())
       const chunk = pipe(
-        ints,
+        Chunk.unsafeFromArray(ints),
         Chunk.concat(success1 ? Chunk.of(20) : Chunk.empty<number>()),
         Chunk.concat(success2 ? Chunk.of(40) : Chunk.empty<number>())
       )

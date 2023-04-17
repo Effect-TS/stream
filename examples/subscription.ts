@@ -26,14 +26,16 @@ const program = Effect.gen(function*($) {
     Effect.fork
   ))
   const result = yield* $(
-    Effect.collectAllPar(
+    Effect.allPar(
       Array.from({ length: 2 }, () => subscriber(subscriptionRef))
     )
   )
   yield* $(Fiber.interrupt(fiber))
-  const isSorted = pipe(
-    result,
-    Chunk.every((chunk) => Equal.equals(chunk, pipe(chunk, Chunk.sort(Number.Order))))
+  const isSorted = result.every((chunk) =>
+    Equal.equals(
+      chunk,
+      Chunk.sort(chunk, Number.Order)
+    )
   )
   return isSorted
 })

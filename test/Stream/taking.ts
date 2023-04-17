@@ -92,9 +92,15 @@ describe.concurrent("Stream", () => {
             pipe(
               chunk,
               Effect.takeWhile((a) => Effect.negate(f(a))),
+              Effect.map(Chunk.unsafeFromArray),
               Effect.zipWith(
-                pipe(chunk, Effect.dropWhile((a) => Effect.negate(f(a))), Effect.map(Chunk.take(1))),
-                (chunk1, chunk2) => pipe(chunk1, Chunk.concat(chunk2))
+                pipe(
+                  chunk,
+                  Effect.dropWhile((a) => Effect.negate(f(a))),
+                  Effect.map(Chunk.unsafeFromArray),
+                  Effect.map(Chunk.take(1))
+                ),
+                (chunk1, chunk2) => Chunk.concat(chunk1, chunk2)
               )
             )
           )
