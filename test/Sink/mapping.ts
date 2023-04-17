@@ -105,7 +105,8 @@ describe.concurrent("Sink", () => {
         Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
-            Effect.forEach((s) => Effect.try(() => Number.parseInt(s)))
+            Effect.forEach((s) => Effect.try(() => Number.parseInt(s))),
+            Effect.map(Chunk.unsafeFromArray)
           )
         )
       )
@@ -120,7 +121,8 @@ describe.concurrent("Sink", () => {
         Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
-            Effect.forEach((s) => Effect.try(() => Number.parseInt(s)))
+            Effect.forEach((s) => Effect.try(() => Number.parseInt(s))),
+            Effect.map(Chunk.unsafeFromArray)
           )
         )
       )
@@ -143,7 +145,8 @@ describe.concurrent("Sink", () => {
                 }
                 return result
               })
-            )
+            ),
+            Effect.map(Chunk.unsafeFromArray)
           )
         )
       )

@@ -28,7 +28,7 @@ describe.concurrent("Sink", () => {
           )
         )
       )
-      assert.isTrue(pipe(result, Chunk.every(identity)))
+      assert.isTrue(result.every(identity))
     }))
 
   it.effect("findEffect - take sink across multiple chunks", () =>

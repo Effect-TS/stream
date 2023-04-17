@@ -76,7 +76,7 @@ export const DefaultChunkSize = 4096
 
 /** @internal */
 export const absolve = <R, E, A>(self: Stream.Stream<R, E, Either.Either<E, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, mapEffect(Effect.fromEither))
+  mapEffect(self, identity)
 
 /** @internal */
 export const acquireRelease = <R, E, A, R2, _>(
@@ -759,12 +759,15 @@ export const broadcastedQueues = dualWithTrace<
     ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>> =>
       pipe(
         Hub.bounded<Take.Take<E, A>>(maximumLag),
-        Effect.flatMap((hub) =>
+        Effect.flatMap((
+          hub
+        ) =>
           pipe(
-            Effect.collectAll(Array.from({ length: n }, () => Hub.subscribe(hub))),
-            Effect.map((chunk) =>
-              Chunk.toReadonlyArray(chunk) as Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
-            ),
+            Effect.all(Array.from({ length: n }, () => Hub.subscribe(hub))) as Effect.Effect<
+              R,
+              never,
+              Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
+            >,
             Effect.tap(() => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
           )
         )
@@ -1875,23 +1878,25 @@ export const distributedWith = dual<
           ),
           Effect.flatMap((next) =>
             pipe(
-              Chunk.range(0, n - 1),
-              Chunk.map((id) => Effect.map(next, ([key, queue]) => [[key, id], queue] as const)),
-              Effect.collectAll,
+              Effect.all(
+                Chunk.map(
+                  Chunk.range(0, n - 1),
+                  (id) => Effect.map(next, ([key, queue]) => [[key, id], queue] as const)
+                )
+              ),
+              Effect.map(Chunk.unsafeFromArray),
               Effect.flatMap((entries) => {
-                const [mappings, queues] = pipe(
+                const [mappings, queues] = Chunk.reduceRight(
                   entries,
-                  Chunk.reduceRight(
+                  [
+                    new Map<number, number>(),
+                    Chunk.empty<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>()
+                  ] as const,
+                  ([mappings, queues], [mapping, queue]) =>
                     [
-                      new Map<number, number>(),
-                      Chunk.empty<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>()
-                    ] as const,
-                    ([mappings, queues], [mapping, queue]) =>
-                      [
-                        mappings.set(mapping[0], mapping[1]),
-                        pipe(queues, Chunk.prepend(queue))
-                      ] as const
-                  )
+                      mappings.set(mapping[0], mapping[1]),
+                      pipe(queues, Chunk.prepend(queue))
+                    ] as const
                 )
                 return pipe(
                   Deferred.succeed(deferred, (a: A) =>
@@ -2237,6 +2242,7 @@ export const dropUntilEffect = dual<
         pipe(
           input,
           Effect.dropUntil(predicate),
+          Effect.map(Chunk.unsafeFromArray),
           Effect.map((leftover) => {
             const more = Chunk.isEmpty(leftover)
             if (more) {
@@ -2295,6 +2301,7 @@ export const dropWhileEffect = dual<
         pipe(
           input,
           Effect.dropWhile(predicate),
+          Effect.map(Chunk.unsafeFromArray),
           Effect.map((leftover) => {
             const more = Chunk.isEmpty(leftover)
             if (more) {

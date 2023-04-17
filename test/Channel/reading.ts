@@ -1,4 +1,3 @@
-import * as Chunk from "@effect/data/Chunk"
 import * as Equal from "@effect/data/Equal"
 import { pipe } from "@effect/data/Function"
 import * as Hash from "@effect/data/Hash"
@@ -229,7 +228,7 @@ describe.concurrent("Channel", () => {
   it.effect("simple concurrent reads", () =>
     Effect.gen(function*($) {
       const capacity = 128
-      const elements = yield* $(Effect.collectAll(Array.from({ length: capacity }, () => Random.nextInt())))
+      const elements = yield* $(Effect.all(Array.from({ length: capacity }, () => Random.nextInt())))
       const source = yield* $(Ref.make(ReadonlyArray.fromIterable(elements)))
       const destination = yield* $(Ref.make<ReadonlyArray<number>>([]))
       const twoWriters = pipe(
@@ -268,7 +267,7 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const capacity = 128
       const f = (n: number) => n + 1
-      const elements = yield* $(Effect.collectAll(Array.from({ length: capacity }, () => Random.nextInt())))
+      const elements = yield* $(Effect.all(Array.from({ length: capacity }, () => Random.nextInt())))
       const source = yield* $(Ref.make(ReadonlyArray.fromIterable(elements)))
       const destination = yield* $(Ref.make<ReadonlyArray<number>>([]))
       const twoWriters = pipe(
@@ -287,7 +286,7 @@ describe.concurrent("Channel", () => {
           Channel.mapEffect(() => Ref.get(destination)),
           Channel.run,
           Effect.map((result) => {
-            const expected = HashSet.fromIterable(pipe(elements, Chunk.map(f)))
+            const expected = HashSet.fromIterable(elements.map(f))
             let missing = HashSet.fromIterable(expected)
             let surplus = HashSet.fromIterable(result)
             for (const value of result) {

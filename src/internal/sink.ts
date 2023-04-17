@@ -207,7 +207,7 @@ const collectAllWhileEffectReader = <In, R, E>(
   core.readWith(
     (input: Chunk.Chunk<In>) =>
       pipe(
-        core.fromEffect(pipe(input, Effect.takeWhile(predicate))),
+        core.fromEffect(pipe(input, Effect.takeWhile(predicate), Effect.map(Chunk.unsafeFromArray))),
         core.flatMap((collected) => {
           const leftovers = pipe(input, Chunk.drop(collected.length))
           if (Chunk.isEmpty(leftovers)) {
@@ -333,7 +333,15 @@ export const contramapEffect = dual<
   <R, E, L, Z, In0, R2, E2, In>(
     self: Sink.Sink<R, E, In, L, Z>,
     f: (input: In0) => Effect.Effect<R2, E2, In>
-  ): Sink.Sink<R | R2, E | E2, In0, L, Z> => pipe(self, contramapChunksEffect(Effect.forEach(f)))
+  ): Sink.Sink<R | R2, E | E2, In0, L, Z> =>
+    contramapChunksEffect(
+      self,
+      (chunk) =>
+        Effect.map(
+          Effect.forEach(chunk, f),
+          Chunk.unsafeFromArray
+        )
+    )
 )
 
 /** @internal */
@@ -529,10 +537,13 @@ const dropUntilEffectReader = <In, R, E>(
         input,
         Effect.dropUntil(predicate),
         Effect.map((leftover) => {
-          const more = Chunk.isEmpty(leftover)
+          const more = leftover.length === 0
           return more ?
             dropUntilEffectReader(predicate) :
-            pipe(core.write(leftover), channel.zipRight(channel.identityChannel<E, Chunk.Chunk<In>, unknown>()))
+            pipe(
+              core.write(Chunk.unsafeFromArray(leftover)),
+              channel.zipRight(channel.identityChannel<E, Chunk.Chunk<In>, unknown>())
+            )
         }),
         channel.unwrap
       ),
@@ -575,11 +586,11 @@ const dropWhileEffectReader = <In, R, E>(
         input,
         Effect.dropWhile(predicate),
         Effect.map((leftover) => {
-          const more = Chunk.isEmpty(leftover)
+          const more = leftover.length === 0
           return more ?
             dropWhileEffectReader(predicate) :
             pipe(
-              core.write(leftover),
+              core.write(Chunk.unsafeFromArray(leftover)),
               channel.zipRight(channel.identityChannel<E, Chunk.Chunk<In>, unknown>())
             )
         }),
@@ -686,7 +697,11 @@ export const filterInputEffect = dual<
   <R, E, L, Z, R2, E2, In, In1 extends In>(
     self: Sink.Sink<R, E, In, L, Z>,
     f: (input: In1) => Effect.Effect<R2, E2, boolean>
-  ): Sink.Sink<R | R2, E | E2, In1, L, Z> => pipe(self, contramapChunksEffect(Effect.filter(f)))
+  ): Sink.Sink<R | R2, E | E2, In1, L, Z> =>
+    contramapChunksEffect(
+      self,
+      (chunk) => Effect.map(Effect.filter(chunk, f), Chunk.unsafeFromArray)
+    )
 )
 
 /** @internal */

@@ -202,7 +202,7 @@ describe.concurrent("Stream", () => {
         Stream.tap(() => coordination.proceed)
       )
       const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
-      yield* $(Effect.collectAllParDiscard([
+      yield* $(Effect.allParDiscard([
         coordination.offer,
         coordination.offer,
         coordination.offer
