@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.21.0
+
+### Minor Changes
+
+- [#101](https://github.com/Effect-TS/stream/pull/101) [`c276050`](https://github.com/Effect-TS/stream/commit/c276050ea52e314d113df6506b87ca3f54731592) Thanks [@tim-smart](https://github.com/tim-smart)! - update /io
+
 ## 0.20.0
 
 ### Minor Changes
