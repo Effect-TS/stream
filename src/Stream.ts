@@ -529,9 +529,10 @@ export const bufferUnbounded: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A
  * @since 1.0.0
  * @category error handling
  */
-export const catchAll: <E, R2, E2, A2>(
-  f: (error: E) => Stream<R2, E2, A2>
-) => <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2, A2 | A> = internal.catchAll
+export const catchAll: {
+  <E, R2, E2, A2>(f: (error: E) => Stream<R2, E2, A2>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2, A2 | A>
+  <R, A, E, R2, E2, A2>(self: Stream<R, E, A>, f: (error: E) => Stream<R2, E2, A2>): Stream<R | R2, E2, A | A2>
+} = internal.catchAll
 
 /**
  * Switches over to the stream produced by the provided function in case this
