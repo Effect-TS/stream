@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.21.1
+
+### Patch Changes
+
+- [#105](https://github.com/Effect-TS/stream/pull/105) [`73c31dc`](https://github.com/Effect-TS/stream/commit/73c31dc90695be03486894df25b4b7b087af8592) Thanks [@tim-smart](https://github.com/tim-smart)! - update dependencies
+
+- [#103](https://github.com/Effect-TS/stream/pull/103) [`6f43734`](https://github.com/Effect-TS/stream/commit/6f4373460f74dd0f3ccd61a593759818283ed966) Thanks [@tim-smart](https://github.com/tim-smart)! - fix catchAll dual signature
+
 ## 0.21.0
 
 ### Minor Changes
