@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.22.0
+
+### Minor Changes
+
+- [#106](https://github.com/Effect-TS/stream/pull/106) [`8a9c58d`](https://github.com/Effect-TS/stream/commit/8a9c58d4d170defac39ab81a7b31fa7be4912825) Thanks [@tim-smart](https://github.com/tim-smart)! - update dependencies
+
 ## 0.21.1
 
 ### Patch Changes
