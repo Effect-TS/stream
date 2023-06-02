@@ -2377,8 +2377,8 @@ Added in v1.0.0
 ```ts
 export declare const mergeAll: (
   n: number,
-  bufferSize?: number | undefined,
-  mergeStrategy?: MergeStrategy.BackPressure | MergeStrategy.BufferSliding | undefined
+  bufferSize?: number,
+  mergeStrategy?: MergeStrategy.MergeStrategy
 ) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
   channels: Channel<
     Env,
@@ -2467,8 +2467,8 @@ Added in v1.0.0
 ```ts
 export declare const mergeAllWith: (
   n: number,
-  bufferSize?: number | undefined,
-  mergeStrategy?: MergeStrategy.BackPressure | MergeStrategy.BufferSliding | undefined
+  bufferSize?: number,
+  mergeStrategy?: MergeStrategy.MergeStrategy
 ) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem, OutDone>(
   channels: Channel<
     Env,
