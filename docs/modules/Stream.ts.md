@@ -473,7 +473,7 @@ stream, by setting it to `None`.
 ```ts
 export declare const asyncEffect: <R, E, A>(
   register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R, E, unknown>,
-  outputBuffer?: number | undefined
+  outputBuffer?: number
 ) => Stream<R, E, A>
 ```
 
@@ -491,7 +491,7 @@ be used to signal the end of the stream, by setting it to `None`.
 ```ts
 export declare const asyncInterrupt: <R, E, A>(
   register: (emit: Emit.Emit<R, E, A, void>) => Either.Either<Effect.Effect<R, never, unknown>, Stream<R, E, A>>,
-  outputBuffer?: number | undefined
+  outputBuffer?: number
 ) => Stream<R, E, A>
 ```
 
@@ -509,7 +509,7 @@ the end of the stream, by setting it to `None`.
 ```ts
 export declare const asyncOption: <R, E, A>(
   register: (emit: Emit.Emit<R, E, A, void>) => Option.Option<Stream<R, E, A>>,
-  outputBuffer?: number | undefined
+  outputBuffer?: number
 ) => Stream<R, E, A>
 ```
 
@@ -528,8 +528,8 @@ end of the stream, by setting it to `None`.
 export declare const asyncScoped: <R, E, A>(
   register: (
     cb: (effect: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>) => void
-  ) => Effect.Effect<R | Scope.Scope, E, unknown>,
-  outputBuffer?: number | undefined
+  ) => Effect.Effect<Scope.Scope | R, E, unknown>,
+  outputBuffer?: number
 ) => Stream<R, E, A>
 ```
 
@@ -852,7 +852,7 @@ Creates a stream from a subscription to a `Hub`.
 **Signature**
 
 ```ts
-export declare const fromHub: <A>(hub: Hub.Hub<A>, maxChunkSize?: number | undefined) => Stream<never, never, A>
+export declare const fromHub: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -868,7 +868,7 @@ the hub while the stream describes taking messages from the hub.
 ```ts
 export declare const fromHubScoped: <A>(
   hub: Hub.Hub<A>,
-  maxChunkSize?: number | undefined
+  maxChunkSize?: number
 ) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
 ```
 
@@ -887,7 +887,7 @@ The hub will be shut down once the stream is closed.
 ```ts
 export declare const fromHubScopedWithShutdown: <A>(
   hub: Hub.Hub<A>,
-  maxChunkSize?: number | undefined
+  maxChunkSize?: number
 ) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
 ```
 
@@ -902,10 +902,7 @@ The hub will be shut down once the stream is closed.
 **Signature**
 
 ```ts
-export declare const fromHubWithShutdown: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number | undefined
-) => Stream<never, never, A>
+export declare const fromHubWithShutdown: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -943,7 +940,7 @@ Creates a stream from an iterator
 ```ts
 export declare const fromIteratorSucceed: <A>(
   iterator: IterableIterator<A>,
-  maxChunkSize?: number | undefined
+  maxChunkSize?: number
 ) => Stream<never, never, A>
 ```
 
@@ -972,10 +969,7 @@ Creates a stream from a queue of values
 **Signature**
 
 ```ts
-export declare const fromQueue: <A>(
-  queue: Queue.Dequeue<A>,
-  maxChunkSize?: number | undefined
-) => Stream<never, never, A>
+export declare const fromQueue: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -990,7 +984,7 @@ the stream is closed.
 ```ts
 export declare const fromQueueWithShutdown: <A>(
   queue: Queue.Dequeue<A>,
-  maxChunkSize?: number | undefined
+  maxChunkSize?: number
 ) => Stream<never, never, A>
 ```
 
@@ -1120,7 +1114,7 @@ bound not included).
 **Signature**
 
 ```ts
-export declare const range: (min: number, max: number, chunkSize?: number | undefined) => Stream<never, never, number>
+export declare const range: (min: number, max: number, chunkSize?: number) => Stream<never, never, number>
 ```
 
 Added in v1.0.0
@@ -5191,7 +5185,7 @@ buffered by this operator.
 ```ts
 export declare const mergeAll: (
   n: number,
-  bufferSize?: number | undefined
+  bufferSize?: number
 ) => <R, E, A>(...streams: Stream<R, E, A>[]) => Stream<R, E, A>
 ```
 
@@ -5205,7 +5199,7 @@ Like `Stream.mergeAll`, but runs all streams concurrently.
 
 ```ts
 export declare const mergeAllUnbounded: (
-  bufferSize?: number | undefined
+  bufferSize?: number
 ) => <R, E, A>(...streams: Stream<R, E, A>[]) => Stream<R, E, A>
 ```
 
