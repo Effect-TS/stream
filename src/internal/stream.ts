@@ -4648,12 +4648,12 @@ export const provideService = dual<
   <T extends Context.Tag<any, any>>(
     tag: T,
     resource: Context.Tag.Service<T>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<Exclude<R, Context.Tag.Service<T>>, E, A>,
+  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<Exclude<R, Context.Tag.Identifier<T>>, E, A>,
   <R, E, A, T extends Context.Tag<any, any>>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     resource: Context.Tag.Service<T>
-  ) => Stream.Stream<Exclude<R, Context.Tag.Service<T>>, E, A>
+  ) => Stream.Stream<Exclude<R, Context.Tag.Identifier<T>>, E, A>
 >(
   3,
   <R, E, A, T extends Context.Tag<any, any>>(
@@ -4668,12 +4668,12 @@ export const provideServiceEffect = dual<
   <T extends Context.Tag<any, any>, R2, E2>(
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>,
+  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A>,
   <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
-  ) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
+  ) => Stream.Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A>
 >(
   3,
   <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
@@ -4688,20 +4688,20 @@ export const provideServiceStream = dual<
   <T extends Context.Tag<any, any>, R2, E2>(
     tag: T,
     stream: Stream.Stream<R2, E2, Context.Tag.Service<T>>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>,
+  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A>,
   <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     stream: Stream.Stream<R2, E2, Context.Tag.Service<T>>
-  ) => Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
+  ) => Stream.Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A>
 >(
   3,
   <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream.Stream<R, E, A>,
     tag: T,
     stream: Stream.Stream<R2, E2, Context.Tag.Service<T>>
-  ): Stream.Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A> =>
-    contextWithStream((env: Context.Context<R2 | Exclude<R, Context.Tag.Service<T>>>) =>
+  ): Stream.Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A> =>
+    contextWithStream((env: Context.Context<R2 | Exclude<R, Context.Tag.Identifier<T>>>) =>
       flatMap(
         stream,
         (service) => pipe(self, provideContext(Context.add(env, tag, service) as Context.Context<R | R2>))
