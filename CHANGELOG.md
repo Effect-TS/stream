@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.22.1
+
+### Patch Changes
+
+- [#109](https://github.com/Effect-TS/stream/pull/109) [`a139e7e`](https://github.com/Effect-TS/stream/commit/a139e7e1d2ff00e444f773cba6c1e2127ca7b16d) Thanks [@tim-smart](https://github.com/tim-smart)! - fix Stream provideService signatures
+
 ## 0.22.0
 
 ### Minor Changes
