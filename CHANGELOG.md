@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.22.2
+
+### Patch Changes
+
+- [#111](https://github.com/Effect-TS/stream/pull/111) [`8e6e5fd`](https://github.com/Effect-TS/stream/commit/8e6e5fd15b4f85288a20aa63a8d1800814470018) Thanks [@IMax153](https://github.com/IMax153)! - update `@effect/data` to `v0.12.4` and `@effect/io` to `v0.26.0`
+
 ## 0.22.1
 
 ### Patch Changes
