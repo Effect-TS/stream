@@ -1,37 +1,41 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:nixos/nixpkgs/nixpkgs-unstable";
+      url = "github:NixOS/nixpkgs/nixos-23.05";
+    };
+
+    devenv = {
+      url = "github:cachix/devenv";
+    };
+
+    flake-utils = {
+      url = "github:numtide/flake-utils";
     };
   };
 
-  outputs = {
+  outputs = inputs @ {
     self,
     nixpkgs,
-  }: let
-    # Helper generating outputs for each desired system
-    forAllSystems = nixpkgs.lib.genAttrs [
-      "x86_64-darwin"
-      "x86_64-linux"
-      "aarch64-darwin"
-      "aarch64-linux"
-    ];
-
-    # Import nixpkgs' package set for each system.
-    nixpkgsFor = forAllSystems (system:
-      import nixpkgs {
-        inherit system;
-      });
-  in {
-    formatter = forAllSystems (system: nixpkgsFor.${system}.alejandra);
-
-    devShells = forAllSystems (system: {
-      default = nixpkgsFor.${system}.mkShell {
-        buildInputs = with nixpkgsFor.${system}; [
-          nodejs-16_x
-          nodePackages.pnpm
-        ];
+    devenv,
+    flake-utils,
+    ...
+  }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      devShells = {
+        default = devenv.lib.mkShell {
+          inherit inputs pkgs;
+          modules = [
+            {
+              packages = [
+                pkgs.git
+                pkgs.nodejs-18_x
+                pkgs.nodePackages.pnpm
+              ];
+            }
+          ];
+        };
       };
     });
-  };
 }

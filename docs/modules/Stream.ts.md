@@ -1504,9 +1504,9 @@ requires more than one service use `Stream.provideContext` instead.
 export declare const provideService: {
   <T extends Context.Tag<any, any>>(tag: T, resource: Context.Tag.Service<T>): <R, E, A>(
     self: Stream<R, E, A>
-  ) => Stream<Exclude<R, Context.Tag.Service<T>>, E, A>
+  ) => Stream<Exclude<R, Context.Tag.Identifier<T>>, E, A>
   <R, E, A, T extends Context.Tag<any, any>>(self: Stream<R, E, A>, tag: T, resource: Context.Tag.Service<T>): Stream<
-    Exclude<R, Context.Tag.Service<T>>,
+    Exclude<R, Context.Tag.Identifier<T>>,
     E,
     A
   >
@@ -1526,12 +1526,12 @@ requires more than one service use `Stream.provideContext` instead.
 export declare const provideServiceEffect: {
   <T extends Context.Tag<any, any>, R2, E2>(tag: T, effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
     self: Stream<R, E, A>
-  ) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
+  ) => Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A>
   <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream<R, E, A>,
     tag: T,
     effect: Effect.Effect<R2, E2, Context.Tag.Service<T>>
-  ): Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E | E2, A>
+  ): Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E | E2, A>
 }
 ```
 
@@ -1548,12 +1548,12 @@ requires more than one service use `Stream.provideContext` instead.
 export declare const provideServiceStream: {
   <T extends Context.Tag<any, any>, R2, E2>(tag: T, stream: Stream<R2, E2, Context.Tag.Service<T>>): <R, E, A>(
     self: Stream<R, E, A>
-  ) => Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E2 | E, A>
+  ) => Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E2 | E, A>
   <R, E, A, T extends Context.Tag<any, any>, R2, E2>(
     self: Stream<R, E, A>,
     tag: T,
     stream: Stream<R2, E2, Context.Tag.Service<T>>
-  ): Stream<R2 | Exclude<R, Context.Tag.Service<T>>, E | E2, A>
+  ): Stream<R2 | Exclude<R, Context.Tag.Identifier<T>>, E | E2, A>
 }
 ```
 
