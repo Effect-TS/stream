@@ -74,12 +74,28 @@ const collectAllLoop = <In>(
   )
 
 /** @internal */
-export const collectAllN = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> => {
-  return pipe(
-    fromEffect(Effect.sync(() => Chunk.empty<In>())),
-    flatMap((builder) => foldUntil<Chunk.Chunk<In>, In>(builder, n, (chunk, input) => pipe(chunk, Chunk.append(input))))
+export const collectAllN = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> =>
+  suspend(() => fromChannel(collectAllNLoop(n, Chunk.empty())))
+
+/** @internal */
+const collectAllNLoop = <In>(
+  n: number,
+  acc: Chunk.Chunk<In>
+): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, Chunk.Chunk<In>> =>
+  core.readWithCause(
+    (chunk: Chunk.Chunk<In>) => {
+      const [collected, leftovers] = Chunk.splitAt(chunk, n)
+      if (collected.length < n) {
+        return collectAllNLoop(n - collected.length, Chunk.concat(acc, collected))
+      }
+      if (Chunk.isEmpty(leftovers)) {
+        return core.succeed(Chunk.concat(acc, collected))
+      }
+      return core.flatMap(core.write(leftovers), () => core.succeed(Chunk.concat(acc, collected)))
+    },
+    core.failCause,
+    () => core.succeed(acc)
   )
-}
 
 /** @internal */
 export const collectAllFrom = <R, E, In, L extends In, Z>(
