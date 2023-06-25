@@ -6409,7 +6409,7 @@ export const throttleEnforceEffectBurst = dual<
                   core.flatMap(() => loop(available - weight, currentTimeMillis))
                 )
               }
-              return loop(available, currentTimeMillis)
+              return loop(tokens, timestampMillis)
             }),
             channel.unwrap
           ),
