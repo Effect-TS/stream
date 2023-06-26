@@ -322,7 +322,11 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                     this._input!,
                     identity,
                     (emitted) => {
-                      this._currentChannel = read.more(emitted) as core.Primitive
+                      try {
+                        this._currentChannel = read.more(emitted) as core.Primitive
+                      } catch (error) {
+                        this._currentChannel = read.done.onExit(Exit.die(error)) as core.Primitive
+                      }
                       return undefined
                     },
                     (exit) => {
