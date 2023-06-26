@@ -2998,43 +2998,87 @@ export const groupAdjacentBy = dual<
     f: (a: A) => K
   ): Stream.Stream<R, E, readonly [K, Chunk.NonEmptyChunk<A>]> => {
     type Output = readonly [K, Chunk.NonEmptyChunk<A>]
-    const go = (
-      input: Chunk.Chunk<A>,
-      state: Option.Option<Output>
-    ): readonly [Chunk.Chunk<Output>, Option.Option<Output>] =>
-      pipe(
-        input,
-        Chunk.reduce([Chunk.empty<Output>(), state] as const, ([outputs, option], a) => {
-          if (Option.isSome(option)) {
-            const key = option.value[0]
-            const aggregated = option.value[1]
-            const key2 = f(a)
-            if (Equal.equals(key2)(key)) {
-              return [
-                outputs,
-                Option.some([key, pipe(aggregated, Chunk.append(a)) as Chunk.NonEmptyChunk<A>] as const)
-              ] as const
+    const groupAdjacentByChunk = (
+      state: Option.Option<Output>,
+      chunk: Chunk.Chunk<A>
+    ): readonly [Option.Option<Output>, Chunk.Chunk<Output>] => {
+      if (Chunk.isEmpty(chunk)) {
+        return [state, Chunk.empty()] as const
+      }
+      const builder: Array<Output> = []
+      let from = 0
+      let until = 0
+      let key: K | undefined = undefined
+      let previousChunk = Chunk.empty<A>()
+      switch (state._tag) {
+        case "Some": {
+          const tuple = state.value
+          key = tuple[0]
+          let loop = true
+          while (loop && until < chunk.length) {
+            const input = Chunk.unsafeGet(chunk, until)
+            const updatedKey = f(input)
+            if (!Equal.equals(key, updatedKey)) {
+              builder.push([
+                key,
+                Chunk.unsafeFromArray(Array.from(tuple[1]).slice(from, until)) as Chunk.NonEmptyChunk<A>
+              ])
+              key = updatedKey
+              from = until
+              loop = false
             }
-            return [
-              pipe(outputs, Chunk.append(option.value)),
-              Option.some([key2, Chunk.of(a)] as const)
-            ] as const
+            until = until + 1
           }
-          return [outputs, Option.some([f(a), Chunk.of(a)] as const)] as const
-        })
-      )
-    const chunkAdjacent = (
-      buffer: Option.Option<Output>
+          if (loop) {
+            previousChunk = tuple[1]
+          }
+          break
+        }
+        case "None": {
+          key = f(Chunk.unsafeGet(chunk, until))
+          until = until + 1
+          break
+        }
+      }
+      while (until < chunk.length) {
+        const input = Chunk.unsafeGet(chunk, until)
+        const updatedKey = f(input)
+        if (!Equal.equals(key, updatedKey)) {
+          builder.push([key, Chunk.unsafeFromArray(Array.from(chunk).slice(from, until)) as Chunk.NonEmptyChunk<A>])
+          key = updatedKey
+          from = until
+        }
+        until = until + 1
+      }
+      const nonEmptyChunk = Chunk.concat(previousChunk, Chunk.unsafeFromArray(Array.from(chunk).slice(from, until)))
+      const output = Chunk.unsafeFromArray(builder)
+      return [Option.some([key, nonEmptyChunk as Chunk.NonEmptyChunk<A>] as const), output]
+    }
+
+    const groupAdjacent = (
+      state: Option.Option<Output>
     ): Channel.Channel<never, never, Chunk.Chunk<A>, unknown, never, Chunk.Chunk<Output>, unknown> =>
       core.readWithCause(
         (input: Chunk.Chunk<A>) => {
-          const [outputs, newBuffer] = go(input, buffer)
-          return pipe(core.write(outputs), core.flatMap(() => chunkAdjacent(newBuffer)))
+          const [updatedState, output] = groupAdjacentByChunk(state, input)
+          return Chunk.isEmpty(output)
+            ? groupAdjacent(updatedState)
+            : core.flatMap(core.write(output), () => groupAdjacent(updatedState))
         },
-        core.failCause,
-        () => pipe(buffer, Option.match(core.unit, (output) => core.write(Chunk.of(output))))
+        (cause) =>
+          Option.match(
+            state,
+            () => core.failCause(cause),
+            (output) => core.flatMap(core.write(Chunk.of(output)), () => core.failCause(cause))
+          ),
+        (done) =>
+          Option.match(
+            state,
+            () => core.succeedNow(done),
+            (output) => core.flatMap(core.write(Chunk.of(output)), () => core.succeedNow(done))
+          )
       )
-    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(chunkAdjacent(Option.none()))))
+    return new StreamImpl(channel.pipeToOrFail(toChannel(self), groupAdjacent(Option.none())))
   }
 )
 
