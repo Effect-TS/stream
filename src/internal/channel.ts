@@ -973,14 +973,14 @@ export const mapOutEffect = Debug.dualWithTrace<
     f: (o: OutElem) => Effect.Effect<Env1, OutErr1, OutElem1>
   ): Channel.Channel<Env | Env1, InErr, InElem, InDone, OutErr | OutErr1, OutElem1, OutDone> => {
     const reader: Channel.Channel<Env | Env1, OutErr, OutElem, OutDone, OutErr | OutErr1, OutElem1, OutDone> = core
-      .readWith(
+      .readWithCause(
         (outElem) =>
           pipe(
             core.fromEffect(restore(f)(outElem)),
             core.flatMap(core.write),
             core.flatMap(() => reader)
           ),
-        core.fail,
+        core.failCause,
         core.succeedNow
       )
     return core.pipeTo(self, reader).traced(trace)

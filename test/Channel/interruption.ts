@@ -82,4 +82,10 @@ describe.concurrent("Channel", () => {
       const result = yield* $(pipe(Channel.runDrain(channel), Effect.either))
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
+
+  it.effect("runScoped - in uninterruptible region", () =>
+    Effect.gen(function*(_) {
+      const result = yield* _(Effect.uninterruptible(Channel.run(Channel.unit())))
+      assert.isUndefined(result)
+    }))
 })

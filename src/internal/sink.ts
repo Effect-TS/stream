@@ -74,12 +74,28 @@ const collectAllLoop = <In>(
   )
 
 /** @internal */
-export const collectAllN = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> => {
-  return pipe(
-    fromEffect(Effect.sync(() => Chunk.empty<In>())),
-    flatMap((builder) => foldUntil<Chunk.Chunk<In>, In>(builder, n, (chunk, input) => pipe(chunk, Chunk.append(input))))
+export const collectAllN = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> =>
+  suspend(() => fromChannel(collectAllNLoop(n, Chunk.empty())))
+
+/** @internal */
+const collectAllNLoop = <In>(
+  n: number,
+  acc: Chunk.Chunk<In>
+): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, Chunk.Chunk<In>> =>
+  core.readWithCause(
+    (chunk: Chunk.Chunk<In>) => {
+      const [collected, leftovers] = Chunk.splitAt(chunk, n)
+      if (collected.length < n) {
+        return collectAllNLoop(n - collected.length, Chunk.concat(acc, collected))
+      }
+      if (Chunk.isEmpty(leftovers)) {
+        return core.succeed(Chunk.concat(acc, collected))
+      }
+      return core.flatMap(core.write(leftovers), () => core.succeed(Chunk.concat(acc, collected)))
+    },
+    core.failCause,
+    () => core.succeed(acc)
   )
-}
 
 /** @internal */
 export const collectAllFrom = <R, E, In, L extends In, Z>(
@@ -394,7 +410,8 @@ export const contramapChunksEffect = dual<
 )
 
 /** @internal */
-export const count = (): Sink.Sink<never, never, unknown, never, number> => foldLeft(0, (s, _) => s + 1)
+export const count = (): Sink.Sink<never, never, unknown, never, number> =>
+  foldLeftChunks(0, (acc, chunk) => acc + chunk.length)
 
 /** @internal */
 export const die = (defect: unknown): Sink.Sink<never, never, unknown, never, never> => failCause(Cause.die(defect))
@@ -1438,10 +1455,7 @@ export const ignoreLeftover = <R, E, In, L, Z>(self: Sink.Sink<R, E, In, L, Z>):
 
 /** @internal */
 export const last = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =>
-  foldLeft(
-    Option.none() as Option.Option<In>,
-    (_, input) => Option.some(input)
-  )
+  foldLeftChunks(Option.none<In>(), (s, input) => Option.orElse(Chunk.last(input), () => s))
 
 /** @internal */
 export const leftover = <L>(chunk: Chunk.Chunk<L>): Sink.Sink<never, never, unknown, L, void> =>
@@ -1933,7 +1947,8 @@ const indexWhere = <A>(self: Chunk.Chunk<A>, predicate: Predicate<A>, from = 0):
 export const succeed = <Z>(z: Z): Sink.Sink<never, never, unknown, never, Z> => new SinkImpl(core.succeed(z))
 
 /** @internal */
-export const sum = (): Sink.Sink<never, never, number, never, number> => foldLeft(0, (a, b) => a + b)
+export const sum = (): Sink.Sink<never, never, number, never, number> =>
+  foldLeftChunks(0, (acc, chunk) => acc + Chunk.reduce(chunk, 0, (s, a) => s + a))
 
 /** @internal */
 export const summarized = dual<

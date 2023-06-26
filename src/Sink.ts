@@ -106,7 +106,10 @@ export declare namespace Sink {
  * @since 1.0.0
  * @category mapping
  */
-export const as = internal.as
+export const as: {
+  <Z2>(z: Z2): <R, E, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In, L, Z2>
+  <R, E, In, L, Z, Z2>(self: Sink<R, E, In, L, Z>, z: Z2): Sink<R, E, In, L, Z2>
+} = internal.as
 
 /**
  * A sink that collects all elements into a `Chunk`.

@@ -322,7 +322,11 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                     this._input!,
                     identity,
                     (emitted) => {
-                      this._currentChannel = read.more(emitted) as core.Primitive
+                      try {
+                        this._currentChannel = read.more(emitted) as core.Primitive
+                      } catch (error) {
+                        this._currentChannel = read.done.onExit(Exit.die(error)) as core.Primitive
+                      }
                       return undefined
                     },
                     (exit) => {
@@ -1196,16 +1200,20 @@ export const run = Debug.methodWithTrace((trace) =>
 export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
   self: Channel.Channel<Env, InErr, unknown, InDone, OutErr, never, OutDone>
 ): Effect.Effect<Env | Scope.Scope, OutErr, OutDone> => {
-  const run = (deferred: Deferred.Deferred<OutErr, OutDone>, scope: Scope.Scope) =>
+  const run = (
+    channelDeferred: Deferred.Deferred<OutErr, OutDone>,
+    scopeDeferred: Deferred.Deferred<never, void>,
+    scope: Scope.Scope
+  ) =>
     Effect.acquireUseRelease(
       Effect.sync(() => new ChannelExecutor(self, void 0, identity)),
       (exec) =>
         Effect.suspend(() =>
           pipe(
             runScopedInterpret(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec),
-            Effect.intoDeferred(deferred),
-            Effect.zipRight(Deferred.await(deferred)),
-            Effect.zipLeft(Effect.never())
+            Effect.intoDeferred(channelDeferred),
+            Effect.zipRight(Deferred.await(channelDeferred)),
+            Effect.zipLeft(Deferred.await(scopeDeferred))
           )
         ),
       (exec, exit) => {
@@ -1219,14 +1227,28 @@ export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
         )
       }
     )
-  return Effect.flatMap(Effect.scope(), (parent) =>
-    Effect.flatMap(
-      Scope.fork(parent, ExecutionStrategy.sequential),
-      (child) =>
-        Effect.flatMap(Deferred.make<OutErr, OutDone>(), (deferred) =>
-          Effect.flatMap(Effect.forkScoped(run(deferred, child)), (fiber) =>
-            Effect.zipLeft(Deferred.await(deferred), Fiber.inheritAll(fiber))))
-    ))
+  return Effect.uninterruptibleMask((restore) =>
+    Effect.flatMap(Effect.scope(), (parent) =>
+      pipe(
+        Effect.all(
+          Scope.fork(parent, ExecutionStrategy.sequential),
+          Deferred.make<OutErr, OutDone>(),
+          Deferred.make<never, void>()
+        ),
+        Effect.flatMap(([child, channelDeferred, scopeDeferred]) =>
+          pipe(
+            Effect.forkScoped(restore(run(channelDeferred, scopeDeferred, child))),
+            Effect.flatMap((fiber) =>
+              pipe(
+                Effect.addFinalizer(() => Deferred.succeed(scopeDeferred, void 0)),
+                Effect.zipRight(restore(Deferred.await(channelDeferred))),
+                Effect.zipLeft(Fiber.inheritAll(fiber))
+              )
+            )
+          )
+        )
+      ))
+  )
 }
 
 /** @internal */

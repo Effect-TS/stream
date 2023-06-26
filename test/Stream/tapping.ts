@@ -74,6 +74,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         Stream.make(1, 1, 2, 3, 5, 8),
+        Stream.rechunk(1),
         Stream.tapSink(sink),
         Stream.runCollect
       ))

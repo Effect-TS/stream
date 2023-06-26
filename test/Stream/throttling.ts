@@ -36,6 +36,20 @@ describe.concurrent("Stream", () => {
       assert.isTrue(Chunk.isEmpty(result))
     }))
 
+  it.effect("throttleEnforce - refill bucket tokens", () =>
+    Effect.gen(function*(_) {
+      const fiber = yield* _(
+        Stream.fromSchedule(Schedule.spaced(Duration.millis(100))),
+        Stream.take(10),
+        Stream.throttleEnforce(() => 1, 1, Duration.millis(200)),
+        Stream.runCollect,
+        Effect.fork
+      )
+      yield* _(TestClock.adjust(Duration.seconds(1)))
+      const result = yield* _(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [0, 2, 4, 6, 8])
+    }))
+
   it.effect("throttleShape", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.bounded<number>(10))

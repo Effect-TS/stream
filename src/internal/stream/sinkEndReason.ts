@@ -24,7 +24,7 @@ export interface UpstreamEnd {
 }
 
 /** @internal */
-export const SchedulEnd: SinkEndReason = { _tag: OP_SCHEDULE_END }
+export const ScheduleEnd: SinkEndReason = { _tag: OP_SCHEDULE_END }
 
 /** @internal */
 export const UpstreamEnd: SinkEndReason = { _tag: OP_UPSTREAM_END }
