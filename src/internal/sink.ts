@@ -410,7 +410,8 @@ export const contramapChunksEffect = dual<
 )
 
 /** @internal */
-export const count = (): Sink.Sink<never, never, unknown, never, number> => foldLeft(0, (s, _) => s + 1)
+export const count = (): Sink.Sink<never, never, unknown, never, number> =>
+  foldLeftChunks(0, (acc, chunk) => acc + chunk.length)
 
 /** @internal */
 export const die = (defect: unknown): Sink.Sink<never, never, unknown, never, never> => failCause(Cause.die(defect))
