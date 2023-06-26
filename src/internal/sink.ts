@@ -1454,10 +1454,7 @@ export const ignoreLeftover = <R, E, In, L, Z>(self: Sink.Sink<R, E, In, L, Z>):
 
 /** @internal */
 export const last = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =>
-  foldLeft(
-    Option.none() as Option.Option<In>,
-    (_, input) => Option.some(input)
-  )
+  foldLeftChunks(Option.none<In>(), (s, input) => Option.orElse(Chunk.last(input), () => s))
 
 /** @internal */
 export const leftover = <L>(chunk: Chunk.Chunk<L>): Sink.Sink<never, never, unknown, L, void> =>
