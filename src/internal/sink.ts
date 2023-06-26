@@ -1946,7 +1946,8 @@ const indexWhere = <A>(self: Chunk.Chunk<A>, predicate: Predicate<A>, from = 0):
 export const succeed = <Z>(z: Z): Sink.Sink<never, never, unknown, never, Z> => new SinkImpl(core.succeed(z))
 
 /** @internal */
-export const sum = (): Sink.Sink<never, never, number, never, number> => foldLeft(0, (a, b) => a + b)
+export const sum = (): Sink.Sink<never, never, number, never, number> =>
+  foldLeftChunks(0, (acc, chunk) => acc + Chunk.reduce(chunk, 0, (s, a) => s + a))
 
 /** @internal */
 export const summarized = dual<
