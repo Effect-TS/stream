@@ -5624,36 +5624,17 @@ export const runIntoQueueElementsScoped = dualWithTrace<
       queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>
     ): Effect.Effect<R | Scope.Scope, never, void> => {
       const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Exit.Exit<Option.Option<E>, A>, unknown> =
-        core
-          .readWithCause(
-            (input: Chunk.Chunk<A>) =>
-              pipe(
-                input,
-                Chunk.reduce(
-                  core.unit() as Channel.Channel<
-                    R,
-                    E,
-                    Chunk.Chunk<A>,
-                    unknown,
-                    never,
-                    Exit.Exit<Option.Option<E>, A>,
-                    unknown
-                  >,
-                  (acc, a) =>
-                    pipe(
-                      acc,
-                      channel.zipRight(core.write(Exit.succeed(a)))
-                    )
-                ),
-                core.flatMap(() => writer)
-              ),
-            (cause) => pipe(core.write(Exit.failCause(pipe(cause, Cause.map(Option.some))))),
-            () => core.write(Exit.fail(Option.none()))
-          )
+        core.readWithCause(
+          (input: Chunk.Chunk<A>) =>
+            core.flatMap(
+              core.fromEffect(Queue.offerAll(queue, Chunk.map(input, Exit.succeed))),
+              () => writer
+            ),
+          (cause) => core.fromEffect(Queue.offer(queue, Exit.failCause(Cause.map(cause, Option.some)))),
+          () => core.fromEffect(Queue.offer(queue, Exit.fail(Option.none())))
+        )
       return pipe(
-        toChannel(self),
-        core.pipeTo(writer),
-        channel.mapOutEffect((exit) => pipe(Queue.offer(queue, exit))),
+        core.pipeTo(toChannel(self), writer),
         channel.drain,
         channelExecutor.runScoped,
         Effect.asUnit
@@ -5679,14 +5660,13 @@ export const runIntoQueueScoped = dualWithTrace<
     ): Effect.Effect<R | Scope.Scope, never, void> => {
       const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Take.Take<E, A>, unknown> = core
         .readWithCause(
-          (input: Chunk.Chunk<A>) => pipe(core.write(_take.chunk(input)), core.flatMap(() => writer)),
+          (input: Chunk.Chunk<A>) => core.flatMap(core.write(_take.chunk(input)), () => writer),
           (cause) => core.write(_take.failCause(cause)),
           () => core.write(_take.end)
         )
       return pipe(
-        toChannel(self),
-        core.pipeTo(writer),
-        channel.mapOutEffect((take) => pipe(Queue.offer(queue, take))),
+        core.pipeTo(toChannel(self), writer),
+        channel.mapOutEffect((take) => Queue.offer(queue, take)),
         channel.drain,
         channelExecutor.runScoped,
         Effect.asUnit
