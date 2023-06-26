@@ -1167,6 +1167,9 @@ export const ensuring: {
 
 /**
  * Executes the provided finalizer after this stream's finalizers run.
+ *
+ * @since 1.0.0
+ * @category utils
  */
 export const ensuringWith: {
   <E, R2>(
