@@ -2305,6 +2305,17 @@ export const ensuring = dual<
 )
 
 /** @internal */
+export const ensuringWith = dual<
+  <E, R2>(
+    finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>
+  ) => <R, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R | R2, E, A>,
+  <R, E, A, R2>(
+    self: Stream.Stream<R, E, A>,
+    finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>
+  ) => Stream.Stream<R | R2, E, A>
+>(2, (self, finalizer) => new StreamImpl(core.ensuringWith(toChannel(self), finalizer)))
+
+/** @internal */
 export const context = <R>(): Stream.Stream<R, never, Context.Context<R>> => fromEffect(Effect.context<R>())
 
 /** @internal */

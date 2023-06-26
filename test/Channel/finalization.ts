@@ -1,5 +1,6 @@
 import { pipe } from "@effect/data/Function"
 import * as Effect from "@effect/io/Effect"
+import * as Exit from "@effect/io/Exit"
 import * as Ref from "@effect/io/Ref"
 import * as Channel from "@effect/stream/Channel"
 import * as it from "@effect/stream/test/utils/extend"
@@ -153,5 +154,17 @@ describe.concurrent("Channel", () => {
         "pulled 2",
         "close 2"
       ])
+    }))
+
+  it.effect("ensuring - finalizer failure is propagated", () =>
+    Effect.gen(function*(_) {
+      const result = yield* _(
+        Channel.unit(),
+        Channel.ensuring(Effect.dieMessage("die")),
+        Channel.ensuring(Effect.unit()),
+        Channel.runDrain,
+        Effect.exit
+      )
+      assert.isTrue(Exit.isFailure(result))
     }))
 })

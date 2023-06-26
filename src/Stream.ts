@@ -1165,6 +1165,14 @@ export const ensuring: {
   <R, E, A, R2, _>(self: Stream<R, E, A>, finalizer: Effect.Effect<R2, never, _>): Stream<R | R2, E, A>
 } = internal.ensuring
 
+  /**
+   * Executes the provided finalizer after this stream's finalizers run.
+   */
+export const ensuringWith: {
+  <E, R2>(finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, A, R2>(self: Stream<R, E, A>, finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>): Stream<R | R2, E, A>
+} = internal.ensuringWith
+
 /**
  * Accesses the whole context of the stream.
  *
