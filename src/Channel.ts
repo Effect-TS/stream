@@ -3,7 +3,6 @@
  */
 import type * as Chunk from "@effect/data/Chunk"
 import type * as Context from "@effect/data/Context"
-import type * as Debug from "@effect/data/Debug"
 import type * as Either from "@effect/data/Either"
 import type { LazyArg } from "@effect/data/Function"
 import type * as Option from "@effect/data/Option"
@@ -72,7 +71,6 @@ export type ChannelTypeId = typeof ChannelTypeId
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 {
-  traced(trace: Debug.Trace): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: ChannelUnify<this>
   [Unify.blacklistSymbol]?: ChannelUnifyBlacklist
