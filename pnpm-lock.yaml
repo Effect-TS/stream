@@ -9,8 +9,8 @@ dependencies:
     specifier: ~0.12.9
     version: 0.12.9
   '@effect/io':
-    specifier: ~0.26.2
-    version: 0.26.2
+    specifier: ~0.27.0
+    version: 0.27.0
 
 devDependencies:
   '@babel/cli':
@@ -94,6 +94,9 @@ devDependencies:
   fast-check:
     specifier: ^3.10.0
     version: 3.10.0
+  glob:
+    specifier: ^10.3.0
+    version: 10.3.0
   madge:
     specifier: ^6.1.0
     version: 6.1.0(typescript@5.1.3)
@@ -736,8 +739,8 @@ packages:
       - '@types/node'
     dev: true
 
-  /@effect/io@0.26.2:
-    resolution: {integrity: sha512-PdqtgmfEw88kX1UKZZvK42dpMZPSCPmdWAAzN17yCzfEsA3HoPjjxo9jLyzfjtUcU+tWO0tF/GY7pcDVLcJZAg==}
+  /@effect/io@0.27.0:
+    resolution: {integrity: sha512-3ZUaf6B+aH83HPJ84KTthd4glgrRk6DXj9M915OB9G4cMbbJAwE/709tgamzD2IxcfSlqPowtvx73Cs4N7Ywrw==}
     dependencies:
       '@effect/data': 0.12.9
     dev: false
@@ -3733,8 +3736,8 @@ packages:
       find-index: 0.1.1
     dev: true
 
-  /glob@10.2.7:
-    resolution: {integrity: sha512-jTKehsravOJo8IJxUGfZILnkvVJM/MOfHRs8QcXolVef2zNI9Tqyy5+SeuOAZd3upViEZQLyFpQhYiHLrMUNmA==}
+  /glob@10.3.0:
+    resolution: {integrity: sha512-AQ1/SB9HH0yCx1jXAT4vmCbTOPe5RQ+kCurjbel5xSCGhebumUv+GJZfa1rEqor3XIViqwSEmlkZCQD43RWrBg==}
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
     dependencies:
@@ -5914,7 +5917,7 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
     dependencies:
-      glob: 10.2.7
+      glob: 10.3.0
     dev: true
 
   /rollup@3.25.1:
