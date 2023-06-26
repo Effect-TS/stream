@@ -6318,23 +6318,54 @@ export const tapSink = dual<
     sink: Sink.Sink<R2, E2, A, unknown, unknown>
   ): Stream.Stream<R | R2, E | E2, A> =>
     pipe(
-      fromEffect(Queue.bounded<Take.Take<E | E2, A>>(1)),
-      flatMap((queue) => {
+      fromEffect(Effect.all(Queue.bounded<Take.Take<E | E2, A>>(1), Deferred.make<never, void>())),
+      flatMap(([queue, deferred]) => {
         const right = flattenTake(fromQueue(queue, 1))
         const loop: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, unknown> = core
           .readWithCause(
             (chunk: Chunk.Chunk<A>) =>
               pipe(
-                core.fromEffect(pipe(Queue.offer(queue, _take.chunk(chunk)))),
-                channel.zipRight(core.write(chunk)),
-                core.flatMap(() => loop)
+                core.fromEffect(Queue.offer(queue, _take.chunk(chunk))),
+                core.foldCauseChannel(
+                  () => core.flatMap(core.write(chunk), () => channel.identityChannel()),
+                  () => core.flatMap(core.write(chunk), () => loop)
+                )
+              ) as Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, unknown>,
+            (cause: Cause.Cause<E | E2>) =>
+              pipe(
+                core.fromEffect(Queue.offer(queue, _take.failCause(cause))),
+                core.foldCauseChannel(
+                  () => core.failCause(cause),
+                  () => core.failCause(cause)
+                )
               ),
-            (cause) => core.fromEffect(pipe(Queue.offer(queue, _take.failCause(cause)))),
-            () => core.fromEffect(pipe(Queue.offer(queue, _take.end)))
+            () =>
+              pipe(
+                core.fromEffect(Queue.offer(queue, _take.end)),
+                core.foldCauseChannel(
+                  () => core.unit(),
+                  () => core.unit()
+                )
+              )
           )
         return pipe(
-          new StreamImpl(pipe(toChannel(self), core.pipeTo(loop))),
-          mergeHaltStrategy(execute(pipe(right, run(sink))), haltStrategy.Both)
+          new StreamImpl(pipe(
+            core.pipeTo(toChannel(self), loop),
+            channel.ensuring(Effect.zipRight(
+              Effect.forkDaemon(Queue.offer(queue, _take.end)),
+              Deferred.await(deferred)
+            ))
+          )),
+          mergeHaltStrategy(
+            execute(pipe(
+              run(right, sink),
+              Effect.ensuring(Effect.zipRight(
+                Queue.shutdown(queue),
+                Deferred.succeed(deferred, void 0)
+              ))
+            )),
+            haltStrategy.Both
+          )
         )
       })
     )
