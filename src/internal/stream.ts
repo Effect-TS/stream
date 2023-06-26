@@ -1467,14 +1467,8 @@ export const combineChunks = dual<
               handoff,
               Handoff.offer<Take.Take<Err, Elem>>(_take.failCause(cause))
             )),
-          () =>
-            pipe(
-              core.fromEffect(pipe(
-                handoff,
-                Handoff.offer<Take.Take<Err, Elem>>(_take.end)
-              )),
-              core.flatMap(() => producer(handoff, latch))
-            )
+          (): Channel.Channel<R, Err, Chunk.Chunk<Elem>, unknown, never, never, unknown> =>
+            core.fromEffect(Handoff.offer<Take.Take<Err, Elem>>(handoff, _take.end))
         )
       )
     )
