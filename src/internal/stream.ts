@@ -15,14 +15,12 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as FiberId from "@effect/io/Fiber/Id"
 import * as Hub from "@effect/io/Hub"
 import * as Layer from "@effect/io/Layer"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Runtime from "@effect/io/Runtime"
 import * as Schedule from "@effect/io/Schedule"
-import * as Intervals from "@effect/io/Schedule/Intervals"
 import type * as Scope from "@effect/io/Scope"
 import type * as Channel from "@effect/stream/Channel"
 import * as MergeDecision from "@effect/stream/Channel/MergeDecision"
@@ -123,34 +121,6 @@ export const aggregateWithin = dual<
   ): Stream.Stream<R | R2 | R3, E | E2, B> => pipe(self, aggregateWithinEither(sink, schedule), collectRight)
 )
 
-interface AggregateWithinEitherDriver<Env, Input, Output> {
-  readonly next: (now: number, input: Input) => Effect.Effect<Env, Option.Option<never>, Output>
-  readonly reset: Effect.Effect<Env, never, void>
-}
-
-const aggregateWithinEitherDriver = <Env, Input, Output>(
-  schedule: Schedule.Schedule<Env, Input, Output>
-): Effect.Effect<never, never, AggregateWithinEitherDriver<Env, Input, Output>> =>
-  Effect.map(Effect.all(Effect.clock(), Ref.make(schedule.initial)), ([clock, ref]) => ({
-    next: (now, input) =>
-      pipe(
-        Ref.get(ref),
-        Effect.flatMap((state) => schedule.step(now, input, state)),
-        Effect.flatMap(([state, output, decision]) =>
-          decision._tag === "Done"
-            ? Effect.zipRight(Ref.set(ref, state), Effect.fail(Option.none()))
-            : Effect.as(
-              Effect.zipRight(
-                Ref.set(ref, state),
-                clock.sleep(Duration.millis(Intervals.start(decision.intervals) - now))
-              ),
-              output
-            )
-        )
-      ),
-    reset: Ref.set(ref, schedule.initial)
-  }))
-
 /** @internal */
 export const aggregateWithinEither = dual<
   <R2, E2, A, A2, B, R3, C>(
@@ -169,230 +139,290 @@ export const aggregateWithinEither = dual<
     sink: Sink.Sink<R2, E2, A | A2, A2, B>,
     schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream.Stream<R | R2 | R3, E | E2, Either.Either<C, B>> => {
-    type ScheduleState = Suspended | DownstreamPulled | Running
-
-    interface Suspended {
-      readonly _tag: "Suspended"
-      readonly c: C
-      readonly resume: Deferred.Deferred<never, readonly [number, Option.Option<B>, number]>
-    }
-
-    interface DownstreamPulled {
-      readonly _tag: "DownstreamPulled"
-      readonly lastB: Option.Option<B>
-      readonly started: number
-      readonly epoch: number
-    }
-
-    interface Running {
-      readonly _tag: "Running"
-      readonly lastB: Option.Option<B>
-      readonly started: number
-      readonly epoch: number
-    }
-
     const layer = Effect.all(
       Handoff.make<HandoffSignal.HandoffSignal<E | E2, A>>(),
-      aggregateWithinEitherDriver(schedule),
-      Effect.clock(),
-      Clock.currentTimeMillis()
+      Ref.make<SinkEndReason.SinkEndReason>(SinkEndReason.ScheduleEnd),
+      Ref.make(Chunk.empty<A | A2>()),
+      Schedule.driver(schedule),
+      Ref.make(false),
+      Ref.make(false)
     )
-
     return pipe(
       fromEffect(layer),
-      flatMap(([handoff, scheduleDriver, clock, now]) => {
-        let sinkEndReason: SinkEndReason.SinkEndReason = SinkEndReason.ScheduleEnd
-        let sinkLeftovers: Chunk.Chunk<A | A2> = Chunk.empty()
-        let scheduleState: ScheduleState = { _tag: "Running", lastB: Option.none(), started: now, epoch: 0 }
-        let consumed = false
-        let endAfterEmit = false
-
+      flatMap(([handoff, sinkEndReason, sinkLeftovers, scheduleDriver, consumed, endAfterEmit]) => {
         const handoffProducer: Channel.Channel<never, E | E2, Chunk.Chunk<A>, unknown, never, never, unknown> = core
           .readWithCause(
-            (input: Chunk.Chunk<A>) => {
-              if (Chunk.isNonEmpty(input)) {
-                return core.flatMap(
-                  core.fromEffect(Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
-                    handoff,
-                    HandoffSignal.emit(input)
-                  )),
-                  () => handoffProducer
-                )
-              }
-              return handoffProducer
-            },
+            (input: Chunk.Chunk<A>) =>
+              pipe(
+                core.fromEffect(pipe(
+                  handoff,
+                  Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(HandoffSignal.emit(input)),
+                  Effect.when(() => Chunk.isNonEmpty(input))
+                )),
+                core.flatMap(() => handoffProducer)
+              ),
             (cause) =>
-              core.fromEffect(Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
-                handoff,
-                HandoffSignal.halt(cause)
-              )),
+              pipe(
+                core.fromEffect(
+                  pipe(
+                    handoff,
+                    Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(HandoffSignal.halt(cause))
+                  )
+                )
+              ),
             () =>
-              core.fromEffect(Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
-                handoff,
-                HandoffSignal.end(SinkEndReason.UpstreamEnd)
-              ))
-          )
-
-        const handoffConsumer: Channel.Channel<never, unknown, unknown, unknown, E | E2, Chunk.Chunk<A | A2>, void> =
-          core.suspend(() => {
-            const leftovers = sinkLeftovers
-            sinkLeftovers = Chunk.empty()
-            if (Chunk.isNonEmpty(leftovers)) {
-              consumed = true
-              return core.flatMap(core.write(leftovers), () => handoffConsumer)
-            }
-            return pipe(
-              core.fromEffect(Handoff.take(handoff)),
-              core.flatMap((signal) => {
-                switch (signal._tag) {
-                  case "Halt": {
-                    return core.failCause(signal.cause)
-                  }
-                  case "Emit": {
-                    consumed = true
-                    return core.flatMap(
-                      core.write(signal.elements),
-                      () => endAfterEmit ? core.unit() : handoffConsumer
-                    )
-                  }
-                  case "End": {
-                    if (signal.reason._tag === "ScheduleEnd") {
-                      sinkEndReason = signal.reason
-                      endAfterEmit = true
-                      return consumed ? core.unit() : handoffConsumer
-                    }
-                    sinkEndReason = signal.reason
-                    endAfterEmit = true
-                    return core.unit()
-                  }
-                }
-              })
-            )
-          })
-
-        const timeout = (
-          now: number,
-          lastB: Option.Option<B>,
-          scheduleEpoch: number
-        ): Effect.Effect<R2 | R3, Option.Option<never>, C> =>
-          pipe(
-            scheduleDriver.next(now, lastB),
-            Effect.matchEffect(
-              () => Effect.zipRight(scheduleDriver.reset, timeout(now, lastB, scheduleEpoch)),
-              (c) => {
-                const resume = Deferred.unsafeMake<never, readonly [number, Option.Option<B>, number]>(FiberId.none)
-                const current = scheduleState
-                switch (current._tag) {
-                  case "DownstreamPulled": {
-                    if (scheduleEpoch === current.epoch) {
-                      scheduleState = { _tag: "Suspended", c, resume }
-                      return pipe(
-                        Handoff.offer(handoff, HandoffSignal.end(SinkEndReason.ScheduleEnd)),
-                        Effect.zipRight(Deferred.await(resume)),
-                        Effect.flatMap(([now, lastB, epoch]) => timeout(now, lastB, epoch))
-                      )
-                    }
-                    return timeout(current.started, current.lastB, current.epoch)
-                  }
-                  case "Running": {
-                    if (scheduleEpoch === current.epoch) {
-                      scheduleState = { _tag: "Suspended", c, resume }
-                      return pipe(
-                        Deferred.await(resume),
-                        Effect.flatMap(([now, lastB, epoch]) => timeout(now, lastB, epoch))
-                      )
-                    }
-                    return timeout(current.started, current.lastB, current.epoch)
-                  }
-                  case "Suspended": {
-                    return pipe(
-                      Deferred.await(current.resume),
-                      Effect.flatMap(([now, lastB, epoch]) => timeout(now, lastB, epoch))
-                    )
-                  }
-                }
-              }
-            )
-          )
-
-        const writeDone: Channel.Channel<never, E2, Chunk.Chunk<A2>, B, E2, Chunk.Chunk<Either.Either<C, B>>, B> = core
-          .suspend(() => {
-            const loop = (
-              c: Option.Option<C>
-            ): Channel.Channel<never, E2, Chunk.Chunk<A2>, B, E2, Chunk.Chunk<Either.Either<C, B>>, B> =>
-              core.readWithCause(
-                (elements: Chunk.Chunk<A2>) => {
-                  sinkLeftovers = Chunk.concat(sinkLeftovers, elements)
-                  return loop(c)
-                },
-                core.failCause,
-                (output) => {
-                  if (consumed) {
-                    const toWrite: Chunk.Chunk<Either.Either<C, B>> = Option.match(
-                      c,
-                      () => Chunk.of(Either.right(output)),
-                      (c) => Chunk.make(Either.right(output), Either.left(c))
-                    )
-                    return core.flatMap(core.write(toWrite), () => core.succeed(output))
-                  }
-                  return core.succeed(output)
-                }
+              pipe(
+                core.fromEffect(
+                  pipe(
+                    handoff,
+                    Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(HandoffSignal.end(SinkEndReason.UpstreamEnd))
+                  )
+                )
               )
-
-            const current = scheduleState
-            switch (current._tag) {
-              case "Suspended": {
-                return core.flatMap(
-                  core.fromEffect(
-                    Effect.forkDaemon(Handoff.offer(handoff, HandoffSignal.end(SinkEndReason.ScheduleEnd)))
-                  ),
-                  () => loop(Option.some(current.c))
+          )
+        const handoffConsumer: Channel.Channel<never, unknown, unknown, unknown, E | E2, Chunk.Chunk<A | A2>, void> =
+          pipe(
+            Ref.getAndSet(sinkLeftovers, Chunk.empty()),
+            Effect.flatMap((leftovers) => {
+              if (Chunk.isNonEmpty(leftovers)) {
+                return pipe(
+                  Ref.set(consumed, true),
+                  Effect.zipRight(Effect.succeed(pipe(
+                    core.write(leftovers),
+                    core.flatMap(() => handoffConsumer)
+                  )))
                 )
               }
-              case "DownstreamPulled": {
-                return loop(Option.none())
-              }
-              case "Running": {
-                scheduleState = { ...current, _tag: "DownstreamPulled" }
-                return loop(Option.none())
-              }
-            }
-          })
-
-        const scheduledAggregator = (
-          sinkEpoch: number
-        ): Channel.Channel<R2, unknown, unknown, unknown, E | E2, Chunk.Chunk<Either.Either<C, B>>, unknown> =>
-          pipe(
-            handoffConsumer,
-            channel.pipeToOrFail(core.pipeTo(_sink.toChannel(sink), writeDone)),
-            core.flatMap((b) => {
-              switch (sinkEndReason._tag) {
-                case "ScheduleEnd": {
-                  return core.suspend(() => {
-                    const now = clock.unsafeCurrentTimeMillis()
-                    const current = scheduleState
-                    scheduleState = { _tag: "Running", lastB: Option.some(b), started: now, epoch: sinkEpoch + 1 }
-                    if (current._tag === "Suspended") {
-                      Deferred.unsafeDone(current.resume, Effect.succeed([now, Option.none(), sinkEpoch + 1] as const))
+              return pipe(
+                Handoff.take(handoff),
+                Effect.map((signal) => {
+                  switch (signal._tag) {
+                    case HandoffSignal.OP_EMIT: {
+                      return pipe(
+                        core.fromEffect(Ref.set(consumed, true)),
+                        channel.zipRight(core.write(signal.elements)),
+                        channel.zipRight(core.fromEffect(Ref.get(endAfterEmit))),
+                        core.flatMap((bool) => bool ? core.unit() : handoffConsumer)
+                      )
                     }
-                    consumed = false
-                    endAfterEmit = false
-                    return scheduledAggregator(sinkEpoch + 1)
-                  })
-                }
-                case "UpstreamEnd": {
-                  return core.unit()
-                }
-              }
-            })
+                    case HandoffSignal.OP_HALT: {
+                      return core.failCause(signal.cause)
+                    }
+                    case HandoffSignal.OP_END: {
+                      if (signal.reason._tag === SinkEndReason.OP_SCHEDULE_END) {
+                        return pipe(
+                          Ref.get(consumed),
+                          Effect.map((bool) =>
+                            bool ?
+                              core.fromEffect(
+                                pipe(
+                                  Ref.set(sinkEndReason, SinkEndReason.ScheduleEnd),
+                                  Effect.zipRight(Ref.set(endAfterEmit, true))
+                                )
+                              ) :
+                              pipe(
+                                core.fromEffect(
+                                  pipe(
+                                    Ref.set(sinkEndReason, SinkEndReason.ScheduleEnd),
+                                    Effect.zipRight(Ref.set(endAfterEmit, true))
+                                  )
+                                ),
+                                core.flatMap(() => handoffConsumer)
+                              )
+                          ),
+                          channel.unwrap
+                        )
+                      }
+                      return pipe(
+                        Ref.set<SinkEndReason.SinkEndReason>(sinkEndReason, signal.reason),
+                        Effect.zipRight(Ref.set(endAfterEmit, true)),
+                        core.fromEffect
+                      )
+                    }
+                  }
+                })
+              )
+            }),
+            channel.unwrap
           )
-
-        return unwrapScoped(pipe(
-          channelExecutor.run(core.pipeTo(toChannel(self), handoffProducer)),
-          Effect.forkScoped,
-          Effect.zipRight(Effect.forkScoped(timeout(now, Option.none(), 0))),
-          Effect.as(new StreamImpl(scheduledAggregator(0)))
-        ))
+        const timeout = (lastB: Option.Option<B>): Effect.Effect<R2 | R3, Option.Option<never>, C> =>
+          scheduleDriver.next(lastB)
+        const scheduledAggregator = (
+          sinkFiber: Fiber.RuntimeFiber<E | E2, readonly [Chunk.Chunk<Chunk.Chunk<A | A2>>, B]>,
+          scheduleFiber: Fiber.RuntimeFiber<Option.Option<never>, C>,
+          scope: Scope.Scope
+        ): Channel.Channel<R2 | R3, unknown, unknown, unknown, E | E2, Chunk.Chunk<Either.Either<C, B>>, unknown> => {
+          const forkSink = pipe(
+            Ref.set(consumed, false),
+            Effect.zipRight(Ref.set(endAfterEmit, false)),
+            Effect.zipRight(
+              pipe(
+                handoffConsumer,
+                channel.pipeToOrFail(_sink.toChannel(sink)),
+                core.collectElements,
+                channelExecutor.run,
+                Effect.forkIn(scope)
+              )
+            )
+          )
+          const handleSide = (
+            leftovers: Chunk.Chunk<Chunk.Chunk<A | A2>>,
+            b: B,
+            c: Option.Option<C>
+          ): Channel.Channel<R2 | R3, unknown, unknown, unknown, E | E2, Chunk.Chunk<Either.Either<C, B>>, unknown> =>
+            pipe(
+              Ref.set(sinkLeftovers, Chunk.flatten(leftovers)),
+              Effect.zipRight(
+                pipe(
+                  Ref.get(sinkEndReason),
+                  Effect.map((reason) => {
+                    switch (reason._tag) {
+                      case SinkEndReason.OP_SCHEDULE_END: {
+                        return pipe(
+                          Effect.all(
+                            Ref.get(consumed),
+                            forkSink,
+                            pipe(timeout(Option.some(b)), Effect.forkIn(scope))
+                          ),
+                          Effect.map(([wasConsumed, sinkFiber, scheduleFiber]) => {
+                            const toWrite = pipe(
+                              c,
+                              Option.match(
+                                (): Chunk.Chunk<Either.Either<C, B>> => Chunk.of(Either.right(b)),
+                                (c): Chunk.Chunk<Either.Either<C, B>> => Chunk.make(Either.right(b), Either.left(c))
+                              )
+                            )
+                            if (wasConsumed) {
+                              return pipe(
+                                core.write(toWrite),
+                                core.flatMap(() => scheduledAggregator(sinkFiber, scheduleFiber, scope))
+                              )
+                            }
+                            return scheduledAggregator(sinkFiber, scheduleFiber, scope)
+                          }),
+                          channel.unwrap
+                        )
+                      }
+                      case SinkEndReason.OP_UPSTREAM_END: {
+                        return pipe(
+                          Ref.get(consumed),
+                          Effect.map((wasConsumed) =>
+                            wasConsumed ?
+                              core.write(Chunk.of<Either.Either<C, B>>(Either.right(b))) :
+                              core.unit()
+                          ),
+                          channel.unwrap
+                        )
+                      }
+                    }
+                  })
+                )
+              ),
+              channel.unwrap
+            )
+          return pipe(
+            Fiber.join(sinkFiber),
+            Effect.raceWith(
+              Fiber.join(scheduleFiber),
+              (sinkExit, _) =>
+                pipe(
+                  Fiber.interrupt(scheduleFiber),
+                  Effect.zipRight(pipe(
+                    Effect.done(sinkExit),
+                    Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
+                  ))
+                ),
+              (scheduleExit, _) =>
+                pipe(
+                  Effect.done(scheduleExit),
+                  Effect.matchCauseEffect(
+                    (cause) =>
+                      pipe(
+                        Cause.failureOrCause(cause),
+                        Either.match(
+                          () =>
+                            pipe(
+                              handoff,
+                              Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
+                                HandoffSignal.end(SinkEndReason.ScheduleEnd)
+                              ),
+                              Effect.forkDaemon,
+                              Effect.zipRight(
+                                pipe(
+                                  Fiber.join(sinkFiber),
+                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
+                                )
+                              )
+                            ),
+                          (cause) =>
+                            pipe(
+                              handoff,
+                              Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
+                                HandoffSignal.halt(cause)
+                              ),
+                              Effect.forkDaemon,
+                              Effect.zipRight(
+                                pipe(
+                                  Fiber.join(sinkFiber),
+                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
+                                )
+                              )
+                            )
+                        )
+                      ),
+                    (c) =>
+                      pipe(
+                        handoff,
+                        Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
+                          HandoffSignal.end(SinkEndReason.ScheduleEnd)
+                        ),
+                        Effect.forkDaemon,
+                        Effect.zipRight(
+                          pipe(
+                            Fiber.join(sinkFiber),
+                            Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.some(c)))
+                          )
+                        )
+                      )
+                  )
+                )
+            ),
+            channel.unwrap
+          )
+        }
+        return unwrapScoped(
+          pipe(
+            self,
+            toChannel,
+            core.pipeTo(handoffProducer),
+            channelExecutor.run,
+            Effect.forkScoped,
+            Effect.zipRight(
+              pipe(
+                handoffConsumer,
+                channel.pipeToOrFail(_sink.toChannel(sink)),
+                core.collectElements,
+                channelExecutor.run,
+                Effect.forkScoped,
+                Effect.flatMap((sinkFiber) =>
+                  pipe(
+                    Effect.forkScoped(timeout(Option.none())),
+                    Effect.flatMap((scheduleFiber) =>
+                      pipe(
+                        Effect.scope(),
+                        Effect.map((scope) =>
+                          new StreamImpl(
+                            scheduledAggregator(sinkFiber, scheduleFiber, scope)
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
       })
     )
   }
