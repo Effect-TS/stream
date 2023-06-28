@@ -4088,6 +4088,15 @@ export const splitOnChunk: {
 } = internal.splitOnChunk
 
 /**
+ * Splits strings on newlines. Handles both Windows newlines (`\r\n`) and UNIX
+ * newlines (`\n`).
+ *
+ * @since 1.0.0
+ * @category combinators
+ */
+export const splitLines: <R, E>(self: Stream<R, E, string>) => Stream<R, E, string> = internal.splitLines
+
+/**
  * Creates a single-valued pure stream.
  *
  * @since 1.0.0
