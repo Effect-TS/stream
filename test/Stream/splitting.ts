@@ -3,7 +3,30 @@ import { pipe } from "@effect/data/Function"
 import * as Effect from "@effect/io/Effect"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import * as fc from "fast-check"
 import { assert, describe } from "vitest"
+
+const weirdStringForSplitLines: fc.Arbitrary<ReadonlyArray<string>> = fc.array(
+  fc.string().filter((s) => s !== "\n" && s !== "\r")
+).map((strings) => {
+  if (strings.length > 0 && strings[strings.length - 1] === "") {
+    return [...strings, "a"]
+  }
+  return strings
+})
+
+const testSplitLines = (
+  input: ReadonlyArray<Chunk.Chunk<string>>
+): Effect.Effect<never, never, readonly [ReadonlyArray<string>, ReadonlyArray<string>]> => {
+  const str = input.flatMap((chunk) => Chunk.toReadonlyArray(chunk).join("")).join("")
+  const expected = str.split(/\r?\n/)
+  return pipe(
+    Stream.fromChunks(...input),
+    Stream.splitLines,
+    Stream.runCollect,
+    Effect.map((chunk) => [expected, Chunk.toReadonlyArray(chunk)] as const)
+  )
+}
 
 describe.concurrent("Stream", () => {
   it.effect("split - should split properly", () =>
@@ -184,5 +207,86 @@ describe.concurrent("Stream", () => {
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1], [2]]
       )
+    }))
+
+  it.it("splitLines - preserves data", () =>
+    fc.assert(fc.asyncProperty(weirdStringForSplitLines, async (lines) => {
+      const data = lines.join("\n")
+      const program = pipe(
+        Stream.fromChunk(Chunk.of(data)),
+        Stream.splitLines,
+        Stream.runCollect,
+        Effect.map((chunk) => Chunk.toReadonlyArray(chunk).join("\n"))
+      )
+      const result = await Effect.runPromise(program)
+      assert.strictEqual(result, data)
+    })))
+
+  // it("splitLines - preserves data in chunks", () =>
+  //   fc.asyncProperty(fc.property(weirdStringForSplitLines), async (lines) => {
+  //     const data =
+  //   })
+  // )
+  // //   test("preserves data in chunks") {
+  // //     check(weirdStringGenForSplitLines) { xs =>
+  // //       val data = Chunk.fromIterable(xs.sliding(2, 2).toList.map(_.mkString("\n")))
+  // //       testSplitLines(Seq(data))
+  // //     }
+  // //   },
+
+  it.effect("splitLines - handles leftovers", () =>
+    Effect.gen(function*($) {
+      const chunks = [Chunk.of("abc\nbc")]
+      const [expected, result] = yield* $(testSplitLines(chunks))
+      assert.deepStrictEqual(expected, result)
+    }))
+
+  it.effect("splitLines - handles leftovers 2", () =>
+    Effect.gen(function*($) {
+      const chunks = [
+        Chunk.make("aa", "bb"),
+        Chunk.make("\nbbc\n", "ddb", "bd"),
+        Chunk.make("abc", "\n"),
+        Chunk.of("abc")
+      ]
+      const [expected, result] = yield* $(testSplitLines(chunks))
+      assert.deepStrictEqual(expected, result)
+    }))
+
+  it.effect("splitLines - aggregates chunks", () =>
+    Effect.gen(function*($) {
+      const chunks = [Chunk.make("abc", "\n", "bc", "\n", "bcd", "bcd")]
+      const [expected, result] = yield* $(testSplitLines(chunks))
+      assert.deepStrictEqual(expected, result)
+    }))
+
+  it.effect("splitLines - single newline edge case", () =>
+    Effect.gen(function*($) {
+      const chunks = [Chunk.of("\n")]
+      const [, result] = yield* $(testSplitLines(chunks))
+      // JavaScript arrays split `"\n"` into `["", ""]`, so we manually assert
+      // that the output should be the empty string here
+      assert.deepStrictEqual([""], result)
+    }))
+
+  it.effect("splitLines - no newlines", () =>
+    Effect.gen(function*($) {
+      const chunks = [Chunk.make("abc", "abc", "abc")]
+      const [expected, result] = yield* $(testSplitLines(chunks))
+      assert.deepStrictEqual(expected, result)
+    }))
+
+  it.effect("splitLines - \\r\\n on the boundary", () =>
+    Effect.gen(function*($) {
+      const chunks = [Chunk.make("abc\r", "\nabc")]
+      const [expected, result] = yield* $(testSplitLines(chunks))
+      assert.deepStrictEqual(expected, result)
+    }))
+
+  it.effect("splitLines - ZIO issue #6360", () =>
+    Effect.gen(function*($) {
+      const chunks = [Chunk.make("AAAAABBBB#\r\r\r\n", "test")]
+      const [_, result] = yield* $(testSplitLines(chunks))
+      assert.deepStrictEqual(["AAAAABBBB#\r\r", "test"], result)
     }))
 })

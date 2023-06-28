@@ -6104,6 +6104,91 @@ export const splitOnChunk = dual<
 })
 
 /** @internal */
+export const splitLines = <R, E>(self: Stream.Stream<R, E, string>): Stream.Stream<R, E, string> =>
+  suspend(() => {
+    let stringBuilder = ""
+    let midCRLF = false
+    const splitLinesChunk = (chunk: Chunk.Chunk<string>): Chunk.Chunk<string> => {
+      const chunkBuilder: Array<string> = []
+      Chunk.forEach(chunk, (str) => {
+        if (str.length !== 0) {
+          let from = 0
+          let indexOfCR = str.indexOf("\r")
+          let indexOfLF = str.indexOf("\n")
+          if (midCRLF) {
+            if (indexOfLF === 0) {
+              chunkBuilder.push(stringBuilder)
+              stringBuilder = ""
+              from = 1
+              indexOfLF = str.indexOf("\n", from)
+            } else {
+              stringBuilder = stringBuilder + "\r"
+            }
+            midCRLF = false
+          }
+          while (indexOfCR !== -1 || indexOfLF !== -1) {
+            if (indexOfCR === -1 || (indexOfLF !== -1 && indexOfLF < indexOfCR)) {
+              if (stringBuilder.length === 0) {
+                chunkBuilder.push(str.substring(from, indexOfLF))
+              } else {
+                console.log(str)
+                chunkBuilder.push(stringBuilder + str.substring(from, indexOfLF))
+                stringBuilder = ""
+              }
+              from = indexOfLF + 1
+              indexOfLF = str.indexOf("\n", from)
+            } else {
+              if (str.length === indexOfCR + 1) {
+                midCRLF = true
+                indexOfCR = -1
+              } else {
+                if (indexOfLF === indexOfCR + 1) {
+                  if (stringBuilder.length === 0) {
+                    chunkBuilder.push(str.substring(from, indexOfCR))
+                  } else {
+                    stringBuilder = stringBuilder + str.substring(from, indexOfCR)
+                    chunkBuilder.push(stringBuilder)
+                    stringBuilder = ""
+                  }
+                  from = indexOfCR + 2
+                  indexOfCR = str.indexOf("\r", from)
+                  indexOfLF = str.indexOf("\n", from)
+                } else {
+                  indexOfCR = str.indexOf("\r", indexOfCR + 1)
+                }
+              }
+            }
+          }
+          if (midCRLF) {
+            stringBuilder = stringBuilder + str.substring(from, str.length - 1)
+          } else {
+            stringBuilder = stringBuilder + str.substring(from, str.length)
+          }
+        }
+      })
+      return Chunk.unsafeFromArray(chunkBuilder)
+    }
+    const loop: Channel.Channel<R, E, Chunk.Chunk<string>, unknown, E, Chunk.Chunk<string>, unknown> = core
+      .readWithCause(
+        (input: Chunk.Chunk<string>) => {
+          const out = splitLinesChunk(input)
+          return Chunk.isEmpty(out)
+            ? loop
+            : core.flatMap(core.write(out), () => loop)
+        },
+        (cause) =>
+          stringBuilder.length === 0
+            ? core.failCause(cause)
+            : core.flatMap(core.write(Chunk.of(stringBuilder)), () => core.failCause(cause)),
+        (done) =>
+          stringBuilder.length === 0
+            ? core.succeed(done)
+            : core.flatMap(core.write(Chunk.of(stringBuilder)), () => core.succeed(done))
+      )
+    return new StreamImpl(core.pipeTo(toChannel(self), loop))
+  })
+
+/** @internal */
 export const succeed = <A>(value: A): Stream.Stream<never, never, A> => fromChunk(Chunk.of(value))
 
 /** @internal */

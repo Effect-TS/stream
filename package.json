@@ -71,6 +71,7 @@
     "@effect/docgen": "^0.1.1",
     "@effect/language-service": "^0.0.19",
     "@repo-tooling/eslint-plugin-dprint": "^0.0.4",
+    "@types/chai": "^4.3.5",
     "@types/node": "^20.3.0",
     "@typescript-eslint/eslint-plugin": "^5.59.9",
     "@typescript-eslint/parser": "^5.59.9",
