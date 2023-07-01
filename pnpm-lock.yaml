@@ -1,16 +1,12 @@
 lockfileVersion: '6.0'
 
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
-
 dependencies:
   '@effect/data':
     specifier: ~0.12.9
     version: 0.12.9
   '@effect/io':
-    specifier: ~0.27.0
-    version: 0.27.0
+    specifier: ~0.28.0
+    version: 0.28.0
 
 devDependencies:
   '@babel/cli':
@@ -742,8 +738,8 @@ packages:
       - '@types/node'
     dev: true
 
-  /@effect/io@0.27.0:
-    resolution: {integrity: sha512-3ZUaf6B+aH83HPJ84KTthd4glgrRk6DXj9M915OB9G4cMbbJAwE/709tgamzD2IxcfSlqPowtvx73Cs4N7Ywrw==}
+  /@effect/io@0.28.0:
+    resolution: {integrity: sha512-FzGyTAoRZMsXsji6I45/lLDqqFxV38rEhqebhLiXc995tfIvS+xAHkiTN+nrLFadTP0JL0H4ystSz4kcYgTy5Q==}
     dependencies:
       '@effect/data': 0.12.9
     dev: false
@@ -7129,3 +7125,7 @@ packages:
     dev: true
 
 publishDirectory: dist
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
