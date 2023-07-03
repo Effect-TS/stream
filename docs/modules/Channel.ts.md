@@ -1500,7 +1500,6 @@ Channels compose in a variety of ways:
 ```ts
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> {
-  traced(trace: Debug.Trace): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: ChannelUnify<this>
   [Unify.blacklistSymbol]?: ChannelUnifyBlacklist

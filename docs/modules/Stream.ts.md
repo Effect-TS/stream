@@ -12,6 +12,8 @@ Added in v1.0.0
 
 <h2 class="text-delta">Table of contents</h2>
 
+- [combinators](#combinators)
+  - [splitLines](#splitlines)
 - [constants](#constants)
   - [DefaultChunkSize](#defaultchunksize)
 - [constructors](#constructors)
@@ -55,6 +57,8 @@ Added in v1.0.0
   - [fromPull](#frompull)
   - [fromQueue](#fromqueue)
   - [fromQueueWithShutdown](#fromqueuewithshutdown)
+  - [fromReadableStream](#fromreadablestream)
+  - [fromReadableStreamByob](#fromreadablestreambyob)
   - [fromSchedule](#fromschedule)
   - [iterate](#iterate)
   - [make](#make)
@@ -136,6 +140,7 @@ Added in v1.0.0
   - [toQueueSliding](#toqueuesliding)
   - [toQueueSlidingCapacity](#toqueueslidingcapacity)
   - [toQueueUnbounded](#toqueueunbounded)
+  - [toReadableStream](#toreadablestream)
 - [do notation](#do-notation)
   - [Do](#do)
   - [bind](#bind)
@@ -300,6 +305,7 @@ Added in v1.0.0
   - [dropWhileEffect](#dropwhileeffect)
   - [either](#either)
   - [ensuring](#ensuring)
+  - [ensuringWith](#ensuringwith)
   - [forever](#forever)
   - [groupByKey](#groupbykey)
   - [groupByKeyBuffer](#groupbykeybuffer)
@@ -410,6 +416,21 @@ Added in v1.0.0
   - [zipWithPreviousAndNext](#zipwithpreviousandnext)
 
 ---
+
+# combinators
+
+## splitLines
+
+Splits strings on newlines. Handles both Windows newlines (`\r\n`) and UNIX
+newlines (`\n`).
+
+**Signature**
+
+```ts
+export declare const splitLines: <R, E>(self: Stream<R, E, string>) => Stream<R, E, string>
+```
+
+Added in v1.0.0
 
 # constants
 
@@ -528,7 +549,7 @@ end of the stream, by setting it to `None`.
 export declare const asyncScoped: <R, E, A>(
   register: (
     cb: (effect: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>) => void
-  ) => Effect.Effect<Scope.Scope | R, E, unknown>,
+  ) => Effect.Effect<R | Scope.Scope, E, unknown>,
   outputBuffer?: number
 ) => Stream<R, E, A>
 ```
@@ -986,6 +1007,39 @@ export declare const fromQueueWithShutdown: <A>(
   queue: Queue.Dequeue<A>,
   maxChunkSize?: number
 ) => Stream<never, never, A>
+```
+
+Added in v1.0.0
+
+## fromReadableStream
+
+Creates a stream from a `ReadableStream`.
+
+See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
+
+**Signature**
+
+```ts
+export declare const fromReadableStream: <A = Uint8Array>(
+  evaluate: LazyArg<ReadableStream<A>>
+) => Stream<never, internal.ReadableStreamError, A>
+```
+
+Added in v1.0.0
+
+## fromReadableStreamByob
+
+Creates a stream from a `ReadableStreamBYOBReader`.
+
+See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamBYOBReader.
+
+**Signature**
+
+```ts
+export declare const fromReadableStreamByob: (
+  evaluate: LazyArg<ReadableStream<Uint8Array>>,
+  allocSize?: number
+) => Stream<never, internal.ReadableStreamError, Uint8Array>
 ```
 
 Added in v1.0.0
@@ -2285,6 +2339,20 @@ closed, the queue will never again produce values and should be discarded.
 export declare const toQueueUnbounded: <R, E, A>(
   self: Stream<R, E, A>
 ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+```
+
+Added in v1.0.0
+
+## toReadableStream
+
+Converts the stream to a `ReadableStream`.
+
+See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
+
+**Signature**
+
+```ts
+export declare const toReadableStream: <E, A>(source: Stream<never, E, A>) => ReadableStream<A>
 ```
 
 Added in v1.0.0
@@ -4830,6 +4898,26 @@ Executes the provided finalizer after this stream's finalizers run.
 export declare const ensuring: {
   <R2, _>(finalizer: Effect.Effect<R2, never, _>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
   <R, E, A, R2, _>(self: Stream<R, E, A>, finalizer: Effect.Effect<R2, never, _>): Stream<R | R2, E, A>
+}
+```
+
+Added in v1.0.0
+
+## ensuringWith
+
+Executes the provided finalizer after this stream's finalizers run.
+
+**Signature**
+
+```ts
+export declare const ensuringWith: {
+  <E, R2>(finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, A>
+  <R, E, A, R2>(
+    self: Stream<R, E, A>,
+    finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>
+  ): Stream<R | R2, E, A>
 }
 ```
 
