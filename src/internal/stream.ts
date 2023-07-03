@@ -7107,7 +7107,7 @@ export const toReadableStream = <E, A>(source: Stream.Stream<never, E, A>) => {
             })
           })
         ),
-        Effect.tapErrorCause(() => scope.close(Exit.unit())),
+        Effect.tapErrorCause(() => Scope.close(scope, Exit.unit())),
         Effect.catchTags({
           "None": () =>
             Effect.sync(() => {
