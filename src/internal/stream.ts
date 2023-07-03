@@ -21,7 +21,7 @@ import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Runtime from "@effect/io/Runtime"
 import * as Schedule from "@effect/io/Schedule"
-import type * as Scope from "@effect/io/Scope"
+import * as Scope from "@effect/io/Scope"
 import type * as Channel from "@effect/stream/Channel"
 import * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as channel from "@effect/stream/internal/channel"
@@ -3016,6 +3016,79 @@ export const fromSchedule = <R, A>(schedule: Schedule.Schedule<R, unknown, A>): 
     Effect.map((driver) => repeatEffectOption(driver.next(void 0))),
     unwrap
   )
+
+export class ReadableStreamError {
+  readonly _tag = "ReadableStreamError"
+  constructor(readonly reason: unknown) {}
+}
+
+/** @internal */
+export const fromReadableStream = <A>(
+  evaluate: LazyArg<ReadableStream<A>>
+): Stream.Stream<never, ReadableStreamError, A> =>
+  unwrapScoped(Effect.map(
+    Effect.acquireRelease(
+      Effect.sync(() => evaluate().getReader()),
+      (reader) => Effect.promise(() => reader.cancel())
+    ),
+    (reader) =>
+      repeatEffectOption(
+        Effect.flatMap(
+          Effect.tryCatchPromise(
+            () => reader.read(),
+            (reason) => Option.some(new ReadableStreamError(reason))
+          ),
+          ({ done, value }) => done ? Effect.fail(Option.none()) : Effect.succeed(value)
+        )
+      )
+  ))
+
+/** @internal */
+export const fromReadableStreamByob = (
+  evaluate: LazyArg<ReadableStream<Uint8Array>>,
+  allocSize = 4096
+): Stream.Stream<never, ReadableStreamError, Uint8Array> =>
+  unwrapScoped(Effect.map(
+    Effect.acquireRelease(
+      Effect.sync(() => evaluate().getReader({ mode: "byob" })),
+      (reader) => Effect.promise(() => reader.cancel())
+    ),
+    (reader) =>
+      catchAll(
+        forever(readChunkStreamByobReader(reader, allocSize)),
+        (error) => error._tag === "EOF" ? empty : fail(error)
+      )
+  ))
+
+interface EOF {
+  readonly _tag: "EOF"
+}
+
+const readChunkStreamByobReader = (
+  reader: ReadableStreamBYOBReader,
+  size: number
+): Stream.Stream<never, EOF | ReadableStreamError, Uint8Array> => {
+  const buffer = new ArrayBuffer(size)
+  return paginateEffect(0, (offset) =>
+    Effect.flatMap(
+      Effect.tryCatchPromise(
+        () => reader.read(new Uint8Array(buffer, offset, buffer.byteLength - offset)),
+        (reason) => new ReadableStreamError(reason)
+      ),
+      ({ done, value }) => {
+        if (done) {
+          return Effect.fail({ _tag: "EOF" })
+        }
+        const newOffset = offset + value.byteLength
+        return Effect.succeed([
+          value,
+          newOffset >= buffer.byteLength
+            ? Option.none<number>()
+            : Option.some(newOffset)
+        ])
+      }
+    ))
+}
 
 /** @internal */
 export const groupAdjacentBy = dual<
@@ -7015,6 +7088,47 @@ export const toQueueUnbounded = methodWithTrace((trace) =>
       Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
     ).traced(trace)
 )
+
+/** @internal */
+export const toReadableStream = <E, A>(source: Stream.Stream<never, E, A>) => {
+  let pull: Effect.Effect<never, never, void>
+  let scope: Scope.CloseableScope
+  return new ReadableStream<A>({
+    start(controller) {
+      scope = Effect.runSync(Scope.make())
+      pull = pipe(
+        toPull(source),
+        Scope.use(scope),
+        Effect.runSync,
+        Effect.tap((chunk) =>
+          Effect.sync(() => {
+            Chunk.forEach(chunk, (a) => {
+              controller.enqueue(a)
+            })
+          })
+        ),
+        Effect.tapErrorCause(() => scope.close(Exit.unit())),
+        Effect.catchTags({
+          "None": () =>
+            Effect.sync(() => {
+              controller.close()
+            }),
+          "Some": (error) =>
+            Effect.sync(() => {
+              controller.error(error.value)
+            })
+        }),
+        Effect.asUnit
+      )
+    },
+    pull() {
+      return Effect.runPromise(pull)
+    },
+    cancel() {
+      return Effect.runPromise(Scope.close(scope, Exit.unit()))
+    }
+  })
+}
 
 /** @internal */
 export const transduce = dual<

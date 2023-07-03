@@ -210,6 +210,26 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
+  it.effect("fromReadableStream", () =>
+    Effect.gen(function*($) {
+      class NumberSource implements UnderlyingDefaultSource<number> {
+        #counter = 0
+        pull(controller: ReadableStreamDefaultController<number>) {
+          console.log(this.#counter)
+          controller.enqueue(this.#counter)
+          this.#counter = this.#counter + 1
+        }
+      }
+
+      const result = yield* $(
+        Stream.fromReadableStream(() => new ReadableStream(new NumberSource())),
+        Stream.take(10),
+        Stream.runCollect
+      )
+
+      expect(Array.from(result)).toEqual(Array.from({ length: 10 }, (_, i) => i))
+    }))
+
   it.effect("iterate", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
