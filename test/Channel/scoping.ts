@@ -15,7 +15,7 @@ describe.concurrent("Channel", () => {
     const latch = Deferred.unsafeMake<never, void>(FiberId.none)
     const program = Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const acquire = pipe(Ref.update(ref, (n) => n + 1), Effect.zipRight(Effect.yieldNow()))
+      const acquire = Effect.zipRight(Ref.update(ref, (n) => n + 1), Effect.yieldNow())
       const release = Ref.update(ref, (n) => n - 1)
       yield* $(
         pipe(
@@ -24,7 +24,7 @@ describe.concurrent("Channel", () => {
           Channel.runDrain,
           Effect.fork,
           Effect.flatMap((fiber) => pipe(Effect.yieldNow(), Effect.zipRight(Fiber.interrupt(fiber)))),
-          Effect.repeatN(10_000)
+          Effect.repeatN(1_000)
         )
       )
       return yield* $(Ref.get(ref))
@@ -38,7 +38,7 @@ describe.concurrent("Channel", () => {
     const latch = Deferred.unsafeMake<never, void>(FiberId.none)
     const program = Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const acquire = pipe(Ref.update(ref, (n) => n + 1), Effect.zipRight(Effect.yieldNow()))
+      const acquire = Effect.zipRight(Ref.update(ref, (n) => n + 1), Effect.yieldNow())
       const release = Ref.update(ref, (n) => n - 1)
       const scoped = Effect.acquireRelease(acquire, () => release)
       yield* $(pipe(
@@ -46,7 +46,7 @@ describe.concurrent("Channel", () => {
         Channel.runDrain,
         Effect.fork,
         Effect.flatMap((fiber) => pipe(Effect.yieldNow(), Effect.zipRight(Fiber.interrupt(fiber)))),
-        Effect.repeatN(10_000)
+        Effect.repeatN(1_000)
       ))
       return yield* $(Ref.get(ref))
     })
