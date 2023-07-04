@@ -1020,9 +1020,10 @@ See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
 **Signature**
 
 ```ts
-export declare const fromReadableStream: <A = Uint8Array>(
-  evaluate: LazyArg<ReadableStream<A>>
-) => Stream<never, internal.ReadableStreamError, A>
+export declare const fromReadableStream: <A, E>(
+  evaluate: LazyArg<ReadableStream<A>>,
+  onError: (error: unknown) => E
+) => Stream<never, E, A>
 ```
 
 Added in v1.0.0
@@ -1036,10 +1037,11 @@ See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamBYOBReader.
 **Signature**
 
 ```ts
-export declare const fromReadableStreamByob: (
+export declare const fromReadableStreamByob: <E>(
   evaluate: LazyArg<ReadableStream<Uint8Array>>,
+  onError: (error: unknown) => E,
   allocSize?: number
-) => Stream<never, internal.ReadableStreamError, Uint8Array>
+) => Stream<never, E, Uint8Array>
 ```
 
 Added in v1.0.0
