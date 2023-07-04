@@ -212,17 +212,23 @@ describe.concurrent("Stream", () => {
 
   it.effect("fromReadableStream", () =>
     Effect.gen(function*($) {
+      class FromReadableStreamError {
+        readonly _tag = "FromReadableStreamError"
+        constructor(readonly error: unknown) {}
+      }
       class NumberSource implements UnderlyingDefaultSource<number> {
         #counter = 0
         pull(controller: ReadableStreamDefaultController<number>) {
-          console.log(this.#counter)
           controller.enqueue(this.#counter)
           this.#counter = this.#counter + 1
         }
       }
 
       const result = yield* $(
-        Stream.fromReadableStream(() => new ReadableStream(new NumberSource())),
+        Stream.fromReadableStream(
+          () => new ReadableStream(new NumberSource()),
+          (error) => new FromReadableStreamError(error)
+        ),
         Stream.take(10),
         Stream.runCollect
       )

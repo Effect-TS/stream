@@ -3023,9 +3023,10 @@ export class ReadableStreamError {
 }
 
 /** @internal */
-export const fromReadableStream = <A>(
-  evaluate: LazyArg<ReadableStream<A>>
-): Stream.Stream<never, ReadableStreamError, A> =>
+export const fromReadableStream = <A, E>(
+  evaluate: LazyArg<ReadableStream<A>>,
+  onError: (error: unknown) => E
+): Stream.Stream<never, E, A> =>
   unwrapScoped(Effect.map(
     Effect.acquireRelease(
       Effect.sync(() => evaluate().getReader()),
@@ -3036,7 +3037,7 @@ export const fromReadableStream = <A>(
         Effect.flatMap(
           Effect.tryCatchPromise(
             () => reader.read(),
-            (reason) => Option.some(new ReadableStreamError(reason))
+            (reason) => Option.some(onError(reason))
           ),
           ({ done, value }) => done ? Effect.fail(Option.none()) : Effect.succeed(value)
         )
@@ -3044,10 +3045,11 @@ export const fromReadableStream = <A>(
   ))
 
 /** @internal */
-export const fromReadableStreamByob = (
+export const fromReadableStreamByob = <E>(
   evaluate: LazyArg<ReadableStream<Uint8Array>>,
+  onError: (error: unknown) => E,
   allocSize = 4096
-): Stream.Stream<never, ReadableStreamError, Uint8Array> =>
+): Stream.Stream<never, E, Uint8Array> =>
   unwrapScoped(Effect.map(
     Effect.acquireRelease(
       Effect.sync(() => evaluate().getReader({ mode: "byob" })),
@@ -3055,8 +3057,11 @@ export const fromReadableStreamByob = (
     ),
     (reader) =>
       catchAll(
-        forever(readChunkStreamByobReader(reader, allocSize)),
-        (error) => error._tag === "EOF" ? empty : fail(error)
+        forever(readChunkStreamByobReader(reader, onError, allocSize)),
+        (error) =>
+          typeof error === "object" && error !== null && "_tag" in error && error._tag === "EOF" ?
+            empty :
+            fail(error as E)
       )
   ))
 
@@ -3064,16 +3069,17 @@ interface EOF {
   readonly _tag: "EOF"
 }
 
-const readChunkStreamByobReader = (
+const readChunkStreamByobReader = <E>(
   reader: ReadableStreamBYOBReader,
+  onError: (error: unknown) => E,
   size: number
-): Stream.Stream<never, EOF | ReadableStreamError, Uint8Array> => {
+): Stream.Stream<never, E | EOF, Uint8Array> => {
   const buffer = new ArrayBuffer(size)
   return paginateEffect(0, (offset) =>
     Effect.flatMap(
       Effect.tryCatchPromise(
         () => reader.read(new Uint8Array(buffer, offset, buffer.byteLength - offset)),
-        (reason) => new ReadableStreamError(reason)
+        (reason) => onError(reason)
       ),
       ({ done, value }) => {
         if (done) {

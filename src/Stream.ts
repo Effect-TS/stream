@@ -1803,9 +1803,10 @@ export const fromQueueWithShutdown: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: 
  * @since 1.0.0
  * @category constructors
  */
-export const fromReadableStream: <A = Uint8Array>(
-  evaluate: LazyArg<ReadableStream<A>>
-) => Stream<never, internal.ReadableStreamError, A> = internal.fromReadableStream
+export const fromReadableStream: <A, E>(
+  evaluate: LazyArg<ReadableStream<A>>,
+  onError: (error: unknown) => E
+) => Stream<never, E, A> = internal.fromReadableStream
 
 /**
  * Creates a stream from a `ReadableStreamBYOBReader`.
@@ -1816,10 +1817,11 @@ export const fromReadableStream: <A = Uint8Array>(
  * @since 1.0.0
  * @category constructors
  */
-export const fromReadableStreamByob: (
+export const fromReadableStreamByob: <E>(
   evaluate: LazyArg<ReadableStream<Uint8Array>>,
+  onError: (error: unknown) => E,
   allocSize?: number
-) => Stream<never, internal.ReadableStreamError, Uint8Array> = internal.fromReadableStreamByob
+) => Stream<never, E, Uint8Array> = internal.fromReadableStreamByob
 
 /**
  * Creates a stream from a `Schedule` that does not require any further
