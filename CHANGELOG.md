@@ -1,5 +1,41 @@
 # @effect/stream
 
+## 0.24.0
+
+### Minor Changes
+
+- [#117](https://github.com/Effect-TS/stream/pull/117) [`50d6ccc`](https://github.com/Effect-TS/stream/commit/50d6cccfa158868d4d5e26f5caf4d3562a2b3995) Thanks [@IMax153](https://github.com/IMax153)! - remove native tracing
+
+### Patch Changes
+
+- [#118](https://github.com/Effect-TS/stream/pull/118) [`6a10f7e`](https://github.com/Effect-TS/stream/commit/6a10f7e0bffe3a5b1bd938b932817417386e6a28) Thanks [@IMax153](https://github.com/IMax153)! - add Stream.splitLines
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - close scope in uninterruptible region for Channel.runScoped
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - optimize Sink.last
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - propagate Cause in Channel.mapOutEffect
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - optimize Sink.collectAllN
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - implement Stream.ensuringWith
+
+- [#120](https://github.com/Effect-TS/stream/pull/120) [`b04b2f6`](https://github.com/Effect-TS/stream/commit/b04b2f6326004e7405ee5ee2e07e78b413983522) Thanks [@IMax153](https://github.com/IMax153)! - add `Stream.fromReadableStream`
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - handle stream termination before sink in Stream.tapSink
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - optimize Stream.runIntoQueueElementsScoped
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - optimize Sink.count
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - handle fractional cycles in Stream.throttleEnforce
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - optimize Stream.groupAdjacentBy
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - catch and forward exceptions in channel read
+
+- [#115](https://github.com/Effect-TS/stream/pull/115) [`fe30620`](https://github.com/Effect-TS/stream/commit/fe30620fa9352945d9e0dfc056bebd084beb6093) Thanks [@IMax153](https://github.com/IMax153)! - optimize Sink.sum
+
 ## 0.23.0
 
 ### Minor Changes
