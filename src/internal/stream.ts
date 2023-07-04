@@ -6210,7 +6210,6 @@ export const splitLines = <R, E>(self: Stream.Stream<R, E, string>): Stream.Stre
               if (stringBuilder.length === 0) {
                 chunkBuilder.push(str.substring(from, indexOfLF))
               } else {
-                console.log(str)
                 chunkBuilder.push(stringBuilder + str.substring(from, indexOfLF))
                 stringBuilder = ""
               }
