@@ -349,7 +349,6 @@ export const branchAfter: {
  * as this stream. The driver stream will only ever advance the `maximumLag`
  * chunks before the slowest downstream stream.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -372,7 +371,6 @@ export const broadcast: {
  * same elements as this stream. The driver stream will only ever advance the
  * `maximumLag` chunks before the slowest downstream stream.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -388,7 +386,6 @@ export const broadcastDynamic: {
  *
  * Queues can unsubscribe from upstream by shutting down.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -413,7 +410,6 @@ export const broadcastedQueues: {
  *
  * Queues can unsubscribe from upstream by shutting down.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -996,7 +992,6 @@ export const distributedWith: {
  * Downstream users can also shutdown queues manually. In this case the driver
  * will continue but no longer backpressure on them.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -1707,7 +1702,6 @@ export const fromHub: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<neve
  * effect. The scoped effect describes subscribing to receive messages from
  * the hub while the stream describes taking messages from the hub.
  *
- * @macro traced
  * @since 1.0.0
  * @category constructors
  */
@@ -1734,7 +1728,6 @@ export const fromHubWithShutdown: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) =>
  *
  * The hub will be shut down once the stream is closed.
  *
- * @macro traced
  * @since 1.0.0
  * @category constructors
  */
@@ -1801,6 +1794,34 @@ export const fromQueue: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => S
  */
 export const fromQueueWithShutdown: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => Stream<never, never, A> =
   internal.fromQueueWithShutdown
+
+/**
+ * Creates a stream from a `ReadableStream`.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+export const fromReadableStream: <A, E>(
+  evaluate: LazyArg<ReadableStream<A>>,
+  onError: (error: unknown) => E
+) => Stream<never, E, A> = internal.fromReadableStream
+
+/**
+ * Creates a stream from a `ReadableStreamBYOBReader`.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamBYOBReader.
+ *
+ * @param allocSize Controls the size of the underlying `ArrayBuffer` (defaults to `4096`).
+ * @since 1.0.0
+ * @category constructors
+ */
+export const fromReadableStreamByob: <E>(
+  evaluate: LazyArg<ReadableStream<Uint8Array>>,
+  onError: (error: unknown) => E,
+  allocSize?: number
+) => Stream<never, E, Uint8Array> = internal.fromReadableStreamByob
 
 /**
  * Creates a stream from a `Schedule` that does not require any further
@@ -2715,7 +2736,6 @@ export const mergeRight: {
  * Returns a combined string resulting from concatenating each of the values
  * from the stream.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -3024,7 +3044,6 @@ export const partitionEitherBuffer: {
  * `Stream` in a scope. Like all scoped values, the provided stream is
  * valid only within the scope.
  *
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -3467,7 +3486,6 @@ export const rightOrFail: {
 /**
  * Runs the sink on the stream to produce either the sink's result or an error.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3481,7 +3499,6 @@ export const run: {
 /**
  * Runs the stream and collects all of its elements to a chunk.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3490,7 +3507,6 @@ export const runCollect: <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<R, E,
 /**
  * Runs the stream and emits the number of elements processed
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3499,7 +3515,6 @@ export const runCount: <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<R, E, n
 /**
  * Runs the stream only for its effects. The emitted elements are discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3509,7 +3524,6 @@ export const runDrain: <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<R, E, v
  * Executes a pure fold over the stream of values - reduces all elements in
  * the stream to a value of type `S`.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3521,7 +3535,6 @@ export const runFold: {
 /**
  * Executes an effectful fold over the stream of values.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3541,7 +3554,6 @@ export const runFoldEffect: {
  * Executes a pure fold over the stream of values. Returns a scoped value that
  * represents the scope of the stream.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3554,7 +3566,6 @@ export const runFoldScoped: {
  * Executes an effectful fold over the stream of values. Returns a scoped
  * value that represents the scope of the stream.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3574,7 +3585,6 @@ export const runFoldScopedEffect: {
  * Reduces the elements in the stream to a value of type `S`. Stops the fold
  * early when the condition is not fulfilled. Example:
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3587,7 +3597,6 @@ export const runFoldWhile: {
  * Executes an effectful fold over the stream of values. Stops the fold early
  * when the condition is not fulfilled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3610,7 +3619,6 @@ export const runFoldWhileEffect: {
  * represents the scope of the stream. Stops the fold early when the condition
  * is not fulfilled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3633,7 +3641,6 @@ export const runFoldWhileScoped: {
  * value that represents the scope of the stream. Stops the fold early when
  * the condition is not fulfilled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3655,7 +3662,6 @@ export const runFoldWhileScopedEffect: {
  * Consumes all elements of the stream, passing them to the specified
  * callback.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3673,7 +3679,6 @@ export const runForEach: {
  * Consumes all elements of the stream, passing them to the specified
  * callback.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3691,7 +3696,6 @@ export const runForEachChunk: {
  * Like `Stream.runForEachChunk`, but returns a scoped effect so the
  * finalization order can be controlled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3709,7 +3713,6 @@ export const runForEachChunkScoped: {
  * Like `Stream.forEach`, but returns a scoped effect so the finalization
  * order can be controlled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3727,7 +3730,6 @@ export const runForEachScoped: {
  * Consumes elements of the stream, passing them to the specified callback,
  * and terminating consumption when the callback returns `false`.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3745,7 +3747,6 @@ export const runForEachWhile: {
  * Like `Stream.runForEachWhile`, but returns a scoped effect so the
  * finalization order can be controlled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3763,7 +3764,6 @@ export const runForEachWhileScoped: {
  * Runs the stream to completion and yields the first value emitted by it,
  * discarding the rest of the elements.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3773,7 +3773,6 @@ export const runHead: <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<R, E, Op
  * Publishes elements of this stream to a hub. Stream failure and ending will
  * also be signalled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3786,7 +3785,6 @@ export const runIntoHub: {
  * Like `Stream.runIntoHub`, but provides the result as a scoped effect to
  * allow for scope composition.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3799,7 +3797,6 @@ export const runIntoHubScoped: {
  * Enqueues elements of this stream into a queue. Stream failure and ending
  * will also be signalled.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3812,7 +3809,6 @@ export const runIntoQueue: {
  * Like `Stream.runIntoQueue`, but provides the result as a scoped [[ZIO]]
  * to allow for scope composition.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3830,7 +3826,6 @@ export const runIntoQueueElementsScoped: {
  * Like `Stream.runIntoQueue`, but provides the result as a scoped effect
  * to allow for scope composition.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3845,14 +3840,12 @@ export const runIntoQueueScoped: {
  * Runs the stream to completion and yields the last value emitted by it,
  * discarding the rest of the elements.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
 export const runLast: <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<R, E, Option.Option<A>> = internal.runLast
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -3869,7 +3862,6 @@ export const runScoped: {
 /**
  * Runs the stream to a sink which sums elements, provided they are Numeric.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4493,7 +4485,6 @@ export const timeoutTo: {
  * Converts the stream to a scoped hub of chunks. After the scope is closed,
  * the hub will never again produce values and should be discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4510,7 +4501,6 @@ export const toHub: {
  * finished, or with Some error if it fails, otherwise it returns a chunk of
  * the stream's output.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4522,7 +4512,6 @@ export const toPull: <R, E, A>(
  * Converts the stream to a scoped queue of chunks. After the scope is closed,
  * the queue will never again produce values and should be discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4533,7 +4522,6 @@ export const toQueue: <R, E, A>(
 /**
  * Like `toQueue`, but with a configurable `capacity` parameter.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4552,7 +4540,6 @@ export const toQueueCapacity: {
  * is closed, the queue will never again produce values and should be
  * discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4563,7 +4550,6 @@ export const toQueueDropping: <R, E, A>(
 /**
  * Like `toQueueDropping`, but with a configurable `capacity` parameter.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4581,7 +4567,6 @@ export const toQueueDroppingCapacity: {
  * Converts the stream to a scoped queue of elements. After the scope is
  * closed, the queue will never again produce values and should be discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4592,7 +4577,6 @@ export const toQueueOfElements: <R, E, A>(
 /**
  * Like `toQueueOfElements`, but with a configurable `capacity` parameter.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4612,7 +4596,6 @@ export const toQueueOfElementsCapacity: {
  * Converts the stream to a sliding scoped queue of chunks. After the scope is
  * closed, the queue will never again produce values and should be discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4623,7 +4606,6 @@ export const toQueueSliding: <R, E, A>(
 /**
  * Like `toQueueSliding`, but with a configurable `capacity` parameter.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -4641,13 +4623,22 @@ export const toQueueSlidingCapacity: {
  * Converts the stream into an unbounded scoped queue. After the scope is
  * closed, the queue will never again produce values and should be discarded.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
 export const toQueueUnbounded: <R, E, A>(
   self: Stream<R, E, A>
 ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>> = internal.toQueueUnbounded
+
+/**
+ * Converts the stream to a `ReadableStream`.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
+ *
+ * @since 1.0.0
+ * @category destructors
+ */
+export const toReadableStream: <E, A>(source: Stream<never, E, A>) => ReadableStream<A> = internal.toReadableStream
 
 /**
  * Applies the transducer to the stream and emits its outputs.
