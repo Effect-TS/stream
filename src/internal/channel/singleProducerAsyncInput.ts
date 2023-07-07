@@ -1,4 +1,3 @@
-import { bodyWithTrace, methodWithTrace } from "@effect/data/Debug"
 import * as Either from "@effect/data/Either"
 import { pipe } from "@effect/data/Function"
 import * as Cause from "@effect/io/Cause"
@@ -97,133 +96,114 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
   }
 
   awaitRead(): Effect.Effect<never, never, unknown> {
-    return bodyWithTrace((trace) => {
-      return Effect.flatten(
-        Ref.modify(this.ref, (state) =>
-          state._tag === OP_STATE_EMPTY ?
-            [Deferred.await(state.notifyProducer), state as State<Err, Elem, Done>] :
-            [Effect.unit(), state])
-      ).traced(trace)
-    })
+    return Effect.flatten(
+      Ref.modify(this.ref, (state) =>
+        state._tag === OP_STATE_EMPTY ?
+          [Deferred.await(state.notifyProducer), state as State<Err, Elem, Done>] :
+          [Effect.unit, state])
+    )
   }
 
   close(): Effect.Effect<never, never, unknown> {
-    return bodyWithTrace((trace) => {
-      return Effect.fiberIdWith(
-        (fiberId) => this.error(Cause.interrupt(fiberId))
-      ).traced(trace)
-    })
+    return Effect.fiberIdWith((fiberId) => this.error(Cause.interrupt(fiberId)))
   }
 
   done(value: Done): Effect.Effect<never, never, unknown> {
-    return bodyWithTrace((trace) => {
-      return pipe(
-        Ref.modify(this.ref, (state) => {
-          switch (state._tag) {
-            case OP_STATE_EMPTY: {
-              return [Deferred.await(state.notifyProducer), state]
-            }
-            case OP_STATE_EMIT: {
-              return [
-                pipe(
-                  state.notifyConsumers,
-                  Effect.forEachDiscard((deferred) => Deferred.succeed(deferred, Either.left(value)))
-                ),
-                stateDone(value) as State<Err, Elem, Done>
-              ]
-            }
-            case OP_STATE_ERROR: {
-              return [Effect.interrupt(), state]
-            }
-            case OP_STATE_DONE: {
-              return [Effect.interrupt(), state]
-            }
+    return Effect.flatten(
+      Ref.modify(this.ref, (state) => {
+        switch (state._tag) {
+          case OP_STATE_EMPTY: {
+            return [Deferred.await(state.notifyProducer), state]
           }
-        }),
-        Effect.flatten
-      ).traced(trace)
-    })
+          case OP_STATE_EMIT: {
+            return [
+              Effect.forEach(
+                state.notifyConsumers,
+                (deferred) => Deferred.succeed(deferred, Either.left(value)),
+                { discard: true }
+              ),
+              stateDone(value) as State<Err, Elem, Done>
+            ]
+          }
+          case OP_STATE_ERROR: {
+            return [Effect.interrupt, state]
+          }
+          case OP_STATE_DONE: {
+            return [Effect.interrupt, state]
+          }
+        }
+      })
+    )
   }
 
   emit(element: Elem): Effect.Effect<never, never, unknown> {
-    return bodyWithTrace((trace) => {
-      return pipe(
-        Deferred.make<never, void>(),
-        Effect.flatMap((deferred) =>
-          pipe(
-            Ref.modify(this.ref, (state) => {
-              switch (state._tag) {
-                case OP_STATE_EMPTY: {
-                  return [Deferred.await(state.notifyProducer), state]
-                }
-                case OP_STATE_EMIT: {
-                  const notifyConsumer = state.notifyConsumers[0]
-                  const notifyConsumers = state.notifyConsumers.slice(1)
-                  if (notifyConsumer !== undefined) {
-                    return [
-                      Deferred.succeed(notifyConsumer, Either.right(element)),
-                      (notifyConsumers.length === 0 ?
-                        stateEmpty(deferred) :
-                        stateEmit(notifyConsumers)) as State<Err, Elem, Done>
-                    ]
-                  }
-                  throw new Error(
-                    "Bug: Channel.SingleProducerAsyncInput.emit - Queue was empty! Please report an issue at https://github.com/Effect-TS/stream/issues"
-                  )
-                }
-                case OP_STATE_ERROR: {
-                  return [Effect.interrupt(), state]
-                }
-                case OP_STATE_DONE: {
-                  return [Effect.interrupt(), state]
-                }
-              }
-            }),
-            Effect.flatten
-          )
-        )
-      ).traced(trace)
-    })
-  }
-
-  error(cause: Cause.Cause<Err>): Effect.Effect<never, never, unknown> {
-    return bodyWithTrace((trace) => {
-      return pipe(
+    return Effect.flatMap(Deferred.make<never, void>(), (deferred) =>
+      Effect.flatten(
         Ref.modify(this.ref, (state) => {
           switch (state._tag) {
             case OP_STATE_EMPTY: {
               return [Deferred.await(state.notifyProducer), state]
             }
             case OP_STATE_EMIT: {
-              return [
-                Effect.forEachDiscard(
-                  state.notifyConsumers,
-                  (deferred) => Deferred.failCause(deferred, cause)
-                ),
-                stateError(cause) as State<Err, Elem, Done>
-              ]
+              const notifyConsumer = state.notifyConsumers[0]
+              const notifyConsumers = state.notifyConsumers.slice(1)
+              if (notifyConsumer !== undefined) {
+                return [
+                  Deferred.succeed(notifyConsumer, Either.right(element)),
+                  (notifyConsumers.length === 0 ?
+                    stateEmpty(deferred) :
+                    stateEmit(notifyConsumers)) as State<Err, Elem, Done>
+                ]
+              }
+              throw new Error(
+                "Bug: Channel.SingleProducerAsyncInput.emit - Queue was empty! Please report an issue at https://github.com/Effect-TS/stream/issues"
+              )
             }
             case OP_STATE_ERROR: {
-              return [Effect.interrupt(), state]
+              return [Effect.interrupt, state]
             }
             case OP_STATE_DONE: {
-              return [Effect.interrupt(), state]
+              return [Effect.interrupt, state]
             }
           }
-        }),
-        Effect.flatten
-      ).traced(trace)
-    })
+        })
+      ))
+  }
+
+  error(cause: Cause.Cause<Err>): Effect.Effect<never, never, unknown> {
+    return Effect.flatten(
+      Ref.modify(this.ref, (state) => {
+        switch (state._tag) {
+          case OP_STATE_EMPTY: {
+            return [Deferred.await(state.notifyProducer), state]
+          }
+          case OP_STATE_EMIT: {
+            return [
+              Effect.forEach(
+                state.notifyConsumers,
+                (deferred) => Deferred.failCause(deferred, cause),
+                { discard: true }
+              ),
+              stateError(cause) as State<Err, Elem, Done>
+            ]
+          }
+          case OP_STATE_ERROR: {
+            return [Effect.interrupt, state]
+          }
+          case OP_STATE_DONE: {
+            return [Effect.interrupt, state]
+          }
+        }
+      })
+    )
   }
 
   take(): Effect.Effect<never, never, Exit.Exit<Either.Either<Err, Done>, Elem>> {
-    return bodyWithTrace((trace) => {
-      return this.takeWith(
-        (cause) => Exit.failCause(Cause.map(cause, Either.left)),
-        (elem) => Exit.succeed(elem) as Exit.Exit<Either.Either<Err, Done>, Elem>,
-        (done) => Exit.fail(Either.right(done))
-      ).traced(trace)
-    })
+    return this.takeWith(
+      (cause) => Exit.failCause(Cause.map(cause, Either.left)),
+      (elem) => Exit.succeed(elem) as Exit.Exit<Either.Either<Err, Done>, Elem>,
+      (done) => Exit.fail(Either.right(done))
+    )
   }
 
   takeWith<A>(
@@ -231,62 +211,51 @@ class SingleProducerAsyncInputImpl<Err, Elem, Done>
     onElement: (element: Elem) => A,
     onDone: (value: Done) => A
   ): Effect.Effect<never, never, A> {
-    return bodyWithTrace((trace) => {
-      return pipe(
-        Deferred.make<Err, Either.Either<Done, Elem>>(),
-        Effect.flatMap((deferred) =>
-          pipe(
-            Ref.modify(this.ref, (state) => {
-              switch (state._tag) {
-                case OP_STATE_EMPTY: {
-                  return [
-                    Effect.zipRight(
-                      Deferred.succeed(state.notifyProducer, void 0),
-                      Effect.matchCause(
-                        Deferred.await(deferred),
-                        onError,
-                        Either.match(onDone, onElement)
-                      )
-                    ),
-                    stateEmit([deferred])
-                  ]
-                }
-                case OP_STATE_EMIT: {
-                  return [
-                    Effect.matchCause(
-                      Deferred.await(deferred),
-                      onError,
-                      Either.match(onDone, onElement)
-                    ),
-                    stateEmit([...state.notifyConsumers, deferred])
-                  ]
-                }
-                case OP_STATE_ERROR: {
-                  return [Effect.succeed(onError(state.cause)), state]
-                }
-                case OP_STATE_DONE: {
-                  return [Effect.succeed(onDone(state.done)), state]
-                }
-              }
-            }),
-            Effect.flatten
-          )
-        )
-      ).traced(trace)
-    })
+    return Effect.flatMap(Deferred.make<Err, Either.Either<Done, Elem>>(), (deferred) =>
+      Effect.flatten(
+        Ref.modify(this.ref, (state) => {
+          switch (state._tag) {
+            case OP_STATE_EMPTY: {
+              return [
+                Effect.zipRight(
+                  Deferred.succeed(state.notifyProducer, void 0),
+                  Effect.matchCause(Deferred.await(deferred), {
+                    onFailure: onError,
+                    onSuccess: Either.match({ onLeft: onDone, onRight: onElement })
+                  })
+                ),
+                stateEmit([deferred])
+              ]
+            }
+            case OP_STATE_EMIT: {
+              return [
+                Effect.matchCause(Deferred.await(deferred), {
+                  onFailure: onError,
+                  onSuccess: Either.match({ onLeft: onDone, onRight: onElement })
+                }),
+                stateEmit([...state.notifyConsumers, deferred])
+              ]
+            }
+            case OP_STATE_ERROR: {
+              return [Effect.succeed(onError(state.cause)), state]
+            }
+            case OP_STATE_DONE: {
+              return [Effect.succeed(onDone(state.done)), state]
+            }
+          }
+        })
+      ))
   }
 }
 
 /** @internal */
-export const make = methodWithTrace((trace) =>
-  <Err, Elem, Done>(): Effect.Effect<
-    never,
-    never,
-    SingleProducerAsyncInput.SingleProducerAsyncInput<Err, Elem, Done>
-  > =>
-    pipe(
-      Deferred.make<never, void>(),
-      Effect.flatMap((deferred) => Ref.make(stateEmpty(deferred) as State<Err, Elem, Done>)),
-      Effect.map((ref) => new SingleProducerAsyncInputImpl(ref))
-    ).traced(trace)
-)
+export const make = <Err, Elem, Done>(): Effect.Effect<
+  never,
+  never,
+  SingleProducerAsyncInput.SingleProducerAsyncInput<Err, Elem, Done>
+> =>
+  pipe(
+    Deferred.make<never, void>(),
+    Effect.flatMap((deferred) => Ref.make(stateEmpty(deferred) as State<Err, Elem, Done>)),
+    Effect.map((ref) => new SingleProducerAsyncInputImpl(ref))
+  )

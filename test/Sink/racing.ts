@@ -7,6 +7,7 @@ import * as Random from "@effect/io/Random"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { unfoldEffect } from "@effect/stream/test/utils/unfoldEffect"
 import { assert, describe } from "vitest"
 
 const findSink = <A>(a: A): Sink.Sink<never, void, A, A, A> =>
@@ -16,7 +17,10 @@ const findSink = <A>(a: A): Sink.Sink<never, void, A, A, A> =>
       Option.isNone,
       (_, v) => (a === v ? Option.some(a) : Option.none())
     ),
-    Sink.mapEffect(Option.match(() => Effect.failSync(constVoid), Effect.succeed))
+    Sink.mapEffect(Option.match({
+      onNone: () => Effect.failSync(constVoid),
+      onSome: Effect.succeed
+    }))
   )
 
 const sinkRaceLaw = <E, A, L>(
@@ -33,13 +37,13 @@ const sinkRaceLaw = <E, A, L>(
     Effect.map(({ result1, result2, result3 }) =>
       pipe(
         result3,
-        Either.match(
-          () => Either.isLeft(result1) || Either.isLeft(result2),
-          Either.match(
-            (a) => Either.isRight(result1) && result1.right === a,
-            (a) => Either.isRight(result2) && result2.right === a
-          )
-        )
+        Either.match({
+          onLeft: () => Either.isLeft(result1) || Either.isLeft(result2),
+          onRight: Either.match({
+            onLeft: (a) => Either.isRight(result1) && result1.right === a,
+            onRight: (a) => Either.isRight(result2) && result2.right === a
+          })
+        })
       )
     )
   )
@@ -47,15 +51,15 @@ const sinkRaceLaw = <E, A, L>(
 describe.concurrent("Sink", () => {
   it.effect("raceBoth", () =>
     Effect.gen(function*($) {
-      const ints = yield* $(Effect.unfold(0, (n) =>
+      const ints = yield* $(unfoldEffect(0, (n) =>
         Effect.map(Random.nextIntBetween(0, 10), (i) =>
           n <= 20 ? Option.some([i, n + 1] as const) : Option.none())))
-      const success1 = yield* $(Random.nextBoolean())
-      const success2 = yield* $(Random.nextBoolean())
+      const success1 = yield* $(Random.nextBoolean)
+      const success2 = yield* $(Random.nextBoolean)
       const chunk = pipe(
         Chunk.unsafeFromArray(ints),
-        Chunk.concat(success1 ? Chunk.of(20) : Chunk.empty<number>()),
-        Chunk.concat(success2 ? Chunk.of(40) : Chunk.empty<number>())
+        Chunk.appendAll(success1 ? Chunk.of(20) : Chunk.empty<number>()),
+        Chunk.appendAll(success2 ? Chunk.of(40) : Chunk.empty<number>())
       )
       const result = yield* $(
         sinkRaceLaw(

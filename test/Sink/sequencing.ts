@@ -42,7 +42,10 @@ describe.concurrent("Sink", () => {
       const [option, count] = yield* $(pipe(Stream.fromChunks(...chunks), Stream.run(sink)))
       assert.deepStrictEqual(option, Chunk.head(Chunk.flatten(chunks)))
       assert.strictEqual(
-        count + pipe(option, Option.match(() => 0, () => 1)),
+        count + Option.match(option, {
+          onNone: () => 0,
+          onSome: () => 1
+        }),
         pipe(chunks, Chunk.map(Chunk.size), Chunk.reduce(0, (a, b) => a + b))
       )
     }))

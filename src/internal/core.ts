@@ -882,7 +882,7 @@ export const readWith = <
 > =>
   readWithCause(
     input,
-    (cause) => Either.match(Cause.failureOrCause(cause), error, failCause),
+    (cause) => Either.match(Cause.failureOrCause(cause), { onLeft: error, onRight: failCause }),
     done
   )
 

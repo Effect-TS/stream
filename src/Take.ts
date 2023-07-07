@@ -76,7 +76,6 @@ export const dieMessage: (message: string) => Take<never, never> = internal.dieM
 /**
  * Transforms a `Take<E, A>` to an `Effect<never, E, A>`.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -111,7 +110,6 @@ export const failCause: <E>(cause: Cause.Cause<E>) => Take<E, never> = internal.
  * the `Take<E, A>`. Error from stream when pulling is converted to
  * `Take.failCause`. Creates a single value chunk.
  *
- * @macro traced
  * @since 1.0.0
  * @category constructors
  */
@@ -131,7 +129,6 @@ export const fromExit: <E, A>(exit: Exit.Exit<E, A>) => Take<E, A> = internal.fr
  * succeeds with the `Take<E, A>`. Errors from stream when pulling are converted
  * to `Take.failCause`, and the end-of-stream is converted to `Take.end`.
  *
- * @macro traced
  * @since 1.0.0
  * @category constructors
  */
@@ -209,7 +206,6 @@ export const match: {
  * Folds over the failure cause, success value and end-of-stream marker to
  * yield an effect.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -238,7 +234,6 @@ export const of: <A>(value: A) => Take<never, A> = internal.of
 /**
  * Returns an effect that effectfully "peeks" at the success of this take.
  *
- * @macro traced
  * @since 1.0.0
  * @category sequencing
  */

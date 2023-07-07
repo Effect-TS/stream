@@ -153,7 +153,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(pipe(
-        Effect.unit(),
+        Effect.unit,
         Stream.whenCaseEffect((): Option.Option<Stream.Stream<never, never, void>> => {
           throw error
         }),

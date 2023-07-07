@@ -1,6 +1,4 @@
 import { constTrue, pipe } from "@effect/data/Function"
-import * as Option from "@effect/data/Option"
-import { tuple } from "@effect/data/ReadonlyArray"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -19,8 +17,9 @@ describe.concurrent("Channel", () => {
           Channel.writeAll(1, 2, 3),
           Channel.mergeWith(
             Channel.writeAll(4, 5, 6),
-            (leftDone) => MergeDecision.AwaitConst(Effect.done(leftDone)),
-            (rightDone) => MergeDecision.AwaitConst(Effect.done(rightDone))
+            // TODO: remove
+            (leftDone) => MergeDecision.AwaitConst(Effect.suspend(() => leftDone)),
+            (rightDone) => MergeDecision.AwaitConst(Effect.suspend(() => rightDone))
           ),
           Channel.runCollect
         )
@@ -36,10 +35,10 @@ describe.concurrent("Channel", () => {
         Channel.zipRight(
           pipe(
             Effect.try(() => "whatever"),
-            Effect.refineOrDie((e) =>
-              Cause.isRuntimeException(e) ?
-                Option.some(e) :
-                Option.none()
+            Effect.catchAllCause((cause) =>
+              Cause.isRuntimeException(cause) ?
+                Effect.failCause(cause) :
+                Effect.die(cause)
             ),
             Channel.fromEffect
           )
@@ -50,10 +49,10 @@ describe.concurrent("Channel", () => {
         Channel.zipRight(
           pipe(
             Effect.try(constTrue),
-            Effect.refineOrDie((e) =>
-              Cause.isIllegalArgumentException(e) ?
-                Option.some(e) :
-                Option.none()
+            Effect.catchAllCause((cause) =>
+              Cause.isIllegalArgumentException(cause) ?
+                Effect.failCause(cause) :
+                Effect.die(cause)
             ),
             Channel.fromEffect
           )
@@ -64,8 +63,9 @@ describe.concurrent("Channel", () => {
           left,
           Channel.mergeWith(
             right,
-            (leftDone) => MergeDecision.Await((rightDone) => Effect.done(pipe(leftDone, Exit.zip(rightDone)))),
-            (rightDone) => MergeDecision.Await((leftDone) => Effect.done(pipe(leftDone, Exit.zip(rightDone))))
+            // TODO: remove
+            (leftDone) => MergeDecision.Await((rightDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone))),
+            (rightDone) => MergeDecision.Await((leftDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone)))
           ),
           Channel.runCollect
         )
@@ -91,18 +91,22 @@ describe.concurrent("Channel", () => {
           (leftDone) =>
             MergeDecision.Await((rightDone) =>
               pipe(
-                Effect.done(leftDone),
+                // TODO: remove
+                Effect.suspend(() => leftDone),
                 Effect.flip,
-                Effect.zip(pipe(Effect.done(rightDone), Effect.flip)),
+                // TODO: remove
+                Effect.zip(Effect.flip(Effect.suspend(() => rightDone))),
                 Effect.flip
               )
             ),
           (rightDone) =>
             MergeDecision.Await((leftDone) =>
               pipe(
-                Effect.done(leftDone),
+                // TODO: remove
+                Effect.suspend(() => leftDone),
                 Effect.flip,
-                Effect.zip(pipe(Effect.done(rightDone), Effect.flip)),
+                // TODO: remove
+                Effect.zip(Effect.flip(Effect.suspend(() => rightDone))),
                 Effect.flip
               )
             )
@@ -110,7 +114,7 @@ describe.concurrent("Channel", () => {
         Channel.runDrain,
         Effect.exit
       ))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(tuple("boom", true)))
+      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail<[string, boolean]>(["boom", true]))
     }))
 
   it.effect("mergeWith - interrupts losing side", () =>
@@ -122,7 +126,7 @@ describe.concurrent("Channel", () => {
         Channel.zipRight(
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(interrupted, true)),
             Channel.fromEffect
           )
@@ -136,11 +140,12 @@ describe.concurrent("Channel", () => {
         left,
         Channel.mergeWith(
           right,
-          (leftDone) => MergeDecision.Done(Effect.done(leftDone)),
+          // TODO: remove
+          (leftDone) => MergeDecision.Done(Effect.suspend(() => leftDone)),
           (_rightDone) =>
             MergeDecision.Done(pipe(
               Ref.get(interrupted),
-              Effect.flatMap((isInterrupted) => isInterrupted ? Effect.unit() : Effect.fail(void 0))
+              Effect.flatMap((isInterrupted) => isInterrupted ? Effect.unit : Effect.fail(void 0))
             ))
         )
       )

@@ -1,9 +1,11 @@
 import * as Duration from "@effect/data/Duration"
 import { pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
+import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
-import { fiberFailure } from "@effect/io/internal_effect_untraced/runtime"
-import * as TestEnvironment from "@effect/io/internal_effect_untraced/testing/testEnvironment"
+import { fiberFailure } from "@effect/io/internal/runtime"
+import * as TestEnvironment from "@effect/io/internal/testing/testEnvironment"
 import * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
 import type { TestAPI } from "vitest"
@@ -96,11 +98,24 @@ export const flakyTest = <R, E, A>(
   timeout: Duration.Duration = Duration.seconds(30)
 ) => {
   return pipe(
-    Effect.resurrect(self),
+    Effect.catchAllCause(self, (cause) => {
+      const option = Cause.find(cause, (cause) =>
+        Cause.isDieType(cause) ?
+          Option.some(cause.defect) :
+          Option.none())
+      switch (option._tag) {
+        case "None": {
+          return Effect.failCause(cause)
+        }
+        case "Some": {
+          return Effect.fail(option.value)
+        }
+      }
+    }),
     Effect.retry(
       pipe(
         Schedule.recurs(10),
-        Schedule.compose(Schedule.elapsed()),
+        Schedule.compose(Schedule.elapsed),
         Schedule.whileOutput(Duration.lessThanOrEqualTo(timeout))
       )
     ),

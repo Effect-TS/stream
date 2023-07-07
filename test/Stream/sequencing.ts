@@ -16,10 +16,10 @@ import { assert, describe } from "vitest"
 
 const withPermitsScoped = (permits: number) =>
   (semaphore: Effect.Semaphore) =>
-    Effect.acquireRelease(
-      semaphore.take(permits),
-      (n) => semaphore.release(n)
-    )
+    Effect.acquireRelease({
+      acquire: semaphore.take(permits),
+      release: (n) => semaphore.release(n)
+    })
 
 describe.concurrent("Stream", () => {
   it.effect("branchAfter - switches streams", () =>
@@ -134,7 +134,7 @@ describe.concurrent("Stream", () => {
             Stream.acquireRelease(push(3), () => push(3)),
             Stream.crossRight(Stream.fromEffect(pipe(
               Deferred.succeed<never, void>(latch, void 0),
-              Effect.zipRight(Effect.never())
+              Effect.zipRight(Effect.never)
             )))
           )
         ),
@@ -222,14 +222,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const inner = pipe(
-        Stream.acquireRelease(Effect.unit(), (_, exit) =>
-          pipe(
-            exit,
-            Exit.match(
-              () => Ref.set(ref, true),
-              () => Effect.unit()
-            )
-          )),
+        Stream.acquireRelease(Effect.unit, (_, exit) =>
+          Exit.match(exit, {
+            onFailure: () => Ref.set(ref, true),
+            onSuccess: () => Effect.unit
+          })),
         Stream.flatMap(() => Stream.fail("Ouch"))
       )
       yield* $(pipe(
@@ -273,7 +270,7 @@ describe.concurrent("Stream", () => {
             Effect.flatMap((pull) =>
               pipe(
                 pull,
-                Effect.zipRight(Scope.close(scope, Exit.unit())),
+                Effect.zipRight(Scope.close(scope, Exit.unit)),
                 Effect.zipRight(Ref.get(ref))
               )
             )
@@ -320,7 +317,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapPar(1, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )),
@@ -342,7 +339,7 @@ describe.concurrent("Stream", () => {
           Stream.fromEffect(
             pipe(
               Deferred.succeed<never, void>(latch, void 0),
-              Effect.zipRight(Effect.never()),
+              Effect.zipRight(Effect.never),
               Effect.onInterrupt(() => Ref.set(ref, true))
             )
           ),
@@ -375,7 +372,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapPar(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )),
@@ -396,7 +393,7 @@ describe.concurrent("Stream", () => {
         Stream.make(
           Stream.fromEffect(pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true))
           )),
           Stream.fromEffect(pipe(
@@ -427,7 +424,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapPar(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )),
@@ -473,7 +470,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapParSwitch(1, (n) => {
           if (n > 3) {
             return pipe(
-              Stream.acquireRelease(Effect.unit(), () => Ref.set(ref, true)),
+              Stream.acquireRelease(Effect.unit, () => Ref.set(ref, true)),
               Stream.flatMap(() => Stream.empty)
             )
           }
@@ -498,7 +495,7 @@ describe.concurrent("Stream", () => {
           if (n > 8) {
             return pipe(
               Stream.acquireRelease(
-                Effect.unit(),
+                Effect.unit,
                 () => Ref.update(ref, (n) => n + 1)
               ),
               Stream.flatMap(() => Stream.empty)
@@ -538,7 +535,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapParSwitch(1, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )),
@@ -560,7 +557,7 @@ describe.concurrent("Stream", () => {
           Stream.fromEffect(
             pipe(
               Deferred.succeed<never, void>(latch, void 0),
-              Effect.zipRight(Effect.never()),
+              Effect.zipRight(Effect.never),
               Effect.onInterrupt(() => Ref.set(ref, true))
             )
           ),
@@ -593,7 +590,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapParSwitch(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )),
@@ -615,7 +612,7 @@ describe.concurrent("Stream", () => {
           Stream.fromEffect(
             pipe(
               Deferred.succeed<never, void>(latch, void 0),
-              Effect.zipRight(Effect.never()),
+              Effect.zipRight(Effect.never),
               Effect.onInterrupt(() => Ref.set(ref, true))
             )
           ),
@@ -649,7 +646,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMapParSwitch(2, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )),

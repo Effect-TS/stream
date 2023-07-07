@@ -7,7 +7,7 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Stream from "@effect/stream/Stream"
@@ -194,13 +194,13 @@ describe.concurrent("Stream", () => {
 
   it.effect("mapEffectPar - Effect.forEachParN equivalence", () =>
     Effect.gen(function*($) {
-      const parallelism = 8
+      const concurrency = 8
       const chunk = Chunk.make(1, 2, 3, 4, 5)
       const stream = Stream.fromIterable(chunk)
       const f = (n: number) => Effect.succeed(n * 2)
       const { result1, result2 } = yield* $(Effect.all({
-        result1: pipe(stream, Stream.mapEffectPar(parallelism, f), Stream.runCollect),
-        result2: pipe(chunk, Effect.forEachPar(f), Effect.withParallelism(parallelism))
+        result1: pipe(stream, Stream.mapEffectPar(concurrency, f), Stream.runCollect),
+        result2: Effect.forEach(chunk, f, { concurrency })
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
     }))
@@ -226,7 +226,7 @@ describe.concurrent("Stream", () => {
         Stream.mapEffectPar(1, () =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true))
           )),
         Stream.runDrain,
@@ -254,7 +254,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.fromIterable(Chunk.range(0, 10)),
-        Stream.interruptWhen(Effect.never()),
+        Stream.interruptWhen(Effect.never),
         Stream.mapEffectPar(8, () => pipe(Effect.succeed(1), Effect.repeatN(200))),
         Stream.runDrain,
         Effect.exit
@@ -275,13 +275,13 @@ describe.concurrent("Stream", () => {
             n === 1 ?
               pipe(
                 Deferred.succeed<never, void>(latch1, void 0),
-                Effect.zipRight(Effect.never()),
+                Effect.zipRight(Effect.never),
                 Effect.onInterrupt(() => Ref.update(ref, (n) => n + 1))
               ) :
               n === 2 ?
               pipe(
                 Deferred.succeed<never, void>(latch2, void 0),
-                Effect.zipRight(Effect.never()),
+                Effect.zipRight(Effect.never),
                 Effect.onInterrupt(() => Ref.update(ref, (n) => n + 1))
               ) :
               pipe(

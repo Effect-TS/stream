@@ -28,10 +28,10 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const deferred = yield* $(Deferred.make<never, void>())
       const finished = yield* $(Deferred.make<never, void>())
-      const ref = yield* $(Ref.make<Exit.Exit<never, void>>(Exit.unit()))
+      const ref = yield* $(Ref.make<Exit.Exit<never, void>>(Exit.unit))
       const effect = pipe(
         Deferred.succeed<never, void>(deferred, void 0),
-        Effect.zipRight(Effect.never())
+        Effect.zipRight(Effect.never)
       )
       yield* $(
         pipe(
@@ -39,7 +39,8 @@ describe.concurrent("Channel", () => {
           Channel.runDrain,
           Effect.onExit((exit) => Ref.set(ref, exit as Exit.Exit<never, void>)),
           Effect.ensuring(Deferred.succeed(finished, void 0)),
-          Effect.raceEither(Deferred.await(deferred))
+          Effect.race(Deferred.await(deferred)),
+          Effect.either
         )
       )
       yield* $(Deferred.await(finished)) // Note: interruption in race is now done in the background

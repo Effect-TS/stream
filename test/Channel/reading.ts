@@ -52,7 +52,10 @@ export const refReader = <A>(
         return [Option.some(array[0]!), array.slice(1)] as const
       })
     ),
-    Channel.flatMap(Option.match(Channel.unit, (i) => pipe(Channel.write(i), Channel.flatMap(() => refReader(ref)))))
+    Channel.flatMap(Option.match({
+      onNone: Channel.unit,
+      onSome: (i) => Channel.flatMap(Channel.write(i), () => refReader(ref))
+    }))
   )
 }
 
@@ -228,15 +231,15 @@ describe.concurrent("Channel", () => {
   it.effect("simple concurrent reads", () =>
     Effect.gen(function*($) {
       const capacity = 128
-      const elements = yield* $(Effect.all(Array.from({ length: capacity }, () => Random.nextInt())))
+      const elements = yield* $(Effect.all(Array.from({ length: capacity }, () => Random.nextInt)))
       const source = yield* $(Ref.make(ReadonlyArray.fromIterable(elements)))
       const destination = yield* $(Ref.make<ReadonlyArray<number>>([]))
       const twoWriters = pipe(
         refWriter(destination),
         Channel.mergeWith(
           refWriter(destination),
-          () => MergeDecision.AwaitConst(Effect.unit()),
-          () => MergeDecision.AwaitConst(Effect.unit())
+          () => MergeDecision.AwaitConst(Effect.unit),
+          () => MergeDecision.AwaitConst(Effect.unit)
         )
       )
       const [missing, surplus] = yield* $(
@@ -267,7 +270,7 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const capacity = 128
       const f = (n: number) => n + 1
-      const elements = yield* $(Effect.all(Array.from({ length: capacity }, () => Random.nextInt())))
+      const elements = yield* $(Effect.all(Array.from({ length: capacity }, () => Random.nextInt)))
       const source = yield* $(Ref.make(ReadonlyArray.fromIterable(elements)))
       const destination = yield* $(Ref.make<ReadonlyArray<number>>([]))
       const twoWriters = pipe(
@@ -275,8 +278,8 @@ describe.concurrent("Channel", () => {
         Channel.pipeTo(refWriter(destination)),
         Channel.mergeWith(
           pipe(mapper(f), Channel.pipeTo(refWriter(destination))),
-          () => MergeDecision.AwaitConst(Effect.unit()),
-          () => MergeDecision.AwaitConst(Effect.unit())
+          () => MergeDecision.AwaitConst(Effect.unit),
+          () => MergeDecision.AwaitConst(Effect.unit)
         )
       )
       const [missing, surplus] = yield* $(

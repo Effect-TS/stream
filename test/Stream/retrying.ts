@@ -5,7 +5,7 @@ import * as Option from "@effect/data/Option"
 import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
@@ -22,7 +22,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         stream,
-        Stream.retry(Schedule.forever()),
+        Stream.retry(Schedule.forever),
         Stream.take(2),
         Stream.runCollect
       ))
@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         stream,
-        Stream.retry(Schedule.forever()),
+        Stream.retry(Schedule.forever),
         Stream.take(2),
         Stream.runCollect
       ))
@@ -57,7 +57,7 @@ describe.concurrent("Stream", () => {
       const stream = pipe(
         Stream.fromEffect(
           pipe(
-            Clock.currentTimeMillis(),
+            Clock.currentTimeMillis,
             Effect.flatMap((n) => Ref.update(ref, Chunk.prepend(n)))
           )
         ),
@@ -82,7 +82,7 @@ describe.concurrent("Stream", () => {
       const times = yield* $(Ref.make(Chunk.empty<number>()))
       const ref = yield* $(Ref.make(0))
       const effect = pipe(
-        Clock.currentTimeMillis(),
+        Clock.currentTimeMillis,
         Effect.flatMap((time) =>
           pipe(
             Ref.update(times, Chunk.prepend(time / 1000)),

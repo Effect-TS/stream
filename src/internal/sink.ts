@@ -68,7 +68,7 @@ const collectAllLoop = <In>(
   acc: Chunk.Chunk<In>
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, never, Chunk.Chunk<In>> =>
   core.readWithCause(
-    (chunk: Chunk.Chunk<In>) => collectAllLoop(pipe(acc, Chunk.concat(chunk))),
+    (chunk: Chunk.Chunk<In>) => collectAllLoop(pipe(acc, Chunk.appendAll(chunk))),
     core.failCause,
     () => core.succeed(acc)
   )
@@ -86,12 +86,12 @@ const collectAllNLoop = <In>(
     (chunk: Chunk.Chunk<In>) => {
       const [collected, leftovers] = Chunk.splitAt(chunk, n)
       if (collected.length < n) {
-        return collectAllNLoop(n - collected.length, Chunk.concat(acc, collected))
+        return collectAllNLoop(n - collected.length, Chunk.appendAll(acc, collected))
       }
       if (Chunk.isEmpty(leftovers)) {
-        return core.succeed(Chunk.concat(acc, collected))
+        return core.succeed(Chunk.appendAll(acc, collected))
       }
-      return core.flatMap(core.write(leftovers), () => core.succeed(Chunk.concat(acc, collected)))
+      return core.flatMap(core.write(leftovers), () => core.succeed(Chunk.appendAll(acc, collected)))
     },
     core.failCause,
     () => core.succeed(acc)
@@ -198,12 +198,12 @@ const collectAllWhileReader = <In>(
       if (leftovers.length === 0) {
         return collectAllWhileReader(
           predicate,
-          pipe(done, Chunk.concat(Chunk.unsafeFromArray(collected)))
+          pipe(done, Chunk.appendAll(Chunk.unsafeFromArray(collected)))
         )
       }
       return pipe(
         core.write(Chunk.unsafeFromArray(leftovers)),
-        channel.zipRight(core.succeed(pipe(done, Chunk.concat(Chunk.unsafeFromArray(collected)))))
+        channel.zipRight(core.succeed(pipe(done, Chunk.appendAll(Chunk.unsafeFromArray(collected)))))
       )
     },
     core.fail,
@@ -227,9 +227,9 @@ const collectAllWhileEffectReader = <In, R, E>(
         core.flatMap((collected) => {
           const leftovers = pipe(input, Chunk.drop(collected.length))
           if (Chunk.isEmpty(leftovers)) {
-            return collectAllWhileEffectReader(predicate, pipe(done, Chunk.concat(collected)))
+            return collectAllWhileEffectReader(predicate, pipe(done, Chunk.appendAll(collected)))
           }
-          return pipe(core.write(leftovers), channel.zipRight(core.succeed(pipe(done, Chunk.concat(collected)))))
+          return pipe(core.write(leftovers), channel.zipRight(core.succeed(pipe(done, Chunk.appendAll(collected)))))
         })
       ),
     core.fail,
@@ -978,10 +978,10 @@ const foldEffectReader = <S, In, R, E>(
         core.flatMap(([nextS, leftovers]) =>
           pipe(
             leftovers,
-            Option.match(
-              () => foldEffectReader(nextS, contFn, f),
-              (leftover) => pipe(core.write(leftover), channel.as(nextS))
-            )
+            Option.match({
+              onNone: () => foldEffectReader(nextS, contFn, f),
+              onSome: (leftover) => pipe(core.write(leftover), channel.as(nextS))
+            })
           )
         )
       ),
@@ -1156,7 +1156,7 @@ const foldWeightedDecomposeFold = <In, S>(
   }
   // `elem` got decomposed, so we will recurse with the decomposed elements pushed
   // into the chunk we're processing and see if we can aggregate further.
-  const next = pipe(decomposed, Chunk.concat(pipe(input, Chunk.drop(index + 1))))
+  const next = pipe(decomposed, Chunk.appendAll(pipe(input, Chunk.drop(index + 1))))
   return foldWeightedDecomposeFold(next, 0, s, cost, dirty, max, costFn, decompose, f)
 }
 
@@ -1260,7 +1260,7 @@ const foldWeightedDecomposeEffectFold = <S, In, R, E, R2, E2, R3, E3>(
           }
           // `elem` got decomposed, so we will recurse with the decomposed elements pushed
           // into the chunk we're processing and see if we can aggregate further.
-          const next = pipe(decomposed, Chunk.concat(pipe(input, Chunk.drop(index + 1))))
+          const next = pipe(decomposed, Chunk.appendAll(pipe(input, Chunk.drop(index + 1))))
           return foldWeightedDecomposeEffectFold(s, max, costFn, decompose, f, next, dirty, cost, 0)
         })
       )
@@ -1289,7 +1289,7 @@ export const flatMap = dual<
 export const forEach = <In, R, E, _>(f: (input: In) => Effect.Effect<R, E, _>): Sink.Sink<R, E, In, never, void> => {
   const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause(
     (input: Chunk.Chunk<In>) =>
-      pipe(core.fromEffect(pipe(input, Effect.forEachDiscard(f))), core.flatMap(() => process)),
+      pipe(core.fromEffect(Effect.forEach(input, f, { discard: true })), core.flatMap(() => process)),
     core.failCause,
     core.unit
   )
@@ -1396,10 +1396,10 @@ const fromPushPull = <R, E, In, L, Z>(
           ([either, leftovers]) =>
             pipe(
               either,
-              Either.match(
-                (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
-                (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
-              )
+              Either.match({
+                onLeft: (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
+                onRight: (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
+              })
             ),
           () => fromPushPull(push)
         )
@@ -1412,10 +1412,10 @@ const fromPushPull = <R, E, In, L, Z>(
           ([either, leftovers]) =>
             pipe(
               either,
-              Either.match(
-                (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
-                (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
-              )
+              Either.match({
+                onLeft: (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
+                onRight: (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
+              })
             ),
           () =>
             pipe(
@@ -1436,7 +1436,7 @@ export const fromQueue = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never,
 /** @internal */
 export const fromQueueWithShutdown = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
   pipe(
-    Effect.acquireRelease(Effect.succeed(queue), Queue.shutdown),
+    Effect.acquireRelease({ acquire: Effect.succeed(queue), release: Queue.shutdown }),
     Effect.map(fromQueue),
     unwrapScoped
   )
@@ -1446,7 +1446,11 @@ export const head = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =
   fold(
     Option.none() as Option.Option<In>,
     Option.isNone,
-    (option, input) => pipe(option, Option.match(() => Option.some(input), () => option))
+    (option, input) =>
+      Option.match(option, {
+        onNone: () => Option.some(input),
+        onSome: () => option
+      })
   )
 
 /** @internal */
@@ -1460,93 +1464,6 @@ export const last = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =
 /** @internal */
 export const leftover = <L>(chunk: Chunk.Chunk<L>): Sink.Sink<never, never, unknown, L, void> =>
   new SinkImpl(core.suspend(() => core.write(chunk)))
-
-/** @internal */
-export const log = (message: string): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.log(message))
-
-/** @internal */
-export const logDebug = (message: string): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logDebug(message))
-
-/** @internal */
-export const logDebugCause = <E>(cause: Cause.Cause<E>): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logDebugCause(cause))
-
-/** @internal */
-export const logDebugCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.logDebugCauseMessage(message, cause))
-
-/** @internal */
-export const logError = (message: string): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logError(message))
-
-/** @internal */
-export const logErrorCause = <E>(cause: Cause.Cause<E>): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logErrorCause(cause))
-
-/** @internal */
-export const logErrorCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.logErrorCauseMessage(message, cause))
-
-/** @internal */
-export const logFatal = (message: string): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logFatal(message))
-
-/** @internal */
-export const logFatalCause = <E>(cause: Cause.Cause<E>): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logFatalCause(cause))
-
-/** @internal */
-export const logFatalCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.logFatalCauseMessage(message, cause))
-
-/** @internal */
-export const logInfo = (message: string): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logInfo(message))
-
-/** @internal */
-export const logInfoCause = <E>(cause: Cause.Cause<E>): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logInfoCause(cause))
-
-/** @internal */
-export const logInfoCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.logInfoCauseMessage(message, cause))
-
-/** @internal */
-export const logWarning = (message: string): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logWarning(message))
-
-/** @internal */
-export const logWarningCause = <E>(cause: Cause.Cause<E>): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logWarningCause(cause))
-
-/** @internal */
-export const logWarningCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.logWarningCauseMessage(message, cause))
-
-/** @internal */
-export const logTrace = (message: string): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logTrace(message))
-
-/** @internal */
-export const logTraceCause = <E>(cause: Cause.Cause<E>): Sink.Sink<never, never, unknown, never, void> =>
-  fromEffect(Effect.logTraceCause(cause))
-
-/** @internal */
-export const logTraceCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Sink.Sink<never, never, unknown, never, void> => fromEffect(Effect.logTraceCauseMessage(message, cause))
 
 /** @internal */
 export const map = dual<
@@ -1599,7 +1516,7 @@ export const mkString = (): Sink.Sink<never, never, unknown, never, string> =>
     const strings: Array<string> = []
     return pipe(
       foldLeftChunks<void, unknown>(void 0, (_, elems) =>
-        Chunk.forEach(elems, (elem) => {
+        Chunk.map(elems, (elem) => {
           strings.push(String(elem))
         })),
       map(() => strings.join(""))
@@ -1607,7 +1524,7 @@ export const mkString = (): Sink.Sink<never, never, unknown, never, string> =>
   })
 
 /** @internal */
-export const never = (): Sink.Sink<never, never, unknown, never, never> => fromEffect(Effect.never())
+export const never = (): Sink.Sink<never, never, unknown, never, never> => fromEffect(Effect.never)
 
 /** @internal */
 export const orElse = dual<
@@ -1698,8 +1615,8 @@ export const raceBothCapacity = dual<
     return raceWithCapacity(
       self,
       that,
-      (selfDone) => mergeDecision.Done(pipe(Effect.done(selfDone), Effect.map(Either.left))),
-      (thatDone) => mergeDecision.Done(pipe(Effect.done(thatDone), Effect.map(Either.right))),
+      (selfDone) => mergeDecision.Done(pipe(Effect.suspend(() => selfDone), Effect.map(Either.left))),
+      (thatDone) => mergeDecision.Done(pipe(Effect.suspend(() => thatDone), Effect.map(Either.right))),
       capacity
     )
   }
@@ -1778,8 +1695,8 @@ export const raceWithCapacity = dual<
         reader,
         channel.mergeWith(
           writer,
-          () => mergeDecision.Await((exit) => Effect.done(exit)),
-          (done) => mergeDecision.Done(Effect.done(done))
+          () => mergeDecision.Await((exit) => Effect.suspend(() => exit)),
+          (done) => mergeDecision.Done(Effect.suspend(() => done))
         )
       )
       return new SinkImpl(racedChannel)
@@ -1827,13 +1744,10 @@ export const refineOrDieWith = dual<
       self,
       toChannel,
       channel.catchAll((error) =>
-        pipe(
-          pf(error),
-          Option.match(
-            () => core.failCauseSync(() => Cause.die(f(error))),
-            core.fail
-          )
-        )
+        Option.match(pf(error), {
+          onNone: () => core.failCauseSync(() => Cause.die(f(error))),
+          onSome: core.fail
+        })
       )
     )
     return new SinkImpl(newChannel)
@@ -1885,7 +1799,7 @@ export const splitWhere = dual<
             core.fromEffect(Ref.get(ref)),
             core.flatMap((leftover) =>
               pipe(
-                core.write<Chunk.Chunk<In>>(pipe(leftover, Chunk.concat(Chunk.flatten(leftovers)))),
+                core.write<Chunk.Chunk<In>>(pipe(leftover, Chunk.appendAll(Chunk.flatten(leftovers)))),
                 channel.zipRight(core.succeed(z))
               )
             )
@@ -2001,7 +1915,7 @@ export const take = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk
     foldChunks<Chunk.Chunk<In>, In>(
       Chunk.empty(),
       (chunk) => chunk.length < n,
-      (acc, chunk) => pipe(acc, Chunk.concat(chunk))
+      (acc, chunk) => pipe(acc, Chunk.appendAll(chunk))
     ),
     flatMap((acc) => {
       const [taken, leftover] = pipe(acc, Chunk.splitAt(n))
@@ -2040,7 +1954,7 @@ export const unwrapScoped = <R, E, In, L, Z>(
 export const withDuration = <R, E, In, L, Z>(
   self: Sink.Sink<R, E, In, L, Z>
 ): Sink.Sink<R, E, In, L, readonly [Z, Duration.Duration]> =>
-  pipe(self, summarized(Clock.currentTimeMillis(), (start, end) => Duration.millis(end - start)))
+  pipe(self, summarized(Clock.currentTimeMillis, (start, end) => Duration.millis(end - start)))
 
 /** @internal */
 export const zip = dual<
@@ -2186,26 +2100,26 @@ export const zipWithPar = dual<
       self,
       raceWith(
         that,
-        Exit.match(
-          (cause) => mergeDecision.Done(Effect.failCause(cause)),
-          (leftZ) =>
+        Exit.match({
+          onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
+          onSuccess: (leftZ) =>
             mergeDecision.Await<R | R2, E2, Z2, E | E2, Z3>(
-              Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>(
-                Effect.failCause,
-                (rightZ) => Effect.succeed(f(leftZ, rightZ))
-              )
+              Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>({
+                onFailure: Effect.failCause,
+                onSuccess: (rightZ) => Effect.succeed(f(leftZ, rightZ))
+              })
             )
-        ),
-        Exit.match(
-          (cause) => mergeDecision.Done(Effect.failCause(cause)),
-          (rightZ) =>
+        }),
+        Exit.match({
+          onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
+          onSuccess: (rightZ) =>
             mergeDecision.Await<R | R2, E, Z, E | E2, Z3>(
-              Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>(
-                Effect.failCause,
-                (leftZ) => Effect.succeed(f(leftZ, rightZ))
-              )
+              Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>({
+                onFailure: Effect.failCause,
+                onSuccess: (leftZ) => Effect.succeed(f(leftZ, rightZ))
+              })
             )
-        )
+        })
       )
     )
   }

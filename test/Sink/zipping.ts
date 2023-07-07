@@ -7,6 +7,8 @@ import * as Random from "@effect/io/Random"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
+import { unfoldEffect } from "@effect/stream/test/utils/unfoldEffect"
+
 import { assert, describe } from "vitest"
 
 const findSink = <A>(a: A): Sink.Sink<never, void, A, A, A> =>
@@ -16,7 +18,10 @@ const findSink = <A>(a: A): Sink.Sink<never, void, A, A, A> =>
       Option.isNone,
       (_, v) => (a === v ? Option.some(a) : Option.none())
     ),
-    Sink.mapEffect(Option.match(() => Effect.failSync(constVoid), Effect.succeed))
+    Sink.mapEffect(Option.match({
+      onNone: () => Effect.failSync(constVoid),
+      onSome: Effect.succeed
+    }))
   )
 
 const zipParLaw = <A, B, C, E>(
@@ -31,13 +36,10 @@ const zipParLaw = <A, B, C, E>(
       zbc: pipe(stream, Stream.run(pipe(sink1, Sink.zipPar(sink2))), Effect.either)
     }),
     Effect.map(({ zb, zbc, zc }) =>
-      pipe(
-        zbc,
-        Either.match(
-          (e) => (Either.isLeft(zb) && zb.left === e) || (Either.isLeft(zc) && zc.left === e),
-          ([b, c]) => Either.isRight(zb) && zb.right === b && Either.isRight(zc) && zc.right === c
-        )
-      )
+      Either.match(zbc, {
+        onLeft: (e) => (Either.isLeft(zb) && zb.left === e) || (Either.isLeft(zc) && zc.left === e),
+        onRight: ([b, c]) => Either.isRight(zb) && zb.right === b && Either.isRight(zc) && zc.right === c
+      })
     )
   )
 
@@ -68,17 +70,17 @@ describe.concurrent("Sink", () => {
 
   it.effect("zipWithPar - coherence", () =>
     Effect.gen(function*($) {
-      const ints = yield* $(Effect.unfold(0, (n) =>
+      const ints = yield* $(unfoldEffect(0, (n) =>
         pipe(
           Random.nextIntBetween(0, 10),
           Effect.map((i) => n < 20 ? Option.some([i, n + 1] as const) : Option.none())
         )))
-      const success1 = yield* $(Random.nextBoolean())
-      const success2 = yield* $(Random.nextBoolean())
+      const success1 = yield* $(Random.nextBoolean)
+      const success2 = yield* $(Random.nextBoolean)
       const chunk = pipe(
         Chunk.unsafeFromArray(ints),
-        Chunk.concat(success1 ? Chunk.of(20) : Chunk.empty<number>()),
-        Chunk.concat(success2 ? Chunk.of(40) : Chunk.empty<number>())
+        Chunk.appendAll(success1 ? Chunk.of(20) : Chunk.empty<number>()),
+        Chunk.appendAll(success2 ? Chunk.of(40) : Chunk.empty<number>())
       )
       const result = yield* $(
         zipParLaw(

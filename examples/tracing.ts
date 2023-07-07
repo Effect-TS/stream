@@ -1,3 +1,4 @@
+import { pipe } from "@effect/data/Function"
 import * as Effect from "@effect/io/Effect"
 import * as Channel from "@effect/stream/Channel"
 
@@ -6,6 +7,9 @@ const program = Channel.flatMap(
   (n) => Channel.fail(`n: ${n}`)
 )
 
-const main = Effect.catchAllCause(Channel.runDrain(program), Effect.logErrorCause)
+const main = pipe(
+  Channel.runDrain(program),
+  Effect.catchAllCause((cause) => Effect.logCause(cause, { level: "Error" }))
+)
 
 Effect.runFork(main)

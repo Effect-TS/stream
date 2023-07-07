@@ -92,8 +92,9 @@ describe.concurrent("SubscriptionRef", () => {
       ))
       const result = yield* $(
         Effect.map(
-          Effect.allPar(
-            Array.from({ length: 2 }, () => subscriber(subscriptionRef))
+          Effect.all(
+            Array.from({ length: 2 }, () => subscriber(subscriptionRef)),
+            { concurrency: 2 }
           ),
           Chunk.unsafeFromArray
         )

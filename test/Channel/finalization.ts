@@ -161,7 +161,7 @@ describe.concurrent("Channel", () => {
       const result = yield* _(
         Channel.unit(),
         Channel.ensuring(Effect.dieMessage("die")),
-        Channel.ensuring(Effect.unit()),
+        Channel.ensuring(Effect.unit),
         Channel.runDrain,
         Effect.exit
       )

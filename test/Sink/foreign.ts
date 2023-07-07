@@ -4,13 +4,13 @@ import * as Option from "@effect/data/Option"
 import { unify } from "@effect/data/Unify"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
-import { nextInt } from "@effect/io/Random"
+import * as Random from "@effect/io/Random"
 import type * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import { assert, describe } from "vitest"
 
-const runSink = <R, E, A>(sink: Sink.Sink<R, E, unknown, unknown, A>) => Stream.run(Effect.unit(), sink)
+const runSink = <R, E, A>(sink: Sink.Sink<R, E, unknown, unknown, A>) => Stream.run(Effect.unit, sink)
 
 describe.concurrent("Channel.Foreign", () => {
   it.effect("Tag", () =>
@@ -22,10 +22,10 @@ describe.concurrent("Channel.Foreign", () => {
 
   it.effect("Unify", () =>
     Effect.gen(function*($) {
-      const unifiedEffect = unify((yield* $(nextInt())) > 1 ? Effect.succeed(0) : Effect.fail(1))
-      const unifiedExit = unify((yield* $(nextInt())) > 1 ? Exit.succeed(0) : Exit.fail(1))
-      const unifiedEither = unify((yield* $(nextInt())) > 1 ? Either.right(0) : Either.left(1))
-      const unifiedOption = unify((yield* $(nextInt())) > 1 ? Option.some(0) : Option.none())
+      const unifiedEffect = unify((yield* $(Random.nextInt)) > 1 ? Effect.succeed(0) : Effect.fail(1))
+      const unifiedExit = unify((yield* $(Random.nextInt)) > 1 ? Exit.succeed(0) : Exit.fail(1))
+      const unifiedEither = unify((yield* $(Random.nextInt)) > 1 ? Either.right(0) : Either.left(1))
+      const unifiedOption = unify((yield* $(Random.nextInt)) > 1 ? Option.some(0) : Option.none())
       assert.deepEqual(yield* $(runSink(unifiedEffect)), 0)
       assert.deepEqual(yield* $(runSink(unifiedExit)), 0)
       assert.deepEqual(yield* $(runSink(unifiedEither)), 0)

@@ -60,7 +60,7 @@ describe.concurrent("Stream", () => {
         Stream.drainFork(
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never()),
+            Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true)),
             Stream.fromEffect
           )

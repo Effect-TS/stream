@@ -52,7 +52,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const stream = pipe(
         Stream.make(1),
-        Stream.concat(Stream.acquireRelease(Ref.set(ref, true), Effect.unit)),
+        Stream.concat(Stream.acquireRelease(Ref.set(ref, true), () => Effect.unit)),
         Stream.take(0)
       )
       yield* $(Stream.runDrain(stream))
@@ -65,7 +65,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       yield* $(
         pipe(
-          Stream.acquireRelease(Effect.unit(), () => Ref.set(ref, true)),
+          Stream.acquireRelease(Effect.unit, () => Ref.set(ref, true)),
           Stream.flatMap(() => Stream.fromEffect(Effect.dieMessage("boom"))),
           Stream.runDrain,
           Effect.exit
@@ -109,7 +109,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         pipe(
-          Stream.acquireRelease(Effect.unit(), () => Effect.dieMessage("die")),
+          Stream.acquireRelease(Effect.unit, () => Effect.dieMessage("die")),
           Stream.runCollect,
           Effect.exit
         )
@@ -162,10 +162,10 @@ describe.concurrent("Stream", () => {
     const program = Effect.gen(function*($) {
       const stream = (deferred: Deferred.Deferred<never, void>, ref: Ref.Ref<ReadonlyArray<string>>) =>
         pipe(
-          Effect.acquireRelease(
-            Ref.update(ref, (array) => [...array, "acquire outer"]),
-            () => Ref.update(ref, (array) => [...array, "release outer"])
-          ),
+          Effect.acquireRelease({
+            acquire: Ref.update(ref, (array) => [...array, "acquire outer"]),
+            release: () => Ref.update(ref, (array) => [...array, "release outer"])
+          }),
           Effect.zipRight(Deferred.succeed<never, void>(deferred, void 0)),
           Effect.zipRight(Deferred.await(awaiter)),
           Effect.zipRight(Effect.succeed(Stream.make(1, 2, 3))),

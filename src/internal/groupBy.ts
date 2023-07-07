@@ -168,61 +168,53 @@ export const groupByBuffer = dual<
               (key: K, value: V) => Effect.Effect<never, never, Predicate<number>>
             >()
           )
-          const output = yield* $(Effect.acquireRelease(
-            Queue.bounded<Exit.Exit<Option.Option<E | E2>, readonly [K, Queue.Dequeue<Take.Take<E | E2, V>>]>>(
+          const output = yield* $(Effect.acquireRelease({
+            acquire: Queue.bounded<Exit.Exit<Option.Option<E | E2>, readonly [K, Queue.Dequeue<Take.Take<E | E2, V>>]>>(
               bufferSize
             ),
-            (queue) => Queue.shutdown(queue)
-          ))
+            release: (queue) => Queue.shutdown(queue)
+          }))
           const ref = yield* $(Ref.make<Map<K, number>>(new Map()))
           const add = yield* $(
             pipe(
               stream.mapEffect(self, f),
               stream.distributedWithDynamicCallback(
                 bufferSize,
-                ([key, value]) => pipe(Deferred.await(decider), Effect.flatMap((f) => f(key, value))),
+                ([key, value]) => Effect.flatMap(Deferred.await(decider), (f) => f(key, value)),
                 (exit) => Queue.offer(output, exit)
               )
             )
           )
           yield* $(
-            pipe(
-              Deferred.succeed(decider, (key, _) =>
-                pipe(
-                  Ref.get(ref),
-                  Effect.map((map) => Option.fromNullable(map.get(key))),
-                  Effect.flatMap(Option.match(
-                    () =>
-                      pipe(
-                        add,
-                        Effect.flatMap(([index, queue]) =>
-                          pipe(
-                            Ref.update(ref, (map) => map.set(key, index)),
-                            Effect.zipRight(
-                              pipe(
-                                Queue.offer(
-                                  output,
-                                  Exit.succeed(
-                                    [
-                                      key,
-                                      mapDequeue(queue, (exit) =>
-                                        new take.TakeImpl(pipe(
-                                          exit,
-                                          Exit.map((tuple) => Chunk.of(tuple[1]))
-                                        )))
-                                    ] as const
-                                  )
-                                ),
-                                Effect.as<Predicate<number>>((n: number) => n === index)
-                              )
+            Deferred.succeed(decider, (key, _) =>
+              pipe(
+                Ref.get(ref),
+                Effect.map((map) => Option.fromNullable(map.get(key))),
+                Effect.flatMap(Option.match({
+                  onNone: () =>
+                    Effect.flatMap(add, ([index, queue]) =>
+                      Effect.zipRight(
+                        Ref.update(ref, (map) => map.set(key, index)),
+                        pipe(
+                          Queue.offer(
+                            output,
+                            Exit.succeed(
+                              [
+                                key,
+                                mapDequeue(queue, (exit) =>
+                                  new take.TakeImpl(pipe(
+                                    exit,
+                                    Exit.map((tuple) => Chunk.of(tuple[1]))
+                                  )))
+                              ] as const
                             )
-                          )
+                          ),
+                          Effect.as<Predicate<number>>((n: number) => n === index)
                         )
-                      ),
-                    (index) => Effect.succeed<Predicate<number>>((n: number) => n === index)
-                  ))
-                ))
-            )
+                      )),
+                  onSome: (index) => Effect.succeed<Predicate<number>>((n: number) => n === index)
+                }))
+              ))
           )
           return stream.flattenExitOption(stream.fromQueueWithShutdown(output))
         })
@@ -253,6 +245,10 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
 
   awaitShutdown(): Effect.Effect<never, never, void> {
     return Queue.awaitShutdown(this.dequeue)
+  }
+
+  isActive(): boolean {
+    return this.dequeue.isActive()
   }
 
   isShutdown(): Effect.Effect<never, never, boolean> {
@@ -322,7 +318,7 @@ export const groupByKeyBuffer = dual<
             pipe(
               input,
               groupByIterable(f),
-              Effect.forEachDiscard(([key, values]) => {
+              Effect.forEach(([key, values]) => {
                 const innerQueue = map.get(key)
                 if (innerQueue === undefined) {
                   return pipe(
@@ -340,7 +336,7 @@ export const groupByKeyBuffer = dual<
                             Queue.offer(innerQueue, take.chunk(values)),
                             Effect.catchSomeCause((cause) =>
                               Cause.isInterruptedOnly(cause) ?
-                                Option.some(Effect.unit()) :
+                                Option.some(Effect.unit) :
                                 Option.none()
                             )
                           )
@@ -353,11 +349,11 @@ export const groupByKeyBuffer = dual<
                   Queue.offer(innerQueue, take.chunk(values)),
                   Effect.catchSomeCause((cause) =>
                     Cause.isInterruptedOnly(cause) ?
-                      Option.some(Effect.unit()) :
+                      Option.some(Effect.unit) :
                       Option.none()
                   )
                 )
-              })
+              }, { discard: true })
             )
           ),
           core.flatMap(() => loop(map, outerQueue))
@@ -368,16 +364,15 @@ export const groupByKeyBuffer = dual<
           core.fromEffect(
             pipe(
               map.entries(),
-              Effect.forEachDiscard(([_, innerQueue]) =>
+              Effect.forEach(([_, innerQueue]) =>
                 pipe(
                   Queue.offer(innerQueue, take.end),
                   Effect.catchSomeCause((cause) =>
                     Cause.isInterruptedOnly(cause) ?
-                      Option.some(Effect.unit()) :
+                      Option.some(Effect.unit) :
                       Option.none()
                   )
-                )
-              ),
+                ), { discard: true }),
               Effect.zipRight(Queue.offer(outerQueue, take.end))
             )
           )
@@ -388,10 +383,10 @@ export const groupByKeyBuffer = dual<
       Effect.sync(() => new Map<K, Queue.Queue<Take.Take<E, A>>>()),
       Effect.flatMap((map) =>
         pipe(
-          Effect.acquireRelease(
-            Queue.unbounded<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>(),
-            (queue) => Queue.shutdown(queue)
-          ),
+          Effect.acquireRelease({
+            acquire: Queue.unbounded<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>(),
+            release: (queue) => Queue.shutdown(queue)
+          }),
           Effect.flatMap((queue) =>
             pipe(
               self,

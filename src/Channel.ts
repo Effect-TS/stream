@@ -1930,7 +1930,6 @@ export const repeated: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
 /**
  * Runs a channel until the end is received.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -1944,7 +1943,6 @@ export const run: <Env, InErr, InDone, OutErr, OutDone>(
  *
  * The channel must not read any input.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
@@ -1955,7 +1953,6 @@ export const runCollect: <Env, InErr, InDone, OutErr, OutElem, OutDone>(
 /**
  * Runs a channel until the end is received.
  *
- * @macro traced
  * @since 1.0.0
  * @category destructors
  */
