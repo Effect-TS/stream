@@ -6,8 +6,8 @@ import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
-import * as TestEnvironment from "@effect/io/internal_effect_untraced/testing/testEnvironment"
+import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestEnvironment from "@effect/io/internal/testing/testEnvironment"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
@@ -164,7 +164,10 @@ describe.concurrent("Stream", () => {
         const ref = yield* $(Ref.make(0))
         const effect = pipe(
           Ref.getAndUpdate(ref, (n) => n + 1),
-          Effect.filterOrFail((n) => n <= length + 1, constVoid)
+          Effect.filterOrFail({
+            filter: (n) => n <= length + 1,
+            orFailWith: constVoid
+          })
         )
         const schedule = pipe(
           Schedule.identity<number>(),
@@ -183,7 +186,7 @@ describe.concurrent("Stream", () => {
   it.effect("repeatEffectWithSchedule - should perform repetitions in addition to the first execution (one repetition)", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.repeatEffectWithSchedule(Effect.succeed(1), Schedule.once()),
+        Stream.repeatEffectWithSchedule(Effect.succeed(1), Schedule.once),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 1])
@@ -192,7 +195,7 @@ describe.concurrent("Stream", () => {
   it.effect("repeatEffectWithSchedule - should perform repetitions in addition to the first execution (zero repetitions)", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.repeatEffectWithSchedule(Effect.succeed(1), Schedule.stop()),
+        Stream.repeatEffectWithSchedule(Effect.succeed(1), Schedule.stop),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1])
@@ -203,7 +206,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const schedule = Schedule.spaced(Duration.seconds(1))
       const fiber = yield* $(pipe(
-        Stream.repeatEffectWithSchedule(Effect.unit(), schedule),
+        Stream.repeatEffectWithSchedule(Effect.unit, schedule),
         Stream.tap(() => Ref.update(ref, (n) => n + 1)),
         Stream.runDrain,
         Effect.fork
@@ -237,7 +240,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make("A", "B", "C"),
-        Stream.repeatElements(Schedule.once()),
+        Stream.repeatElements(Schedule.once),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), ["A", "A", "B", "B", "C", "C"])
@@ -247,7 +250,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make("A", "B", "C"),
-        Stream.repeatElements(Schedule.once()),
+        Stream.repeatElements(Schedule.once),
         Stream.take(4),
         Stream.runCollect
       ))
@@ -258,7 +261,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make("A", "B", "C"),
-        Stream.repeatElements(Schedule.once()),
+        Stream.repeatElements(Schedule.once),
         Stream.take(3),
         Stream.runCollect
       ))

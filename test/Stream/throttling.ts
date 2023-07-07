@@ -6,7 +6,7 @@ import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
@@ -90,7 +90,7 @@ describe.concurrent("Stream", () => {
             const result1 = yield* $(pull)
             yield* $(pipe(Queue.offer(queue, 2)))
             const result2 = yield* $(pull)
-            const elapsed = yield* $(Clock.currentTimeMillis())
+            const elapsed = yield* $(Clock.currentTimeMillis)
             return [Array.from(result1), Array.from(result2), elapsed] as const
           })
         ),
@@ -216,11 +216,11 @@ describe.concurrent("Stream", () => {
         Stream.tap(() => coordination.proceed)
       )
       const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
-      yield* $(Effect.allParDiscard([
+      yield* $(Effect.all([
         coordination.offer,
         coordination.offer,
         coordination.offer
-      ]))
+      ], { concurrency: 3, discard: true }))
       yield* $(TestClock.adjust(Duration.seconds(1)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(
@@ -287,10 +287,11 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
         Stream.tap(() => coordination.proceed),
-        Stream.flatMap((exit) => Stream.fromEffectOption(Effect.done(exit))),
+        // TODO: remove
+        Stream.flatMap((exit) => Stream.fromEffectOption(Effect.suspend(() => exit))),
         Stream.flattenChunks,
         Stream.debounce(Duration.millis(200)),
-        Stream.interruptWhen(Effect.never()),
+        Stream.interruptWhen(Effect.never),
         Stream.take(1),
         Stream.runCollect,
         Effect.fork
@@ -310,9 +311,9 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const fiber = yield* $(pipe(
-        Stream.fromEffect(Effect.unit()),
+        Stream.fromEffect(Effect.unit),
         Stream.concat(Stream.fromEffect(pipe(
-          Effect.never(),
+          Effect.never,
           Effect.onInterrupt(() => Ref.set(ref, true))
         ))),
         Stream.debounce(Duration.millis(800)),

@@ -13,7 +13,10 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.head<number>(),
-        Sink.findEffect(Option.match(() => Effect.succeed(false), (n) => Effect.succeed(n >= 10)))
+        Sink.findEffect(Option.match({
+          onNone: () => Effect.succeed(false),
+          onSome: (n) => Effect.succeed(n >= 10)
+        }))
       )
       const result = yield* $(
         pipe(
@@ -67,7 +70,10 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.head<number>(),
-        Sink.findEffect(Option.match(() => Effect.succeed(false), (n) => Effect.succeed(n >= 3)))
+        Sink.findEffect(Option.match({
+          onNone: () => Effect.succeed(false),
+          onSome: (n) => Effect.succeed(n >= 3)
+        }))
       )
       const result = yield* $(
         pipe(

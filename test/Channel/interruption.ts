@@ -38,11 +38,11 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const deferred = yield* $(Deferred.make<string, never>())
       const channel = pipe(
-        Channel.fromEffect(Effect.never()),
+        Channel.fromEffect(Effect.never),
         Channel.interruptWhen(Deferred.await(deferred))
       )
       yield* $(Deferred.fail(deferred, "fail"))
-      const result = yield* $(pipe(Channel.runDrain(channel), Effect.either))
+      const result = yield* $(Effect.either(Channel.runDrain(channel)))
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
 
@@ -75,11 +75,11 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const deferred = yield* $(Deferred.make<string, never>())
       const channel = pipe(
-        Channel.fromEffect(Effect.never()),
+        Channel.fromEffect(Effect.never),
         Channel.interruptWhenDeferred(deferred)
       )
       yield* $(Deferred.fail(deferred, "fail"))
-      const result = yield* $(pipe(Channel.runDrain(channel), Effect.either))
+      const result = yield* $(Effect.either(Channel.runDrain(channel)))
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
 

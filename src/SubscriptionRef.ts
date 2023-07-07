@@ -1,13 +1,13 @@
 /**
  * @since 1.0.0
  */
+import type * as Option from "@effect/data/Option"
 import type * as Effect from "@effect/io/Effect"
 import type * as Hub from "@effect/io/Hub"
 import * as Ref from "@effect/io/Ref"
 import * as Synchronized from "@effect/io/Ref/Synchronized"
 import * as internal from "@effect/stream/internal/subscriptionRef"
 import type * as Stream from "@effect/stream/Stream"
-import type * as Option from "@effect/data/Option"
 
 /**
  * @since 1.0.0
@@ -58,14 +58,12 @@ export declare namespace SubscriptionRef {
 }
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category getters
  */
 export const get: <A>(self: SubscriptionRef<A>) => Effect.Effect<never, never, A> = internal.get
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -75,7 +73,6 @@ export const getAndSet: {
 } = Ref.getAndSet
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -85,7 +82,6 @@ export const getAndUpdate: {
 } = Ref.getAndUpdate
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -95,7 +91,6 @@ export const getAndUpdateEffect: {
 } = Synchronized.getAndUpdateEffect
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -105,7 +100,6 @@ export const getAndUpdateSome: {
 } = Ref.getAndUpdateSome
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -122,14 +116,12 @@ export const getAndUpdateSomeEffect: {
 /**
  * Creates a new `SubscriptionRef` with the specified value.
  *
- * @macro traced
  * @since 1.0.0
  * @category constructors
  */
 export const make: <A>(value: A) => Effect.Effect<never, never, SubscriptionRef<A>> = internal.make
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -139,7 +131,6 @@ export const modify: {
 } = internal.modify
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -149,7 +140,6 @@ export const modifyEffect: {
 } = internal.modifyEffect
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -166,7 +156,6 @@ export const modifySome: {
 } = Ref.modifySome
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -183,7 +172,6 @@ export const modifySomeEffect: {
 } = Synchronized.modifySomeEffect
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -193,7 +181,6 @@ export const set: {
 } = internal.set
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -203,7 +190,6 @@ export const setAndGet: {
 } = Ref.setAndGet
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -213,7 +199,6 @@ export const update: {
 } = Ref.update
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -223,7 +208,6 @@ export const updateEffect: {
 } = Synchronized.updateEffect
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -233,7 +217,6 @@ export const updateAndGet: {
 } = Ref.updateAndGet
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -243,7 +226,6 @@ export const updateAndGetEffect: {
 } = Synchronized.updateAndGetEffect
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -253,7 +235,6 @@ export const updateSome: {
 } = Ref.updateSome
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -268,7 +249,6 @@ export const updateSomeEffect: {
 } = Synchronized.updateSomeEffect
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */
@@ -278,7 +258,6 @@ export const updateSomeAndGet: {
 } = Ref.updateSomeAndGet
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category utils
  */

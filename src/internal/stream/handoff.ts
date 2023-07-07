@@ -1,5 +1,4 @@
-import { dualWithTrace, methodWithTrace } from "@effect/data/Debug"
-import { pipe } from "@effect/data/Function"
+import { dual, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -96,113 +95,91 @@ const handoffVariance = {
 }
 
 /** @internal */
-export const make = methodWithTrace((trace) =>
-  <A>(): Effect.Effect<never, never, Handoff<A>> =>
-    pipe(
-      Deferred.make<never, void>(),
-      Effect.flatMap((deferred) => Ref.make(handoffStateEmpty(deferred))),
-      Effect.map((ref) => ({
-        [HandoffTypeId]: handoffVariance,
-        ref
-      }))
-    ).traced(trace)
-)
+export const make = <A>(): Effect.Effect<never, never, Handoff<A>> =>
+  pipe(
+    Deferred.make<never, void>(),
+    Effect.flatMap((deferred) => Ref.make(handoffStateEmpty(deferred))),
+    Effect.map((ref) => ({
+      [HandoffTypeId]: handoffVariance,
+      ref
+    }))
+  )
 
-/**
- * @macro traced
- * @internal
- */
-export const offer = dualWithTrace<
+/** @internal */
+export const offer = dual<
   <A>(value: A) => (self: Handoff<A>) => Effect.Effect<never, never, void>,
   <A>(self: Handoff<A>, value: A) => Effect.Effect<never, never, void>
->(2, (trace) =>
-  (
-    self,
-    value
-  ): Effect.Effect<never, never, void> => {
-    return pipe(
-      Deferred.make<never, void>(),
-      Effect.flatMap((deferred) =>
+>(2, (self, value): Effect.Effect<never, never, void> => {
+  return Effect.flatMap(Deferred.make<never, void>(), (deferred) =>
+    Effect.flatten(
+      Ref.modify(self.ref, (state) =>
         pipe(
-          Ref.modify(self.ref, (state) =>
-            pipe(
-              state,
-              handoffStateMatch(
-                (notifyConsumer) => [
-                  pipe(
-                    Deferred.succeed<never, void>(notifyConsumer, void 0),
-                    Effect.zipRight(Deferred.await(deferred))
-                  ),
-                  handoffStateFull(value, deferred)
-                ],
-                (_, notifyProducer) => [
-                  pipe(Deferred.await(notifyProducer), Effect.flatMap(() => pipe(self, offer(value)))),
-                  state
-                ]
-              )
-            )),
-          Effect.flatten
-        )
-      )
-    ).traced(trace)
-  })
+          state,
+          handoffStateMatch(
+            (notifyConsumer) => [
+              Effect.zipRight(
+                Deferred.succeed<never, void>(notifyConsumer, void 0),
+                Deferred.await(deferred)
+              ),
+              handoffStateFull(value, deferred)
+            ],
+            (_, notifyProducer) => [
+              Effect.flatMap(
+                Deferred.await(notifyProducer),
+                () => pipe(self, offer(value))
+              ),
+              state
+            ]
+          )
+        ))
+    ))
+})
 
-/**
- * @macro traced
- * @since 1.0.0
- */
-export const take = methodWithTrace((trace) =>
-  <A>(self: Handoff<A>): Effect.Effect<never, never, A> =>
-    pipe(
-      Deferred.make<never, void>(),
-      Effect.flatMap((deferred) =>
+/** @internal */
+export const take = <A>(self: Handoff<A>): Effect.Effect<never, never, A> =>
+  Effect.flatMap(Deferred.make<never, void>(), (deferred) =>
+    Effect.flatten(
+      Ref.modify(self.ref, (state) =>
         pipe(
-          Ref.modify(self.ref, (state) =>
-            pipe(
-              state,
-              handoffStateMatch(
-                (notifyConsumer) => [
-                  pipe(Deferred.await(notifyConsumer), Effect.flatMap(() => take(self))),
-                  state
-                ],
-                (value, notifyProducer) => [
-                  pipe(Deferred.succeed<never, void>(notifyProducer, void 0), Effect.as(value)),
-                  handoffStateEmpty(deferred)
-                ]
-              )
-            )),
-          Effect.flatten
-        )
-      )
-    ).traced(trace)
-)
+          state,
+          handoffStateMatch(
+            (notifyConsumer) => [
+              Effect.flatMap(
+                Deferred.await(notifyConsumer),
+                () => take(self)
+              ),
+              state
+            ],
+            (value, notifyProducer) => [
+              Effect.as(
+                Deferred.succeed<never, void>(notifyProducer, void 0),
+                value
+              ),
+              handoffStateEmpty(deferred)
+            ]
+          )
+        ))
+    ))
 
-/**
- * @macro traced
- * @internal
- */
-export const poll = methodWithTrace((trace) =>
-  <A>(self: Handoff<A>): Effect.Effect<never, never, Option.Option<A>> =>
-    pipe(
-      Deferred.make<never, void>(),
-      Effect.flatMap((deferred) =>
+/** @internal */
+export const poll = <A>(self: Handoff<A>): Effect.Effect<never, never, Option.Option<A>> =>
+  Effect.flatMap(Deferred.make<never, void>(), (deferred) =>
+    Effect.flatten(
+      Ref.modify(self.ref, (state) =>
         pipe(
-          Ref.modify(self.ref, (state) =>
-            pipe(
-              state,
-              handoffStateMatch(
-                () => [
-                  Effect.succeed(Option.none() as Option.Option<A>),
-                  state
-                ],
-                (value, notifyProducer) => [
-                  pipe(Deferred.succeed<never, void>(notifyProducer, void 0), Effect.as(Option.some(value))),
-                  handoffStateEmpty(deferred)
-                ]
-              )
-            )),
-          Effect.flatten
-        )
-      )
-    ).traced(trace)
-)
+          state,
+          handoffStateMatch(
+            () => [
+              Effect.succeed(Option.none<A>()),
+              state
+            ],
+            (value, notifyProducer) => [
+              Effect.as(
+                Deferred.succeed<never, void>(notifyProducer, void 0),
+                Option.some(value)
+              ),
+              handoffStateEmpty(deferred)
+            ]
+          )
+        ))
+    ))

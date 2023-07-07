@@ -6,8 +6,8 @@ import * as HashSet from "@effect/data/HashSet"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
-import * as TestServices from "@effect/io/internal_effect_untraced/testing/testServices"
+import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestServices from "@effect/io/internal/testing/testServices"
 import * as Queue from "@effect/io/Queue"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
@@ -124,7 +124,7 @@ describe.concurrent("Stream", () => {
           Stream.runCollect(stream1),
           Effect.zipWith(
             Stream.runCollect(stream2),
-            (chunk1, chunk2) => pipe(chunk1, Chunk.concat(chunk2))
+            (chunk1, chunk2) => pipe(chunk1, Chunk.appendAll(chunk2))
           ),
           Effect.map(HashSet.fromIterable)
         )

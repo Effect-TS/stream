@@ -4,7 +4,7 @@ import { identity, pipe } from "@effect/data/Function"
 import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
+import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Schedule from "@effect/io/Schedule"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
@@ -13,13 +13,13 @@ import { assert, describe } from "vitest"
 describe.concurrent("Stream", () => {
   it.effect("schedule", () =>
     Effect.gen(function*($) {
-      const start = yield* $(Clock.currentTimeMillis())
+      const start = yield* $(Clock.currentTimeMillis)
       const fiber = yield* $(pipe(
         Stream.range(1, 9),
         Stream.schedule<never, number>(Schedule.fixed(Duration.millis(100))),
         Stream.mapEffect((n) =>
           pipe(
-            Clock.currentTimeMillis(),
+            Clock.currentTimeMillis,
             Effect.map((now) => [n, now - start] as const)
           )
         ),

@@ -42,7 +42,7 @@ export const acquireUseRelease = <Env, InErr, InElem, InDone, OutErr, OutElem1, 
     core.fromEffect(
       Ref.make<
         (exit: Exit.Exit<OutErr, OutDone>) => Effect.Effect<Env, never, any>
-      >(() => Effect.unit())
+      >(() => Effect.unit)
     ),
     (ref) =>
       pipe(
@@ -164,7 +164,12 @@ export const catchAll = dual<
     OutErr1,
     OutElem | OutElem1,
     OutDone | OutDone1
-  > => core.catchAllCause(self, (cause) => Either.match(Cause.failureOrCause(cause), f, core.failCause))
+  > =>
+    core.catchAllCause(self, (cause) =>
+      Either.match(Cause.failureOrCause(cause), {
+        onLeft: f,
+        onRight: core.failCause
+      }))
 )
 
 /** @internal */
@@ -227,8 +232,10 @@ export const collect = dual<
       (out) =>
         Option.match(
           pf(out),
-          () => collector,
-          (out2) => core.flatMap(core.write(out2), () => collector)
+          {
+            onNone: () => collector,
+            onSome: (out2) => core.flatMap(core.write(out2), () => collector)
+          }
         ),
       core.fail,
       core.succeedNow
@@ -656,7 +663,7 @@ export const foldChannel = dual<
 export const fromEither = <E, A>(
   either: Either.Either<E, A>
 ): Channel.Channel<never, unknown, unknown, unknown, E, never, A> =>
-  core.suspend(() => Either.match(either, core.fail, core.succeed))
+  core.suspend(() => Either.match(either, { onLeft: core.fail, onRight: core.succeed }))
 
 /** @internal */
 export const fromInput = <Err, Elem, Done>(
@@ -686,7 +693,12 @@ export const fromHubScoped = <Err, Done, Elem>(
 export const fromOption = <A>(
   option: Option.Option<A>
 ): Channel.Channel<never, unknown, unknown, unknown, Option.Option<never>, never, A> =>
-  core.suspend(() => Option.match(option, () => core.fail(Option.none()), core.succeed))
+  core.suspend(() =>
+    Option.match(option, {
+      onNone: () => core.fail(Option.none()),
+      onSome: core.succeed
+    })
+  )
 
 /** @internal */
 export const fromQueue = <Err, Elem, Done>(
@@ -699,17 +711,17 @@ const fromQueueInternal = <Err, Elem, Done>(
 ): Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done> =>
   pipe(
     core.fromEffect(Queue.take(queue)),
-    core.flatMap(Either.match(
-      Exit.match<Err, Done, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>>(
-        core.failCause,
-        core.succeedNow
-      ),
-      (elem) =>
-        pipe(
+    core.flatMap(Either.match({
+      onLeft: Exit.match<Err, Done, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>>({
+        onFailure: core.failCause,
+        onSuccess: core.succeedNow
+      }),
+      onRight: (elem) =>
+        core.flatMap(
           core.write(elem),
-          core.flatMap(() => fromQueueInternal<Err, Elem, Done>(queue))
+          () => fromQueueInternal<Err, Elem, Done>(queue)
         )
-    ))
+    }))
   )
 
 /** @internal */
@@ -746,8 +758,8 @@ export const interruptWhen = dual<
   mergeWith(
     self,
     core.fromEffect(effect),
-    (selfDone) => mergeDecision.Done(Effect.done(selfDone)),
-    (effectDone) => mergeDecision.Done(Effect.done(effectDone))
+    (selfDone) => mergeDecision.Done(Effect.suspend(() => selfDone)),
+    (effectDone) => mergeDecision.Done(Effect.suspend(() => effectDone))
   ))
 
 /** @internal */
@@ -908,10 +920,10 @@ export const mapOutEffectPar = dual<
   pipe(
     Effect.gen(function*($) {
       const queue = yield* $(
-        Effect.acquireRelease(
-          Queue.bounded<Effect.Effect<Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem1>>>(n),
-          Queue.shutdown
-        )
+        Effect.acquireRelease({
+          acquire: Queue.bounded<Effect.Effect<Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem1>>>(n),
+          release: (queue) => Queue.shutdown(queue)
+        })
       )
       const errorSignal = yield* $(Deferred.make<OutErr1, never>())
       const withPermits = n === Number.POSITIVE_INFINITY ?
@@ -920,54 +932,56 @@ export const mapOutEffectPar = dual<
       const pull = yield* $(toPull(self))
       yield* $(
         pipe(
-          Effect.matchCauseEffect(
-            pull,
-            (cause) => Queue.offer(queue, Effect.failCause(cause)),
-            (either) =>
+          Effect.matchCauseEffect(pull, {
+            onFailure: (cause) => Queue.offer(queue, Effect.failCause(cause)),
+            onSuccess: (either) =>
               Either.match(
                 either,
-                (outDone) => {
-                  const lock = withPermits(n)
-                  return Effect.zipRight(
-                    Effect.interruptible(lock(Effect.unit())),
-                    Effect.asUnit(Queue.offer(
-                      queue,
-                      Effect.succeed(Either.left(outDone))
-                    ))
-                  )
-                },
-                (outElem) =>
-                  Effect.gen(function*($) {
-                    const deferred = yield* $(Deferred.make<OutErr1, OutElem1>())
-                    const latch = yield* $(Deferred.make<never, void>())
-                    yield* $(Effect.asUnit(Queue.offer(
-                      queue,
-                      Effect.map(Deferred.await(deferred), Either.right)
-                    )))
-                    yield* $(
-                      pipe(
-                        Deferred.succeed<never, void>(latch, void 0),
-                        Effect.zipRight(
-                          pipe(
-                            Effect.uninterruptibleMask((restore) =>
-                              pipe(
-                                Effect.exit(restore(Deferred.await(errorSignal))),
-                                Effect.raceFirst(Effect.exit(restore(f(outElem)))),
-                                Effect.flatMap(Effect.done)
-                              )
-                            ),
-                            Effect.tapErrorCause((cause) => Deferred.failCause(errorSignal, cause)),
-                            Effect.intoDeferred(deferred)
-                          )
-                        ),
-                        withPermits(1),
-                        Effect.forkScoped
-                      )
+                {
+                  onLeft: (outDone) => {
+                    const lock = withPermits(n)
+                    return Effect.zipRight(
+                      Effect.interruptible(lock(Effect.unit)),
+                      Effect.asUnit(Queue.offer(
+                        queue,
+                        Effect.succeed(Either.left(outDone))
+                      ))
                     )
-                    yield* $(Deferred.await(latch))
-                  })
+                  },
+                  onRight: (outElem) =>
+                    Effect.gen(function*($) {
+                      const deferred = yield* $(Deferred.make<OutErr1, OutElem1>())
+                      const latch = yield* $(Deferred.make<never, void>())
+                      yield* $(Effect.asUnit(Queue.offer(
+                        queue,
+                        Effect.map(Deferred.await(deferred), Either.right)
+                      )))
+                      yield* $(
+                        pipe(
+                          Deferred.succeed<never, void>(latch, void 0),
+                          Effect.zipRight(
+                            pipe(
+                              Effect.uninterruptibleMask((restore) =>
+                                pipe(
+                                  Effect.exit(restore(Deferred.await(errorSignal))),
+                                  Effect.raceFirst(Effect.exit(restore(f(outElem)))),
+                                  // TODO: remove
+                                  Effect.flatMap((exit) => Effect.suspend(() => exit))
+                                )
+                              ),
+                              Effect.tapErrorCause((cause) => Deferred.failCause(errorSignal, cause)),
+                              Effect.intoDeferred(deferred)
+                            )
+                          ),
+                          withPermits(1),
+                          Effect.forkScoped
+                        )
+                      )
+                      yield* $(Deferred.await(latch))
+                    })
+                }
               )
-          ),
+          }),
           Effect.forever,
           Effect.interruptible,
           Effect.forkScoped
@@ -985,14 +999,13 @@ export const mapOutEffectPar = dual<
         OutElem1,
         OutDone
       > = unwrap(
-        Effect.matchCause(
-          Effect.flatten(Queue.take(queue)),
-          core.failCause,
-          Either.match(
-            core.succeedNow,
-            (outElem) => core.flatMap(core.write(outElem), () => consumer)
-          )
-        )
+        Effect.matchCause(Effect.flatten(Queue.take(queue)), {
+          onFailure: core.failCause,
+          onSuccess: Either.match({
+            onLeft: core.succeedNow,
+            onRight: (outElem) => core.flatMap(core.write(outElem), () => consumer)
+          })
+        })
       )
       return consumer
     }),
@@ -1154,16 +1167,16 @@ export const mergeAllWith = (
         >())
         const queueReader = fromInput(input)
         const queue = yield* $(
-          Effect.acquireRelease(
-            Queue.bounded<Effect.Effect<Env, OutErr | OutErr1, Either.Either<OutDone, OutElem>>>(bufferSize),
-            Queue.shutdown
-          )
+          Effect.acquireRelease({
+            acquire: Queue.bounded<Effect.Effect<Env, OutErr | OutErr1, Either.Either<OutDone, OutElem>>>(bufferSize),
+            release: (queue) => Queue.shutdown(queue)
+          })
         )
         const cancelers = yield* $(
-          Effect.acquireRelease(
-            Queue.unbounded<Deferred.Deferred<never, void>>(),
-            Queue.shutdown
-          )
+          Effect.acquireRelease({
+            acquire: Queue.unbounded<Deferred.Deferred<never, void>>(),
+            release: (queue) => Queue.shutdown(queue)
+          })
         )
         const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none()))
         const errorSignal = yield* $(Deferred.make<never, void>())
@@ -1175,68 +1188,69 @@ export const mergeAllWith = (
           pull: Effect.Effect<Env | Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem>>
         ) =>
           pipe(
-            pull,
-            Effect.flatMap(Either.match(
-              (done) => Effect.succeed(Option.some(done)),
-              (outElem) => pipe(Queue.offer(queue, Effect.succeed(Either.right(outElem))), Effect.as(Option.none()))
-            )),
+            Effect.flatMap(
+              pull,
+              Either.match({
+                onLeft: (done) => Effect.succeed(Option.some(done)),
+                onRight: (outElem) =>
+                  Effect.as(
+                    Queue.offer(queue, Effect.succeed(Either.right(outElem))),
+                    Option.none()
+                  )
+              })
+            ),
             Effect.repeatUntil(Option.isSome),
-            Effect.flatMap(Option.match(
-              () => Effect.unit(),
-              (outDone) =>
+            Effect.flatMap(Option.match({
+              onNone: () => Effect.unit,
+              onSome: (outDone) =>
                 Ref.update(
                   lastDone,
-                  Option.match(
-                    () => Option.some(outDone),
-                    (lastDone) => Option.some(f(lastDone, outDone))
-                  )
+                  Option.match({
+                    onNone: () => Option.some(outDone),
+                    onSome: (lastDone) => Option.some(f(lastDone, outDone))
+                  })
                 )
-            )),
+            })),
             Effect.catchAllCause((cause) =>
               Cause.isInterrupted(cause) ?
                 Effect.failCause(cause) :
                 pipe(
                   Queue.offer(queue, Effect.failCause(cause)),
-                  Effect.zipRight(
-                    Deferred.succeed<never, void>(errorSignal, void 0)
-                  ),
+                  Effect.zipRight(Deferred.succeed<never, void>(errorSignal, void 0)),
                   Effect.asUnit
                 )
             )
           )
         yield* $(
           pipe(
-            Effect.matchCauseEffect(
-              pull,
-              (cause) =>
+            Effect.matchCauseEffect(pull, {
+              onFailure: (cause) =>
                 pipe(
                   Queue.offer(queue, Effect.failCause(cause)),
                   Effect.zipRight(Effect.succeed(false))
                 ),
-              Either.match(
-                (outDone) =>
-                  pipe(
-                    Deferred.await(errorSignal),
-                    Effect.raceWith(
-                      withPermits(n)(Effect.unit()),
-                      (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
-                      (_, failureAwait) =>
-                        pipe(
-                          Fiber.interrupt(failureAwait),
-                          Effect.zipRight(
-                            pipe(
-                              Ref.get(lastDone),
-                              Effect.flatMap(Option.match(
-                                () => Queue.offer(queue, Effect.succeed(Either.left(outDone))),
-                                (lastDone) => Queue.offer(queue, Effect.succeed(Either.left(f(lastDone, outDone))))
-                              )),
-                              Effect.as(false)
-                            )
+              onSuccess: Either.match({
+                onLeft: (outDone) =>
+                  Effect.raceWith(Deferred.await(errorSignal), {
+                    other: withPermits(n)(Effect.unit),
+                    onSelfDone: (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
+                    onOtherDone: (_, failureAwait) =>
+                      pipe(
+                        Fiber.interrupt(failureAwait),
+                        Effect.zipRight(
+                          pipe(
+                            Ref.get(lastDone),
+                            Effect.flatMap(Option.match({
+                              onNone: () => Queue.offer(queue, Effect.succeed(Either.left(outDone))),
+                              onSome: (lastDone) =>
+                                Queue.offer(queue, Effect.succeed(Either.left(f(lastDone, outDone))))
+                            })),
+                            Effect.as(false)
                           )
                         )
-                    )
-                  ),
-                (channel) =>
+                      )
+                  }),
+                onRight: (channel) =>
                   pipe(
                     mergeStrategy,
                     _mergeStrategy.match(
@@ -1305,9 +1319,9 @@ export const mergeAllWith = (
                         })
                     )
                   )
-              )
-            ),
-            Effect.repeatWhileEquals(true),
+              })
+            }),
+            Effect.repeatWhile(identity),
             Effect.forkScoped
           )
         )
@@ -1325,13 +1339,13 @@ export const mergeAllWith = (
         > = pipe(
           Queue.take(queue),
           Effect.flatten,
-          Effect.matchCause(
-            core.failCause,
-            Either.match(
-              core.succeedNow,
-              (outElem) => core.flatMap(core.write(outElem), () => consumer)
-            )
-          ),
+          Effect.matchCause({
+            onFailure: core.failCause,
+            onSuccess: Either.match({
+              onLeft: core.succeedNow,
+              onRight: (outElem) => core.flatMap(core.write(outElem), () => consumer)
+            })
+          }),
           unwrap
         )
         return core.embedInput(consumer, input)
@@ -1846,26 +1860,21 @@ export const mergeWith = dual<
                   }
                   return Effect.map(
                     Fiber.await(fiber),
-                    Exit.match(
-                      (cause) => core.fromEffect(op.f(Exit.failCause(cause))),
-                      Either.match(
-                        (done) => core.fromEffect(op.f(Exit.succeed(done))),
-                        (elem) =>
-                          zipRight(
-                            core.write(elem),
-                            go(single(op.f))
-                          )
-                      )
-                    )
+                    Exit.match({
+                      onFailure: (cause) => core.fromEffect(op.f(Exit.failCause(cause))),
+                      onSuccess: Either.match({
+                        onLeft: (done) => core.fromEffect(op.f(Exit.succeed(done))),
+                        onRight: (elem) => zipRight(core.write(elem), go(single(op.f)))
+                      })
+                    })
                   )
                 }
 
-                return Exit.match(
-                  exit,
-                  (cause) => onDecision(done(Exit.failCause(cause))),
-                  Either.match(
-                    (z) => onDecision(done(Exit.succeed(z))),
-                    (elem) =>
+                return Exit.match(exit, {
+                  onFailure: (cause) => onDecision(done(Exit.failCause(cause))),
+                  onSuccess: Either.match({
+                    onLeft: (z) => onDecision(done(Exit.succeed(z))),
+                    onRight: (elem) =>
                       Effect.succeed(
                         core.flatMap(core.write(elem), () =>
                           core.flatMap(
@@ -1873,8 +1882,8 @@ export const mergeWith = dual<
                             (leftFiber) => go(both(leftFiber, fiber))
                           ))
                       )
-                  )
-                )
+                  })
+                })
               }
 
             const go = (
@@ -1893,10 +1902,9 @@ export const mergeWith = dual<
                   const leftJoin = Effect.interruptible(Fiber.join(state.left))
                   const rightJoin = Effect.interruptible(Fiber.join(state.right))
                   return unwrap(
-                    Effect.raceWith(
-                      leftJoin,
-                      rightJoin,
-                      (leftExit, rf) =>
+                    Effect.raceWith(leftJoin, {
+                      other: rightJoin,
+                      onSelfDone: (leftExit, rf) =>
                         Effect.zipRight(
                           Fiber.interrupt(rf),
                           handleSide(leftExit, state.right, pullL)(
@@ -1905,7 +1913,7 @@ export const mergeWith = dual<
                             (f) => mergeState.LeftDone(f)
                           )
                         ),
-                      (rightExit, lf) =>
+                      onOtherDone: (rightExit, lf) =>
                         Effect.zipRight(
                           Fiber.interrupt(lf),
                           handleSide(rightExit, state.left, pullR)(
@@ -1922,20 +1930,24 @@ export const mergeWith = dual<
                             (f) => mergeState.RightDone(f)
                           )
                         )
-                    )
+                    })
                   )
                 }
                 case MergeStateOpCodes.OP_LEFT_DONE: {
                   return unwrap(
                     Effect.map(
                       Effect.exit(pullR),
-                      Exit.match(
-                        (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
-                        Either.match(
-                          (done) => core.fromEffect(state.f(Exit.succeed(done))),
-                          (elem) => core.flatMap(core.write(elem), () => go(mergeState.LeftDone(state.f)))
-                        )
-                      )
+                      Exit.match({
+                        onFailure: (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
+                        onSuccess: Either.match({
+                          onLeft: (done) => core.fromEffect(state.f(Exit.succeed(done))),
+                          onRight: (elem) =>
+                            core.flatMap(
+                              core.write(elem),
+                              () => go(mergeState.LeftDone(state.f))
+                            )
+                        })
+                      })
                     )
                   )
                 }
@@ -1943,13 +1955,17 @@ export const mergeWith = dual<
                   return unwrap(
                     Effect.map(
                       Effect.exit(pullL),
-                      Exit.match(
-                        (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
-                        Either.match(
-                          (done) => core.fromEffect(state.f(Exit.succeed(done))),
-                          (elem) => core.flatMap(core.write(elem), () => go(mergeState.RightDone(state.f)))
-                        )
-                      )
+                      Exit.match({
+                        onFailure: (cause) => core.fromEffect(state.f(Exit.failCause(cause))),
+                        onSuccess: Either.match({
+                          onLeft: (done) => core.fromEffect(state.f(Exit.succeed(done))),
+                          onRight: (elem) =>
+                            core.flatMap(
+                              core.write(elem),
+                              () => go(mergeState.RightDone(state.f))
+                            )
+                        })
+                      })
                     )
                   )
                 }
@@ -1985,7 +2001,7 @@ export const mergeWith = dual<
 
 /** @internal */
 export const never = (): Channel.Channel<never, unknown, unknown, unknown, never, never, never> =>
-  core.fromEffect(Effect.never())
+  core.fromEffect(Effect.never)
 
 /** @internal */
 export const orDie = dual<
@@ -2278,13 +2294,13 @@ export const toPull = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
 ): Effect.Effect<Env | Scope.Scope, never, Effect.Effect<Env, OutErr, Either.Either<OutDone, OutElem>>> =>
   Effect.map(
-    Effect.acquireRelease(
-      Effect.sync(() => new executor.ChannelExecutor(self, void 0, identity)),
-      (exec, exit) => {
+    Effect.acquireRelease({
+      acquire: Effect.sync(() => new executor.ChannelExecutor(self, void 0, identity)),
+      release: (exec, exit) => {
         const finalize = exec.close(exit)
-        return finalize === undefined ? Effect.unit() : finalize
+        return finalize === undefined ? Effect.unit : finalize
       }
-    ),
+    }),
     (exec) => Effect.suspend(() => interpretToPull(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec))
   )
 
@@ -2296,11 +2312,11 @@ const interpretToPull = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
   const state = channelState as ChannelState.Primitive
   switch (state._tag) {
     case ChannelStateOpCodes.OP_DONE: {
-      return Exit.match(
-        exec.getDone(),
-        Effect.failCause,
-        (done): Effect.Effect<Env, OutErr, Either.Either<OutDone, OutElem>> => Effect.succeed(Either.left(done))
-      )
+      return Exit.match(exec.getDone(), {
+        onFailure: Effect.failCause,
+        onSuccess: (done): Effect.Effect<Env, OutErr, Either.Either<OutDone, OutElem>> =>
+          Effect.succeed(Either.left(done))
+      })
     }
     case ChannelStateOpCodes.OP_EMIT: {
       return Effect.succeed(Either.right(exec.getEmit()))
@@ -2599,8 +2615,8 @@ export const zipPar = dual<
     mergeWith(
       self,
       that,
-      (exit1) => mergeDecision.Await((exit2) => Effect.done(Exit.zip(exit1, exit2))),
-      (exit2) => mergeDecision.Await((exit1) => Effect.done(Exit.zip(exit1, exit2)))
+      (exit1) => mergeDecision.Await((exit2) => Effect.suspend(() => Exit.zip(exit1, exit2))),
+      (exit2) => mergeDecision.Await((exit1) => Effect.suspend(() => Exit.zip(exit1, exit2)))
     )
 )
 

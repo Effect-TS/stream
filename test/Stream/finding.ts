@@ -18,7 +18,10 @@ describe.concurrent("Stream", () => {
           stream,
           Stream.runCollect,
           Effect.map(Chunk.findFirst(f)),
-          Effect.map(Option.match(() => Chunk.empty<number>(), Chunk.of))
+          Effect.map(Option.match({
+            onNone: () => Chunk.empty<number>(),
+            onSome: Chunk.of
+          }))
         )
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
@@ -31,13 +34,14 @@ describe.concurrent("Stream", () => {
       const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.findEffect(f), Stream.runCollect),
         result2: pipe(
-          stream,
-          Stream.runCollect,
+          Stream.runCollect(stream),
           Effect.flatMap((chunk) =>
             pipe(
-              chunk,
-              Effect.find(f),
-              Effect.map(Option.match(() => Chunk.empty<number>(), Chunk.of))
+              Effect.findFirst(chunk, f),
+              Effect.map(Option.match({
+                onNone: () => Chunk.empty<number>(),
+                onSome: Chunk.of
+              }))
             )
           )
         )

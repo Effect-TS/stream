@@ -72,7 +72,7 @@ describe.concurrent("Stream", () => {
             pipe(
               chunk,
               Chunk.takeWhile((a) => !f(a)),
-              Chunk.concat(pipe(chunk, Chunk.dropWhile((a) => !f(a)), Chunk.take(1)))
+              Chunk.appendAll(pipe(chunk, Chunk.dropWhile((a) => !f(a)), Chunk.take(1)))
             )
           )
         )
@@ -100,7 +100,7 @@ describe.concurrent("Stream", () => {
                   Effect.map(Chunk.unsafeFromArray),
                   Effect.map(Chunk.take(1))
                 ),
-                (chunk1, chunk2) => Chunk.concat(chunk1, chunk2)
+                (chunk1, chunk2) => Chunk.appendAll(chunk1, chunk2)
               )
             )
           )

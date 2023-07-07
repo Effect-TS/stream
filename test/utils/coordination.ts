@@ -25,7 +25,7 @@ export const chunkCoordination = <A>(
         chunks,
         Chunk.dropRight(1),
         Chunk.map((chunk) => Chunk.of(Exit.succeed(chunk))),
-        Chunk.concat(
+        Chunk.appendAll(
           pipe(
             Chunk.last(chunks),
             Option.map((chunk) =>
@@ -34,10 +34,10 @@ export const chunkCoordination = <A>(
                 Exit.fail(Option.none())
               ])
             ),
-            Option.match(
-              () => Chunk.empty<Chunk.Chunk<Exit.Exit<Option.Option<never>, Chunk.Chunk<A>>>>(),
-              Chunk.of
-            )
+            Option.match({
+              onNone: () => Chunk.empty<Chunk.Chunk<Exit.Exit<Option.Option<never>, Chunk.Chunk<A>>>>(),
+              onSome: Chunk.of
+            })
           )
         )
       )

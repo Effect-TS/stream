@@ -17,7 +17,7 @@ describe.concurrent("Stream", () => {
           Stream.runCollect,
           Effect.zipWith(
             pipe(stream2, Stream.runCollect),
-            (chunk1, chunk2) => pipe(chunk1, Chunk.concat(chunk2))
+            (chunk1, chunk2) => pipe(chunk1, Chunk.appendAll(chunk2))
           )
         ),
         result2: pipe(

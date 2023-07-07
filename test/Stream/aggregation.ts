@@ -8,8 +8,8 @@ import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
-import * as TestClock from "@effect/io/internal_effect_untraced/testing/testClock"
-import * as TestServices from "@effect/io/internal_effect_untraced/testing/testServices"
+import * as TestClock from "@effect/io/internal/testing/testClock"
+import * as TestServices from "@effect/io/internal/testing/testServices"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Schedule from "@effect/io/Schedule"
@@ -78,7 +78,7 @@ describe.concurrent("Stream", () => {
         }
         return pipe(
           Deferred.succeed<never, void>(latch, void 0),
-          Effect.zipRight(Effect.never()),
+          Effect.zipRight(Effect.never),
           Effect.onInterrupt(() => Ref.set(ref, true))
         )
       })
@@ -100,7 +100,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const sink = Sink.fromEffect(pipe(
         Deferred.succeed<never, void>(latch, void 0),
-        Effect.zipRight(Effect.never()),
+        Effect.zipRight(Effect.never),
         Effect.onInterrupt(() => Ref.set(ref, true))
       ))
       const fiber = yield* $(pipe(
@@ -154,7 +154,7 @@ describe.concurrent("Stream", () => {
         Stream.fromQueue(queue),
         Stream.flattenTake,
         Stream.aggregate(
-          Sink.foldLeft(Chunk.empty<number>(), (acc, n) => pipe(acc, Chunk.append(n)))
+          Sink.foldLeft(Chunk.empty<number>(), (acc, n) => Chunk.append(acc, n))
         ),
         Stream.runCollect,
         Effect.fork
@@ -193,7 +193,7 @@ describe.concurrent("Stream", () => {
             Sink.last<number>(),
             Schedule.fixed(Duration.millis(200))
           ),
-          Stream.interruptWhen(Effect.never()),
+          Stream.interruptWhen(Effect.never),
           Stream.take(2),
           Stream.runCollect,
           Effect.fork
@@ -254,7 +254,7 @@ describe.concurrent("Stream", () => {
           ),
           Stream.aggregateWithinEither(
             Sink.foldUntil(void 0, 5, constVoid),
-            Schedule.forever()
+            Schedule.forever
           ),
           Stream.runDrain,
           Effect.catchAll(() => Effect.succeed(void 0))
@@ -309,7 +309,7 @@ describe.concurrent("Stream", () => {
         }
         return pipe(
           Deferred.succeed<never, void>(latch, void 0),
-          Effect.zipRight(Effect.never()),
+          Effect.zipRight(Effect.never),
           Effect.onInterrupt(() => Ref.set(ref, true))
         )
       })
@@ -333,7 +333,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const sink = Sink.fromEffect(pipe(
         Deferred.succeed<never, void>(latch, void 0),
-        Effect.zipRight(Effect.never()),
+        Effect.zipRight(Effect.never),
         Effect.onInterrupt(() => Ref.set(ref, true))
       ))
       const fiber = yield* $(

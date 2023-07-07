@@ -1,5 +1,4 @@
 import * as Chunk from "@effect/data/Chunk"
-import { dualWithTrace, methodWithTrace } from "@effect/data/Debug"
 import { constFalse, constTrue, dual, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
@@ -39,10 +38,8 @@ export const dieMessage = (message: string): Take.Take<never, never> =>
   new TakeImpl(Exit.die(Cause.RuntimeException(message)))
 
 /** @internal */
-export const done = methodWithTrace((trace) =>
-  <E, A>(self: Take.Take<E, A>): Effect.Effect<never, Option.Option<E>, Chunk.Chunk<A>> =>
-    pipe(Effect.done(self.exit)).traced(trace)
-)
+export const done = <E, A>(self: Take.Take<E, A>): Effect.Effect<never, Option.Option<E>, Chunk.Chunk<A>> =>
+  Effect.suspend(() => self.exit)
 
 /** @internal */
 export const end: Take.Take<never, never> = new TakeImpl(Exit.fail(Option.none()))
@@ -55,56 +52,46 @@ export const failCause = <E>(cause: Cause.Cause<E>): Take.Take<E, never> =>
   new TakeImpl(Exit.failCause(pipe(cause, Cause.map(Option.some))))
 
 /** @internal */
-export const fromEffect = methodWithTrace((trace) =>
-  <R, E, A>(effect: Effect.Effect<R, E, A>): Effect.Effect<R, never, Take.Take<E, A>> =>
-    pipe(effect, Effect.matchCause(failCause, of)).traced(trace)
-)
+export const fromEffect = <R, E, A>(effect: Effect.Effect<R, E, A>): Effect.Effect<R, never, Take.Take<E, A>> =>
+  Effect.matchCause(effect, { onFailure: failCause, onSuccess: of })
 
 /** @internal */
 export const fromExit = <E, A>(exit: Exit.Exit<E, A>): Take.Take<E, A> =>
-  new TakeImpl(pipe(exit, Exit.mapBoth(Option.some, Chunk.of)))
+  new TakeImpl(pipe(exit, Exit.mapBoth({ onFailure: Option.some, onSuccess: Chunk.of })))
 
 /** @internal */
-export const fromPull = methodWithTrace((trace) =>
-  <R, E, A>(
-    pull: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>
-  ): Effect.Effect<R, never, Take.Take<E, A>> =>
-    pipe(
-      pull,
-      Effect.matchCause((cause) =>
-        pipe(
-          Cause.flipCauseOption(cause),
-          Option.match(() => end, failCause)
-        ), chunk)
-    ).traced(trace)
-)
+export const fromPull = <R, E, A>(
+  pull: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>
+): Effect.Effect<R, never, Take.Take<E, A>> =>
+  Effect.matchCause(pull, {
+    onFailure: (cause) =>
+      Option.match(Cause.flipCauseOption(cause), {
+        onNone: () => end,
+        onSome: failCause
+      }),
+    onSuccess: chunk
+  })
 
 /** @internal */
 export const isDone = <E, A>(self: Take.Take<E, A>): boolean =>
-  pipe(
-    self.exit,
-    Exit.match(
-      (cause) => Option.isNone(Cause.flipCauseOption(cause)),
-      constFalse
-    )
-  )
+  Exit.match(self.exit, {
+    onFailure: (cause) => Option.isNone(Cause.flipCauseOption(cause)),
+    onSuccess: constFalse
+  })
 
 /** @internal */
 export const isFailure = <E, A>(self: Take.Take<E, A>): boolean =>
-  pipe(
-    self.exit,
-    Exit.match(
-      (cause) => Option.isSome(Cause.flipCauseOption(cause)),
-      constFalse
-    )
-  )
+  Exit.match(self.exit, {
+    onFailure: (cause) => Option.isSome(Cause.flipCauseOption(cause)),
+    onSuccess: constFalse
+  })
 
 /** @internal */
 export const isSuccess = <E, A>(self: Take.Take<E, A>): boolean =>
-  pipe(
-    self.exit,
-    Exit.match(constFalse, constTrue)
-  )
+  Exit.match(self.exit, {
+    onFailure: constFalse,
+    onSuccess: constTrue
+  })
 
 /** @internal */
 export const make = <E, A>(
@@ -130,16 +117,17 @@ export const match = dual<
   onError: (cause: Cause.Cause<E>) => Z2,
   onSuccess: (chunk: Chunk.Chunk<A>) => Z3
 ): Z | Z2 | Z3 =>
-  pipe(
-    self.exit,
-    Exit.match<Option.Option<E>, Chunk.Chunk<A>, Z | Z2 | Z3>(
-      (cause) => pipe(Cause.flipCauseOption(cause), Option.match(onEnd, onError)),
-      onSuccess
-    )
-  ))
+  Exit.match<Option.Option<E>, Chunk.Chunk<A>, Z | Z2 | Z3>(self.exit, {
+    onFailure: (cause) =>
+      Option.match(Cause.flipCauseOption(cause), {
+        onNone: onEnd,
+        onSome: onError
+      }),
+    onSuccess
+  }))
 
 /** @internal */
-export const matchEffect = dualWithTrace<
+export const matchEffect = dual<
   <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
     onEnd: () => Effect.Effect<R, E2, Z>,
     onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
@@ -151,20 +139,20 @@ export const matchEffect = dualWithTrace<
     onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
     onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
   ) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
->(4, (trace) =>
-  <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
-    self: Take.Take<E, A>,
-    onEnd: () => Effect.Effect<R, E2, Z>,
-    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
-  ): Effect.Effect<R | R2 | R3, E | E2 | E3, Z | Z2 | Z3> =>
-    pipe(
-      self.exit,
-      Exit.matchEffect<Option.Option<E>, Chunk.Chunk<A>, R | R2, E | E2, Z | Z2, R3, E3, Z3>(
-        (cause) => pipe(Cause.flipCauseOption(cause), Option.match(onEnd, onError)),
-        onSuccess
-      )
-    ).traced(trace))
+>(4, <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
+  self: Take.Take<E, A>,
+  onEnd: () => Effect.Effect<R, E2, Z>,
+  onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
+  onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+): Effect.Effect<R | R2 | R3, E | E2 | E3, Z | Z2 | Z3> =>
+  Exit.matchEffect<Option.Option<E>, Chunk.Chunk<A>, R | R2, E | E2, Z | Z2, R3, E3, Z3>(self.exit, {
+    onFailure: (cause) =>
+      Option.match(Cause.flipCauseOption(cause), {
+        onNone: onEnd,
+        onSome: onError
+      }),
+    onSuccess
+  }))
 
 /** @internal */
 export const map = dual<
@@ -180,7 +168,7 @@ export const map = dual<
 export const of = <A>(value: A): Take.Take<never, A> => new TakeImpl(Exit.succeed(Chunk.of(value)))
 
 /** @internal */
-export const tap = dualWithTrace<
+export const tap = dual<
   <A, R, E2, _>(
     f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
   ) => <E>(self: Take.Take<E, A>) => Effect.Effect<R, E2 | E, void>,
@@ -188,11 +176,7 @@ export const tap = dualWithTrace<
     self: Take.Take<E, A>,
     f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
   ) => Effect.Effect<R, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <E, A, R, E2, _>(
-      self: Take.Take<E, A>,
-      f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
-    ): Effect.Effect<R, E | E2, void> => pipe(self.exit, Exit.forEachEffect(f), Effect.asUnit).traced(trace)
-)
+>(2, <E, A, R, E2, _>(
+  self: Take.Take<E, A>,
+  f: (chunk: Chunk.Chunk<A>) => Effect.Effect<R, E2, _>
+): Effect.Effect<R, E | E2, void> => pipe(self.exit, Exit.forEachEffect(f), Effect.asUnit))

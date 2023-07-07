@@ -29,13 +29,7 @@ import * as internal from "@effect/stream/internal/channel/singleProducerAsyncIn
 export interface SingleProducerAsyncInput<Err, Elem, Done>
   extends AsyncInputProducer<Err, Elem, Done>, AsyncInputConsumer<Err, Elem, Done>
 {
-  /**
-   * @macro traced
-   */
   close(): Effect.Effect<never, never, unknown>
-  /**
-   * @macro traced
-   */
   take(): Effect.Effect<never, never, Exit.Exit<Either.Either<Err, Done>, Elem>>
 }
 
@@ -46,21 +40,9 @@ export interface SingleProducerAsyncInput<Err, Elem, Done>
  * @category models
  */
 export interface AsyncInputProducer<Err, Elem, Done> {
-  /**
-   * @macro traced
-   */
   awaitRead(): Effect.Effect<never, never, unknown>
-  /**
-   * @macro traced
-   */
   done(value: Done): Effect.Effect<never, never, unknown>
-  /**
-   * @macro traced
-   */
   emit(element: Elem): Effect.Effect<never, never, unknown>
-  /**
-   * @macro traced
-   */
   error(cause: Cause.Cause<Err>): Effect.Effect<never, never, unknown>
 }
 
@@ -71,9 +53,6 @@ export interface AsyncInputProducer<Err, Elem, Done> {
  * @category models
  */
 export interface AsyncInputConsumer<Err, Elem, Done> {
-  /**
-   * @macro traced
-   */
   takeWith<A>(
     onError: (cause: Cause.Cause<Err>) => A,
     onElement: (element: Elem) => A,
@@ -82,7 +61,6 @@ export interface AsyncInputConsumer<Err, Elem, Done> {
 }
 
 /**
- * @macro traced
  * @since 1.0.0
  * @category constructors
  */

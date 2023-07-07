@@ -248,10 +248,10 @@ describe.concurrent("Channel", () => {
               () => UpstreamPullStrategy.PullAfterNext(Option.none()),
               () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
             ),
-            Option.match(
-              () => ChildExecutorDecision.Yield(),
-              () => ChildExecutorDecision.Continue()
-            )
+            Option.match({
+              onNone: () => ChildExecutorDecision.Yield(),
+              onSome: () => ChildExecutorDecision.Continue()
+            })
           ),
           Channel.runCollect,
           Effect.map(([chunk]) => pipe(Array.from(chunk), ReadonlyArray.compact))
@@ -296,10 +296,10 @@ describe.concurrent("Channel", () => {
             constVoid,
             constVoid,
             () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none()),
-            Option.match(
-              () => ChildExecutorDecision.Yield(),
-              () => ChildExecutorDecision.Continue()
-            )
+            Option.match({
+              onNone: () => ChildExecutorDecision.Yield(),
+              onSome: () => ChildExecutorDecision.Continue()
+            })
           ),
           Channel.runCollect,
           Effect.map(([chunk]) => pipe(Array.from(chunk), ReadonlyArray.compact))

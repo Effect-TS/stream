@@ -33,7 +33,10 @@ console.log(util.inspect(Array.from(chunk), { depth: null, colors: true }))
 
 console.log(
   util.inspect(
-    pipe(either, Either.bimap((chunk) => Array.from(chunk), (chunk) => Array.from(chunk))),
-    { depth: null, colors: true }
-  )
+    Either.mapBoth(either, {
+      onLeft: (chunk) => Array.from(chunk),
+      onRight: (chunk) => Array.from(chunk)
+    })
+  ),
+  { depth: null, colors: true }
 )

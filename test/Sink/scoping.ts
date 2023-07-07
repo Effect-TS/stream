@@ -10,7 +10,10 @@ describe.concurrent("Sink", () => {
   it.effect("unwrapScoped - happy path", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      const resource = Effect.acquireRelease(Effect.succeed(100), () => Ref.set(ref, true))
+      const resource = Effect.acquireRelease({
+        acquire: Effect.succeed(100),
+        release: () => Ref.set(ref, true)
+      })
       const sink = pipe(
         resource,
         Effect.map((n) =>
@@ -36,7 +39,10 @@ describe.concurrent("Sink", () => {
   it.effect("unwrapScoped - error", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      const resource = Effect.acquireRelease(Effect.succeed(100), () => Ref.set(ref, true))
+      const resource = Effect.acquireRelease({
+        acquire: Effect.succeed(100),
+        release: () => Ref.set(ref, true)
+      })
       const sink = pipe(resource, Effect.as(Sink.succeed("ok")), Sink.unwrapScoped)
       const result = yield* $(pipe(Stream.fail("fail"), Stream.run(sink)))
       const finalState = yield* $(Ref.get(ref))

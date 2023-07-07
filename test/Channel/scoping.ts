@@ -39,8 +39,8 @@ describe.concurrent("Channel", () => {
     const program = Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
       const acquire = Effect.zipRight(Ref.update(ref, (n) => n + 1), Effect.yieldNow())
-      const release = Ref.update(ref, (n) => n - 1)
-      const scoped = Effect.acquireRelease(acquire, () => release)
+      const release = () => Ref.update(ref, (n) => n - 1)
+      const scoped = Effect.acquireRelease({ acquire, release })
       yield* $(pipe(
         Channel.unwrapScoped(pipe(scoped, Effect.as(Channel.fromEffect(Deferred.await(latch))))),
         Channel.runDrain,
@@ -61,7 +61,7 @@ describe.concurrent("Channel", () => {
         pipe(
           Channel.unit(),
           Channel.ensuring(Effect.die("ok")),
-          Channel.ensuring(Effect.unit()),
+          Channel.ensuring(Effect.unit),
           Channel.runDrain,
           Effect.sandbox,
           Effect.either,

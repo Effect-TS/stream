@@ -8,7 +8,7 @@ import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
 import * as Hub from "@effect/io/Hub"
-import * as internalQueue from "@effect/io/internal_effect_untraced/queue"
+import * as internalQueue from "@effect/io/internal/queue"
 import * as Queue from "@effect/io/Queue"
 import * as Sink from "@effect/stream/Sink"
 import * as Stream from "@effect/stream/Stream"
@@ -106,6 +106,10 @@ class QueueSpy<A> implements Queue.Queue<A> {
     this.takers = backingQueue.takers
   }
 
+  unsafeOffer(value: A): boolean {
+    return Queue.unsafeOffer(this.backingQueue, value)
+  }
+
   offer(a: A) {
     return Queue.offer(this.backingQueue, a)
   }
@@ -124,6 +128,10 @@ class QueueSpy<A> implements Queue.Queue<A> {
 
   awaitShutdown(): Effect.Effect<never, never, void> {
     return Queue.awaitShutdown(this.backingQueue)
+  }
+
+  isActive(): boolean {
+    return !this.isShutdownInternal
   }
 
   isShutdown(): Effect.Effect<never, never, boolean> {

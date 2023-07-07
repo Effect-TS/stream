@@ -25,11 +25,10 @@ const program = Effect.gen(function*($) {
     Effect.forever,
     Effect.fork
   ))
-  const result = yield* $(
-    Effect.allPar(
-      Array.from({ length: 2 }, () => subscriber(subscriptionRef))
-    )
-  )
+  const result = yield* $(Effect.all(
+    Array.from({ length: 2 }, () => subscriber(subscriptionRef)),
+    { concurrency: 2 }
+  ))
   yield* $(Fiber.interrupt(fiber))
   const isSorted = result.every((chunk) =>
     Equal.equals(

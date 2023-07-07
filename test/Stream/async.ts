@@ -40,7 +40,7 @@ describe.concurrent("Stream", () => {
           })
           return pipe(
             Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.unit())
+            Effect.zipRight(Effect.unit)
           )
         }),
         Stream.take(array.length),
@@ -58,7 +58,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncEffect<never, Cause.RuntimeException, number>((emit) => {
           emit.fromEffect(Effect.fail(error))
-          return Effect.unit()
+          return Effect.unit
         }),
         Stream.runCollect,
         Effect.exit
@@ -84,7 +84,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncEffect<never, never, number>((emit) => {
           emit(Effect.fail(Option.none()))
-          return Effect.unit()
+          return Effect.unit
         }),
         Stream.runCollect
       ))
@@ -114,7 +114,7 @@ describe.concurrent("Stream", () => {
             )
           )
         )
-        return Effect.unit()
+        return Effect.unit
       }, 5)
       const sink = pipe(Sink.take<number>(1), Sink.zipRight(Sink.never()))
       const fiber = yield* $(pipe(stream, Stream.run(sink), Effect.fork))
@@ -158,7 +158,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncInterrupt<never, never, number>((emit) => {
           emit.end()
-          return Either.left(Effect.unit())
+          return Either.left(Effect.unit)
         }),
         Stream.runCollect
       ))
@@ -171,7 +171,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncInterrupt<never, Cause.RuntimeException, number>((emit) => {
           emit.fromEffect(Effect.fail(error))
-          return Either.left(Effect.unit())
+          return Either.left(Effect.unit)
         }),
         Stream.runCollect,
         Effect.exit
@@ -215,7 +215,7 @@ describe.concurrent("Stream", () => {
             )
           )
         )
-        return Either.left(Effect.unit())
+        return Either.left(Effect.unit)
       }, 5)
       const sink = pipe(Sink.take<number>(1), Sink.zipRight(Sink.never()))
       const fiber = yield* $(pipe(stream, Stream.run(sink), Effect.fork))
@@ -351,7 +351,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncScoped<never, never, number>((cb) => {
           cb(Effect.fail(Option.none()))
-          return Effect.unit()
+          return Effect.unit
         }),
         Stream.runCollect
       ))
@@ -364,7 +364,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.asyncScoped<never, Cause.RuntimeException, number>((cb) => {
           cb(Effect.fail(Option.some(error)))
-          return Effect.unit()
+          return Effect.unit
         }),
         Stream.runCollect,
         Effect.exit
@@ -408,7 +408,7 @@ describe.concurrent("Stream", () => {
             )
           )
         )
-        return Effect.unit()
+        return Effect.unit
       }, 5)
       const sink = pipe(Sink.take<number>(1), Sink.zipRight(Sink.never()))
       const fiber = yield* $(pipe(stream, Stream.run(sink), Effect.fork))

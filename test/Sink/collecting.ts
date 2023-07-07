@@ -253,7 +253,10 @@ describe.concurrent("Sink", () => {
         Sink.head<number>(),
         Sink.collectAllWhileWith(
           Chunk.empty<number>(),
-          Option.match(constTrue, (n) => n < 5),
+          Option.match({
+            onNone: constTrue,
+            onSome: (n) => n < 5
+          }),
           (acc, option) => Option.isSome(option) ? pipe(acc, Chunk.append(option.value)) : acc
         )
       )

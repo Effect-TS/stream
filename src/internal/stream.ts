@@ -1,14 +1,13 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Context from "@effect/data/Context"
-import { dualWithTrace, methodWithTrace } from "@effect/data/Debug"
 import * as Duration from "@effect/data/Duration"
 import * as Either from "@effect/data/Either"
 import * as Equal from "@effect/data/Equal"
 import { constTrue, dual, identity, pipe } from "@effect/data/Function"
 import type { LazyArg } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
+import type * as Order from "@effect/data/Order"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
-import type * as Order from "@effect/data/typeclass/Order"
 import * as Cause from "@effect/io/Cause"
 import * as Clock from "@effect/io/Clock"
 import * as Deferred from "@effect/io/Deferred"
@@ -82,7 +81,7 @@ export const absolve = <R, E, A>(self: Stream.Stream<R, E, Either.Either<E, A>>)
 export const acquireRelease = <R, E, A, R2, _>(
   acquire: Effect.Effect<R, E, A>,
   release: (resource: A, exit: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, _>
-): Stream.Stream<R | R2, E, A> => scoped(Effect.acquireRelease(acquire, release))
+): Stream.Stream<R | R2, E, A> => scoped(Effect.acquireRelease({ acquire, release }))
 
 /** @internal */
 export const aggregate = dual<
@@ -98,7 +97,7 @@ export const aggregate = dual<
   <R, E, R2, E2, A, A2, B>(
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A | A2, A2, B>
-  ): Stream.Stream<R | R2, E | E2, B> => pipe(self, aggregateWithin(sink, Schedule.forever()))
+  ): Stream.Stream<R | R2, E | E2, B> => aggregateWithin(self, sink, Schedule.forever)
 )
 
 /** @internal */
@@ -273,121 +272,114 @@ export const aggregateWithinEither = dual<
             pipe(
               Ref.set(sinkLeftovers, Chunk.flatten(leftovers)),
               Effect.zipRight(
-                pipe(
-                  Ref.get(sinkEndReason),
-                  Effect.map((reason) => {
-                    switch (reason._tag) {
-                      case SinkEndReason.OP_SCHEDULE_END: {
-                        return pipe(
-                          Effect.all(
-                            Ref.get(consumed),
-                            forkSink,
-                            pipe(timeout(Option.some(b)), Effect.forkIn(scope))
-                          ),
-                          Effect.map(([wasConsumed, sinkFiber, scheduleFiber]) => {
-                            const toWrite = pipe(
-                              c,
-                              Option.match(
-                                (): Chunk.Chunk<Either.Either<C, B>> => Chunk.of(Either.right(b)),
-                                (c): Chunk.Chunk<Either.Either<C, B>> => Chunk.make(Either.right(b), Either.left(c))
-                              )
-                            )
-                            if (wasConsumed) {
-                              return pipe(
-                                core.write(toWrite),
-                                core.flatMap(() => scheduledAggregator(sinkFiber, scheduleFiber, scope))
-                              )
-                            }
-                            return scheduledAggregator(sinkFiber, scheduleFiber, scope)
-                          }),
-                          channel.unwrap
-                        )
-                      }
-                      case SinkEndReason.OP_UPSTREAM_END: {
-                        return pipe(
+                Effect.map(Ref.get(sinkEndReason), (reason) => {
+                  switch (reason._tag) {
+                    case SinkEndReason.OP_SCHEDULE_END: {
+                      return pipe(
+                        Effect.all(
                           Ref.get(consumed),
-                          Effect.map((wasConsumed) =>
-                            wasConsumed ?
-                              core.write(Chunk.of<Either.Either<C, B>>(Either.right(b))) :
-                              core.unit()
-                          ),
-                          channel.unwrap
-                        )
-                      }
+                          forkSink,
+                          pipe(timeout(Option.some(b)), Effect.forkIn(scope))
+                        ),
+                        Effect.map(([wasConsumed, sinkFiber, scheduleFiber]) => {
+                          const toWrite = pipe(
+                            c,
+                            Option.match({
+                              onNone: (): Chunk.Chunk<Either.Either<C, B>> => Chunk.of(Either.right(b)),
+                              onSome: (c): Chunk.Chunk<Either.Either<C, B>> =>
+                                Chunk.make(Either.right(b), Either.left(c))
+                            })
+                          )
+                          if (wasConsumed) {
+                            return pipe(
+                              core.write(toWrite),
+                              core.flatMap(() => scheduledAggregator(sinkFiber, scheduleFiber, scope))
+                            )
+                          }
+                          return scheduledAggregator(sinkFiber, scheduleFiber, scope)
+                        }),
+                        channel.unwrap
+                      )
                     }
-                  })
-                )
+                    case SinkEndReason.OP_UPSTREAM_END: {
+                      return pipe(
+                        Ref.get(consumed),
+                        Effect.map((wasConsumed) =>
+                          wasConsumed ?
+                            core.write(Chunk.of<Either.Either<C, B>>(Either.right(b))) :
+                            core.unit()
+                        ),
+                        channel.unwrap
+                      )
+                    }
+                  }
+                })
               ),
               channel.unwrap
             )
-          return pipe(
-            Fiber.join(sinkFiber),
-            Effect.raceWith(
-              Fiber.join(scheduleFiber),
-              (sinkExit, _) =>
+          return channel.unwrap(
+            Effect.raceWith(Fiber.join(sinkFiber), {
+              other: Fiber.join(scheduleFiber),
+              onSelfDone: (sinkExit, _) =>
                 pipe(
                   Fiber.interrupt(scheduleFiber),
                   Effect.zipRight(pipe(
-                    Effect.done(sinkExit),
+                    Effect.suspend(() => sinkExit),
                     Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
                   ))
                 ),
-              (scheduleExit, _) =>
-                pipe(
-                  Effect.done(scheduleExit),
-                  Effect.matchCauseEffect(
-                    (cause) =>
-                      pipe(
-                        Cause.failureOrCause(cause),
-                        Either.match(
-                          () =>
-                            pipe(
-                              handoff,
-                              Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
-                                HandoffSignal.end(SinkEndReason.ScheduleEnd)
-                              ),
-                              Effect.forkDaemon,
-                              Effect.zipRight(
-                                pipe(
-                                  Fiber.join(sinkFiber),
-                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
-                                )
-                              )
+              onOtherDone: (scheduleExit, _) =>
+                Effect.matchCauseEffect(Effect.suspend(() => scheduleExit), {
+                  onFailure: (cause) =>
+                    Either.match(
+                      Cause.failureOrCause(cause),
+                      {
+                        onLeft: () =>
+                          pipe(
+                            handoff,
+                            Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
+                              HandoffSignal.end(SinkEndReason.ScheduleEnd)
                             ),
-                          (cause) =>
-                            pipe(
-                              handoff,
-                              Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
-                                HandoffSignal.halt(cause)
-                              ),
-                              Effect.forkDaemon,
-                              Effect.zipRight(
-                                pipe(
-                                  Fiber.join(sinkFiber),
-                                  Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
-                                )
+                            Effect.forkDaemon,
+                            Effect.zipRight(
+                              pipe(
+                                Fiber.join(sinkFiber),
+                                Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
                               )
                             )
-                        )
-                      ),
-                    (c) =>
-                      pipe(
-                        handoff,
-                        Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
-                          HandoffSignal.end(SinkEndReason.ScheduleEnd)
-                        ),
-                        Effect.forkDaemon,
-                        Effect.zipRight(
+                          ),
+                        onRight: (cause) =>
                           pipe(
-                            Fiber.join(sinkFiber),
-                            Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.some(c)))
+                            handoff,
+                            Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
+                              HandoffSignal.halt(cause)
+                            ),
+                            Effect.forkDaemon,
+                            Effect.zipRight(
+                              pipe(
+                                Fiber.join(sinkFiber),
+                                Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))
+                              )
+                            )
                           )
+                      }
+                    ),
+                  onSuccess: (c) =>
+                    pipe(
+                      handoff,
+                      Handoff.offer<HandoffSignal.HandoffSignal<E | E2, A>>(
+                        HandoffSignal.end(SinkEndReason.ScheduleEnd)
+                      ),
+                      Effect.forkDaemon,
+                      Effect.zipRight(
+                        pipe(
+                          Fiber.join(sinkFiber),
+                          Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.some(c)))
                         )
                       )
-                  )
-                )
-            ),
-            channel.unwrap
+                    )
+                })
+            })
           )
         }
         return unwrapScoped(
@@ -409,7 +401,7 @@ export const aggregateWithinEither = dual<
                     Effect.forkScoped(timeout(Option.none())),
                     Effect.flatMap((scheduleFiber) =>
                       pipe(
-                        Effect.scope(),
+                        Effect.scope,
                         Effect.map((scope) =>
                           new StreamImpl(
                             scheduledAggregator(sinkFiber, scheduleFiber, scope)
@@ -450,10 +442,10 @@ export const asyncEffect = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
-    Effect.acquireRelease(
-      Queue.bounded<Take.Take<E, A>>(outputBuffer),
-      (queue) => Queue.shutdown(queue)
-    ),
+    Effect.acquireRelease({
+      acquire: Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      release: (queue) => Queue.shutdown(queue)
+    }),
     Effect.flatMap((output) =>
       pipe(
         Effect.runtime<R>(),
@@ -479,14 +471,14 @@ export const asyncEffect = <R, E, A>(
               const loop: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
                 Queue.take(output),
                 Effect.flatMap(_take.done),
-                Effect.match(
-                  (maybeError) =>
+                Effect.match({
+                  onFailure: (maybeError) =>
                     pipe(
                       core.fromEffect(Queue.shutdown(output)),
-                      channel.zipRight(pipe(maybeError, Option.match(core.unit, core.fail)))
+                      channel.zipRight(Option.match(maybeError, { onNone: core.unit, onSome: core.fail }))
                     ),
-                  (chunk) => pipe(core.write(chunk), core.flatMap(() => loop))
-                ),
+                  onSuccess: (chunk) => pipe(core.write(chunk), core.flatMap(() => loop))
+                }),
                 channel.unwrap
               )
               return loop
@@ -507,10 +499,10 @@ export const asyncInterrupt = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
-    Effect.acquireRelease(
-      Queue.bounded<Take.Take<E, A>>(outputBuffer),
-      (queue) => Queue.shutdown(queue)
-    ),
+    Effect.acquireRelease({
+      acquire: Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      release: (queue) => Queue.shutdown(queue)
+    }),
     Effect.flatMap((output) =>
       pipe(
         Effect.runtime<R>(),
@@ -534,25 +526,28 @@ export const asyncInterrupt = <R, E, A>(
                 )
               )
             ),
-            Effect.map(Either.match(
-              (canceler) => {
+            Effect.map(Either.match({
+              onLeft: (canceler) => {
                 const loop: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
                   Queue.take(output),
                   Effect.flatMap(_take.done),
-                  Effect.match(
-                    (maybeError) =>
-                      pipe(
+                  Effect.match({
+                    onFailure: (maybeError) =>
+                      channel.zipRight(
                         core.fromEffect(Queue.shutdown(output)),
-                        channel.zipRight(pipe(maybeError, Option.match(core.unit, core.fail)))
+                        Option.match(maybeError, {
+                          onNone: core.unit,
+                          onSome: core.fail
+                        })
                       ),
-                    (chunk) => pipe(core.write(chunk), core.flatMap(() => loop))
-                  ),
+                    onSuccess: (chunk) => pipe(core.write(chunk), core.flatMap(() => loop))
+                  }),
                   channel.unwrap
                 )
                 return pipe(fromChannel(loop), ensuring(canceler))
               },
-              (stream) => unwrap(pipe(Queue.shutdown(output), Effect.as(stream)))
-            ))
+              onRight: (stream) => unwrap(pipe(Queue.shutdown(output), Effect.as(stream)))
+            }))
           )
         )
       )
@@ -566,7 +561,11 @@ export const asyncOption = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   asyncInterrupt(
-    (emit) => pipe(register(emit), Either.fromOption(Effect.unit)),
+    (emit) =>
+      Option.match(register(emit), {
+        onNone: () => Either.left(Effect.unit),
+        onSome: Either.right
+      }),
     outputBuffer
   )
 
@@ -578,10 +577,10 @@ export const asyncScoped = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
-    Effect.acquireRelease(
-      Queue.bounded<Take.Take<E, A>>(outputBuffer),
-      (queue) => Queue.shutdown(queue)
-    ),
+    Effect.acquireRelease({
+      acquire: Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      release: (queue) => Queue.shutdown(queue)
+    }),
     Effect.flatMap((output) =>
       pipe(
         Effect.runtime<R>(),
@@ -658,9 +657,9 @@ export const branchAfter = dual<
             const nextSize = acc.length + input.length
             if (nextSize >= n) {
               const [b1, b2] = pipe(input, Chunk.splitAt(n - acc.length))
-              return running(pipe(acc, Chunk.concat(b1)), b2)
+              return running(pipe(acc, Chunk.appendAll(b1)), b2)
             }
-            return bufferring(pipe(acc, Chunk.concat(input)))
+            return bufferring(pipe(acc, Chunk.appendAll(input)))
           },
           core.fail,
           () => running(acc, Chunk.empty())
@@ -679,7 +678,7 @@ export const branchAfter = dual<
 )
 
 /** @internal */
-export const broadcast = dualWithTrace<
+export const broadcast = dual<
   <N extends number>(
     n: N,
     maximumLag: number
@@ -691,30 +690,24 @@ export const broadcast = dualWithTrace<
     n: N,
     maximumLag: number
   ) => Effect.Effect<Scope.Scope | R, never, Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>>
->(
-  3,
-  (trace) =>
-    <R, E, A, N extends number>(
-      self: Stream.Stream<R, E, A>,
-      n: N,
-      maximumLag: number
-    ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>> =>
-      pipe(
-        self,
-        broadcastedQueues(n, maximumLag),
-        Effect.map((tuple) =>
-          tuple.map((queue) =>
-            pipe(
-              fromQueueWithShutdown(queue),
-              flattenTake
-            )
-          ) as Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>
-        )
-      ).traced(trace)
-)
+>(3, <R, E, A, N extends number>(
+  self: Stream.Stream<R, E, A>,
+  n: N,
+  maximumLag: number
+): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Stream.Stream<never, E, A>, N>> =>
+  pipe(
+    self,
+    broadcastedQueues(n, maximumLag),
+    Effect.map((tuple) =>
+      tuple.map((queue) => flattenTake(fromQueueWithShutdown(queue))) as Stream.Stream.DynamicTuple<
+        Stream.Stream<never, E, A>,
+        N
+      >
+    )
+  ))
 
 /** @internal */
-export const broadcastDynamic = dualWithTrace<
+export const broadcastDynamic = dual<
   (
     maximumLag: number
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Stream.Stream<never, E, A>>,
@@ -722,22 +715,18 @@ export const broadcastDynamic = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     maximumLag: number
   ) => Effect.Effect<Scope.Scope | R, never, Stream.Stream<never, E, A>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      maximumLag: number
-    ): Effect.Effect<R | Scope.Scope, never, Stream.Stream<never, E, A>> =>
-      pipe(
-        self,
-        broadcastedQueuesDynamic(maximumLag),
-        Effect.map((effect) => pipe(scoped(effect), flatMap(fromQueue), flattenTake))
-      ).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  maximumLag: number
+): Effect.Effect<R | Scope.Scope, never, Stream.Stream<never, E, A>> =>
+  pipe(
+    self,
+    broadcastedQueuesDynamic(maximumLag),
+    Effect.map((effect) => flattenTake(flatMap(scoped(effect), fromQueue)))
+  ))
 
 /** @internal */
-export const broadcastedQueues = dualWithTrace<
+export const broadcastedQueues = dual<
   <N extends number>(
     n: N,
     maximumLag: number
@@ -749,33 +738,23 @@ export const broadcastedQueues = dualWithTrace<
     n: N,
     maximumLag: number
   ) => Effect.Effect<Scope.Scope | R, never, Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>>
->(
-  3,
-  (trace) =>
-    <R, E, A, N extends number>(
-      self: Stream.Stream<R, E, A>,
-      n: N,
-      maximumLag: number
-    ): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>> =>
-      pipe(
-        Hub.bounded<Take.Take<E, A>>(maximumLag),
-        Effect.flatMap((
-          hub
-        ) =>
-          pipe(
-            Effect.all(Array.from({ length: n }, () => Hub.subscribe(hub))) as Effect.Effect<
-              R,
-              never,
-              Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
-            >,
-            Effect.tap(() => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
-          )
-        )
-      ).traced(trace)
-)
+>(3, <R, E, A, N extends number>(
+  self: Stream.Stream<R, E, A>,
+  n: N,
+  maximumLag: number
+): Effect.Effect<R | Scope.Scope, never, Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>> =>
+  Effect.flatMap(Hub.bounded<Take.Take<E, A>>(maximumLag), (hub) =>
+    pipe(
+      Effect.all(Array.from({ length: n }, () => Hub.subscribe(hub))) as Effect.Effect<
+        R,
+        never,
+        Stream.Stream.DynamicTuple<Queue.Dequeue<Take.Take<E, A>>, N>
+      >,
+      Effect.tap(() => Effect.forkScoped(runIntoHubScoped(self, hub)))
+    )))
 
 /** @internal */
-export const broadcastedQueuesDynamic = dualWithTrace<
+export const broadcastedQueuesDynamic = dual<
   (
     maximumLag: number
   ) => <R, E, A>(
@@ -785,15 +764,11 @@ export const broadcastedQueuesDynamic = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     maximumLag: number
   ) => Effect.Effect<Scope.Scope | R, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      maximumLag: number
-    ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>> =>
-      pipe(self, toHub(maximumLag), Effect.map(Hub.subscribe)).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  maximumLag: number
+): Effect.Effect<R | Scope.Scope, never, Effect.Effect<Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>> =>
+  Effect.map(toHub(self, maximumLag), Hub.subscribe))
 
 /** @internal */
 export const buffer = dual<
@@ -802,23 +777,21 @@ export const buffer = dual<
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
   const queue = toQueueOfElementsCapacity(self, capacity)
   return new StreamImpl(
-    pipe(
-      queue,
-      Effect.map((queue) => {
+    channel.unwrapScoped(
+      Effect.map(queue, (queue) => {
         const process: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
           core.fromEffect(Queue.take(queue)),
-          core.flatMap(Exit.match(
-            (cause) =>
+          core.flatMap(Exit.match({
+            onFailure: (cause) =>
               pipe(
                 Cause.flipCauseOption(cause),
-                Option.match(core.unit, core.failCause)
+                Option.match({ onNone: core.unit, onSome: core.failCause })
               ),
-            (value) => pipe(core.write(Chunk.of(value)), core.flatMap(() => process))
-          ))
+            onSuccess: (value) => core.flatMap(core.write(Chunk.of(value)), () => process)
+          }))
         )
         return process
-      }),
-      channel.unwrapScoped
+      })
     )
   )
 })
@@ -853,10 +826,10 @@ export const bufferChunksDropping = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease(
-    Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    (queue) => Queue.shutdown(queue)
-  )
+  const queue = Effect.acquireRelease({
+    acquire: Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    release: (queue) => Queue.shutdown(queue)
+  })
   return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
@@ -865,10 +838,10 @@ export const bufferChunksSliding = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease(
-    Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    (queue) => Queue.shutdown(queue)
-  )
+  const queue = Effect.acquireRelease({
+    acquire: Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    release: (queue) => Queue.shutdown(queue)
+  })
   return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
@@ -877,10 +850,10 @@ export const bufferDropping = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease(
-    Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    (queue) => Queue.shutdown(queue)
-  )
+  const queue = Effect.acquireRelease({
+    acquire: Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    release: (queue) => Queue.shutdown(queue)
+  })
   return new StreamImpl(bufferSignal(queue, toChannel(rechunk(1)(self))))
 })
 
@@ -889,10 +862,10 @@ export const bufferSliding = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease(
-    Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    (queue) => Queue.shutdown(queue)
-  )
+  const queue = Effect.acquireRelease({
+    acquire: Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    release: (queue) => Queue.shutdown(queue)
+  })
   return new StreamImpl(bufferSignal(queue, toChannel(pipe(self, rechunk(1)))))
 })
 
@@ -900,20 +873,18 @@ export const bufferSliding = dual<
 export const bufferUnbounded = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> => {
   const queue = toQueueUnbounded(self)
   return new StreamImpl(
-    pipe(
-      queue,
-      Effect.map((queue) => {
+    channel.unwrapScoped(
+      Effect.map(queue, (queue) => {
         const process: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
           core.fromEffect(Queue.take(queue)),
           core.flatMap(_take.match(
             core.unit,
             core.failCause,
-            (value) => pipe(core.write(value), core.flatMap(() => process))
+            (value) => core.flatMap(core.write(value), () => process)
           ))
         )
         return process
-      }),
-      channel.unwrapScoped
+      })
     )
   )
 }
@@ -1019,17 +990,16 @@ export const catchAll = dual<
     self: Stream.Stream<R, E, A>,
     f: (error: E) => Stream.Stream<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2, A2 | A>
->(
-  2,
-  <R, A, E, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    f: (error: E) => Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E2, A | A2> =>
-    pipe(
-      self,
-      catchAllCause((cause) => pipe(Cause.failureOrCause(cause), Either.match(f, failCause)))
-    )
-)
+>(2, <R, A, E, R2, E2, A2>(
+  self: Stream.Stream<R, E, A>,
+  f: (error: E) => Stream.Stream<R2, E2, A2>
+): Stream.Stream<R | R2, E2, A | A2> =>
+  catchAllCause(self, (cause) =>
+    Either.match(Cause.failureOrCause(cause), {
+      onLeft: f,
+      onRight: failCause
+    })))
+
 /** @internal */
 export const catchAllCause = dual<
   <E, R2, E2, A2>(
@@ -1198,7 +1168,7 @@ export const collect = dual<
 >(
   2,
   <R, E, A, B>(self: Stream.Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream.Stream<R, E, B> =>
-    pipe(self, mapChunks(Chunk.filterMap(pf)))
+    mapChunks(self, Chunk.filterMap(pf))
 )
 
 /** @internal */
@@ -1230,10 +1200,10 @@ export const collectEffect = dual<
         } else {
           return pipe(
             pf(next.value),
-            Option.match(
-              () => Effect.sync(() => loop(iterator)),
-              Effect.map((a2) => pipe(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator))))
-            ),
+            Option.match({
+              onNone: () => Effect.sync(() => loop(iterator)),
+              onSome: Effect.map((a2) => core.flatMap(core.write(Chunk.of(a2)), () => loop(iterator)))
+            }),
             channel.unwrap
           )
         }
@@ -1323,13 +1293,13 @@ export const collectWhileEffect = dual<
             core.succeed
           )
         } else {
-          return pipe(
-            pf(next.value),
-            Option.match(
-              () => Effect.succeed(core.unit()),
-              Effect.map((a2) => pipe(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator))))
-            ),
-            channel.unwrap
+          return channel.unwrap(
+            Option.match(pf(next.value), {
+              onNone: () => Effect.succeed(core.unit()),
+              onSome: Effect.map(
+                (a2) => core.flatMap(core.write(Chunk.of(a2)), () => loop(iterator))
+              )
+            })
           )
         }
       }
@@ -1428,17 +1398,20 @@ export const combine = dual<
         const pullLeft = pipe(
           latchL,
           Handoff.offer<void>(void 0),
-          Effect.zipRight(pipe(Handoff.take(left), Effect.flatMap(Effect.done)))
+          // TODO: remove
+          Effect.zipRight(pipe(Handoff.take(left), Effect.flatMap((exit) => Effect.suspend(() => exit))))
         )
         const pullRight = pipe(
           latchR,
           Handoff.offer<void>(void 0),
-          Effect.zipRight(pipe(Handoff.take(right), Effect.flatMap(Effect.done)))
+          // TODO: remove
+          Effect.zipRight(pipe(Handoff.take(right), Effect.flatMap((exit) => Effect.suspend(() => exit))))
         )
         return toChannel(unfoldEffect(s, (s) =>
           pipe(
             f(s, pullLeft, pullRight),
-            Effect.flatMap((exit) => Effect.unsome(Effect.done(exit)))
+            // TODO: remove
+            Effect.flatMap((exit) => Effect.unsome(Effect.suspend(() => exit)))
           )))
       })
     )
@@ -1550,7 +1523,8 @@ export const combineChunks = dual<
         return toChannel(unfoldChunkEffect(s, (s) =>
           pipe(
             f(s, pullLeft, pullRight),
-            Effect.flatMap((exit) => Effect.unsome(Effect.done(exit)))
+            // TODO: remove
+            Effect.flatMap((exit) => Effect.unsome(Effect.suspend(() => exit)))
           )))
       }),
       channel.unwrapScoped
@@ -1680,9 +1654,9 @@ export const debounce = dual<
                 (input: Chunk.Chunk<A>) =>
                   pipe(
                     Chunk.last(input),
-                    Option.match(
-                      () => producer,
-                      (last) =>
+                    Option.match({
+                      onNone: () => producer,
+                      onSome: (last) =>
                         pipe(
                           core.fromEffect(
                             pipe(
@@ -1694,7 +1668,7 @@ export const debounce = dual<
                           ),
                           core.flatMap(() => producer)
                         )
-                    )
+                    })
                   ),
                 (cause) =>
                   core.fromEffect(
@@ -1732,46 +1706,38 @@ export const debounce = dual<
                   )
                 }
                 case DebounceState.OP_PREVIOUS: {
-                  return pipe(
-                    Fiber.join(state.fiber),
-                    Effect.raceWith(
-                      Handoff.take(handoff),
-                      (leftExit, current) =>
-                        pipe(
-                          leftExit,
-                          Exit.match(
-                            (cause) => pipe(Fiber.interrupt(current), Effect.as(core.failCause(cause))),
-                            (chunk) =>
-                              Effect.succeed(
-                                pipe(core.write(chunk), core.flatMap(() => consumer(DebounceState.current(current))))
-                              )
-                          )
-                        ),
-                      (rightExit, previous) =>
-                        pipe(
-                          rightExit,
-                          Exit.match(
-                            (cause) => pipe(Fiber.interrupt(previous), Effect.as(core.failCause(cause))),
-                            (signal) => {
-                              switch (signal._tag) {
-                                case HandoffSignal.OP_EMIT: {
-                                  return pipe(Fiber.interrupt(previous), Effect.zipRight(enqueue(signal.elements)))
-                                }
-                                case HandoffSignal.OP_HALT: {
-                                  return pipe(Fiber.interrupt(previous), Effect.as(core.failCause(signal.cause)))
-                                }
-                                case HandoffSignal.OP_END: {
-                                  return pipe(
-                                    Fiber.join(previous),
-                                    Effect.map((chunk) => pipe(core.write(chunk), channel.zipRight(core.unit())))
-                                  )
-                                }
+                  return channel.unwrap(
+                    Effect.raceWith(Fiber.join(state.fiber), {
+                      other: Handoff.take(handoff),
+                      onSelfDone: (leftExit, current) =>
+                        Exit.match(leftExit, {
+                          onFailure: (cause) => pipe(Fiber.interrupt(current), Effect.as(core.failCause(cause))),
+                          onSuccess: (chunk) =>
+                            Effect.succeed(
+                              pipe(core.write(chunk), core.flatMap(() => consumer(DebounceState.current(current))))
+                            )
+                        }),
+                      onOtherDone: (rightExit, previous) =>
+                        Exit.match(rightExit, {
+                          onFailure: (cause) => pipe(Fiber.interrupt(previous), Effect.as(core.failCause(cause))),
+                          onSuccess: (signal) => {
+                            switch (signal._tag) {
+                              case HandoffSignal.OP_EMIT: {
+                                return pipe(Fiber.interrupt(previous), Effect.zipRight(enqueue(signal.elements)))
+                              }
+                              case HandoffSignal.OP_HALT: {
+                                return pipe(Fiber.interrupt(previous), Effect.as(core.failCause(signal.cause)))
+                              }
+                              case HandoffSignal.OP_END: {
+                                return pipe(
+                                  Fiber.join(previous),
+                                  Effect.map((chunk) => pipe(core.write(chunk), channel.zipRight(core.unit())))
+                                )
                               }
                             }
-                          )
-                        )
-                    ),
-                    channel.unwrap
+                          }
+                        })
+                    })
                   )
                 }
                 case DebounceState.OP_CURRENT: {
@@ -1917,7 +1883,7 @@ const newDistributedWithDynamicId = () => {
 }
 
 /** @internal */
-export const distributedWithDynamic = dualWithTrace<
+export const distributedWithDynamic = dual<
   <E, A, _>(
     maximumLag: number,
     decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
@@ -1937,21 +1903,17 @@ export const distributedWithDynamic = dualWithTrace<
     never,
     Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
   >
->(
-  3,
-  (trace) =>
-    <R, E, A, _>(
-      self: Stream.Stream<R, E, A>,
-      maximumLag: number,
-      decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
-    ): Effect.Effect<
-      R | Scope.Scope,
-      never,
-      Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
-    > => distributedWithDynamicCallback(self, maximumLag, decide, () => Effect.unit()).traced(trace)
-)
+>(3, <R, E, A, _>(
+  self: Stream.Stream<R, E, A>,
+  maximumLag: number,
+  decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+): Effect.Effect<
+  R | Scope.Scope,
+  never,
+  Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
+> => distributedWithDynamicCallback(self, maximumLag, decide, () => Effect.unit))
 
-export const distributedWithDynamicCallback = dualWithTrace<
+export const distributedWithDynamicCallback = dual<
   <E, A, _>(
     maximumLag: number,
     decide: (a: A) => Effect.Effect<never, never, Predicate<number>>,
@@ -1973,77 +1935,94 @@ export const distributedWithDynamicCallback = dualWithTrace<
     never,
     Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
   >
->(
-  4,
-  (trace) =>
-    <R, E, A, _>(
-      self: Stream.Stream<R, E, A>,
-      maximumLag: number,
-      decide: (a: A) => Effect.Effect<never, never, Predicate<number>>,
-      done: (exit: Exit.Exit<Option.Option<E>, never>) => Effect.Effect<never, never, _>
-    ): Effect.Effect<
-      R | Scope.Scope,
-      never,
-      Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
-    > =>
-      pipe(
-        Effect.acquireRelease(
-          Ref.make<Map<number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>>>(new Map()),
-          (ref, _) =>
-            pipe(Ref.get(ref), Effect.flatMap((queues) => pipe(queues.values(), Effect.forEach(Queue.shutdown))))
-        ),
-        Effect.flatMap((queuesRef) =>
-          Effect.gen(function*($) {
-            const offer = (a: A): Effect.Effect<never, never, void> =>
+>(4, <R, E, A, _>(
+  self: Stream.Stream<R, E, A>,
+  maximumLag: number,
+  decide: (a: A) => Effect.Effect<never, never, Predicate<number>>,
+  done: (exit: Exit.Exit<Option.Option<E>, never>) => Effect.Effect<never, never, _>
+): Effect.Effect<
+  R | Scope.Scope,
+  never,
+  Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
+> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Ref.make<Map<number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>>>(new Map()),
+      release: (ref, _) =>
+        pipe(Ref.get(ref), Effect.flatMap((queues) => pipe(queues.values(), Effect.forEach(Queue.shutdown))))
+    }),
+    Effect.flatMap((queuesRef) =>
+      Effect.gen(function*($) {
+        const offer = (a: A): Effect.Effect<never, never, void> =>
+          pipe(
+            decide(a),
+            Effect.flatMap((shouldProcess) =>
               pipe(
-                decide(a),
-                Effect.flatMap((shouldProcess) =>
+                Ref.get(queuesRef),
+                Effect.flatMap((queues) =>
                   pipe(
-                    Ref.get(queuesRef),
-                    Effect.flatMap((queues) =>
-                      pipe(
-                        queues.entries(),
-                        Effect.reduce(Chunk.empty<number>(), (acc, [id, queue]) => {
-                          if (shouldProcess(id)) {
-                            return pipe(
-                              Queue.offer(queue, Exit.succeed(a)),
-                              Effect.matchCauseEffect(
-                                (cause) =>
-                                  // Ignore all downstream queues that were shut
-                                  // down and remove them later
-                                  Cause.isInterrupted(cause) ?
-                                    Effect.succeed(pipe(acc, Chunk.prepend(id))) :
-                                    Effect.failCause(cause),
-                                () => Effect.succeed(acc)
-                              )
-                            )
-                          }
-                          return Effect.succeed(acc)
-                        }),
-                        Effect.flatMap((ids) => {
-                          if (Chunk.isNonEmpty(ids)) {
-                            return pipe(
-                              Ref.update(queuesRef, (map) => {
-                                for (const id of ids) {
-                                  map.delete(id)
-                                }
-                                return map
-                              })
-                            )
-                          }
-                          return Effect.unit()
-                        })
-                      )
-                    )
+                    queues.entries(),
+                    Effect.reduce(Chunk.empty<number>(), (acc, [id, queue]) => {
+                      if (shouldProcess(id)) {
+                        return pipe(
+                          Queue.offer(queue, Exit.succeed(a)),
+                          Effect.matchCauseEffect({
+                            onFailure: (cause) =>
+                              // Ignore all downstream queues that were shut
+                              // down and remove them later
+                              Cause.isInterrupted(cause) ?
+                                Effect.succeed(pipe(acc, Chunk.prepend(id))) :
+                                Effect.failCause(cause),
+                            onSuccess: () => Effect.succeed(acc)
+                          })
+                        )
+                      }
+                      return Effect.succeed(acc)
+                    }),
+                    Effect.flatMap((ids) => {
+                      if (Chunk.isNonEmpty(ids)) {
+                        return pipe(
+                          Ref.update(queuesRef, (map) => {
+                            for (const id of ids) {
+                              map.delete(id)
+                            }
+                            return map
+                          })
+                        )
+                      }
+                      return Effect.unit
+                    })
                   )
-                ),
-                Effect.asUnit
+                )
               )
-            const queuesLock = yield* $(Effect.makeSemaphore(1))
-            const newQueue = yield* $(
-              Ref.make<Effect.Effect<never, never, readonly [number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>]>>(
+            ),
+            Effect.asUnit
+          )
+        const queuesLock = yield* $(Effect.makeSemaphore(1))
+        const newQueue = yield* $(
+          Ref.make<Effect.Effect<never, never, readonly [number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>]>>(
+            pipe(
+              Queue.bounded<Exit.Exit<Option.Option<E>, A>>(maximumLag),
+              Effect.flatMap((queue) => {
+                const id = newDistributedWithDynamicId()
+                return pipe(
+                  Ref.update(queuesRef, (map) => map.set(id, queue)),
+                  Effect.as([id, queue] as const)
+                )
+              })
+            )
+          )
+        )
+        const finalize = (endTake: Exit.Exit<Option.Option<E>, never>): Effect.Effect<never, never, void> =>
+          // Make sure that no queues are currently being added
+          queuesLock.withPermits(1)(
+            pipe(
+              Ref.set(
+                newQueue,
                 pipe(
-                  Queue.bounded<Exit.Exit<Option.Option<E>, A>>(maximumLag),
+                  // All newly created queues should end immediately
+                  Queue.bounded<Exit.Exit<Option.Option<E>, A>>(1),
+                  Effect.tap((queue) => Queue.offer(queue, endTake)),
                   Effect.flatMap((queue) => {
                     const id = newDistributedWithDynamicId()
                     return pipe(
@@ -2052,68 +2031,48 @@ export const distributedWithDynamicCallback = dualWithTrace<
                     )
                   })
                 )
-              )
-            )
-            const finalize = (endTake: Exit.Exit<Option.Option<E>, never>): Effect.Effect<never, never, void> =>
-              // Make sure that no queues are currently being added
-              queuesLock.withPermits(1)(
+              ),
+              Effect.zipRight(
                 pipe(
-                  Ref.set(
-                    newQueue,
+                  Ref.get(queuesRef),
+                  Effect.flatMap((map) =>
                     pipe(
-                      // All newly created queues should end immediately
-                      Queue.bounded<Exit.Exit<Option.Option<E>, A>>(1),
-                      Effect.tap((queue) => Queue.offer(queue, endTake)),
-                      Effect.flatMap((queue) => {
-                        const id = newDistributedWithDynamicId()
-                        return pipe(
-                          Ref.update(queuesRef, (map) => map.set(id, queue)),
-                          Effect.as([id, queue] as const)
-                        )
-                      })
-                    )
-                  ),
-                  Effect.zipRight(
-                    pipe(
-                      Ref.get(queuesRef),
-                      Effect.flatMap((map) =>
+                      Chunk.fromIterable(map.values()),
+                      Effect.forEach((queue) =>
                         pipe(
-                          Chunk.fromIterable(map.values()),
-                          Effect.forEach((queue) =>
-                            pipe(
-                              Queue.offer(queue, endTake),
-                              Effect.catchSomeCause((cause) =>
-                                Cause.isInterrupted(cause) ? Option.some(Effect.unit()) : Option.none()
-                              )
-                            )
+                          Queue.offer(queue, endTake),
+                          Effect.catchSomeCause((cause) =>
+                            Cause.isInterrupted(cause) ? Option.some(Effect.unit) : Option.none()
                           )
                         )
                       )
                     )
-                  ),
-                  Effect.zipRight(done(endTake)),
-                  Effect.asUnit
+                  )
                 )
-              )
-            yield* $(pipe(
-              self,
-              runForEachScoped(offer),
-              Effect.matchCauseEffect(
-                (cause) => finalize(Exit.failCause(pipe(cause, Cause.map(Option.some)))),
-                () => finalize(Exit.fail(Option.none()))
               ),
-              Effect.forkScoped
-            ))
-            return queuesLock.withPermits(1)(
-              Effect.flatten(Ref.get(newQueue))
+              Effect.zipRight(done(endTake)),
+              Effect.asUnit
             )
-          })
+          )
+        yield* $(pipe(
+          self,
+          runForEachScoped(offer),
+          Effect.matchCauseEffect({
+            onFailure: (cause) => finalize(Exit.failCause(pipe(cause, Cause.map(Option.some)))),
+            onSuccess: () => finalize(Exit.fail(Option.none()))
+          }),
+          Effect.forkScoped
+        ))
+        return queuesLock.withPermits(1)(
+          Effect.flatten(Ref.get(newQueue))
         )
-      ).traced(trace)
-)
+      })
+    )
+  ))
 
+// TODO: remove
 /** @internal */
-export const done = <E, A>(exit: Exit.Exit<E, A>): Stream.Stream<never, E, A> => fromEffect(Effect.done(exit))
+export const done = <E, A>(exit: Exit.Exit<E, A>): Stream.Stream<never, E, A> => fromEffect(Effect.suspend(() => exit))
 
 /** @internal */
 export const drain = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, never> =>
@@ -2141,7 +2100,7 @@ export const drainFork = dual<
           scoped(
             pipe(
               that,
-              runForEachScoped(() => Effect.unit()),
+              runForEachScoped(() => Effect.unit),
               Effect.catchAllCause((cause) => Deferred.failCause(backgroundDied, cause)),
               Effect.forkScoped
             )
@@ -2438,7 +2397,7 @@ export const filterEffect = dual<
 
 /** @internal */
 export const finalizer = <R, _>(finalizer: Effect.Effect<R, never, _>): Stream.Stream<R, never, void> =>
-  acquireRelease(Effect.unit(), () => finalizer)
+  acquireRelease(Effect.unit, () => finalizer)
 
 /** @internal */
 export const find = dual<
@@ -2456,10 +2415,10 @@ export const find = dual<
       pipe(
         input,
         Chunk.findFirst(predicate),
-        Option.match(
-          () => loop,
-          (n) => core.write(Chunk.of(n))
-        )
+        Option.match({
+          onNone: () => loop,
+          onSome: (n) => core.write(Chunk.of(n))
+        })
       ),
     core.fail,
     core.unit
@@ -2486,11 +2445,11 @@ export const findEffect = dual<
       (input: Chunk.Chunk<A>) =>
         pipe(
           input,
-          Effect.find(predicate),
-          Effect.map(Option.match(
-            () => loop,
-            (n) => core.write(Chunk.of(n))
-          )),
+          Effect.findFirst(predicate),
+          Effect.map(Option.match({
+            onNone: () => loop,
+            onSome: (n) => core.write(Chunk.of(n))
+          })),
           channel.unwrap
         ),
       core.fail,
@@ -2660,7 +2619,8 @@ export const flattenEffect = <R, E, R2, E2, A>(
 
 /** @internal */
 export const flattenExit = <R, E, E2, A>(self: Stream.Stream<R, E, Exit.Exit<E2, A>>): Stream.Stream<R, E | E2, A> =>
-  pipe(self, mapEffect(Effect.done))
+  // TODO: remove
+  mapEffect(self, (exit) => Effect.suspend(() => exit))
 
 /** @internal */
 export const flattenExitOption = <R, E, E2, A>(
@@ -2673,13 +2633,17 @@ export const flattenExitOption = <R, E, E2, A>(
     const [toEmit, rest] = pipe(chunk, Chunk.splitWhere((exit) => !Exit.isSuccess(exit)))
     const next = pipe(
       Chunk.head(rest),
-      Option.match(
-        () => cont,
-        Exit.match(
-          (cause) => pipe(Cause.flipCauseOption(cause), Option.match(core.unit, core.failCause)),
-          core.unit
-        )
-      )
+      Option.match({
+        onNone: () => cont,
+        onSome: Exit.match({
+          onFailure: (cause) =>
+            Option.match(Cause.flipCauseOption(cause), {
+              onNone: core.unit,
+              onSome: core.failCause
+            }),
+          onSuccess: core.unit
+        })
+      })
     )
     return pipe(
       core.write(pipe(
@@ -2786,13 +2750,16 @@ export const fromAsyncIterable = <E, A>(
   onError: (e: unknown) => E
 ) =>
   pipe(
-    Effect.acquireRelease(
-      Effect.sync(() => iterable[Symbol.asyncIterator]()),
-      (iterator) => iterator.return ? Effect.promise(() => iterator.return!()) : Effect.unit()
-    ),
+    Effect.acquireRelease({
+      acquire: Effect.sync(() => iterable[Symbol.asyncIterator]()),
+      release: (iterator) => iterator.return ? Effect.promise(() => iterator.return!()) : Effect.unit
+    }),
     Effect.map((iterator) =>
       repeatEffectOption(pipe(
-        Effect.tryCatchPromise(() => iterator.next(), (reason) => Option.some(onError(reason))),
+        Effect.tryPromise({
+          try: () => iterator.next(),
+          catch: (reason) => Option.some(onError(reason))
+        }),
         Effect.flatMap((result) => result.done ? Effect.fail(Option.none()) : Effect.succeed(result.value))
       ))
     ),
@@ -2871,10 +2838,14 @@ export const fromEffect = <R, E, A>(effect: Effect.Effect<R, E, A>): Stream.Stre
 /** @internal */
 export const fromEffectOption = <R, E, A>(effect: Effect.Effect<R, Option.Option<E>, A>): Stream.Stream<R, E, A> =>
   new StreamImpl(
-    pipe(
-      effect,
-      Effect.match(Option.match(core.unit, core.fail), (a) => core.write(Chunk.of(a))),
-      channel.unwrap
+    channel.unwrap(
+      Effect.match(effect, {
+        onFailure: Option.match({
+          onNone: core.unit,
+          onSome: core.fail
+        }),
+        onSuccess: (a) => core.write(Chunk.of(a))
+      })
     )
   )
 
@@ -2886,20 +2857,14 @@ export const fromHub = <A>(hub: Hub.Hub<A>, maxChunkSize = DefaultChunkSize): St
   )
 
 /** @internal */
-export const fromHubScoped = methodWithTrace((trace) =>
-  <A>(
-    hub: Hub.Hub<A>,
-    maxChunkSize = DefaultChunkSize
-  ): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
-    pipe(
-      Effect.suspend(() =>
-        pipe(
-          Hub.subscribe(hub),
-          Effect.map((queue) => fromQueueWithShutdown(queue, maxChunkSize))
-        )
-      )
-    ).traced(trace)
-)
+export const fromHubScoped = <A>(
+  hub: Hub.Hub<A>,
+  maxChunkSize = DefaultChunkSize
+): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
+  Effect.map(
+    Hub.subscribe(hub),
+    (queue) => fromQueueWithShutdown(queue, maxChunkSize)
+  )
 
 /** @internal */
 export const fromHubWithShutdown = <A>(
@@ -2908,16 +2873,14 @@ export const fromHubWithShutdown = <A>(
 ): Stream.Stream<never, never, A> => pipe(fromHub(hub, maxChunkSize), ensuring(Hub.shutdown(hub)))
 
 /** @internal */
-export const fromHubScopedWithShutdown = methodWithTrace((trace) =>
-  <A>(
-    hub: Hub.Hub<A>,
-    maxChunkSize = DefaultChunkSize
-  ): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
-    pipe(
-      fromHubScoped(hub, maxChunkSize),
-      Effect.map(ensuring(Hub.shutdown(hub)))
-    ).traced(trace)
-)
+export const fromHubScopedWithShutdown = <A>(
+  hub: Hub.Hub<A>,
+  maxChunkSize = DefaultChunkSize
+): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
+  Effect.map(
+    fromHubScoped(hub, maxChunkSize),
+    ensuring(Hub.shutdown(hub))
+  )
 
 /** @internal */
 export const fromIterable = <A>(iterable: Iterable<A>): Stream.Stream<never, never, A> =>
@@ -3028,17 +2991,17 @@ export const fromReadableStream = <A, E>(
   onError: (error: unknown) => E
 ): Stream.Stream<never, E, A> =>
   unwrapScoped(Effect.map(
-    Effect.acquireRelease(
-      Effect.sync(() => evaluate().getReader()),
-      (reader) => Effect.promise(() => reader.cancel())
-    ),
+    Effect.acquireRelease({
+      acquire: Effect.sync(() => evaluate().getReader()),
+      release: (reader) => Effect.promise(() => reader.cancel())
+    }),
     (reader) =>
       repeatEffectOption(
         Effect.flatMap(
-          Effect.tryCatchPromise(
-            () => reader.read(),
-            (reason) => Option.some(onError(reason))
-          ),
+          Effect.tryPromise({
+            try: () => reader.read(),
+            catch: (reason) => Option.some(onError(reason))
+          }),
           ({ done, value }) => done ? Effect.fail(Option.none()) : Effect.succeed(value)
         )
       )
@@ -3051,10 +3014,10 @@ export const fromReadableStreamByob = <E>(
   allocSize = 4096
 ): Stream.Stream<never, E, Uint8Array> =>
   unwrapScoped(Effect.map(
-    Effect.acquireRelease(
-      Effect.sync(() => evaluate().getReader({ mode: "byob" })),
-      (reader) => Effect.promise(() => reader.cancel())
-    ),
+    Effect.acquireRelease({
+      acquire: Effect.sync(() => evaluate().getReader({ mode: "byob" })),
+      release: (reader) => Effect.promise(() => reader.cancel())
+    }),
     (reader) =>
       catchAll(
         forever(readChunkStreamByobReader(reader, onError, allocSize)),
@@ -3077,10 +3040,10 @@ const readChunkStreamByobReader = <E>(
   const buffer = new ArrayBuffer(size)
   return paginateEffect(0, (offset) =>
     Effect.flatMap(
-      Effect.tryCatchPromise(
-        () => reader.read(new Uint8Array(buffer, offset, buffer.byteLength - offset)),
-        (reason) => onError(reason)
-      ),
+      Effect.tryPromise({
+        try: () => reader.read(new Uint8Array(buffer, offset, buffer.byteLength - offset)),
+        catch: (reason) => onError(reason)
+      }),
       ({ done, value }) => {
         if (done) {
           return Effect.fail({ _tag: "EOF" })
@@ -3164,7 +3127,7 @@ export const groupAdjacentBy = dual<
         }
         until = until + 1
       }
-      const nonEmptyChunk = Chunk.concat(previousChunk, Chunk.unsafeFromArray(Array.from(chunk).slice(from, until)))
+      const nonEmptyChunk = Chunk.appendAll(previousChunk, Chunk.unsafeFromArray(Array.from(chunk).slice(from, until)))
       const output = Chunk.unsafeFromArray(builder)
       return [Option.some([key, nonEmptyChunk as Chunk.NonEmptyChunk<A>] as const), output]
     }
@@ -3180,17 +3143,15 @@ export const groupAdjacentBy = dual<
             : core.flatMap(core.write(output), () => groupAdjacent(updatedState))
         },
         (cause) =>
-          Option.match(
-            state,
-            () => core.failCause(cause),
-            (output) => core.flatMap(core.write(Chunk.of(output)), () => core.failCause(cause))
-          ),
+          Option.match(state, {
+            onNone: () => core.failCause(cause),
+            onSome: (output) => core.flatMap(core.write(Chunk.of(output)), () => core.failCause(cause))
+          }),
         (done) =>
-          Option.match(
-            state,
-            () => core.succeedNow(done),
-            (output) => core.flatMap(core.write(Chunk.of(output)), () => core.succeedNow(done))
-          )
+          Option.match(state, {
+            onNone: () => core.succeedNow(done),
+            onSome: (output) => core.flatMap(core.write(Chunk.of(output)), () => core.succeedNow(done))
+          })
       )
     return new StreamImpl(channel.pipeToOrFail(toChannel(self), groupAdjacent(Option.none())))
   }
@@ -3247,18 +3208,20 @@ export const haltWhen = dual<
     ): Channel.Channel<R2, E | E2, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void> =>
       pipe(
         Fiber.poll(fiber),
-        Effect.map(Option.match(
-          () =>
+        Effect.map(Option.match({
+          onNone: () =>
             core.readWith(
               (input: Chunk.Chunk<A>) => pipe(core.write(input), core.flatMap(() => writer(fiber))),
               core.fail,
               core.unit
             ),
-          Exit.match<E2, _, Channel.Channel<R2, E | E2, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void>>(
-            core.failCause,
-            core.unit
+          onSome: Exit.match<E2, _, Channel.Channel<R2, E | E2, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void>>(
+            {
+              onFailure: core.failCause,
+              onSuccess: core.unit
+            }
           )
-        )),
+        })),
         channel.unwrap
       )
     return new StreamImpl(
@@ -3290,15 +3253,19 @@ export const haltWhenDeferred = dual<
   <R, E, A, E2, _>(self: Stream.Stream<R, E, A>, deferred: Deferred.Deferred<E2, _>): Stream.Stream<R, E | E2, A> => {
     const writer: Channel.Channel<R, E | E2, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void> = pipe(
       Deferred.poll(deferred),
-      Effect.map(Option.match(
-        () =>
+      Effect.map(Option.match({
+        onNone: () =>
           core.readWith(
             (input: Chunk.Chunk<A>) => pipe(core.write(input), core.flatMap(() => writer)),
             core.fail,
             core.unit
           ),
-        (effect) => pipe(effect, Effect.match(core.fail, core.unit), channel.unwrap)
-      )),
+        onSome: (effect) =>
+          channel.unwrap(Effect.match(effect, {
+            onFailure: core.fail,
+            onSuccess: core.unit
+          }))
+      })),
       channel.unwrap
     )
     return new StreamImpl(pipe(toChannel(self), core.pipeTo(writer)))
@@ -3547,87 +3514,6 @@ export const iterate = <A>(value: A, next: (value: A) => A): Stream.Stream<never
   unfold(value, (a) => Option.some([a, next(a)] as const))
 
 /** @internal */
-export const log = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.log(message))
-
-/** @internal */
-export const logDebug = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.logDebug(message))
-
-/** @internal */
-export const logDebugCause = <E>(cause: Cause.Cause<E>): Stream.Stream<never, never, void> =>
-  fromEffect(Effect.logDebugCause(cause))
-
-/** @internal */
-export const logDebugCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Stream.Stream<never, never, void> => fromEffect(Effect.logDebugCauseMessage(message, cause))
-
-/** @internal */
-export const logError = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.logError(message))
-
-/** @internal */
-export const logErrorCause = <E>(cause: Cause.Cause<E>): Stream.Stream<never, never, void> =>
-  fromEffect(Effect.logErrorCause(cause))
-
-/** @internal */
-export const logErrorCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Stream.Stream<never, never, void> => fromEffect(Effect.logErrorCauseMessage(message, cause))
-
-/** @internal */
-export const logFatal = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.logFatal(message))
-
-/** @internal */
-export const logFatalCause = <E>(cause: Cause.Cause<E>): Stream.Stream<never, never, void> =>
-  fromEffect(Effect.logFatalCause(cause))
-
-/** @internal */
-export const logFatalCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Stream.Stream<never, never, void> => fromEffect(Effect.logFatalCauseMessage(message, cause))
-
-/** @internal */
-export const logInfo = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.logInfo(message))
-
-/** @internal */
-export const logInfoCause = <E>(cause: Cause.Cause<E>): Stream.Stream<never, never, void> =>
-  fromEffect(Effect.logInfoCause(cause))
-
-/** @internal */
-export const logInfoCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Stream.Stream<never, never, void> => fromEffect(Effect.logInfoCauseMessage(message, cause))
-
-/** @internal */
-export const logWarning = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.logWarning(message))
-
-/** @internal */
-export const logWarningCause = <E>(cause: Cause.Cause<E>): Stream.Stream<never, never, void> =>
-  fromEffect(Effect.logWarningCause(cause))
-
-/** @internal */
-export const logWarningCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Stream.Stream<never, never, void> => fromEffect(Effect.logWarningCauseMessage(message, cause))
-
-/** @internal */
-export const logTrace = (message: string): Stream.Stream<never, never, void> => fromEffect(Effect.logTrace(message))
-
-/** @internal */
-export const logTraceCause = <E>(cause: Cause.Cause<E>): Stream.Stream<never, never, void> =>
-  fromEffect(Effect.logTraceCause(cause))
-
-/** @internal */
-export const logTraceCauseMessage = <E>(
-  message: string,
-  cause: Cause.Cause<E>
-): Stream.Stream<never, never, void> => fromEffect(Effect.logTraceCauseMessage(message, cause))
-
-/** @internal */
 export const make = <As extends Array<any>>(...as: As): Stream.Stream<never, never, As[number]> => fromIterable(as)
 
 /** @internal */
@@ -3705,15 +3591,15 @@ export const mapAccumEffect = dual<
                       f(s, a),
                       Effect.flatMap(([s, a]) => pipe(emit(a), Effect.as(s)))
                     )),
-                  Effect.match(
-                    (error) => {
+                  Effect.match({
+                    onFailure: (error) => {
                       if (outputs.length !== 0) {
-                        return pipe(core.write(Chunk.unsafeFromArray(outputs)), channel.zipRight(core.fail(error)))
+                        return channel.zipRight(core.write(Chunk.unsafeFromArray(outputs)), core.fail(error))
                       }
                       return core.fail(error)
                     },
-                    (s) => pipe(core.write(Chunk.unsafeFromArray(outputs)), core.flatMap(() => accumulator(s)))
-                  )
+                    onSuccess: (s) => core.flatMap(core.write(Chunk.unsafeFromArray(outputs)), () => accumulator(s))
+                  })
                 )
               }),
               channel.unwrap
@@ -4164,8 +4050,9 @@ export const mergeWithHaltStrategy = dual<
     const handler = (terminate: boolean) =>
       (exit: Exit.Exit<E | E2, unknown>): MergeDecision.MergeDecision<R | R2, E | E2, unknown, E | E2, unknown> =>
         terminate || !Exit.isSuccess(exit) ?
-          MergeDecision.Done(Effect.done(exit)) :
-          MergeDecision.Await(Effect.done)
+          // TODO: remove
+          MergeDecision.Done(Effect.suspend(() => exit)) :
+          MergeDecision.Await((exit) => Effect.suspend(() => exit))
 
     return new StreamImpl<R | R2, E | E2, A3 | A4>(
       channel.mergeWith(
@@ -4179,13 +4066,11 @@ export const mergeWithHaltStrategy = dual<
 )
 
 /** @internal */
-export const mkString = methodWithTrace((trace) =>
-  <R, E>(self: Stream.Stream<R, E, string>): Effect.Effect<R, E, string> =>
-    pipe(self, run(_sink.mkString())).traced(trace)
-)
+export const mkString = <R, E>(self: Stream.Stream<R, E, string>): Effect.Effect<R, E, string> =>
+  run(self, _sink.mkString())
 
 /** @internal */
-export const never = (): Stream.Stream<never, never, never> => fromEffect(Effect.never())
+export const never = (): Stream.Stream<never, never, never> => fromEffect(Effect.never)
 
 /** @internal */
 export const onError = dual<
@@ -4221,7 +4106,7 @@ export const onDone = dual<
     cleanup: () => Effect.Effect<R2, never, _>
   ): Stream.Stream<R | R2, E, A> =>
     new StreamImpl<R | R2, E, A>(
-      pipe(toChannel(self), core.ensuringWith((exit) => Exit.isSuccess(exit) ? cleanup() : Effect.unit()))
+      pipe(toChannel(self), core.ensuringWith((exit) => Exit.isSuccess(exit) ? cleanup() : Effect.unit))
     )
 )
 
@@ -4352,7 +4237,13 @@ export const orElseOptional = dual<
     self: Stream.Stream<R, Option.Option<E>, A>,
     that: LazyArg<Stream.Stream<R2, Option.Option<E2>, A2>>
   ): Stream.Stream<R | R2, Option.Option<E | E2>, A | A2> =>
-    pipe(self, catchAll(Option.match(that, (error) => fail(Option.some<E | E2>(error)))))
+    catchAll(
+      self,
+      Option.match({
+        onNone: that,
+        onSome: (error) => fail(Option.some<E | E2>(error))
+      })
+    )
 )
 
 /** @internal */
@@ -4379,13 +4270,10 @@ export const paginateChunk = <S, A>(
 ): Stream.Stream<never, never, A> => {
   const loop = (s: S): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown> => {
     const page = f(s)
-    return pipe(
-      page[1],
-      Option.match(
-        () => pipe(core.write(page[0]), channel.zipRight(core.unit())),
-        (s) => pipe(core.write(page[0]), core.flatMap(() => loop(s)))
-      )
-    )
+    return Option.match(page[1], {
+      onNone: () => channel.zipRight(core.write(page[0]), core.unit()),
+      onSome: (s) => core.flatMap(core.write(page[0]), () => loop(s))
+    })
   }
   return new StreamImpl(core.suspend(() => loop(s)))
 }
@@ -4396,18 +4284,12 @@ export const paginateChunkEffect = <S, R, E, A>(
   f: (s: S) => Effect.Effect<R, E, readonly [Chunk.Chunk<A>, Option.Option<S>]>
 ): Stream.Stream<R, E, A> => {
   const loop = (s: S): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> =>
-    pipe(
-      f(s),
-      Effect.map(([chunk, option]) =>
-        pipe(
-          option,
-          Option.match(
-            () => pipe(core.write(chunk), channel.zipRight(core.unit())),
-            (s) => pipe(core.write(chunk), core.flatMap(() => loop(s)))
-          )
-        )
-      ),
-      channel.unwrap
+    channel.unwrap(
+      Effect.map(f(s), ([chunk, option]) =>
+        Option.match(option, {
+          onNone: () => channel.zipRight(core.write(chunk), core.unit()),
+          onSome: (s) => core.flatMap(core.write(chunk), () => loop(s))
+        }))
     )
   return new StreamImpl(core.suspend(() => loop(s)))
 }
@@ -4420,7 +4302,7 @@ export const paginateEffect = <S, R, E, A>(
   paginateChunkEffect(s, (s) => pipe(f(s), Effect.map(([a, s]) => [Chunk.of(a), s] as const)))
 
 /** @internal */
-export const peel = dualWithTrace<
+export const peel = dual<
   <R2, E2, A, Z>(
     sink: Sink.Sink<R2, E2, A, A, Z>
   ) => <R, E>(
@@ -4430,126 +4312,122 @@ export const peel = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A, A, Z>
   ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Z, Stream.Stream<never, E, A>]>
->(
-  2,
-  (trace) =>
-    <R, E, R2, E2, A, Z>(
-      self: Stream.Stream<R, E, A>,
-      sink: Sink.Sink<R2, E2, A, A, Z>
-    ): Effect.Effect<R | R2 | Scope.Scope, E2 | E, readonly [Z, Stream.Stream<never, E, A>]> => {
-      type Signal = Emit | Halt | End
-      const OP_EMIT = "Emit" as const
-      type OP_EMIT = typeof OP_EMIT
-      const OP_HALT = "Halt" as const
-      type OP_HALT = typeof OP_HALT
-      const OP_END = "End" as const
-      type OP_END = typeof OP_END
-      interface Emit {
-        readonly _tag: OP_EMIT
-        readonly elements: Chunk.Chunk<A>
-      }
-      interface Halt {
-        readonly _tag: OP_HALT
-        readonly cause: Cause.Cause<E>
-      }
-      interface End {
-        readonly _tag: OP_END
-      }
-      return pipe(
-        Deferred.make<E | E2, Z>(),
-        Effect.flatMap((deferred) =>
-          pipe(
-            Handoff.make<Signal>(),
-            Effect.map((handoff) => {
-              const consumer = pipe(
-                _sink.collectLeftover(sink),
-                _sink.foldSink(
-                  (error) =>
-                    pipe(
-                      _sink.fromEffect(Deferred.fail(deferred, error)),
-                      _sink.zipRight(_sink.fail(error))
-                    ),
-                  ([z, leftovers]) => {
-                    const loop: Channel.Channel<
-                      never,
-                      E,
-                      Chunk.Chunk<A>,
-                      unknown,
-                      E | E2,
-                      Chunk.Chunk<A>,
-                      void
-                    > = core
-                      .readWithCause(
-                        (elements) =>
-                          pipe(
-                            core.fromEffect(
-                              pipe(
-                                handoff,
-                                Handoff.offer<Signal>({ _tag: OP_EMIT, elements })
-                              )
-                            ),
-                            core.flatMap(() => loop)
-                          ),
-                        (cause) =>
-                          pipe(
-                            core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_HALT, cause }))),
-                            channel.zipRight(core.failCause(cause))
-                          ),
-                        (_) =>
-                          pipe(
-                            core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_END }))),
-                            channel.zipRight(core.unit())
-                          )
-                      )
-                    return _sink.fromChannel(
+>(2, <R, E, R2, E2, A, Z>(
+  self: Stream.Stream<R, E, A>,
+  sink: Sink.Sink<R2, E2, A, A, Z>
+): Effect.Effect<R | R2 | Scope.Scope, E2 | E, readonly [Z, Stream.Stream<never, E, A>]> => {
+  type Signal = Emit | Halt | End
+  const OP_EMIT = "Emit" as const
+  type OP_EMIT = typeof OP_EMIT
+  const OP_HALT = "Halt" as const
+  type OP_HALT = typeof OP_HALT
+  const OP_END = "End" as const
+  type OP_END = typeof OP_END
+  interface Emit {
+    readonly _tag: OP_EMIT
+    readonly elements: Chunk.Chunk<A>
+  }
+  interface Halt {
+    readonly _tag: OP_HALT
+    readonly cause: Cause.Cause<E>
+  }
+  interface End {
+    readonly _tag: OP_END
+  }
+  return pipe(
+    Deferred.make<E | E2, Z>(),
+    Effect.flatMap((deferred) =>
+      pipe(
+        Handoff.make<Signal>(),
+        Effect.map((handoff) => {
+          const consumer = pipe(
+            _sink.collectLeftover(sink),
+            _sink.foldSink(
+              (error) =>
+                pipe(
+                  _sink.fromEffect(Deferred.fail(deferred, error)),
+                  _sink.zipRight(_sink.fail(error))
+                ),
+              ([z, leftovers]) => {
+                const loop: Channel.Channel<
+                  never,
+                  E,
+                  Chunk.Chunk<A>,
+                  unknown,
+                  E | E2,
+                  Chunk.Chunk<A>,
+                  void
+                > = core
+                  .readWithCause(
+                    (elements) =>
                       pipe(
-                        core.fromEffect(Deferred.succeed(deferred, z)),
-                        channel.zipRight(core.fromEffect(
+                        core.fromEffect(
                           pipe(
                             handoff,
-                            Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
+                            Handoff.offer<Signal>({ _tag: OP_EMIT, elements })
                           )
-                        )),
-                        channel.zipRight(loop)
+                        ),
+                        core.flatMap(() => loop)
+                      ),
+                    (cause) =>
+                      pipe(
+                        core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_HALT, cause }))),
+                        channel.zipRight(core.failCause(cause))
+                      ),
+                    (_) =>
+                      pipe(
+                        core.fromEffect(pipe(handoff, Handoff.offer<Signal>({ _tag: OP_END }))),
+                        channel.zipRight(core.unit())
                       )
-                    )
-                  }
+                  )
+                return _sink.fromChannel(
+                  pipe(
+                    core.fromEffect(Deferred.succeed(deferred, z)),
+                    channel.zipRight(core.fromEffect(
+                      pipe(
+                        handoff,
+                        Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
+                      )
+                    )),
+                    channel.zipRight(loop)
+                  )
                 )
-              )
-
-              const producer: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
-                Handoff.take(handoff),
-                Effect.map((signal) => {
-                  switch (signal._tag) {
-                    case OP_EMIT: {
-                      return pipe(core.write(signal.elements), core.flatMap(() => producer))
-                    }
-                    case OP_HALT: {
-                      return core.failCause(signal.cause)
-                    }
-                    case OP_END: {
-                      return core.unit()
-                    }
-                  }
-                }),
-                channel.unwrap
-              )
-
-              return pipe(
-                self,
-                tapErrorCause((cause) => Deferred.failCause(deferred, cause)),
-                run(consumer),
-                Effect.forkScoped,
-                Effect.zipRight(Deferred.await(deferred)),
-                Effect.map((z) => [z, new StreamImpl(producer)] as const)
-              )
-            })
+              }
+            )
           )
-        ),
-        Effect.flatten
-      ).traced(trace)
-    }
-)
+
+          const producer: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
+            Handoff.take(handoff),
+            Effect.map((signal) => {
+              switch (signal._tag) {
+                case OP_EMIT: {
+                  return pipe(core.write(signal.elements), core.flatMap(() => producer))
+                }
+                case OP_HALT: {
+                  return core.failCause(signal.cause)
+                }
+                case OP_END: {
+                  return core.unit()
+                }
+              }
+            }),
+            channel.unwrap
+          )
+
+          return pipe(
+            self,
+            tapErrorCause((cause) => Deferred.failCause(deferred, cause)),
+            run(consumer),
+            Effect.forkScoped,
+            Effect.zipRight(Deferred.await(deferred)),
+            Effect.map((z) => [z, new StreamImpl(producer)] as const)
+          )
+        })
+      )
+    ),
+    Effect.flatten
+  )
+})
 
 /** @internal */
 export const partition = dual<
@@ -4658,15 +4536,14 @@ export const partitionEitherBuffer = dual<
     readonly [Stream.Stream<never, E | E2, A2>, Stream.Stream<never, E | E2, A3>]
   > =>
     pipe(
-      self,
-      mapEffect(predicate),
+      mapEffect(self, predicate),
       distributedWith(
         2,
         bufferSize,
-        Either.match(
-          () => Effect.succeed((n) => n === 0),
-          () => Effect.succeed((n) => n === 1)
-        )
+        Either.match({
+          onLeft: () => Effect.succeed((n) => n === 0),
+          onRight: () => Effect.succeed((n) => n === 1)
+        })
       ),
       Effect.flatMap(([queue1, queue2]) =>
         Effect.succeed([
@@ -5005,18 +4882,11 @@ export const refineOrDieWith = dual<
     f: (error: E) => unknown
   ): Stream.Stream<R, E2, A> =>
     new StreamImpl(
-      pipe(
-        toChannel(self),
-        channel.catchAll((error) =>
-          pipe(
-            pf(error),
-            Option.match(
-              () => core.failCause(Cause.die(f(error))),
-              core.fail
-            )
-          )
-        )
-      )
+      channel.catchAll(toChannel(self), (error) =>
+        Option.match(pf(error), {
+          onNone: () => core.failCause(Cause.die(f(error))),
+          onSome: core.fail
+        }))
     )
 )
 
@@ -5051,12 +4921,11 @@ export const repeatEffectChunkOption = <R, E, A>(
 ): Stream.Stream<R, E, A> =>
   unfoldChunkEffect(effect, (effect) =>
     pipe(
-      effect,
-      Effect.map((chunk) => Option.some([chunk, effect] as const)),
-      Effect.catchAll(Option.match(
-        Effect.succeedNone,
-        Effect.fail
-      ))
+      Effect.map(effect, (chunk) => Option.some([chunk, effect] as const)),
+      Effect.catchAll(Option.match({
+        onNone: () => Effect.succeed(Option.none()),
+        onSome: Effect.fail
+      }))
     ))
 
 /** @internal */
@@ -5143,17 +5012,14 @@ export const repeatElementsWith = dual<
         const feed = (
           input: Chunk.Chunk<A>
         ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<C>, void> =>
-          pipe(
-            Chunk.head(input),
-            Option.match(
-              () => loop,
-              (a) =>
-                pipe(
-                  core.write(Chunk.of(f(a))),
-                  channel.zipRight(step(pipe(input, Chunk.drop(1)), a))
-                )
-            )
-          )
+          Option.match(Chunk.head(input), {
+            onNone: () => loop,
+            onSome: (a) =>
+              channel.zipRight(
+                core.write(Chunk.of(f(a))),
+                step(pipe(input, Chunk.drop(1)), a)
+              )
+          })
         const step = (
           input: Chunk.Chunk<A>,
           a: A
@@ -5228,11 +5094,10 @@ export const repeatWith = dual<
       Effect.map((driver) => {
         const scheduleOutput = pipe(driver.last(), Effect.orDie, Effect.map(g))
         const process = pipe(self, map(f), toChannel)
-        const loop: Channel.Channel<R | R2, unknown, unknown, unknown, E, Chunk.Chunk<C>, void> = pipe(
-          driver.next(void 0),
-          Effect.match(
-            core.unit,
-            () =>
+        const loop: Channel.Channel<R | R2, unknown, unknown, unknown, E, Chunk.Chunk<C>, void> = channel.unwrap(
+          Effect.match(driver.next(void 0), {
+            onFailure: core.unit,
+            onSuccess: () =>
               pipe(
                 process,
                 channel.zipRight(
@@ -5243,8 +5108,7 @@ export const repeatWith = dual<
                   )
                 )
               )
-          ),
-          channel.unwrap
+          })
         )
         return new StreamImpl(pipe(process, channel.zipRight(loop)))
       }),
@@ -5269,23 +5133,17 @@ export const repeatEffectWithSchedule = <R, E, A, R2, _>(
   effect: Effect.Effect<R, E, A>,
   schedule: Schedule.Schedule<R2, A, _>
 ): Stream.Stream<R | R2, E, A> =>
-  pipe(
-    fromEffect(pipe(effect, Effect.zip(Schedule.driver(schedule)))),
-    flatMap(([a, driver]) =>
-      pipe(
+  flatMap(
+    fromEffect(Effect.zip(effect, Schedule.driver(schedule))),
+    ([a, driver]) =>
+      concat(
         succeed(a),
-        concat(
-          unfoldEffect(a, (s) =>
-            pipe(
-              driver.next(s),
-              Effect.matchEffect(
-                Effect.succeed,
-                () => pipe(effect, Effect.map((nextA) => Option.some([nextA, nextA] as const)))
-              )
-            ))
-        )
+        unfoldEffect(a, (s) =>
+          Effect.matchEffect(driver.next(s), {
+            onFailure: Effect.succeed,
+            onSuccess: () => Effect.map(effect, (nextA) => Option.some([nextA, nextA] as const))
+          }))
       )
-    )
   )
 
 /** @internal */
@@ -5297,25 +5155,17 @@ export const retry = dual<
 >(
   2,
   <R, A, R2, E, _>(self: Stream.Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream.Stream<R | R2, E, A> =>
-    pipe(
-      Schedule.driver(schedule),
-      Effect.map((driver) => {
-        const loop: Stream.Stream<R | R2, E, A> = pipe(
-          self,
-          catchAll((error) =>
-            pipe(
-              driver.next(error),
-              Effect.matchEffect(
-                () => Effect.fail(error),
-                () => Effect.succeed(pipe(loop, tap(() => driver.reset())))
-              ),
-              unwrap
-            )
-          )
-        )
+    unwrap(
+      Effect.map(Schedule.driver(schedule), (driver) => {
+        const loop: Stream.Stream<R | R2, E, A> = catchAll(self, (error) =>
+          unwrap(
+            Effect.matchEffect(driver.next(error), {
+              onFailure: () => Effect.fail(error),
+              onSuccess: () => Effect.succeed(pipe(loop, tap(() => driver.reset())))
+            })
+          ))
         return loop
-      }),
-      unwrap
+      })
     )
 )
 
@@ -5339,11 +5189,18 @@ export const rightOrFail = dual<
   <R, E, A, A2, E2>(
     self: Stream.Stream<R, E, Either.Either<A, A2>>,
     error: LazyArg<E2>
-  ): Stream.Stream<R, E | E2, A2> => pipe(self, mapEffect(Either.match(() => Effect.failSync(error), Effect.succeed)))
+  ): Stream.Stream<R, E | E2, A2> =>
+    mapEffect(
+      self,
+      Either.match({
+        onLeft: () => Effect.failSync(error),
+        onRight: Effect.succeed
+      })
+    )
 )
 
 /** @internal */
-export const run = dualWithTrace<
+export const run = dual<
   <R2, E2, A, Z>(
     sink: Sink.Sink<R2, E2, A, unknown, Z>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, Z>,
@@ -5351,45 +5208,36 @@ export const run = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A, unknown, Z>
   ) => Effect.Effect<R2 | R, E2 | E, Z>
->(
-  2,
-  (trace) =>
-    <R, E, R2, E2, A, Z>(
-      self: Stream.Stream<R, E, A>,
-      sink: Sink.Sink<R2, E2, A, unknown, Z>
-    ): Effect.Effect<R | R2, E | E2, Z> =>
-      pipe(toChannel(self), channel.pipeToOrFail(_sink.toChannel(sink)), channel.runDrain).traced(trace)
-)
+>(2, <R, E, R2, E2, A, Z>(
+  self: Stream.Stream<R, E, A>,
+  sink: Sink.Sink<R2, E2, A, unknown, Z>
+): Effect.Effect<R | R2, E | E2, Z> =>
+  pipe(toChannel(self), channel.pipeToOrFail(_sink.toChannel(sink)), channel.runDrain))
 
 /** @internal */
-export const runCollect = methodWithTrace((trace) =>
-  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Chunk.Chunk<A>> =>
-    pipe(self, run(_sink.collectAll())).traced(trace)
-)
+export const runCollect = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Chunk.Chunk<A>> =>
+  pipe(self, run(_sink.collectAll()))
 
 /** @internal */
-export const runCount = methodWithTrace((trace) =>
-  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, number> => pipe(self, run(_sink.count())).traced(trace)
-)
+export const runCount = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, number> =>
+  pipe(self, run(_sink.count()))
 
 /** @internal */
-export const runDrain = methodWithTrace((trace) =>
-  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, void> => pipe(self, run(_sink.drain())).traced(trace)
-)
+export const runDrain = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, void> =>
+  pipe(self, run(_sink.drain()))
 
 /** @internal */
-export const runFold = dualWithTrace<
+export const runFold = dual<
   <S, A>(s: S, f: (s: S, a: A) => S) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R, E, S>,
   <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, f: (s: S, a: A) => S) => Effect.Effect<R, E, S>
 >(
   3,
-  (trace) =>
-    <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Effect.Effect<R, E, S> =>
-      pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.scoped).traced(trace)
+  <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Effect.Effect<R, E, S> =>
+    pipe(self, runFoldWhileScoped(s, constTrue, f), Effect.scoped)
 )
 
 /** @internal */
-export const runFoldEffect = dualWithTrace<
+export const runFoldEffect = dual<
   <S, A, R2, E2>(
     s: S,
     f: (s: S, a: A) => Effect.Effect<R2, E2, S>
@@ -5399,30 +5247,24 @@ export const runFoldEffect = dualWithTrace<
     s: S,
     f: (s: S, a: A) => Effect.Effect<R2, E2, S>
   ) => Effect.Effect<R2 | R, E2 | E, S>
->(
-  3,
-  (trace) =>
-    <R, E, S, A, R2, E2>(
-      self: Stream.Stream<R, E, A>,
-      s: S,
-      f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-    ): Effect.Effect<R | R2, E | E2, S> =>
-      pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.scoped).traced(trace)
-)
+>(3, <R, E, S, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  s: S,
+  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+): Effect.Effect<R | R2, E | E2, S> => pipe(self, runFoldWhileScopedEffect(s, constTrue, f), Effect.scoped))
 
 /** @internal */
-export const runFoldScoped = dualWithTrace<
+export const runFoldScoped = dual<
   <S, A>(s: S, f: (s: S, a: A) => S) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, E, S>,
   <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, f: (s: S, a: A) => S) => Effect.Effect<Scope.Scope | R, E, S>
 >(
   3,
-  (trace) =>
-    <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Effect.Effect<R | Scope.Scope, E, S> =>
-      pipe(self, runFoldWhileScoped(s, constTrue, f)).traced(trace)
+  <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, f: (s: S, a: A) => S): Effect.Effect<R | Scope.Scope, E, S> =>
+    pipe(self, runFoldWhileScoped(s, constTrue, f))
 )
 
 /** @internal */
-export const runFoldScopedEffect = dualWithTrace<
+export const runFoldScopedEffect = dual<
   <S, A, R2, E2>(
     s: S,
     f: (s: S, a: A) => Effect.Effect<R2, E2, S>
@@ -5432,38 +5274,29 @@ export const runFoldScopedEffect = dualWithTrace<
     s: S,
     f: (s: S, a: A) => Effect.Effect<R2, E2, S>
   ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, S>
->(
-  3,
-  (trace) =>
-    <R, E, S, A, R2, E2>(
-      self: Stream.Stream<R, E, A>,
-      s: S,
-      f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-    ): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
-      pipe(self, runFoldWhileScopedEffect(s, constTrue, f)).traced(trace)
-)
+>(3, <R, E, S, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  s: S,
+  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> => pipe(self, runFoldWhileScopedEffect(s, constTrue, f)))
 
 /** @internal */
-export const runFoldWhile = dualWithTrace<
+export const runFoldWhile = dual<
   <S, A>(
     s: S,
     cont: Predicate<S>,
     f: (s: S, a: A) => S
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R, E, S>,
   <R, E, S, A>(self: Stream.Stream<R, E, A>, s: S, cont: Predicate<S>, f: (s: S, a: A) => S) => Effect.Effect<R, E, S>
->(
-  4,
-  (trace) =>
-    <R, E, S, A>(
-      self: Stream.Stream<R, E, A>,
-      s: S,
-      cont: Predicate<S>,
-      f: (s: S, a: A) => S
-    ): Effect.Effect<R, E, S> => pipe(self, runFoldWhileScoped(s, cont, f), Effect.scoped).traced(trace)
-)
+>(4, <R, E, S, A>(
+  self: Stream.Stream<R, E, A>,
+  s: S,
+  cont: Predicate<S>,
+  f: (s: S, a: A) => S
+): Effect.Effect<R, E, S> => pipe(self, runFoldWhileScoped(s, cont, f), Effect.scoped))
 
 /** @internal */
-export const runFoldWhileEffect = dualWithTrace<
+export const runFoldWhileEffect = dual<
   <S, A, R2, E2>(
     s: S,
     cont: Predicate<S>,
@@ -5475,19 +5308,15 @@ export const runFoldWhileEffect = dualWithTrace<
     cont: Predicate<S>,
     f: (s: S, a: A) => Effect.Effect<R2, E2, S>
   ) => Effect.Effect<R2 | R, E2 | E, S>
->(
-  4,
-  (trace) =>
-    <R, E, S, A, R2, E2>(
-      self: Stream.Stream<R, E, A>,
-      s: S,
-      cont: Predicate<S>,
-      f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-    ): Effect.Effect<R | R2, E | E2, S> => pipe(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped).traced(trace)
-)
+>(4, <R, E, S, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  s: S,
+  cont: Predicate<S>,
+  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+): Effect.Effect<R | R2, E | E2, S> => pipe(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped))
 
 /** @internal */
-export const runFoldWhileScoped = dualWithTrace<
+export const runFoldWhileScoped = dual<
   <S, A>(
     s: S,
     cont: Predicate<S>,
@@ -5499,19 +5328,15 @@ export const runFoldWhileScoped = dualWithTrace<
     cont: Predicate<S>,
     f: (s: S, a: A) => S
   ) => Effect.Effect<Scope.Scope | R, E, S>
->(
-  4,
-  (trace) =>
-    <R, E, S, A>(
-      self: Stream.Stream<R, E, A>,
-      s: S,
-      cont: Predicate<S>,
-      f: (s: S, a: A) => S
-    ): Effect.Effect<R | Scope.Scope, E, S> => pipe(self, runScoped(_sink.fold(s, cont, f))).traced(trace)
-)
+>(4, <R, E, S, A>(
+  self: Stream.Stream<R, E, A>,
+  s: S,
+  cont: Predicate<S>,
+  f: (s: S, a: A) => S
+): Effect.Effect<R | Scope.Scope, E, S> => pipe(self, runScoped(_sink.fold(s, cont, f))))
 
 /** @internal */
-export const runFoldWhileScopedEffect = dualWithTrace<
+export const runFoldWhileScopedEffect = dual<
   <S, A, R2, E2>(
     s: S,
     cont: Predicate<S>,
@@ -5523,20 +5348,15 @@ export const runFoldWhileScopedEffect = dualWithTrace<
     cont: Predicate<S>,
     f: (s: S, a: A) => Effect.Effect<R2, E2, S>
   ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, S>
->(
-  4,
-  (trace) =>
-    <R, E, S, A, R2, E2>(
-      self: Stream.Stream<R, E, A>,
-      s: S,
-      cont: Predicate<S>,
-      f: (s: S, a: A) => Effect.Effect<R2, E2, S>
-    ): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> =>
-      pipe(self, runScoped(_sink.foldEffect(s, cont, f))).traced(trace)
-)
+>(4, <R, E, S, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  s: S,
+  cont: Predicate<S>,
+  f: (s: S, a: A) => Effect.Effect<R2, E2, S>
+): Effect.Effect<R | R2 | Scope.Scope, E | E2, S> => pipe(self, runScoped(_sink.foldEffect(s, cont, f))))
 
 /** @internal */
-export const runForEach = dualWithTrace<
+export const runForEach = dual<
   <A, R2, E2, _>(
     f: (a: A) => Effect.Effect<R2, E2, _>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, void>,
@@ -5544,17 +5364,13 @@ export const runForEach = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, _>
   ) => Effect.Effect<R2 | R, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <R, E, A, R2, E2, _>(
-      self: Stream.Stream<R, E, A>,
-      f: (a: A) => Effect.Effect<R2, E2, _>
-    ): Effect.Effect<R | R2, E | E2, void> => pipe(self, run(_sink.forEach(f))).traced(trace)
-)
+>(2, <R, E, A, R2, E2, _>(
+  self: Stream.Stream<R, E, A>,
+  f: (a: A) => Effect.Effect<R2, E2, _>
+): Effect.Effect<R | R2, E | E2, void> => pipe(self, run(_sink.forEach(f))))
 
 /** @internal */
-export const runForEachChunk = dualWithTrace<
+export const runForEachChunk = dual<
   <A, R2, E2, _>(
     f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, void>,
@@ -5562,17 +5378,13 @@ export const runForEachChunk = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
   ) => Effect.Effect<R2 | R, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <R, E, A, R2, E2, _>(
-      self: Stream.Stream<R, E, A>,
-      f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
-    ): Effect.Effect<R | R2, E | E2, void> => pipe(self, run(_sink.forEachChunk(f))).traced(trace)
-)
+>(2, <R, E, A, R2, E2, _>(
+  self: Stream.Stream<R, E, A>,
+  f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
+): Effect.Effect<R | R2, E | E2, void> => pipe(self, run(_sink.forEachChunk(f))))
 
 /** @internal */
-export const runForEachChunkScoped = dualWithTrace<
+export const runForEachChunkScoped = dual<
   <A, R2, E2, _>(
     f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>,
@@ -5580,17 +5392,13 @@ export const runForEachChunkScoped = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
   ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <R, E, A, R2, E2, _>(
-      self: Stream.Stream<R, E, A>,
-      f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
-    ): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> => pipe(self, runScoped(_sink.forEachChunk(f))).traced(trace)
-)
+>(2, <R, E, A, R2, E2, _>(
+  self: Stream.Stream<R, E, A>,
+  f: (a: Chunk.Chunk<A>) => Effect.Effect<R2, E2, _>
+): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> => pipe(self, runScoped(_sink.forEachChunk(f))))
 
 /** @internal */
-export const runForEachScoped = dualWithTrace<
+export const runForEachScoped = dual<
   <A, R2, E2, _>(
     f: (a: A) => Effect.Effect<R2, E2, _>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R2 | R | Scope.Scope, E2 | E, void>,
@@ -5598,17 +5406,13 @@ export const runForEachScoped = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, _>
   ) => Effect.Effect<R2 | R | Scope.Scope, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <R, E, A, R2, E2, _>(
-      self: Stream.Stream<R, E, A>,
-      f: (a: A) => Effect.Effect<R2, E2, _>
-    ): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> => pipe(self, runScoped(_sink.forEach(f))).traced(trace)
-)
+>(2, <R, E, A, R2, E2, _>(
+  self: Stream.Stream<R, E, A>,
+  f: (a: A) => Effect.Effect<R2, E2, _>
+): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> => pipe(self, runScoped(_sink.forEach(f))))
 
 /** @internal */
-export const runForEachWhile = dualWithTrace<
+export const runForEachWhile = dual<
   <A, R2, E2>(
     f: (a: A) => Effect.Effect<R2, E2, boolean>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R2 | R, E2 | E, void>,
@@ -5616,17 +5420,13 @@ export const runForEachWhile = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, boolean>
   ) => Effect.Effect<R2 | R, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <R, E, A, R2, E2>(
-      self: Stream.Stream<R, E, A>,
-      f: (a: A) => Effect.Effect<R2, E2, boolean>
-    ): Effect.Effect<R | R2, E | E2, void> => pipe(self, run(_sink.forEachWhile(f))).traced(trace)
-)
+>(2, <R, E, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  f: (a: A) => Effect.Effect<R2, E2, boolean>
+): Effect.Effect<R | R2, E | E2, void> => pipe(self, run(_sink.forEachWhile(f))))
 
 /** @internal */
-export const runForEachWhileScoped = dualWithTrace<
+export const runForEachWhileScoped = dual<
   <A, R2, E2>(
     f: (a: A) => Effect.Effect<R2, E2, boolean>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<R2 | R | Scope.Scope, E2 | E, void>,
@@ -5634,60 +5434,48 @@ export const runForEachWhileScoped = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, boolean>
   ) => Effect.Effect<R2 | R | Scope.Scope, E2 | E, void>
->(
-  2,
-  (trace) =>
-    <R, E, A, R2, E2>(
-      self: Stream.Stream<R, E, A>,
-      f: (a: A) => Effect.Effect<R2, E2, boolean>
-    ): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> => pipe(self, runScoped(_sink.forEachWhile(f))).traced(trace)
-)
+>(2, <R, E, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  f: (a: A) => Effect.Effect<R2, E2, boolean>
+): Effect.Effect<R | R2 | Scope.Scope, E | E2, void> => pipe(self, runScoped(_sink.forEachWhile(f))))
 
 /** @internal */
-export const runHead = methodWithTrace((trace) =>
-  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> =>
-    pipe(self, run(_sink.head<A>())).traced(trace)
-)
+export const runHead = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> =>
+  pipe(self, run(_sink.head<A>()))
 
 /** @internal */
-export const runIntoHub = dualWithTrace<
+export const runIntoHub = dual<
   <E, A>(hub: Hub.Hub<Take.Take<E, A>>) => <R>(self: Stream.Stream<R, E, A>) => Effect.Effect<R, never, void>,
   <R, E, A>(self: Stream.Stream<R, E, A>, hub: Hub.Hub<Take.Take<E, A>>) => Effect.Effect<R, never, void>
 >(
   2,
-  (trace) =>
-    <R, E, A>(self: Stream.Stream<R, E, A>, hub: Hub.Hub<Take.Take<E, A>>): Effect.Effect<R, never, void> =>
-      pipe(self, runIntoQueue(hub)).traced(trace)
+  <R, E, A>(self: Stream.Stream<R, E, A>, hub: Hub.Hub<Take.Take<E, A>>): Effect.Effect<R, never, void> =>
+    pipe(self, runIntoQueue(hub))
 )
 
 /** @internal */
-export const runIntoHubScoped = dualWithTrace<
+export const runIntoHubScoped = dual<
   <E, A>(
     hub: Hub.Hub<Take.Take<E, A>>
   ) => <R>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>,
   <R, E, A>(self: Stream.Stream<R, E, A>, hub: Hub.Hub<Take.Take<E, A>>) => Effect.Effect<Scope.Scope | R, never, void>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      hub: Hub.Hub<Take.Take<E, A>>
-    ): Effect.Effect<R | Scope.Scope, never, void> => pipe(self, runIntoQueueScoped(hub)).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  hub: Hub.Hub<Take.Take<E, A>>
+): Effect.Effect<R | Scope.Scope, never, void> => pipe(self, runIntoQueueScoped(hub)))
 
 /** @internal */
-export const runIntoQueue = dualWithTrace<
+export const runIntoQueue = dual<
   <E, A>(queue: Queue.Enqueue<Take.Take<E, A>>) => <R>(self: Stream.Stream<R, E, A>) => Effect.Effect<R, never, void>,
   <R, E, A>(self: Stream.Stream<R, E, A>, queue: Queue.Enqueue<Take.Take<E, A>>) => Effect.Effect<R, never, void>
 >(
   2,
-  (trace) =>
-    <R, E, A>(self: Stream.Stream<R, E, A>, queue: Queue.Enqueue<Take.Take<E, A>>): Effect.Effect<R, never, void> =>
-      pipe(self, runIntoQueueScoped(queue), Effect.scoped).traced(trace)
+  <R, E, A>(self: Stream.Stream<R, E, A>, queue: Queue.Enqueue<Take.Take<E, A>>): Effect.Effect<R, never, void> =>
+    pipe(self, runIntoQueueScoped(queue), Effect.scoped)
 )
 
 /** @internal */
-export const runIntoQueueElementsScoped = dualWithTrace<
+export const runIntoQueueElementsScoped = dual<
   <E, A>(
     queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>
   ) => <R>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>,
@@ -5695,34 +5483,30 @@ export const runIntoQueueElementsScoped = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>
   ) => Effect.Effect<Scope.Scope | R, never, void>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>
-    ): Effect.Effect<R | Scope.Scope, never, void> => {
-      const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Exit.Exit<Option.Option<E>, A>, unknown> =
-        core.readWithCause(
-          (input: Chunk.Chunk<A>) =>
-            core.flatMap(
-              core.fromEffect(Queue.offerAll(queue, Chunk.map(input, Exit.succeed))),
-              () => writer
-            ),
-          (cause) => core.fromEffect(Queue.offer(queue, Exit.failCause(Cause.map(cause, Option.some)))),
-          () => core.fromEffect(Queue.offer(queue, Exit.fail(Option.none())))
-        )
-      return pipe(
-        core.pipeTo(toChannel(self), writer),
-        channel.drain,
-        channelExecutor.runScoped,
-        Effect.asUnit
-      ).traced(trace)
-    }
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  queue: Queue.Enqueue<Exit.Exit<Option.Option<E>, A>>
+): Effect.Effect<R | Scope.Scope, never, void> => {
+  const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Exit.Exit<Option.Option<E>, A>, unknown> = core
+    .readWithCause(
+      (input: Chunk.Chunk<A>) =>
+        core.flatMap(
+          core.fromEffect(Queue.offerAll(queue, Chunk.map(input, Exit.succeed))),
+          () => writer
+        ),
+      (cause) => core.fromEffect(Queue.offer(queue, Exit.failCause(Cause.map(cause, Option.some)))),
+      () => core.fromEffect(Queue.offer(queue, Exit.fail(Option.none())))
+    )
+  return pipe(
+    core.pipeTo(toChannel(self), writer),
+    channel.drain,
+    channelExecutor.runScoped,
+    Effect.asUnit
+  )
+})
 
 /** @internal */
-export const runIntoQueueScoped = dualWithTrace<
+export const runIntoQueueScoped = dual<
   <E, A>(
     queue: Queue.Enqueue<Take.Take<E, A>>
   ) => <R>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, void>,
@@ -5730,37 +5514,31 @@ export const runIntoQueueScoped = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     queue: Queue.Enqueue<Take.Take<E, A>>
   ) => Effect.Effect<Scope.Scope | R, never, void>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      queue: Queue.Enqueue<Take.Take<E, A>>
-    ): Effect.Effect<R | Scope.Scope, never, void> => {
-      const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Take.Take<E, A>, unknown> = core
-        .readWithCause(
-          (input: Chunk.Chunk<A>) => core.flatMap(core.write(_take.chunk(input)), () => writer),
-          (cause) => core.write(_take.failCause(cause)),
-          () => core.write(_take.end)
-        )
-      return pipe(
-        core.pipeTo(toChannel(self), writer),
-        channel.mapOutEffect((take) => Queue.offer(queue, take)),
-        channel.drain,
-        channelExecutor.runScoped,
-        Effect.asUnit
-      ).traced(trace)
-    }
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  queue: Queue.Enqueue<Take.Take<E, A>>
+): Effect.Effect<R | Scope.Scope, never, void> => {
+  const writer: Channel.Channel<R, E, Chunk.Chunk<A>, unknown, never, Take.Take<E, A>, unknown> = core
+    .readWithCause(
+      (input: Chunk.Chunk<A>) => core.flatMap(core.write(_take.chunk(input)), () => writer),
+      (cause) => core.write(_take.failCause(cause)),
+      () => core.write(_take.end)
+    )
+  return pipe(
+    core.pipeTo(toChannel(self), writer),
+    channel.mapOutEffect((take) => Queue.offer(queue, take)),
+    channel.drain,
+    channelExecutor.runScoped,
+    Effect.asUnit
+  )
+})
 
 /** @internal */
-export const runLast = methodWithTrace((trace) =>
-  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> =>
-    pipe(self, run(_sink.last())).traced(trace)
-)
+export const runLast = <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R, E, Option.Option<A>> =>
+  pipe(self, run(_sink.last()))
 
 /** @internal */
-export const runScoped = dualWithTrace<
+export const runScoped = dual<
   <R2, E2, A, A2>(
     sink: Sink.Sink<R2, E2, A, unknown, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, A2>,
@@ -5768,25 +5546,20 @@ export const runScoped = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A, unknown, A2>
   ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, A2>
->(
-  2,
-  (trace) =>
-    <R, E, R2, E2, A, A2>(
-      self: Stream.Stream<R, E, A>,
-      sink: Sink.Sink<R2, E2, A, unknown, A2>
-    ): Effect.Effect<R | R2 | Scope.Scope, E | E2, A2> =>
-      pipe(
-        toChannel(self),
-        channel.pipeToOrFail(_sink.toChannel(sink)),
-        channel.drain,
-        channelExecutor.runScoped
-      ).traced(trace)
-)
+>(2, <R, E, R2, E2, A, A2>(
+  self: Stream.Stream<R, E, A>,
+  sink: Sink.Sink<R2, E2, A, unknown, A2>
+): Effect.Effect<R | R2 | Scope.Scope, E | E2, A2> =>
+  pipe(
+    toChannel(self),
+    channel.pipeToOrFail(_sink.toChannel(sink)),
+    channel.drain,
+    channelExecutor.runScoped
+  ))
 
 /** @internal */
-export const runSum = methodWithTrace((trace) =>
-  <R, E>(self: Stream.Stream<R, E, number>): Effect.Effect<R, E, number> => pipe(self, run(_sink.sum())).traced(trace)
-)
+export const runSum = <R, E>(self: Stream.Stream<R, E, number>): Effect.Effect<R, E, number> =>
+  pipe(self, run(_sink.sum()))
 
 /** @internal */
 export const scan = dual<
@@ -5909,10 +5682,9 @@ export const scheduleWith = dual<
           core.succeedNow
         )
       }
-      return pipe(
-        driver.next(next.value),
-        Effect.matchEffect(
-          () =>
+      return channel.unwrap(
+        Effect.matchEffect(driver.next(next.value), {
+          onFailure: () =>
             pipe(
               driver.last(),
               Effect.orDie,
@@ -5924,13 +5696,12 @@ export const scheduleWith = dual<
               ),
               Effect.zipLeft(driver.reset())
             ),
-          () =>
+          onSuccess: () =>
             Effect.succeed(pipe(
               core.write(Chunk.of(f(next.value))),
               core.flatMap(() => loop(driver, iterator))
             ))
-        ),
-        channel.unwrap
+        })
       )
     }
     return new StreamImpl(
@@ -5982,7 +5753,7 @@ export const scanEffect = dual<
 export const scoped = <R, E, A>(
   effect: Effect.Effect<R | Scope.Scope, E, A>
 ): Stream.Stream<Exclude<R | Scope.Scope, Scope.Scope>, E, A> =>
-  new StreamImpl(channel.ensuring(channel.scoped(pipe(effect, Effect.map(Chunk.of))), Effect.unit()))
+  new StreamImpl(channel.ensuring(channel.scoped(pipe(effect, Effect.map(Chunk.of))), Effect.unit))
 
 /** @internal */
 export const some = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, Option.Option<E>, A> =>
@@ -6005,7 +5776,13 @@ export const someOrFail = dual<
 >(
   2,
   <R, E, A, E2>(self: Stream.Stream<R, E, Option.Option<A>>, error: LazyArg<E2>): Stream.Stream<R, E | E2, A> =>
-    pipe(self, mapEffect(Option.match(() => Effect.failSync(error), Effect.succeed)))
+    mapEffect(
+      self,
+      Option.match({
+        onNone: () => Effect.failSync(error),
+        onSome: Effect.succeed
+      })
+    )
 )
 
 /** @internal */
@@ -6063,8 +5840,7 @@ export const slidingSize = dual<
             pipe(
               core.write(
                 pipe(
-                  Chunk.zipWithIndex(input),
-                  Chunk.filterMap(([element, index]) => {
+                  Chunk.filterMap(input, (element, index) => {
                     queue.put(element)
                     const currentIndex = queueSize + index + 1
                     if (currentIndex < chunkSize || (currentIndex - chunkSize) % stepSize > 0) {
@@ -6093,9 +5869,9 @@ export const split = dual<
     leftovers: Chunk.Chunk<A>,
     input: Chunk.Chunk<A>
   ): Channel.Channel<R, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<Chunk.Chunk<A>>, unknown> => {
-    const [chunk, remaining] = pipe(leftovers, Chunk.concat(input), Chunk.splitWhere(predicate))
+    const [chunk, remaining] = pipe(leftovers, Chunk.appendAll(input), Chunk.splitWhere(predicate))
     if (Chunk.isEmpty(chunk) || Chunk.isEmpty(remaining)) {
-      return loop(pipe(chunk, Chunk.concat(pipe(remaining, Chunk.drop(1)))))
+      return loop(pipe(chunk, Chunk.appendAll(pipe(remaining, Chunk.drop(1)))))
     }
     return pipe(
       core.write(Chunk.of(chunk)),
@@ -6163,21 +5939,15 @@ export const splitOnChunk = dual<
         )
       },
       (cause) =>
-        pipe(
-          leftover,
-          Option.match(
-            () => core.failCause(cause),
-            (chunk) => pipe(core.write(Chunk.of(chunk)), channel.zipRight(core.failCause(cause)))
-          )
-        ),
+        Option.match(leftover, {
+          onNone: () => core.failCause(cause),
+          onSome: (chunk) => pipe(core.write(Chunk.of(chunk)), channel.zipRight(core.failCause(cause)))
+        }),
       (done) =>
-        pipe(
-          leftover,
-          Option.match(
-            () => core.succeed(done),
-            (chunk) => pipe(core.write(Chunk.of(chunk)), channel.zipRight(core.succeed(done)))
-          )
-        )
+        Option.match(leftover, {
+          onNone: () => core.succeed(done),
+          onSome: (chunk) => pipe(core.write(Chunk.of(chunk)), channel.zipRight(core.succeed(done)))
+        })
     )
   return new StreamImpl(pipe(toChannel(self), core.pipeTo(next(Option.none(), 0))))
 })
@@ -6189,7 +5959,7 @@ export const splitLines = <R, E>(self: Stream.Stream<R, E, string>): Stream.Stre
     let midCRLF = false
     const splitLinesChunk = (chunk: Chunk.Chunk<string>): Chunk.Chunk<string> => {
       const chunkBuilder: Array<string> = []
-      Chunk.forEach(chunk, (str) => {
+      Chunk.map(chunk, (str) => {
         if (str.length !== 0) {
           let from = 0
           let indexOfCR = str.indexOf("\r")
@@ -6348,7 +6118,7 @@ export const takeUntil = dual<
       if (Chunk.isEmpty(last)) {
         return pipe(core.write(taken), core.flatMap(() => loop))
       }
-      return core.write(pipe(taken, Chunk.concat(last)))
+      return core.write(pipe(taken, Chunk.appendAll(last)))
     },
     core.fail,
     core.succeed
@@ -6649,10 +6419,10 @@ export const throttleEnforceEffectBurst = dual<
         (input: Chunk.Chunk<A>) =>
           pipe(
             costFn(input),
-            Effect.zip(Clock.currentTimeMillis()),
+            Effect.zip(Clock.currentTimeMillis),
             Effect.map(([weight, currentTimeMillis]) => {
               const elapsed = currentTimeMillis - timestampMillis
-              const cycles = elapsed / duration.millis
+              const cycles = elapsed / Duration.toMillis(duration)
               const sum = tokens + (cycles * units)
               const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst
               const available = sum < 0 ? max : Math.min(sum, max)
@@ -6670,7 +6440,7 @@ export const throttleEnforceEffectBurst = dual<
         core.unit
       )
     const throttled = pipe(
-      Clock.currentTimeMillis(),
+      Clock.currentTimeMillis,
       Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
       channel.unwrap
     )
@@ -6783,16 +6553,16 @@ export const throttleShapeEffectBurst = dual<
         (input: Chunk.Chunk<A>) =>
           pipe(
             costFn(input),
-            Effect.zip(Clock.currentTimeMillis()),
+            Effect.zip(Clock.currentTimeMillis),
             Effect.map(([weight, currentTimeMillis]) => {
               const elapsed = currentTimeMillis - timestampMillis
-              const cycles = elapsed / duration.millis
+              const cycles = elapsed / Duration.toMillis(duration)
               const sum = tokens + (cycles * units)
               const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst
               const available = sum < 0 ? max : Math.min(sum, max)
               const remaining = available - weight
               const waitCycles = remaining >= 0 ? 0 : -remaining / units
-              const delay = Duration.millis(Math.max(0, waitCycles * duration.millis))
+              const delay = Duration.millis(Math.max(0, waitCycles * Duration.toMillis(duration)))
               if (pipe(delay, Duration.greaterThan(Duration.zero))) {
                 return pipe(
                   core.fromEffect(Clock.sleep(delay)),
@@ -6811,7 +6581,7 @@ export const throttleShapeEffectBurst = dual<
         core.unit
       )
     const throttled = pipe(
-      Clock.currentTimeMillis(),
+      Clock.currentTimeMillis,
       Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
       channel.unwrap
     )
@@ -6830,7 +6600,10 @@ export const timeout = dual<
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration): Stream.Stream<R, E, A> =>
   pipe(
     toPull(self),
-    Effect.map(Effect.timeoutFail<Option.Option<E>>(() => Option.none(), duration)),
+    Effect.map(Effect.timeoutFail<Option.Option<E>>({
+      onTimeout: () => Option.none(),
+      duration
+    })),
     fromPull
   ))
 
@@ -6875,10 +6648,10 @@ export const timeoutFailCause = dual<
     pipe(
       toPull(self),
       Effect.map(
-        Effect.timeoutFailCause<Option.Option<E | E2>>(
-          () => pipe(cause(), Cause.map(Option.some)),
+        Effect.timeoutFailCause<Option.Option<E | E2>>({
+          onTimeout: () => Cause.map(cause(), Option.some),
           duration
-        )
+        })
       ),
       fromPull
     )
@@ -6920,7 +6693,7 @@ export const timeoutTo = dual<
 )
 
 /** @internal */
-export const toHub = dualWithTrace<
+export const toHub = dual<
   (
     capacity: number
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Hub.Hub<Take.Take<E, A>>>,
@@ -6928,46 +6701,39 @@ export const toHub = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     capacity: number
   ) => Effect.Effect<Scope.Scope | R, never, Hub.Hub<Take.Take<E, A>>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      capacity: number
-    ): Effect.Effect<R | Scope.Scope, never, Hub.Hub<Take.Take<E, A>>> =>
-      pipe(
-        Effect.acquireRelease(Hub.bounded<Take.Take<E, A>>(capacity), (hub) => Hub.shutdown(hub)),
-        Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
-      ).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  capacity: number
+): Effect.Effect<R | Scope.Scope, never, Hub.Hub<Take.Take<E, A>>> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Hub.bounded<Take.Take<E, A>>(capacity),
+      release: (hub) => Hub.shutdown(hub)
+    }),
+    Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
+  ))
 
 /** @internal */
-export const toPull = methodWithTrace((trace) =>
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> =>
+export const toPull = <R, E, A>(
+  self: Stream.Stream<R, E, A>
+): Effect.Effect<R | Scope.Scope, never, Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>> =>
+  Effect.map(channel.toPull(toChannel(self)), (pull) =>
     pipe(
-      channel.toPull(toChannel(self)),
-      Effect.map((pull) =>
-        pipe(
-          pull,
-          Effect.mapError(Option.some),
-          Effect.flatMap(Either.match(() => Effect.fail(Option.none()), Effect.succeed))
-        )
-      )
-    ).traced(trace)
-)
+      pull,
+      Effect.mapError(Option.some),
+      Effect.flatMap(Either.match({
+        onLeft: () => Effect.fail(Option.none()),
+        onRight: Effect.succeed
+      }))
+    ))
 
 /** @internal */
-export const toQueue = methodWithTrace(
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueCapacity(self, 2).traced(trace)
-)
+export const toQueue = <R, E, A>(
+  self: Stream.Stream<R, E, A>
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueCapacity(self, 2)
 
 /** @internal */
-export const toQueueCapacity = dualWithTrace<
+export const toQueueCapacity = dual<
   (
     capacity: number
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>,
@@ -6975,30 +6741,25 @@ export const toQueueCapacity = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     capacity: number
   ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      capacity: number
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-      pipe(
-        Effect.acquireRelease(Queue.bounded<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-        Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-      ).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  capacity: number
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Queue.bounded<Take.Take<E, A>>(capacity),
+      release: (queue) => Queue.shutdown(queue)
+    }),
+    Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
+  ))
 
 /** @internal */
-export const toQueueDropping = methodWithTrace(
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-      toQueueDroppingCapacity(self, 2).traced(trace)
-)
+export const toQueueDropping = <R, E, A>(
+  self: Stream.Stream<R, E, A>
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueDroppingCapacity(self, 2)
 
 /** @internal */
-export const toQueueDroppingCapacity = dualWithTrace<
+export const toQueueDroppingCapacity = dual<
   (
     capacity: number
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>,
@@ -7006,30 +6767,26 @@ export const toQueueDroppingCapacity = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     capacity: number
   ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      capacity: number
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-      pipe(
-        Effect.acquireRelease(Queue.dropping<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-        Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-      ).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  capacity: number
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Queue.dropping<Take.Take<E, A>>(capacity),
+      release: (queue) => Queue.shutdown(queue)
+    }),
+    Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
+  ))
 
 /** @internal */
-export const toQueueOfElements = methodWithTrace(
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
-      toQueueOfElementsCapacity(self, 2).traced(trace)
-)
+export const toQueueOfElements = <R, E, A>(
+  self: Stream.Stream<R, E, A>
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
+  toQueueOfElementsCapacity(self, 2)
 
 /** @internal */
-export const toQueueOfElementsCapacity = dualWithTrace<
+export const toQueueOfElementsCapacity = dual<
   (
     capacity: number
   ) => <R, E, A>(
@@ -7039,32 +6796,25 @@ export const toQueueOfElementsCapacity = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     capacity: number
   ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      capacity: number
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
-      pipe(
-        Effect.acquireRelease(
-          Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity),
-          (queue) => Queue.shutdown(queue)
-        ),
-        Effect.tap((queue) => pipe(self, runIntoQueueElementsScoped(queue), Effect.forkScoped))
-      ).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  capacity: number
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity),
+      release: (queue) => Queue.shutdown(queue)
+    }),
+    Effect.tap((queue) => Effect.forkScoped(runIntoQueueElementsScoped(self, queue)))
+  ))
 
 /** @internal */
-export const toQueueSliding = methodWithTrace((trace) =>
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>
-  ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-    toQueueSlidingCapacity(self, 2).traced(trace)
-)
+export const toQueueSliding = <R, E, A>(
+  self: Stream.Stream<R, E, A>
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueSlidingCapacity(self, 2)
 
 /** @internal */
-export const toQueueSlidingCapacity = dualWithTrace<
+export const toQueueSlidingCapacity = dual<
   (
     capacity: number
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>,
@@ -7072,27 +6822,29 @@ export const toQueueSlidingCapacity = dualWithTrace<
     self: Stream.Stream<R, E, A>,
     capacity: number
   ) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>
->(
-  2,
-  (trace) =>
-    <R, E, A>(
-      self: Stream.Stream<R, E, A>,
-      capacity: number
-    ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-      pipe(
-        Effect.acquireRelease(Queue.sliding<Take.Take<E, A>>(capacity), (queue) => Queue.shutdown(queue)),
-        Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-      ).traced(trace)
-)
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  capacity: number
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Queue.sliding<Take.Take<E, A>>(capacity),
+      release: (queue) => Queue.shutdown(queue)
+    }),
+    Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
+  ))
 
 /** @internal */
-export const toQueueUnbounded = methodWithTrace((trace) =>
-  <R, E, A>(self: Stream.Stream<R, E, A>): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-    pipe(
-      Effect.acquireRelease(Queue.unbounded<Take.Take<E, A>>(), (queue) => Queue.shutdown(queue)),
-      Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-    ).traced(trace)
-)
+export const toQueueUnbounded = <R, E, A>(
+  self: Stream.Stream<R, E, A>
+): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
+  pipe(
+    Effect.acquireRelease({
+      acquire: Queue.unbounded<Take.Take<E, A>>(),
+      release: (queue) => Queue.shutdown(queue)
+    }),
+    Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
+  )
 
 /** @internal */
 export const toReadableStream = <E, A>(source: Stream.Stream<never, E, A>) => {
@@ -7107,12 +6859,12 @@ export const toReadableStream = <E, A>(source: Stream.Stream<never, E, A>) => {
         Effect.runSync,
         Effect.tap((chunk) =>
           Effect.sync(() => {
-            Chunk.forEach(chunk, (a) => {
+            Chunk.map(chunk, (a) => {
               controller.enqueue(a)
             })
           })
         ),
-        Effect.tapErrorCause(() => Scope.close(scope, Exit.unit())),
+        Effect.tapErrorCause(() => Scope.close(scope, Exit.unit)),
         Effect.catchTags({
           "None": () =>
             Effect.sync(() => {
@@ -7130,7 +6882,7 @@ export const toReadableStream = <E, A>(source: Stream.Stream<never, E, A>) => {
       return Effect.runPromise(pull)
     },
     cancel() {
-      return Effect.runPromise(Scope.close(scope, Exit.unit()))
+      return Effect.runPromise(Scope.close(scope, Exit.unit))
     }
   })
 }
@@ -7169,7 +6921,7 @@ export const transduce = dual<
       )
       const concatAndGet = (chunk: Chunk.Chunk<Chunk.Chunk<A>>): Chunk.Chunk<Chunk.Chunk<A>> => {
         const leftover = leftovers.ref
-        const concatenated = pipe(leftover, Chunk.concat(pipe(chunk, Chunk.filter((chunk) => chunk.length !== 0))))
+        const concatenated = Chunk.appendAll(leftover, Chunk.filter(chunk, (chunk) => chunk.length !== 0))
         leftovers.ref = concatenated
         return concatenated
       }
@@ -7222,7 +6974,10 @@ export const unfoldChunk = <S, A>(
   f: (s: S) => Option.Option<readonly [Chunk.Chunk<A>, S]>
 ): Stream.Stream<never, never, A> => {
   const loop = (s: S): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown> =>
-    pipe(f(s), Option.match(core.unit, ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))))
+    Option.match(f(s), {
+      onNone: core.unit,
+      onSome: ([chunk, s]) => core.flatMap(core.write(chunk), () => loop(s))
+    })
   return new StreamImpl(core.suspend(() => loop(s)))
 }
 
@@ -7233,13 +6988,14 @@ export const unfoldChunkEffect = <R, E, A, S>(
 ): Stream.Stream<R, E, A> =>
   suspend(() => {
     const loop = (s: S): Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown> =>
-      pipe(
-        f(s),
-        Effect.map(Option.match(
-          core.unit,
-          ([chunk, s]) => pipe(core.write(chunk), core.flatMap(() => loop(s)))
-        )),
-        channel.unwrap
+      channel.unwrap(
+        Effect.map(
+          f(s),
+          Option.match({
+            onNone: core.unit,
+            onSome: ([chunk, s]) => core.flatMap(core.write(chunk), () => loop(s))
+          })
+        )
       )
     return new StreamImpl(loop(s))
   })
@@ -7580,40 +7336,40 @@ export const zipAllSortedByKeyWith = dual<
         case ZipAllState.OP_DRAIN_LEFT: {
           return pipe(
             pullLeft,
-            Effect.match(
-              Exit.fail,
-              (leftChunk) =>
+            Effect.match({
+              onFailure: Exit.fail,
+              onSuccess: (leftChunk) =>
                 Exit.succeed(
                   [
-                    pipe(leftChunk, Chunk.map(([k, a]) => [k, left(a)] as const)),
+                    Chunk.map(leftChunk, ([k, a]) => [k, left(a)] as const),
                     ZipAllState.DrainLeft
                   ] as const
                 )
-            )
+            })
           )
         }
         case ZipAllState.OP_DRAIN_RIGHT: {
           return pipe(
             pullRight,
-            Effect.match(
-              Exit.fail,
-              (rightChunk) =>
+            Effect.match({
+              onFailure: Exit.fail,
+              onSuccess: (rightChunk) =>
                 Exit.succeed(
                   [
-                    pipe(rightChunk, Chunk.map(([k, a2]) => [k, right(a2)] as const)),
+                    Chunk.map(rightChunk, ([k, a2]) => [k, right(a2)] as const),
                     ZipAllState.DrainRight
                   ] as const
                 )
-            )
+            })
           )
         }
         case ZipAllState.OP_PULL_BOTH: {
           return pipe(
             Effect.unsome(pullLeft),
-            Effect.zipPar(Effect.unsome(pullRight)),
-            Effect.matchEffect(
-              (error) => Effect.succeed(Exit.fail(Option.some(error))),
-              ([leftOption, rightOption]) => {
+            Effect.zip(Effect.unsome(pullRight), { parallel: true }),
+            Effect.matchEffect({
+              onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
+              onSuccess: ([leftOption, rightOption]) => {
                 if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
                   if (Chunk.isEmpty(leftOption.value) && Chunk.isEmpty(rightOption.value)) {
                     return pull(ZipAllState.PullBoth, pullLeft, pullRight)
@@ -7654,70 +7410,64 @@ export const zipAllSortedByKeyWith = dual<
                 }
                 return Effect.succeed(Exit.fail<Option.Option<E | E2>>(Option.none()))
               }
-            )
+            })
           )
         }
         case ZipAllState.OP_PULL_LEFT: {
-          return pipe(
-            pullLeft,
-            Effect.matchEffect(
-              Option.match(
-                () =>
-                  Effect.succeed(
-                    Exit.succeed([
-                      pipe(state.rightChunk, Chunk.map(([k, a2]) => [k, right(a2)] as const)),
-                      ZipAllState.DrainRight
-                    ])
-                  ),
-                (error) =>
-                  Effect.succeed<
-                    Exit.Exit<
-                      Option.Option<E | E2>,
-                      readonly [
-                        Chunk.Chunk<readonly [K, A3]>,
-                        ZipAllState.ZipAllState<readonly [K, A], readonly [K, A2]>
-                      ]
-                    >
-                  >(Exit.fail(Option.some(error)))
-              ),
-              (leftChunk) =>
-                Chunk.isEmpty(leftChunk) ?
-                  pull(ZipAllState.PullLeft(state.rightChunk), pullLeft, pullRight) :
-                  Effect.succeed(Exit.succeed(merge(leftChunk, state.rightChunk)))
-            )
-          )
+          return Effect.matchEffect(pullLeft, {
+            onFailure: Option.match({
+              onNone: () =>
+                Effect.succeed(
+                  Exit.succeed([
+                    pipe(state.rightChunk, Chunk.map(([k, a2]) => [k, right(a2)] as const)),
+                    ZipAllState.DrainRight
+                  ])
+                ),
+              onSome: (error) =>
+                Effect.succeed<
+                  Exit.Exit<
+                    Option.Option<E | E2>,
+                    readonly [
+                      Chunk.Chunk<readonly [K, A3]>,
+                      ZipAllState.ZipAllState<readonly [K, A], readonly [K, A2]>
+                    ]
+                  >
+                >(Exit.fail(Option.some(error)))
+            }),
+            onSuccess: (leftChunk) =>
+              Chunk.isEmpty(leftChunk) ?
+                pull(ZipAllState.PullLeft(state.rightChunk), pullLeft, pullRight) :
+                Effect.succeed(Exit.succeed(merge(leftChunk, state.rightChunk)))
+          })
         }
         case ZipAllState.OP_PULL_RIGHT: {
-          return pipe(
-            pullRight,
-            Effect.matchEffect(
-              Option.match(
-                () =>
-                  Effect.succeed(
-                    Exit.succeed(
-                      [
-                        pipe(state.leftChunk, Chunk.map(([k, a]) => [k, left(a)] as const)),
-                        ZipAllState.DrainLeft
-                      ] as const
-                    )
-                  ),
-                (error) =>
-                  Effect.succeed<
-                    Exit.Exit<
-                      Option.Option<E | E2>,
-                      readonly [
-                        Chunk.Chunk<readonly [K, A3]>,
-                        ZipAllState.ZipAllState<readonly [K, A], readonly [K, A2]>
-                      ]
-                    >
-                  >(Exit.fail(Option.some(error)))
-              ),
-              (rightChunk) =>
-                Chunk.isEmpty(rightChunk) ?
-                  pull(ZipAllState.PullRight(state.leftChunk), pullLeft, pullRight) :
-                  Effect.succeed(Exit.succeed(merge(state.leftChunk, rightChunk)))
-            )
-          )
+          return Effect.matchEffect(pullRight, {
+            onFailure: Option.match({
+              onNone: () =>
+                Effect.succeed(
+                  Exit.succeed(
+                    [
+                      Chunk.map(state.leftChunk, ([k, a]) => [k, left(a)] as const),
+                      ZipAllState.DrainLeft
+                    ] as const
+                  )
+                ),
+              onSome: (error) =>
+                Effect.succeed<
+                  Exit.Exit<
+                    Option.Option<E | E2>,
+                    readonly [
+                      Chunk.Chunk<readonly [K, A3]>,
+                      ZipAllState.ZipAllState<readonly [K, A], readonly [K, A2]>
+                    ]
+                  >
+                >(Exit.fail(Option.some(error)))
+            }),
+            onSuccess: (rightChunk) =>
+              Chunk.isEmpty(rightChunk) ?
+                pull(ZipAllState.PullRight(state.leftChunk), pullLeft, pullRight) :
+                Effect.succeed(Exit.succeed(merge(state.leftChunk, rightChunk)))
+          })
         }
       }
     }
@@ -7746,7 +7496,7 @@ export const zipAllSortedByKeyWith = dual<
       let a2 = rightTuple[1]
       let loop = true
       while (loop) {
-        const compare = order.compare(k1, k2)
+        const compare = order(k1, k2)
         if (compare === 0) {
           builder.push([k1, both(a, a2)])
           if (hasNext(leftChunk, leftIndex) && hasNext(rightChunk, rightIndex)) {
@@ -7850,42 +7600,36 @@ export const zipAllWith = dual<
     > => {
       switch (state._tag) {
         case ZipAllState.OP_DRAIN_LEFT: {
-          return pipe(
-            pullLeft,
-            Effect.matchEffect(
-              (error) => Effect.succeed(Exit.fail(error)),
-              (leftChunk) =>
-                Effect.succeed(Exit.succeed(
-                  [
-                    pipe(leftChunk, Chunk.map(left)),
-                    ZipAllState.DrainLeft
-                  ] as const
-                ))
-            )
-          )
+          return Effect.matchEffect(pullLeft, {
+            onFailure: (error) => Effect.succeed(Exit.fail(error)),
+            onSuccess: (leftChunk) =>
+              Effect.succeed(Exit.succeed(
+                [
+                  Chunk.map(leftChunk, left),
+                  ZipAllState.DrainLeft
+                ] as const
+              ))
+          })
         }
         case ZipAllState.OP_DRAIN_RIGHT: {
-          return pipe(
-            pullRight,
-            Effect.matchEffect(
-              (error) => Effect.succeed(Exit.fail(error)),
-              (rightChunk) =>
-                Effect.succeed(Exit.succeed(
-                  [
-                    pipe(rightChunk, Chunk.map(right)),
-                    ZipAllState.DrainRight
-                  ] as const
-                ))
-            )
-          )
+          return Effect.matchEffect(pullRight, {
+            onFailure: (error) => Effect.succeed(Exit.fail(error)),
+            onSuccess: (rightChunk) =>
+              Effect.succeed(Exit.succeed(
+                [
+                  Chunk.map(rightChunk, right),
+                  ZipAllState.DrainRight
+                ] as const
+              ))
+          })
         }
         case ZipAllState.OP_PULL_BOTH: {
           return pipe(
             Effect.unsome(pullLeft),
-            Effect.zipPar(Effect.unsome(pullRight)),
-            Effect.matchEffect(
-              (error) => Effect.succeed(Exit.fail(Option.some(error))),
-              ([leftOption, rightOption]) => {
+            Effect.zip(Effect.unsome(pullRight), { parallel: true }),
+            Effect.matchEffect({
+              onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
+              onSuccess: ([leftOption, rightOption]) => {
                 if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
                   if (Chunk.isEmpty(leftOption.value) && Chunk.isEmpty(rightOption.value)) {
                     return pull(ZipAllState.PullBoth, pullLeft, pullRight)
@@ -7901,7 +7645,7 @@ export const zipAllWith = dual<
                 if (Option.isSome(leftOption) && Option.isNone(rightOption)) {
                   return Effect.succeed(Exit.succeed(
                     [
-                      pipe(leftOption.value, Chunk.map(left)),
+                      Chunk.map(leftOption.value, left),
                       ZipAllState.DrainLeft
                     ] as const
                   ))
@@ -7909,87 +7653,81 @@ export const zipAllWith = dual<
                 if (Option.isNone(leftOption) && Option.isSome(rightOption)) {
                   return Effect.succeed(Exit.succeed(
                     [
-                      pipe(rightOption.value, Chunk.map(right)),
+                      Chunk.map(rightOption.value, right),
                       ZipAllState.DrainRight
                     ] as const
                   ))
                 }
                 return Effect.succeed(Exit.fail<Option.Option<E | E2>>(Option.none()))
               }
-            )
+            })
           )
         }
         case ZipAllState.OP_PULL_LEFT: {
-          return pipe(
-            pullLeft,
-            Effect.matchEffect(
-              Option.match(
-                () =>
-                  Effect.succeed(Exit.succeed(
-                    [
-                      pipe(state.rightChunk, Chunk.map(right)),
-                      ZipAllState.DrainRight
-                    ] as const
-                  )),
-                (error) =>
-                  Effect.succeed<
-                    Exit.Exit<Option.Option<E | E2>, readonly [Chunk.Chunk<A3>, ZipAllState.ZipAllState<A, A2>]>
-                  >(
-                    Exit.fail(Option.some(error))
-                  )
-              ),
-              (leftChunk) => {
-                if (Chunk.isEmpty(leftChunk)) {
-                  return pull(ZipAllState.PullLeft(state.rightChunk), pullLeft, pullRight)
-                }
-                if (Chunk.isEmpty(state.rightChunk)) {
-                  return pull(ZipAllState.PullRight(leftChunk), pullLeft, pullRight)
-                }
-                return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk, both)))
+          return Effect.matchEffect(pullLeft, {
+            onFailure: Option.match({
+              onNone: () =>
+                Effect.succeed(Exit.succeed(
+                  [
+                    Chunk.map(state.rightChunk, right),
+                    ZipAllState.DrainRight
+                  ] as const
+                )),
+              onSome: (error) =>
+                Effect.succeed<
+                  Exit.Exit<Option.Option<E | E2>, readonly [Chunk.Chunk<A3>, ZipAllState.ZipAllState<A, A2>]>
+                >(
+                  Exit.fail(Option.some(error))
+                )
+            }),
+            onSuccess: (leftChunk) => {
+              if (Chunk.isEmpty(leftChunk)) {
+                return pull(ZipAllState.PullLeft(state.rightChunk), pullLeft, pullRight)
               }
-            )
-          )
+              if (Chunk.isEmpty(state.rightChunk)) {
+                return pull(ZipAllState.PullRight(leftChunk), pullLeft, pullRight)
+              }
+              return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk, both)))
+            }
+          })
         }
         case ZipAllState.OP_PULL_RIGHT: {
-          return pipe(
-            pullRight,
-            Effect.matchEffect(
-              Option.match(
-                () =>
-                  Effect.succeed(
-                    Exit.succeed(
-                      [
-                        pipe(state.leftChunk, Chunk.map(left)),
-                        ZipAllState.DrainLeft
-                      ] as const
-                    )
-                  ),
-                (error) =>
-                  Effect.succeed<
-                    Exit.Exit<Option.Option<E | E2>, readonly [Chunk.Chunk<A3>, ZipAllState.ZipAllState<A, A2>]>
-                  >(
-                    Exit.fail(Option.some(error))
+          return Effect.matchEffect(pullRight, {
+            onFailure: Option.match({
+              onNone: () =>
+                Effect.succeed(
+                  Exit.succeed(
+                    [
+                      Chunk.map(state.leftChunk, left),
+                      ZipAllState.DrainLeft
+                    ] as const
                   )
-              ),
-              (rightChunk) => {
-                if (Chunk.isEmpty(rightChunk)) {
-                  return pull(
-                    ZipAllState.PullRight(state.leftChunk),
-                    pullLeft,
-                    pullRight
-                  )
-                }
-                if (Chunk.isEmpty(state.leftChunk)) {
-                  return pull(
-                    ZipAllState.PullLeft(rightChunk),
-                    pullLeft,
-                    pullRight
-                  )
-                }
-                return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk, both)))
+                ),
+              onSome: (error) =>
+                Effect.succeed<
+                  Exit.Exit<Option.Option<E | E2>, readonly [Chunk.Chunk<A3>, ZipAllState.ZipAllState<A, A2>]>
+                >(
+                  Exit.fail(Option.some(error))
+                )
+            }),
+            onSuccess: (rightChunk) => {
+              if (Chunk.isEmpty(rightChunk)) {
+                return pull(
+                  ZipAllState.PullRight(state.leftChunk),
+                  pullLeft,
+                  pullRight
+                )
               }
-            )
-          )
+              if (Chunk.isEmpty(state.leftChunk)) {
+                return pull(
+                  ZipAllState.PullLeft(rightChunk),
+                  pullLeft,
+                  pullRight
+                )
+              }
+              return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk, both)))
+            }
+          })
         }
       }
     }
@@ -8067,22 +7805,19 @@ export const zipLatestWith = dual<
       Effect.flatMap(([left, right]) =>
         pipe(
           fromEffectOption<R | R2, E | E2, readonly [Chunk.Chunk<A>, Chunk.Chunk<A2>, boolean]>(
-            pipe(
-              left,
-              Effect.raceWith(
-                right,
-                (leftDone, rightFiber) =>
-                  pipe(
-                    Effect.done(leftDone),
-                    Effect.zipWith(Fiber.join(rightFiber), (l, r) => [l, r, true] as const)
-                  ),
-                (rightDone, leftFiber) =>
-                  pipe(
-                    Effect.done(rightDone),
-                    Effect.zipWith(Fiber.join(leftFiber), (l, r) => [r, l, false] as const)
-                  )
-              )
-            )
+            Effect.raceWith(left, {
+              other: right,
+              onSelfDone: (leftDone, rightFiber) =>
+                pipe(
+                  Effect.suspend(() => leftDone),
+                  Effect.zipWith(Fiber.join(rightFiber), (l, r) => [l, r, true] as const)
+                ),
+              onOtherDone: (rightDone, leftFiber) =>
+                pipe(
+                  Effect.suspend(() => rightDone),
+                  Effect.zipWith(Fiber.join(leftFiber), (l, r) => [r, l, false] as const)
+                )
+            })
           ),
           flatMap(([l, r, leftFirst]) =>
             pipe(
@@ -8100,8 +7835,8 @@ export const zipLatestWith = dual<
                     pipe(
                       repeatEffectOption(left),
                       mergeEither(repeatEffectOption(right)),
-                      mapEffect(Either.match(
-                        (leftChunk) =>
+                      mapEffect(Either.match({
+                        onLeft: (leftChunk) =>
                           pipe(
                             Ref.modify(latest, ([_, rightLatest]) =>
                               [
@@ -8109,7 +7844,7 @@ export const zipLatestWith = dual<
                                 [Chunk.unsafeLast(leftChunk), rightLatest] as const
                               ] as const)
                           ),
-                        (rightChunk) =>
+                        onRight: (rightChunk) =>
                           pipe(
                             Ref.modify(latest, ([leftLatest, _]) =>
                               [
@@ -8117,7 +7852,7 @@ export const zipLatestWith = dual<
                                 [leftLatest, Chunk.unsafeLast(rightChunk)] as const
                               ] as const)
                           )
-                      )),
+                      })),
                       flatMap(fromChunk)
                     )
                   )
@@ -8256,10 +7991,10 @@ export const zipWithChunks = dual<
       case ZipChunksState.OP_PULL_BOTH: {
         return pipe(
           Effect.unsome(pullLeft),
-          Effect.zipPar(Effect.unsome(pullRight)),
-          Effect.matchEffect(
-            (error) => Effect.succeed(Exit.fail(Option.some(error))),
-            ([leftOption, rightOption]) => {
+          Effect.zip(Effect.unsome(pullRight), { parallel: true }),
+          Effect.matchEffect({
+            onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
+            onSuccess: ([leftOption, rightOption]) => {
               if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
                 if (Chunk.isEmpty(leftOption.value) && Chunk.isEmpty(rightOption.value)) {
                   return pull(ZipChunksState.PullBoth, pullLeft, pullRight)
@@ -8274,42 +8009,36 @@ export const zipWithChunks = dual<
               }
               return Effect.succeed(Exit.fail(Option.none()))
             }
-          )
+          })
         )
       }
       case ZipChunksState.OP_PULL_LEFT: {
-        return pipe(
-          pullLeft,
-          Effect.matchEffect(
-            (error) => Effect.succeed(Exit.fail(error)),
-            (leftChunk) => {
-              if (Chunk.isEmpty(leftChunk)) {
-                return pull(ZipChunksState.PullLeft(state.rightChunk), pullLeft, pullRight)
-              }
-              if (Chunk.isEmpty(state.rightChunk)) {
-                return pull(ZipChunksState.PullRight(leftChunk), pullLeft, pullRight)
-              }
-              return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk)))
+        return Effect.matchEffect(pullLeft, {
+          onFailure: (error) => Effect.succeed(Exit.fail(error)),
+          onSuccess: (leftChunk) => {
+            if (Chunk.isEmpty(leftChunk)) {
+              return pull(ZipChunksState.PullLeft(state.rightChunk), pullLeft, pullRight)
             }
-          )
-        )
+            if (Chunk.isEmpty(state.rightChunk)) {
+              return pull(ZipChunksState.PullRight(leftChunk), pullLeft, pullRight)
+            }
+            return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk)))
+          }
+        })
       }
       case ZipChunksState.OP_PULL_RIGHT: {
-        return pipe(
-          pullRight,
-          Effect.matchEffect(
-            (error) => Effect.succeed(Exit.fail(error)),
-            (rightChunk) => {
-              if (Chunk.isEmpty(rightChunk)) {
-                return pull(ZipChunksState.PullRight(state.leftChunk), pullLeft, pullRight)
-              }
-              if (Chunk.isEmpty(state.leftChunk)) {
-                return pull(ZipChunksState.PullLeft(rightChunk), pullLeft, pullRight)
-              }
-              return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk)))
+        return Effect.matchEffect(pullRight, {
+          onFailure: (error) => Effect.succeed(Exit.fail(error)),
+          onSuccess: (rightChunk) => {
+            if (Chunk.isEmpty(rightChunk)) {
+              return pull(ZipChunksState.PullRight(state.leftChunk), pullLeft, pullRight)
             }
-          )
-        )
+            if (Chunk.isEmpty(state.leftChunk)) {
+              return pull(ZipChunksState.PullLeft(rightChunk), pullLeft, pullRight)
+            }
+            return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk)))
+          }
+        })
       }
     }
   }
@@ -8373,14 +8102,14 @@ export const zipWithNext = <R, E, A>(
       () =>
         pipe(
           last,
-          Option.match(
-            core.unit,
-            (value) =>
+          Option.match({
+            onNone: core.unit,
+            onSome: (value) =>
               pipe(
                 core.write(Chunk.of<readonly [A, Option.Option<A>]>([value, Option.none()])),
                 channel.zipRight(core.unit())
               )
-          )
+          })
         )
     )
   return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(process(Option.none()))))
