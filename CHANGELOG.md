@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.25.0
+
+### Minor Changes
+
+- [#121](https://github.com/Effect-TS/stream/pull/121) [`5795073`](https://github.com/Effect-TS/stream/commit/5795073eb0f500fea37de97059794e18a756e255) Thanks [@IMax153](https://github.com/IMax153)! - upgrade @effect/io to v0.31.1
+
 ## 0.24.0
 
 ### Minor Changes
