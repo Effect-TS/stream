@@ -4,6 +4,7 @@ import * as Either from "@effect/data/Either"
 import { constVoid, dual, identity } from "@effect/data/Function"
 import type { LazyArg } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
+import { pipeArguments } from "@effect/data/Pipeable"
 import * as Cause from "@effect/io/Cause"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
@@ -39,7 +40,10 @@ const channelVariance = {
 
 /** @internal */
 const proto = {
-  [ChannelTypeId]: channelVariance
+  [ChannelTypeId]: channelVariance,
+  pipe() {
+    return pipeArguments(this, arguments)
+  }
 }
 
 /** @internal */

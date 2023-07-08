@@ -7,6 +7,7 @@ import { constTrue, dual, identity, pipe } from "@effect/data/Function"
 import type { LazyArg } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import type * as Order from "@effect/data/Order"
+import { pipeArguments } from "@effect/data/Pipeable"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
 import * as Cause from "@effect/io/Cause"
 import * as Clock from "@effect/io/Clock"
@@ -67,6 +68,10 @@ export class StreamImpl<R, E, A> implements Stream.Stream<R, E, A> {
   constructor(
     readonly channel: Channel.Channel<R, unknown, unknown, unknown, E, Chunk.Chunk<A>, unknown>
   ) {
+  }
+
+  pipe() {
+    return pipeArguments(this, arguments)
   }
 }
 

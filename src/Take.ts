@@ -3,6 +3,7 @@
  */
 import type * as Chunk from "@effect/data/Chunk"
 import type * as Option from "@effect/data/Option"
+import type { Pipeable } from "@effect/data/Pipeable"
 import type * as Cause from "@effect/io/Cause"
 import type * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
@@ -28,7 +29,7 @@ export type TakeTypeId = typeof TakeTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Take<E, A> extends Take.Variance<E, A> {
+export interface Take<E, A> extends Take.Variance<E, A>, Pipeable<Take<E, A>> {
   /** @internal */
   readonly exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<A>>
 }

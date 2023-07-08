@@ -120,6 +120,9 @@ export const make = <R, E, K, V>(
   grouped: Stream.Stream<R, E, readonly [K, Queue.Dequeue<Take.Take<E, V>>]>
 ): GroupBy.GroupBy<R, E, K, V> => ({
   [GroupByTypeId]: groupByVariance,
+  pipe() {
+    return pipeArguments(this, arguments)
+  },
   grouped
 })
 

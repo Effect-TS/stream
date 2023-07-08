@@ -7,6 +7,7 @@ import type { LazyArg } from "@effect/data/Function"
 import * as HashMap from "@effect/data/HashMap"
 import * as HashSet from "@effect/data/HashSet"
 import * as Option from "@effect/data/Option"
+import { pipeArguments } from "@effect/data/Pipeable"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
 import * as ReadonlyArray from "@effect/data/ReadonlyArray"
 import * as Cause from "@effect/io/Cause"
@@ -47,6 +48,9 @@ export class SinkImpl<R, E, In, L, Z> implements Sink.Sink<R, E, In, L, Z> {
   constructor(
     readonly channel: Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z>
   ) {
+  }
+  pipe() {
+    return pipeArguments(this, arguments)
   }
 }
 
