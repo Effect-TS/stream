@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.25.1
+
+### Patch Changes
+
+- [#123](https://github.com/Effect-TS/stream/pull/123) [`31eee0b`](https://github.com/Effect-TS/stream/commit/31eee0bc72ef359fe8e7929c88e2d5d2913f0ef5) Thanks [@tim-smart](https://github.com/tim-smart)! - update /io
+
+- [#123](https://github.com/Effect-TS/stream/pull/123) [`31eee0b`](https://github.com/Effect-TS/stream/commit/31eee0bc72ef359fe8e7929c88e2d5d2913f0ef5) Thanks [@tim-smart](https://github.com/tim-smart)! - implement Pipeable
+
 ## 0.25.0
 
 ### Minor Changes
