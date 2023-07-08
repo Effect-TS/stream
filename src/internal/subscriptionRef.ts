@@ -1,4 +1,5 @@
 import { dual, pipe } from "@effect/data/Function"
+import { pipeArguments } from "@effect/data/Pipeable"
 import * as Effect from "@effect/io/Effect"
 import * as Hub from "@effect/io/Hub"
 import * as _circular from "@effect/io/internal/effect/circular"
@@ -34,6 +35,9 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
     readonly hub: Hub.Hub<A>,
     readonly semaphore: Effect.Semaphore
   ) {
+  }
+  pipe() {
+    return pipeArguments(this, arguments)
   }
   get changes(): Stream<never, never, A> {
     return pipe(

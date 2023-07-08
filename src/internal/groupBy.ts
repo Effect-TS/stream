@@ -1,6 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import { dual, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
+import { pipeArguments } from "@effect/data/Pipeable"
 import type { Predicate } from "@effect/data/Predicate"
 import * as Cause from "@effect/io/Cause"
 import * as Deferred from "@effect/io/Deferred"
@@ -119,6 +120,9 @@ export const make = <R, E, K, V>(
   grouped: Stream.Stream<R, E, readonly [K, Queue.Dequeue<Take.Take<E, V>>]>
 ): GroupBy.GroupBy<R, E, K, V> => ({
   [GroupByTypeId]: groupByVariance,
+  pipe() {
+    return pipeArguments(this, arguments)
+  },
   grouped
 })
 
@@ -168,12 +172,12 @@ export const groupByBuffer = dual<
               (key: K, value: V) => Effect.Effect<never, never, Predicate<number>>
             >()
           )
-          const output = yield* $(Effect.acquireRelease({
-            acquire: Queue.bounded<Exit.Exit<Option.Option<E | E2>, readonly [K, Queue.Dequeue<Take.Take<E | E2, V>>]>>(
+          const output = yield* $(Effect.acquireRelease(
+            Queue.bounded<Exit.Exit<Option.Option<E | E2>, readonly [K, Queue.Dequeue<Take.Take<E | E2, V>>]>>(
               bufferSize
             ),
-            release: (queue) => Queue.shutdown(queue)
-          }))
+            (queue) => Queue.shutdown(queue)
+          ))
           const ref = yield* $(Ref.make<Map<K, number>>(new Map()))
           const add = yield* $(
             pipe(
@@ -290,6 +294,10 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
   poll(): Effect.Effect<never, never, Option.Option<B>> {
     return pipe(Queue.poll(this.dequeue), Effect.map(Option.map((a) => this.f(a))))
   }
+
+  pipe() {
+    return pipeArguments(this, arguments)
+  }
 }
 
 /** @internal */
@@ -383,10 +391,10 @@ export const groupByKeyBuffer = dual<
       Effect.sync(() => new Map<K, Queue.Queue<Take.Take<E, A>>>()),
       Effect.flatMap((map) =>
         pipe(
-          Effect.acquireRelease({
-            acquire: Queue.unbounded<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>(),
-            release: (queue) => Queue.shutdown(queue)
-          }),
+          Effect.acquireRelease(
+            Queue.unbounded<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>(),
+            (queue) => Queue.shutdown(queue)
+          ),
           Effect.flatMap((queue) =>
             pipe(
               self,

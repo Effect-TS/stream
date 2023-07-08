@@ -1,6 +1,7 @@
 import * as Chunk from "@effect/data/Chunk"
 import { constFalse, constTrue, dual, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
+import { pipeArguments } from "@effect/data/Pipeable"
 import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -24,6 +25,9 @@ const takeVariance = {
 export class TakeImpl<E, A> implements Take.Take<E, A> {
   readonly [TakeTypeId] = takeVariance
   constructor(readonly exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<A>>) {
+  }
+  pipe() {
+    return pipeArguments(this, arguments)
   }
 }
 

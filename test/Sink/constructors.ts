@@ -3,6 +3,7 @@ import { pipe } from "@effect/data/Function"
 import type * as MutableQueue from "@effect/data/MutableQueue"
 import type * as MutableRef from "@effect/data/MutableRef"
 import type * as Option from "@effect/data/Option"
+import { pipeArguments } from "@effect/data/Pipeable"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
@@ -104,6 +105,10 @@ class QueueSpy<A> implements Queue.Queue<A> {
     this.shutdownHook = backingQueue.shutdownHook
     this.strategy = backingQueue.strategy
     this.takers = backingQueue.takers
+  }
+
+  pipe() {
+    return pipeArguments(this, arguments)
   }
 
   unsafeOffer(value: A): boolean {

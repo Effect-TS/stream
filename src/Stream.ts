@@ -9,6 +9,7 @@ import type { LazyArg } from "@effect/data/Function"
 import type { TypeLambda } from "@effect/data/HKT"
 import type * as Option from "@effect/data/Option"
 import type * as Order from "@effect/data/Order"
+import type { Pipeable } from "@effect/data/Pipeable"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
 import type * as Unify from "@effect/data/Unify"
 import type * as Cause from "@effect/io/Cause"
@@ -61,7 +62,7 @@ export type StreamTypeId = typeof StreamTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
+export interface Stream<R, E, A> extends Stream.Variance<R, E, A>, Pipeable<Stream<R, E, A>> {
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: StreamUnify<this>
   [Unify.blacklistSymbol]?: StreamUnifyBlacklist
@@ -88,7 +89,7 @@ export interface StreamUnifyBlacklist extends Effect.EffectUnifyBlacklist {
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Stream<R, E, A> {}
+  interface Effect<R, E, A> extends Omit<Stream<R, E, A>, "pipe"> {}
   interface EffectUnifyBlacklist {
     Stream?: true
   }

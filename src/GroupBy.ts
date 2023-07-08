@@ -1,6 +1,7 @@
 /**
  * @since 1.0.0
  */
+import type { Pipeable } from "@effect/data/Pipeable"
 import type { Predicate } from "@effect/data/Predicate"
 import type * as Queue from "@effect/io/Queue"
 import * as internal from "@effect/stream/internal/groupBy"
@@ -27,7 +28,7 @@ export type GroupByTypeId = typeof GroupByTypeId
  * @since 1.0.0
  * @category models
  */
-export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V> {
+export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V>, Pipeable<GroupBy<R, E, K, V>> {
   readonly grouped: Stream.Stream<R, E, readonly [K, Queue.Dequeue<Take.Take<E, V>>]>
 }
 

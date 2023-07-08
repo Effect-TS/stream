@@ -164,10 +164,10 @@ describe.concurrent("Stream", () => {
         const ref = yield* $(Ref.make(0))
         const effect = pipe(
           Ref.getAndUpdate(ref, (n) => n + 1),
-          Effect.filterOrFail({
-            filter: (n) => n <= length + 1,
-            orFailWith: constVoid
-          })
+          Effect.filterOrFail(
+            (n) => n <= length + 1,
+            constVoid
+          )
         )
         const schedule = pipe(
           Schedule.identity<number>(),

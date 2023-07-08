@@ -9,6 +9,7 @@ import type { LazyArg } from "@effect/data/Function"
 import type * as HashMap from "@effect/data/HashMap"
 import type * as HashSet from "@effect/data/HashSet"
 import type * as Option from "@effect/data/Option"
+import type { Pipeable } from "@effect/data/Pipeable"
 import type { Predicate, Refinement } from "@effect/data/Predicate"
 import type * as Unify from "@effect/data/Unify"
 import type * as Cause from "@effect/io/Cause"
@@ -43,7 +44,7 @@ export type SinkTypeId = typeof SinkTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {}
+export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z>, Pipeable<Sink<R, E, In, L, Z>> {}
 
 /**
  * @since 1.0.0
@@ -75,7 +76,7 @@ export interface SinkUnifyBlacklist extends Effect.EffectUnifyBlacklist {
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Sink<R, E, unknown, never, A> {}
+  interface Effect<R, E, A> extends Omit<Sink<R, E, unknown, never, A>, "pipe"> {}
   interface EffectUnifyBlacklist {
     Sink?: true
   }

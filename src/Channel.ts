@@ -6,6 +6,7 @@ import type * as Context from "@effect/data/Context"
 import type * as Either from "@effect/data/Either"
 import type { LazyArg } from "@effect/data/Function"
 import type * as Option from "@effect/data/Option"
+import type { Pipeable } from "@effect/data/Pipeable"
 import type { Predicate } from "@effect/data/Predicate"
 import type * as Unify from "@effect/data/Unify"
 import type * as Cause from "@effect/io/Cause"
@@ -69,7 +70,9 @@ export type ChannelTypeId = typeof ChannelTypeId
  * @category models
  */
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  extends
+    Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    Pipeable<Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
 {
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: ChannelUnify<this>
@@ -108,7 +111,7 @@ export interface ChannelUnifyBlacklist extends Effect.EffectUnifyBlacklist {
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Channel<R, unknown, unknown, unknown, E, never, A> {}
+  interface Effect<R, E, A> extends Omit<Channel<R, unknown, unknown, unknown, E, never, A>, "pipe"> {}
   interface EffectUnifyBlacklist {
     Channel?: true
   }
