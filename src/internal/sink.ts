@@ -1436,7 +1436,7 @@ export const fromQueue = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never,
 /** @internal */
 export const fromQueueWithShutdown = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
   pipe(
-    Effect.acquireRelease({ acquire: Effect.succeed(queue), release: Queue.shutdown }),
+    Effect.acquireRelease(Effect.succeed(queue), Queue.shutdown),
     Effect.map(fromQueue),
     unwrapScoped
   )

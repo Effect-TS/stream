@@ -162,10 +162,10 @@ describe.concurrent("Stream", () => {
     const program = Effect.gen(function*($) {
       const stream = (deferred: Deferred.Deferred<never, void>, ref: Ref.Ref<ReadonlyArray<string>>) =>
         pipe(
-          Effect.acquireRelease({
-            acquire: Ref.update(ref, (array) => [...array, "acquire outer"]),
-            release: () => Ref.update(ref, (array) => [...array, "release outer"])
-          }),
+          Effect.acquireRelease(
+            Ref.update(ref, (array) => [...array, "acquire outer"]),
+            () => Ref.update(ref, (array) => [...array, "release outer"])
+          ),
           Effect.zipRight(Deferred.succeed<never, void>(deferred, void 0)),
           Effect.zipRight(Deferred.await(awaiter)),
           Effect.zipRight(Effect.succeed(Stream.make(1, 2, 3))),

@@ -81,7 +81,7 @@ export const absolve = <R, E, A>(self: Stream.Stream<R, E, Either.Either<E, A>>)
 export const acquireRelease = <R, E, A, R2, _>(
   acquire: Effect.Effect<R, E, A>,
   release: (resource: A, exit: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, _>
-): Stream.Stream<R | R2, E, A> => scoped(Effect.acquireRelease({ acquire, release }))
+): Stream.Stream<R | R2, E, A> => scoped(Effect.acquireRelease(acquire, release))
 
 /** @internal */
 export const aggregate = dual<
@@ -442,10 +442,10 @@ export const asyncEffect = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.bounded<Take.Take<E, A>>(outputBuffer),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.flatMap((output) =>
       pipe(
         Effect.runtime<R>(),
@@ -499,10 +499,10 @@ export const asyncInterrupt = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.bounded<Take.Take<E, A>>(outputBuffer),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.flatMap((output) =>
       pipe(
         Effect.runtime<R>(),
@@ -577,10 +577,10 @@ export const asyncScoped = <R, E, A>(
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.bounded<Take.Take<E, A>>(outputBuffer),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(outputBuffer),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.flatMap((output) =>
       pipe(
         Effect.runtime<R>(),
@@ -826,10 +826,10 @@ export const bufferChunksDropping = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease({
-    acquire: Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    release: (queue) => Queue.shutdown(queue)
-  })
+  const queue = Effect.acquireRelease(
+    Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    (queue) => Queue.shutdown(queue)
+  )
   return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
@@ -838,10 +838,10 @@ export const bufferChunksSliding = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease({
-    acquire: Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    release: (queue) => Queue.shutdown(queue)
-  })
+  const queue = Effect.acquireRelease(
+    Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    (queue) => Queue.shutdown(queue)
+  )
   return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
@@ -850,10 +850,10 @@ export const bufferDropping = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease({
-    acquire: Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    release: (queue) => Queue.shutdown(queue)
-  })
+  const queue = Effect.acquireRelease(
+    Queue.dropping<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    (queue) => Queue.shutdown(queue)
+  )
   return new StreamImpl(bufferSignal(queue, toChannel(rechunk(1)(self))))
 })
 
@@ -862,10 +862,10 @@ export const bufferSliding = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = Effect.acquireRelease({
-    acquire: Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
-    release: (queue) => Queue.shutdown(queue)
-  })
+  const queue = Effect.acquireRelease(
+    Queue.sliding<readonly [Take.Take<E, A>, Deferred.Deferred<never, void>]>(capacity),
+    (queue) => Queue.shutdown(queue)
+  )
   return new StreamImpl(bufferSignal(queue, toChannel(pipe(self, rechunk(1)))))
 })
 
@@ -1946,11 +1946,10 @@ export const distributedWithDynamicCallback = dual<
   Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
 > =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Ref.make<Map<number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>>>(new Map()),
-      release: (ref, _) =>
-        pipe(Ref.get(ref), Effect.flatMap((queues) => pipe(queues.values(), Effect.forEach(Queue.shutdown))))
-    }),
+    Effect.acquireRelease(
+      Ref.make<Map<number, Queue.Queue<Exit.Exit<Option.Option<E>, A>>>>(new Map()),
+      (ref, _) => pipe(Ref.get(ref), Effect.flatMap((queues) => pipe(queues.values(), Effect.forEach(Queue.shutdown))))
+    ),
     Effect.flatMap((queuesRef) =>
       Effect.gen(function*($) {
         const offer = (a: A): Effect.Effect<never, never, void> =>
@@ -2750,10 +2749,10 @@ export const fromAsyncIterable = <E, A>(
   onError: (e: unknown) => E
 ) =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Effect.sync(() => iterable[Symbol.asyncIterator]()),
-      release: (iterator) => iterator.return ? Effect.promise(() => iterator.return!()) : Effect.unit
-    }),
+    Effect.acquireRelease(
+      Effect.sync(() => iterable[Symbol.asyncIterator]()),
+      (iterator) => iterator.return ? Effect.promise(() => iterator.return!()) : Effect.unit
+    ),
     Effect.map((iterator) =>
       repeatEffectOption(pipe(
         Effect.tryPromise({
@@ -2991,10 +2990,10 @@ export const fromReadableStream = <A, E>(
   onError: (error: unknown) => E
 ): Stream.Stream<never, E, A> =>
   unwrapScoped(Effect.map(
-    Effect.acquireRelease({
-      acquire: Effect.sync(() => evaluate().getReader()),
-      release: (reader) => Effect.promise(() => reader.cancel())
-    }),
+    Effect.acquireRelease(
+      Effect.sync(() => evaluate().getReader()),
+      (reader) => Effect.promise(() => reader.cancel())
+    ),
     (reader) =>
       repeatEffectOption(
         Effect.flatMap(
@@ -3014,10 +3013,10 @@ export const fromReadableStreamByob = <E>(
   allocSize = 4096
 ): Stream.Stream<never, E, Uint8Array> =>
   unwrapScoped(Effect.map(
-    Effect.acquireRelease({
-      acquire: Effect.sync(() => evaluate().getReader({ mode: "byob" })),
-      release: (reader) => Effect.promise(() => reader.cancel())
-    }),
+    Effect.acquireRelease(
+      Effect.sync(() => evaluate().getReader({ mode: "byob" })),
+      (reader) => Effect.promise(() => reader.cancel())
+    ),
     (reader) =>
       catchAll(
         forever(readChunkStreamByobReader(reader, onError, allocSize)),
@@ -6706,10 +6705,10 @@ export const toHub = dual<
   capacity: number
 ): Effect.Effect<R | Scope.Scope, never, Hub.Hub<Take.Take<E, A>>> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Hub.bounded<Take.Take<E, A>>(capacity),
-      release: (hub) => Hub.shutdown(hub)
-    }),
+    Effect.acquireRelease(
+      Hub.bounded<Take.Take<E, A>>(capacity),
+      (hub) => Hub.shutdown(hub)
+    ),
     Effect.tap((hub) => pipe(self, runIntoHubScoped(hub), Effect.forkScoped))
   ))
 
@@ -6746,10 +6745,10 @@ export const toQueueCapacity = dual<
   capacity: number
 ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.bounded<Take.Take<E, A>>(capacity),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.bounded<Take.Take<E, A>>(capacity),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
   ))
 
@@ -6772,10 +6771,10 @@ export const toQueueDroppingCapacity = dual<
   capacity: number
 ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.dropping<Take.Take<E, A>>(capacity),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.dropping<Take.Take<E, A>>(capacity),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
   ))
 
@@ -6801,10 +6800,10 @@ export const toQueueOfElementsCapacity = dual<
   capacity: number
 ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.tap((queue) => Effect.forkScoped(runIntoQueueElementsScoped(self, queue)))
   ))
 
@@ -6827,10 +6826,10 @@ export const toQueueSlidingCapacity = dual<
   capacity: number
 ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.sliding<Take.Take<E, A>>(capacity),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.sliding<Take.Take<E, A>>(capacity),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
   ))
 
@@ -6839,10 +6838,10 @@ export const toQueueUnbounded = <R, E, A>(
   self: Stream.Stream<R, E, A>
 ): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
   pipe(
-    Effect.acquireRelease({
-      acquire: Queue.unbounded<Take.Take<E, A>>(),
-      release: (queue) => Queue.shutdown(queue)
-    }),
+    Effect.acquireRelease(
+      Queue.unbounded<Take.Take<E, A>>(),
+      (queue) => Queue.shutdown(queue)
+    ),
     Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
   )
 

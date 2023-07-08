@@ -1113,9 +1113,9 @@ export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
     scopeDeferred: Deferred.Deferred<never, void>,
     scope: Scope.Scope
   ) =>
-    Effect.acquireUseRelease({
-      acquire: Effect.sync(() => new ChannelExecutor(self, void 0, identity)),
-      use: (exec) =>
+    Effect.acquireUseRelease(
+      Effect.sync(() => new ChannelExecutor(self, void 0, identity)),
+      (exec) =>
         Effect.suspend(() =>
           pipe(
             runScopedInterpret(exec.run() as ChannelState.ChannelState<Env, OutErr>, exec),
@@ -1124,7 +1124,7 @@ export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
             Effect.zipLeft(Deferred.await(scopeDeferred))
           )
         ),
-      release: (exec, exit) => {
+      (exec, exit) => {
         const finalize = exec.close(exit)
         if (finalize === undefined) {
           return Effect.unit
@@ -1134,7 +1134,7 @@ export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
           (cause) => Scope.addFinalizer(scope, Effect.failCause(cause))
         )
       }
-    })
+    )
   return Effect.uninterruptibleMask((restore) =>
     Effect.flatMap(Effect.scope, (parent) =>
       pipe(

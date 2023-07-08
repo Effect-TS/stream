@@ -16,10 +16,10 @@ import { assert, describe } from "vitest"
 
 const withPermitsScoped = (permits: number) =>
   (semaphore: Effect.Semaphore) =>
-    Effect.acquireRelease({
-      acquire: semaphore.take(permits),
-      release: (n) => semaphore.release(n)
-    })
+    Effect.acquireRelease(
+      semaphore.take(permits),
+      (n) => semaphore.release(n)
+    )
 
 describe.concurrent("Stream", () => {
   it.effect("branchAfter - switches streams", () =>
