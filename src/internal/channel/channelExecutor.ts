@@ -1138,11 +1138,11 @@ export const runScoped = <Env, InErr, InDone, OutErr, OutDone>(
   return Effect.uninterruptibleMask((restore) =>
     Effect.flatMap(Effect.scope, (parent) =>
       pipe(
-        Effect.all(
+        Effect.all([
           Scope.fork(parent, ExecutionStrategy.sequential),
           Deferred.make<OutErr, OutDone>(),
           Deferred.make<never, void>()
-        ),
+        ]),
         Effect.flatMap(([child, channelDeferred, scopeDeferred]) =>
           pipe(
             Effect.forkScoped(restore(run(channelDeferred, scopeDeferred, child))),

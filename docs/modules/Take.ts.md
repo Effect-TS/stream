@@ -314,7 +314,7 @@ or an end-of-stream marker.
 **Signature**
 
 ```ts
-export interface Take<E, A> extends Take.Variance<E, A> {
+export interface Take<E, A> extends Take.Variance<E, A>, Pipeable {
   /** @internal */
   readonly exit: Exit.Exit<Option.Option<E>, Chunk.Chunk<A>>
 }

@@ -2,7 +2,7 @@
  * @since 1.0.0
  */
 import type * as Option from "@effect/data/Option"
-import type { PipeableOverride } from "@effect/data/Pipeable"
+import type { Pipeable } from "@effect/data/Pipeable"
 import type * as Effect from "@effect/io/Effect"
 import type * as Hub from "@effect/io/Hub"
 import * as Ref from "@effect/io/Ref"
@@ -29,9 +29,7 @@ export type SubscriptionRefTypeId = typeof SubscriptionRefTypeId
  * @since 1.0.0
  * @category models
  */
-export interface SubscriptionRef<A>
-  extends SubscriptionRef.Variance<A>, PipeableOverride<Synchronized.Synchronized<A>, SubscriptionRef<A>>
-{
+export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.Synchronized<A>, Pipeable {
   /** @internal */
   readonly ref: Ref.Ref<A>
   /** @internal */

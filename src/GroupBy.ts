@@ -28,7 +28,7 @@ export type GroupByTypeId = typeof GroupByTypeId
  * @since 1.0.0
  * @category models
  */
-export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V>, Pipeable<GroupBy<R, E, K, V>> {
+export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V>, Pipeable {
   readonly grouped: Stream.Stream<R, E, readonly [K, Queue.Dequeue<Take.Take<E, V>>]>
 }
 

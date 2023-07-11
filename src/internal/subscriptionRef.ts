@@ -82,11 +82,11 @@ export const get = <A>(self: SubscriptionRef.SubscriptionRef<A>): Effect.Effect<
 /** @internal */
 export const make = <A>(value: A): Effect.Effect<never, never, SubscriptionRef.SubscriptionRef<A>> =>
   pipe(
-    Effect.all(
+    Effect.all([
       Hub.unbounded<A>(),
       Ref.make(value),
       Effect.makeSemaphore(1)
-    ),
+    ]),
     Effect.map(([hub, ref, semaphore]) => new SubscriptionRefImpl(ref, hub, semaphore))
   )
 

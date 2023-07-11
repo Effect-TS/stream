@@ -143,14 +143,14 @@ export const aggregateWithinEither = dual<
     sink: Sink.Sink<R2, E2, A | A2, A2, B>,
     schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream.Stream<R | R2 | R3, E | E2, Either.Either<C, B>> => {
-    const layer = Effect.all(
+    const layer = Effect.all([
       Handoff.make<HandoffSignal.HandoffSignal<E | E2, A>>(),
       Ref.make<SinkEndReason.SinkEndReason>(SinkEndReason.ScheduleEnd),
       Ref.make(Chunk.empty<A | A2>()),
       Schedule.driver(schedule),
       Ref.make(false),
       Ref.make(false)
-    )
+    ])
     return pipe(
       fromEffect(layer),
       flatMap(([handoff, sinkEndReason, sinkLeftovers, scheduleDriver, consumed, endAfterEmit]) => {
@@ -281,11 +281,11 @@ export const aggregateWithinEither = dual<
                   switch (reason._tag) {
                     case SinkEndReason.OP_SCHEDULE_END: {
                       return pipe(
-                        Effect.all(
+                        Effect.all([
                           Ref.get(consumed),
                           forkSink,
                           pipe(timeout(Option.some(b)), Effect.forkIn(scope))
-                        ),
+                        ]),
                         Effect.map(([wasConsumed, sinkFiber, scheduleFiber]) => {
                           const toWrite = pipe(
                             c,
@@ -1482,12 +1482,12 @@ export const combineChunks = dual<
     )
   return new StreamImpl(
     pipe(
-      Effect.all(
+      Effect.all([
         Handoff.make<Take.Take<E, A>>(),
         Handoff.make<Take.Take<E2, A2>>(),
         Handoff.make<void>(),
         Handoff.make<void>()
-      ),
+      ]),
       Effect.tap(([left, _, latchL]) =>
         pipe(
           toChannel(self),
@@ -6265,7 +6265,7 @@ export const tapSink = dual<
     sink: Sink.Sink<R2, E2, A, unknown, unknown>
   ): Stream.Stream<R | R2, E | E2, A> =>
     pipe(
-      fromEffect(Effect.all(Queue.bounded<Take.Take<E | E2, A>>(1), Deferred.make<never, void>())),
+      fromEffect(Effect.all([Queue.bounded<Take.Take<E | E2, A>>(1), Deferred.make<never, void>()])),
       flatMap(([queue, deferred]) => {
         const right = flattenTake(fromQueue(queue, 1))
         const loop: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, unknown> = core
@@ -7370,7 +7370,7 @@ export const zipAllSortedByKeyWith = dual<
         case ZipAllState.OP_PULL_BOTH: {
           return pipe(
             Effect.unsome(pullLeft),
-            Effect.zip(Effect.unsome(pullRight), { parallel: true }),
+            Effect.zip(Effect.unsome(pullRight), { concurrent: true }),
             Effect.matchEffect({
               onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
               onSuccess: ([leftOption, rightOption]) => {
@@ -7630,7 +7630,7 @@ export const zipAllWith = dual<
         case ZipAllState.OP_PULL_BOTH: {
           return pipe(
             Effect.unsome(pullLeft),
-            Effect.zip(Effect.unsome(pullRight), { parallel: true }),
+            Effect.zip(Effect.unsome(pullRight), { concurrent: true }),
             Effect.matchEffect({
               onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
               onSuccess: ([leftOption, rightOption]) => {
@@ -7995,7 +7995,7 @@ export const zipWithChunks = dual<
       case ZipChunksState.OP_PULL_BOTH: {
         return pipe(
           Effect.unsome(pullLeft),
-          Effect.zip(Effect.unsome(pullRight), { parallel: true }),
+          Effect.zip(Effect.unsome(pullRight), { concurrent: true }),
           Effect.matchEffect({
             onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
             onSuccess: ([leftOption, rightOption]) => {

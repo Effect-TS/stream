@@ -80,7 +80,7 @@ receive the current value as well as all changes to the value.
 **Signature**
 
 ```ts
-export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.Synchronized<A> {
+export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.Synchronized<A>, Pipeable {
   /** @internal */
   readonly ref: Ref.Ref<A>
   /** @internal */

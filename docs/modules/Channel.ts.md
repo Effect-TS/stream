@@ -1499,7 +1499,8 @@ Channels compose in a variety of ways:
 
 ```ts
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> {
+  extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    Pipeable {
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: ChannelUnify<this>
   [Unify.blacklistSymbol]?: ChannelUnifyBlacklist

@@ -3092,7 +3092,7 @@ allow for rich and expressive composition of streams.
 **Signature**
 
 ```ts
-export interface Stream<R, E, A> extends Stream.Variance<R, E, A> {
+export interface Stream<R, E, A> extends Stream.Variance<R, E, A>, Pipeable {
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: StreamUnify<this>
   [Unify.blacklistSymbol]?: StreamUnifyBlacklist
