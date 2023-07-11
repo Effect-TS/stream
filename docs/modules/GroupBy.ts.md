@@ -100,7 +100,7 @@ and the results will be merged in arbitrary order.
 **Signature**
 
 ```ts
-export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V> {
+export interface GroupBy<R, E, K, V> extends GroupBy.Variance<R, E, K, V>, Pipeable {
   readonly grouped: Stream.Stream<R, E, readonly [K, Queue.Dequeue<Take.Take<E, V>>]>
 }
 ```

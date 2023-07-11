@@ -44,7 +44,7 @@ export type SinkTypeId = typeof SinkTypeId
  * @since 1.0.0
  * @category models
  */
-export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z>, Pipeable<Sink<R, E, In, L, Z>> {}
+export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z>, Pipeable {}
 
 /**
  * @since 1.0.0
@@ -76,7 +76,7 @@ export interface SinkUnifyBlacklist extends Effect.EffectUnifyBlacklist {
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Omit<Sink<R, E, unknown, never, A>, "pipe"> {}
+  interface Effect<R, E, A> extends Sink<R, E, unknown, never, A> {}
   interface EffectUnifyBlacklist {
     Sink?: true
   }

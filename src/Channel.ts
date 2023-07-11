@@ -70,9 +70,7 @@ export type ChannelTypeId = typeof ChannelTypeId
  * @category models
  */
 export interface Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  extends
-    Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    Pipeable<Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
+  extends Channel.Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>, Pipeable
 {
   [Unify.typeSymbol]?: unknown
   [Unify.unifySymbol]?: ChannelUnify<this>

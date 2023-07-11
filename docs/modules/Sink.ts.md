@@ -1605,7 +1605,7 @@ type `L` (i.e. any leftovers).
 **Signature**
 
 ```ts
-export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z> {}
+export interface Sink<R, E, In, L, Z> extends Sink.Variance<R, E, In, L, Z>, Pipeable {}
 ```
 
 Added in v1.0.0
