@@ -95,7 +95,7 @@ describe.concurrent("Stream", () => {
         Effect.flatMap((pull) =>
           pipe(
             Chunk.range(1, 3),
-            Effect.forEach(() => pipe(Effect.either(pull), Effect.map(Either.map((chunk) => Array.from(chunk)))))
+            Effect.forEach(() => pipe(Effect.either(pull), Effect.map(Either.mapRight(Chunk.toReadonlyArray))))
           )
         ),
         Effect.scoped
