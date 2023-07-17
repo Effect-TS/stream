@@ -23,7 +23,7 @@ const chunkArb = <A>(
 
 const OrderByKey: Order.Order<readonly [number, number]> = pipe(
   Number.Order,
-  Order.contramap((tuple) => tuple[0])
+  Order.mapInput((tuple) => tuple[0])
 )
 
 export const splitChunks = <A>(chunks: Chunk.Chunk<Chunk.Chunk<A>>): fc.Arbitrary<Chunk.Chunk<Chunk.Chunk<A>>> => {
