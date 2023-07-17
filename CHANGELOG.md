@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.27.0
+
+### Minor Changes
+
+- [#127](https://github.com/Effect-TS/stream/pull/127) [`be45984`](https://github.com/Effect-TS/stream/commit/be45984eb99ec7ebf6a975fc32344ff687782a41) Thanks [@tim-smart](https://github.com/tim-smart)! - update /io and /data
+
 ## 0.26.0
 
 ### Minor Changes
