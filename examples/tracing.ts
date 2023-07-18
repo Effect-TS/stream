@@ -9,7 +9,7 @@ const program = Channel.flatMap(
 
 const main = pipe(
   Channel.runDrain(program),
-  Effect.catchAllCause(Effect.logCause("Error"))
+  Effect.catchAllCause(Effect.logError)
 )
 
 Effect.runFork(main)

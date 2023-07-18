@@ -6,7 +6,7 @@ const program = pipe(
   Channel.ensuring(Channel.ensuring(Channel.unit(), Effect.die("ok")), Effect.unit),
   Channel.runDrain,
   Effect.map((x) => console.log("HMMM", x)),
-  Effect.catchAllCause(Effect.logCause("Error"))
+  Effect.catchAllCause(Effect.logError)
 )
 
 Effect.runFork(program)
