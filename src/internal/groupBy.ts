@@ -70,11 +70,10 @@ export const evaluateBuffer = dual<
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
     bufferSize: number
   ): Stream.Stream<R | R2, E | E2, A> =>
-    stream.flatMapParBuffer(
+    stream.flatMap(
       self.grouped,
-      Number.POSITIVE_INFINITY,
-      bufferSize,
-      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue)))
+      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue))),
+      { concurrency: "unbounded", bufferSize }
     )
 )
 

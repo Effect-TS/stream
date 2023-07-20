@@ -166,6 +166,7 @@ describe.concurrent("Stream", () => {
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
       ))
+      console.log("serviceWithStream")
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
 

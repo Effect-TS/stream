@@ -193,10 +193,6 @@ Added in v1.0.0
 - [sequencing](#sequencing)
   - [branchAfter](#branchafter)
   - [flatMap](#flatmap)
-  - [flatMapPar](#flatmappar)
-  - [flatMapParBuffer](#flatmapparbuffer)
-  - [flatMapParSwitch](#flatmapparswitch)
-  - [flatMapParSwitchBuffer](#flatmapparswitchbuffer)
   - [flatten](#flatten)
   - [flattenChunks](#flattenchunks)
   - [flattenEffect](#flatteneffect)
@@ -3195,92 +3191,15 @@ streams produced by passing each element of this stream to `f0`
 
 ```ts
 export declare const flatMap: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## flatMapPar
-
-Maps each element of this stream to another stream and returns the
-non-deterministic merge of those streams, executing up to `n` inner streams
-concurrently. Up to `bufferSize` elements of the produced streams may be
-buffered in memory by this operator.
-
-**Signature**
-
-```ts
-export declare const flatMapPar: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## flatMapParBuffer
-
-Like `flatMapPar`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flatMapParBuffer: {
-  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## flatMapParSwitch
-
-Maps each element of this stream to another stream and returns the
-non-deterministic merge of those streams, executing up to `n` inner streams
-concurrently. When a new stream is created from an element of the source
-stream, the oldest executing stream is cancelled. Up to `bufferSize`
-elements of the produced streams may be buffered in memory by this
-operator.
-
-**Signature**
-
-```ts
-export declare const flatMapParSwitch: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## flatMapParSwitchBuffer
-
-Like `flatMapParSwitch`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flatMapParSwitchBuffer: {
-  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
+  <A, R2, E2, A2>(
+    f: (a: A) => Stream<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number; readonly switch?: boolean }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Stream<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number; readonly switch?: boolean }
+  ): Stream<R | R2, E | E2, A2>
 }
 ```
 

@@ -1280,85 +1280,16 @@ export const findEffect: {
  * @category sequencing
  */
 export const flatMap: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
+  <A, R2, E2, A2>(
+    f: (a: A) => Stream<R2, E2, A2>,
+    options?: { readonly concurrency?: number | "unbounded"; readonly bufferSize?: number; readonly switch?: boolean }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Stream<R2, E2, A2>,
+    options?: { readonly concurrency?: number | "unbounded"; readonly bufferSize?: number; readonly switch?: boolean }
+  ): Stream<R | R2, E | E2, A2>
 } = internal.flatMap
-
-/**
- * Maps each element of this stream to another stream and returns the
- * non-deterministic merge of those streams, executing up to `n` inner streams
- * concurrently. Up to `bufferSize` elements of the produced streams may be
- * buffered in memory by this operator.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flatMapPar: {
-  <A, R2, E2, A2>(
-    n: number,
-    f: (a: A) => Stream<R2, E2, A2>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-} = internal.flatMapPar
-
-/**
- * Like `flatMapPar`, but with a configurable `bufferSize` parameter.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flatMapParBuffer: {
-  <A, R2, E2, A2>(
-    n: number,
-    bufferSize: number,
-    f: (a: A) => Stream<R2, E2, A2>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(
-    self: Stream<R, E, A>,
-    n: number,
-    bufferSize: number,
-    f: (a: A) => Stream<R2, E2, A2>
-  ): Stream<R | R2, E | E2, A2>
-} = internal.flatMapParBuffer
-
-/**
- * Maps each element of this stream to another stream and returns the
- * non-deterministic merge of those streams, executing up to `n` inner streams
- * concurrently. When a new stream is created from an element of the source
- * stream, the oldest executing stream is cancelled. Up to `bufferSize`
- * elements of the produced streams may be buffered in memory by this
- * operator.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flatMapParSwitch: {
-  <A, R2, E2, A2>(
-    n: number,
-    f: (a: A) => Stream<R2, E2, A2>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-} = internal.flatMapParSwitch
-
-/**
- * Like `flatMapParSwitch`, but with a configurable `bufferSize` parameter.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flatMapParSwitchBuffer: {
-  <A, R2, E2, A2>(
-    n: number,
-    bufferSize: number,
-    f: (a: A) => Stream<R2, E2, A2>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(
-    self: Stream<R, E, A>,
-    n: number,
-    bufferSize: number,
-    f: (a: A) => Stream<R2, E2, A2>
-  ): Stream<R | R2, E | E2, A2>
-} = internal.flatMapParSwitchBuffer
 
 /**
  * Flattens this stream-of-streams into a stream made of the concatenation in
