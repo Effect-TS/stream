@@ -428,8 +428,19 @@ export const broadcastedQueuesDynamic: {
  * @category utils
  */
 export const buffer: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+  (
+    options: { readonly capacity: "unbounded" } | {
+      readonly capacity: number
+      readonly strategy?: "dropping" | "sliding" | "suspend"
+    }
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options: { readonly capacity: "unbounded" } | {
+      readonly capacity: number
+      readonly strategy?: "dropping" | "sliding" | "suspend"
+    }
+  ): Stream<R, E, A>
 } = internal.buffer
 
 /**
@@ -441,74 +452,20 @@ export const buffer: {
  * @category utils
  */
 export const bufferChunks: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+  (
+    options: {
+      readonly capacity: number
+      readonly strategy?: "dropping" | "sliding" | "suspend"
+    }
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options: {
+      readonly capacity: number
+      readonly strategy?: "dropping" | "sliding" | "suspend"
+    }
+  ): Stream<R, E, A>
 } = internal.bufferChunks
-
-/**
- * Allows a faster producer to progress independently of a slower consumer by
- * buffering up to `capacity` chunks in a dropping queue.
- *
- * @note Prefer capacities that are powers of 2 for better performance.
- * @since 1.0.0
- * @category utils
- */
-export const bufferChunksDropping: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-} = internal.bufferChunksDropping
-
-/**
- * Allows a faster producer to progress independently of a slower consumer by
- * buffering up to `capacity` chunks in a sliding queue.
- *
- * @note Prefer capacities that are powers of 2 for better performance.
- * @since 1.0.0
- * @category utils
- */
-export const bufferChunksSliding: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-} = internal.bufferChunksSliding
-
-/**
- * Allows a faster producer to progress independently of a slower consumer by
- * buffering up to `capacity` elements in a dropping queue.
- *
- * @note This combinator destroys the chunking structure. It's recommended to
- *       use rechunk afterwards. Additionally, Prefer capacities that are
- *       powers of 2 for better performance.
- * @since 1.0.0
- * @category utils
- */
-export const bufferDropping: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-} = internal.bufferDropping
-
-/**
- * Allows a faster producer to progress independently of a slower consumer by
- * buffering up to `capacity` elements in a sliding queue.
- *
- * @note This combinator destroys the chunking structure. It's recommended to
- *       use rechunk afterwards. Additionally, Prefer capacities that are
- *       powers of 2 for better performance.
- * @since 1.0.0
- * @category utils
- */
-export const bufferSliding: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-} = internal.bufferSliding
-
-/**
- * Allows a faster producer to progress independently of a slower consumer by
- * buffering chunks into an unbounded queue.
- *
- * @since 1.0.0
- * @category utils
- */
-export const bufferUnbounded: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A> = internal.bufferUnbounded
 
 /**
  * Switches over to the stream produced by the provided function in case this

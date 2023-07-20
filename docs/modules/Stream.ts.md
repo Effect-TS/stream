@@ -228,11 +228,6 @@ Added in v1.0.0
   - [broadcastedQueuesDynamic](#broadcastedqueuesdynamic)
   - [buffer](#buffer)
   - [bufferChunks](#bufferchunks)
-  - [bufferChunksDropping](#bufferchunksdropping)
-  - [bufferChunksSliding](#bufferchunkssliding)
-  - [bufferDropping](#bufferdropping)
-  - [bufferSliding](#buffersliding)
-  - [bufferUnbounded](#bufferunbounded)
   - [changes](#changes)
   - [changesWith](#changeswith)
   - [changesWithEffect](#changeswitheffect)
@@ -3750,8 +3745,17 @@ buffering up to `capacity` elements in a queue.
 
 ```ts
 export declare const buffer: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+  (
+    options:
+      | { readonly capacity: 'unbounded' }
+      | { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options:
+      | { readonly capacity: 'unbounded' }
+      | { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }
+  ): Stream<R, E, A>
 }
 ```
 
@@ -3766,86 +3770,14 @@ buffering up to `capacity` chunks in a queue.
 
 ```ts
 export declare const bufferChunks: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+  (options: { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options: { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }
+  ): Stream<R, E, A>
 }
-```
-
-Added in v1.0.0
-
-## bufferChunksDropping
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` chunks in a dropping queue.
-
-**Signature**
-
-```ts
-export declare const bufferChunksDropping: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferChunksSliding
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` chunks in a sliding queue.
-
-**Signature**
-
-```ts
-export declare const bufferChunksSliding: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferDropping
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` elements in a dropping queue.
-
-**Signature**
-
-```ts
-export declare const bufferDropping: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferSliding
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` elements in a sliding queue.
-
-**Signature**
-
-```ts
-export declare const bufferSliding: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferUnbounded
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering chunks into an unbounded queue.
-
-**Signature**
-
-```ts
-export declare const bufferUnbounded: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
 ```
 
 Added in v1.0.0

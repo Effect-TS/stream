@@ -792,10 +792,40 @@ export const broadcastedQueuesDynamic = dual<
 
 /** @internal */
 export const buffer = dual<
-  (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
->(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = toQueueOfElementsCapacity(self, capacity)
+  (
+    options: {
+      readonly capacity: "unbounded"
+    } | {
+      readonly capacity: number
+      readonly strategy?: "dropping" | "sliding" | "suspend"
+    }
+  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(
+    self: Stream.Stream<R, E, A>,
+    options: {
+      readonly capacity: "unbounded"
+    } | {
+      readonly capacity: number
+      readonly strategy?: "dropping" | "sliding" | "suspend"
+    }
+  ) => Stream.Stream<R, E, A>
+>(2, <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  options: {
+    readonly capacity: "unbounded"
+  } | {
+    readonly capacity: number
+    readonly strategy?: "dropping" | "sliding" | "suspend"
+  }
+): Stream.Stream<R, E, A> => {
+  if (options.capacity === "unbounded") {
+    return bufferUnbounded(self)
+  } else if (options.strategy === "dropping") {
+    return bufferDropping(self, options.capacity)
+  } else if (options.strategy === "sliding") {
+    return bufferSliding(self, options.capacity)
+  }
+  const queue = toQueueOfElementsCapacity(self, options.capacity)
   return new StreamImpl(
     channel.unwrapScoped(
       Effect.map(queue, (queue) => {
@@ -818,14 +848,27 @@ export const buffer = dual<
 
 /** @internal */
 export const bufferChunks = dual<
-  (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
->(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
-  const queue = pipe(self, toQueueCapacity(capacity))
+  (options: {
+    readonly capacity: number
+    readonly strategy?: "dropping" | "sliding" | "suspend"
+  }) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(self: Stream.Stream<R, E, A>, options: {
+    readonly capacity: number
+    readonly strategy?: "dropping" | "sliding" | "suspend"
+  }) => Stream.Stream<R, E, A>
+>(2, <R, E, A>(self: Stream.Stream<R, E, A>, options: {
+  readonly capacity: number
+  readonly strategy?: "dropping" | "sliding" | "suspend"
+}): Stream.Stream<R, E, A> => {
+  if (options.strategy === "dropping") {
+    return bufferChunksDropping(self, options.capacity)
+  } else if (options.strategy === "sliding") {
+    return bufferChunksSliding(self, options.capacity)
+  }
+  const queue = toQueueCapacity(self, options.capacity)
   return new StreamImpl(
-    pipe(
-      queue,
-      Effect.map((queue) => {
+    channel.unwrapScoped(
+      Effect.map(queue, (queue) => {
         const process: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
           core.fromEffect(Queue.take(queue)),
           core.flatMap(_take.match(
@@ -835,14 +878,12 @@ export const bufferChunks = dual<
           ))
         )
         return process
-      }),
-      channel.unwrapScoped
+      })
     )
   )
 })
 
-/** @internal */
-export const bufferChunksDropping = dual<
+const bufferChunksDropping = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
@@ -853,8 +894,7 @@ export const bufferChunksDropping = dual<
   return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
-/** @internal */
-export const bufferChunksSliding = dual<
+const bufferChunksSliding = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
@@ -865,8 +905,7 @@ export const bufferChunksSliding = dual<
   return new StreamImpl(bufferSignal(queue, toChannel(self)))
 })
 
-/** @internal */
-export const bufferDropping = dual<
+const bufferDropping = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
@@ -877,8 +916,7 @@ export const bufferDropping = dual<
   return new StreamImpl(bufferSignal(queue, toChannel(rechunk(1)(self))))
 })
 
-/** @internal */
-export const bufferSliding = dual<
+const bufferSliding = dual<
   (capacity: number) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number) => Stream.Stream<R, E, A>
 >(2, <R, E, A>(self: Stream.Stream<R, E, A>, capacity: number): Stream.Stream<R, E, A> => {
@@ -889,8 +927,7 @@ export const bufferSliding = dual<
   return new StreamImpl(bufferSignal(queue, toChannel(pipe(self, rechunk(1)))))
 })
 
-/** @internal */
-export const bufferUnbounded = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> => {
+const bufferUnbounded = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> => {
   const queue = toQueueUnbounded(self)
   return new StreamImpl(
     channel.unwrapScoped(

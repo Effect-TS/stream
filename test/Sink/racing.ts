@@ -51,9 +51,14 @@ const sinkRaceLaw = <E, A, L>(
 describe.concurrent("Sink", () => {
   it.effect("raceBoth", () =>
     Effect.gen(function*($) {
-      const ints = yield* $(unfoldEffect(0, (n) =>
-        Effect.map(Random.nextIntBetween(0, 10), (i) =>
-          n <= 20 ? Option.some([i, n + 1] as const) : Option.none())))
+      const ints = yield* $(unfoldEffect(
+        0,
+        (n) =>
+          Effect.map(
+            Random.nextIntBetween(0, 10),
+            (i) => n <= 20 ? Option.some([i, n + 1] as const) : Option.none()
+          )
+      ))
       const success1 = yield* $(Random.nextBoolean)
       const success2 = yield* $(Random.nextBoolean)
       const chunk = pipe(
