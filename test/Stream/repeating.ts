@@ -281,25 +281,4 @@ describe.concurrent("Stream", () => {
       ))
       assert.deepStrictEqual(Array.from(result), ["A", "123", "B", "123", "C", "123"])
     }))
-
-  it.effect("repeatElementsEither", () =>
-    Effect.gen(function*($) {
-      const schedule = pipe(
-        Schedule.recurs(0),
-        Schedule.zipRight(Schedule.fromFunction(() => 123))
-      )
-      const result = yield* $(pipe(
-        Stream.make("A", "B", "C"),
-        Stream.repeatElementsEither(schedule),
-        Stream.runCollect
-      ))
-      assert.deepStrictEqual(Array.from(result), [
-        Either.right("A"),
-        Either.left(123),
-        Either.right("B"),
-        Either.left(123),
-        Either.right("C"),
-        Either.left(123)
-      ])
-    }))
 })

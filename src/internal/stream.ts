@@ -79,10 +79,6 @@ export class StreamImpl<R, E, A> implements Stream.Stream<R, E, A> {
 export const DefaultChunkSize = 4096
 
 /** @internal */
-export const absolve = <R, E, A>(self: Stream.Stream<R, E, Either.Either<E, A>>): Stream.Stream<R, E, A> =>
-  mapEffect(self, identity)
-
-/** @internal */
 export const acquireRelease = <R, E, A, R2, _>(
   acquire: Effect.Effect<R, E, A>,
   release: (resource: A, exit: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, _>
@@ -122,7 +118,15 @@ export const aggregateWithin = dual<
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A | A2, A2, B>,
     schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-  ): Stream.Stream<R | R2 | R3, E | E2, B> => pipe(self, aggregateWithinEither(sink, schedule), collectRight)
+  ): Stream.Stream<R | R2 | R3, E | E2, B> =>
+    pipe(
+      self,
+      aggregateWithinEither(sink, schedule),
+      collect(Either.match({
+        onLeft: Option.none,
+        onRight: Option.some
+      }))
+    )
 )
 
 /** @internal */
@@ -1218,22 +1222,6 @@ export const collectEffect = dual<
 )
 
 /** @internal */
-export const collectLeft = <R, E, E2, A>(self: Stream.Stream<R, E, Either.Either<E2, A>>): Stream.Stream<R, E, E2> =>
-  pipe(self, collect((either) => Either.isLeft(either) ? Option.some(either.left) : Option.none()))
-
-/** @internal */
-export const collectSome = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collect((option) => Option.isSome(option) ? Option.some(option.value) : Option.none()))
-
-/** @internal */
-export const collectSuccess = <R, E, E2, A>(self: Stream.Stream<R, E, Exit.Exit<E2, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collect((exit) => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()))
-
-/** @internal */
-export const collectRight = <R, E, E2, A>(self: Stream.Stream<R, E, Either.Either<E2, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collect((either) => Either.isRight(either) ? Option.some(either.right) : Option.none()))
-
-/** @internal */
 export const collectWhile = <A, A2>(pf: (a: A) => Option.Option<A2>) => {
   return <R, E>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A2> => {
     const loop: Channel.Channel<never, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<A2>, unknown> = core.readWith(
@@ -1250,26 +1238,6 @@ export const collectWhile = <A, A2>(pf: (a: A) => Option.Option<A2>) => {
     return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(loop)))
   }
 }
-
-/** @internal */
-export const collectWhileLeft = <R, E, E2, A>(
-  self: Stream.Stream<R, E, Either.Either<E2, A>>
-): Stream.Stream<R, E, E2> =>
-  pipe(self, collectWhile((either) => Either.isLeft(either) ? Option.some(either.left) : Option.none()))
-
-/** @internal */
-export const collectWhileSome = <R, E, A>(self: Stream.Stream<R, E, Option.Option<A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collectWhile((option) => Option.isSome(option) ? Option.some(option.value) : Option.none()))
-
-/** @internal */
-export const collectWhileRight = <R, E, E2, A>(
-  self: Stream.Stream<R, E, Either.Either<E2, A>>
-): Stream.Stream<R, E, A> =>
-  pipe(self, collectWhile((either) => Either.isRight(either) ? Option.some(either.right) : Option.none()))
-
-/** @internal */
-export const collectWhileSuccess = <R, E, E2, A>(self: Stream.Stream<R, E, Exit.Exit<E2, A>>): Stream.Stream<R, E, A> =>
-  pipe(self, collectWhile((exit) => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()))
 
 /** @internal */
 export const collectWhileEffect = dual<
@@ -2073,10 +2041,6 @@ export const distributedWithDynamicCallback = dual<
       })
     )
   ))
-
-// TODO: remove
-/** @internal */
-export const done = <E, A>(exit: Exit.Exit<E, A>): Stream.Stream<never, E, A> => fromEffect(Effect.suspend(() => exit))
 
 /** @internal */
 export const drain = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, never> =>
@@ -4227,30 +4191,6 @@ export const orElseIfEmptyStream = dual<
 )
 
 /** @internal */
-export const orElseOptional = dual<
-  <R2, E2, A2>(
-    that: LazyArg<Stream.Stream<R2, Option.Option<E2>, A2>>
-  ) => <R, E, A>(self: Stream.Stream<R, Option.Option<E>, A>) => Stream.Stream<R2 | R, Option.Option<E2 | E>, A2 | A>,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, Option.Option<E>, A>,
-    that: LazyArg<Stream.Stream<R2, Option.Option<E2>, A2>>
-  ) => Stream.Stream<R2 | R, Option.Option<E2 | E>, A2 | A>
->(
-  2,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, Option.Option<E>, A>,
-    that: LazyArg<Stream.Stream<R2, Option.Option<E2>, A2>>
-  ): Stream.Stream<R | R2, Option.Option<E | E2>, A | A2> =>
-    catchAll(
-      self,
-      Option.match({
-        onNone: that,
-        onSome: (error) => fail(Option.some<E | E2>(error))
-      })
-    )
-)
-
-/** @internal */
 export const orElseSucceed = dual<
   <A2>(value: LazyArg<A2>) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, never, A2 | A>,
   <R, E, A, A2>(self: Stream.Stream<R, E, A>, value: LazyArg<A2>) => Stream.Stream<R, never, A2 | A>
@@ -4469,94 +4409,34 @@ export const partitionBuffer = dual<
   readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]
 > =>
   pipe(
-    self,
-    partitionEitherBuffer((a) =>
-      predicate(a) ?
-        Effect.succeed(Either.left(a)) :
-        Effect.succeed(Either.right(a)), bufferSize)
-  ))
-
-/** @internal */
-export const partitionEither = dual<
-  <A, R2, E2, A2, A3>(
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ) => <R, E>(
-    self: Stream.Stream<R, E, A>
-  ) => Effect.Effect<
-    Scope.Scope | R2 | R,
-    E2 | E,
-    readonly [Stream.Stream<never, E2 | E, A2>, Stream.Stream<never, E2 | E, A3>]
-  >,
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream.Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ) => Effect.Effect<
-    Scope.Scope | R2 | R,
-    E2 | E,
-    readonly [Stream.Stream<never, E2 | E, A2>, Stream.Stream<never, E2 | E, A3>]
-  >
->(
-  2,
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream.Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ): Effect.Effect<
-    R | R2 | Scope.Scope,
-    E | E2,
-    readonly [Stream.Stream<never, E | E2, A2>, Stream.Stream<never, E | E2, A3>]
-  > => partitionEitherBuffer(self, predicate, 16)
-)
-
-/** @internal */
-export const partitionEitherBuffer = dual<
-  <A, R2, E2, A2, A3>(
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ) => <R, E>(
-    self: Stream.Stream<R, E, A>
-  ) => Effect.Effect<
-    Scope.Scope | R2 | R,
-    E2 | E,
-    readonly [Stream.Stream<never, E2 | E, A2>, Stream.Stream<never, E2 | E, A3>]
-  >,
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream.Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ) => Effect.Effect<
-    Scope.Scope | R2 | R,
-    E2 | E,
-    readonly [Stream.Stream<never, E2 | E, A2>, Stream.Stream<never, E2 | E, A3>]
-  >
->(
-  3,
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream.Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ): Effect.Effect<
-    R | R2 | Scope.Scope,
-    E | E2,
-    readonly [Stream.Stream<never, E | E2, A2>, Stream.Stream<never, E | E2, A3>]
-  > =>
-    pipe(
-      mapEffect(self, predicate),
-      distributedWith(
-        2,
-        bufferSize,
-        Either.match({
-          onLeft: () => Effect.succeed((n) => n === 0),
-          onRight: () => Effect.succeed((n) => n === 1)
-        })
-      ),
-      Effect.flatMap(([queue1, queue2]) =>
-        Effect.succeed([
-          collectLeft(flattenExitOption(fromQueueWithShutdown(queue1))),
-          collectRight(flattenExitOption(fromQueueWithShutdown(queue2)))
-        ])
-      )
+    map(self, (a): Either.Either<A, A> => predicate(a) ? Either.left(a) : Either.right(a)),
+    distributedWith(
+      2,
+      bufferSize,
+      Either.match({
+        onLeft: () => Effect.succeed((n) => n === 0),
+        onRight: () => Effect.succeed((n) => n === 1)
+      })
+    ),
+    Effect.flatMap(([queue1, queue2]) =>
+      Effect.succeed([
+        collect(
+          flattenExitOption(fromQueueWithShutdown(queue1)),
+          Either.match({
+            onLeft: Option.some,
+            onRight: Option.none
+          })
+        ),
+        collect(
+          flattenExitOption(fromQueueWithShutdown(queue2)),
+          Either.match({
+            onLeft: Option.none,
+            onRight: Option.some
+          })
+        )
+      ])
     )
-)
+  ))
 
 /** @internal */
 export const pipeThrough = dual<
@@ -4908,7 +4788,15 @@ export const repeat = dual<
   <R, E, A, R2, B>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>
-  ): Stream.Stream<R | R2, E, A> => pipe(self, repeatEither(schedule), collectRight)
+  ): Stream.Stream<R | R2, E, A> =>
+    pipe(
+      self,
+      repeatEither(schedule),
+      collect(Either.match({
+        onLeft: Option.none,
+        onRight: Option.some
+      }))
+    )
 )
 
 /** @internal */
@@ -4968,25 +4856,11 @@ export const repeatElements = dual<
   <R, E, A, R2, B>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>
-  ): Stream.Stream<R | R2, E, A> => pipe(self, repeatElementsEither(schedule), collectRight)
-)
-
-/** @internal */
-export const repeatElementsEither = dual<
-  <R2, B>(
-    schedule: Schedule.Schedule<R2, unknown, B>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, Either.Either<B, A>>,
-  <R, E, A, R2, B>(
-    self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, unknown, B>
-  ) => Stream.Stream<R2 | R, E, Either.Either<B, A>>
->(
-  2,
-  <R, E, A, R2, B>(
-    self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, unknown, B>
-  ): Stream.Stream<R | R2, E, Either.Either<B, A>> =>
-    pipe(self, repeatElementsWith(schedule, (a): Either.Either<B, A> => Either.right(a), Either.left))
+  ): Stream.Stream<R | R2, E, A> =>
+    collect(
+      repeatElementsWith(self, schedule, (a) => Option.some(a), Option.none),
+      identity
+    )
 )
 
 /** @internal */
@@ -5169,36 +5043,6 @@ export const retry = dual<
             })
           ))
         return loop
-      })
-    )
-)
-
-/** @internal */
-export const right = <R, E, A, A2>(
-  self: Stream.Stream<R, E, Either.Either<A, A2>>
-): Stream.Stream<R, Option.Option<E>, A2> =>
-  pipe(self, mapError(Option.some), rightOrFail((): Option.Option<E> => Option.none()))
-
-/** @internal */
-export const rightOrFail = dual<
-  <E2>(
-    error: LazyArg<E2>
-  ) => <R, E, A, A2>(self: Stream.Stream<R, E, Either.Either<A, A2>>) => Stream.Stream<R, E2 | E, A2>,
-  <R, E, A, A2, E2>(
-    self: Stream.Stream<R, E, Either.Either<A, A2>>,
-    error: LazyArg<E2>
-  ) => Stream.Stream<R, E2 | E, A2>
->(
-  2,
-  <R, E, A, A2, E2>(
-    self: Stream.Stream<R, E, Either.Either<A, A2>>,
-    error: LazyArg<E2>
-  ): Stream.Stream<R, E | E2, A2> =>
-    mapEffect(
-      self,
-      Either.match({
-        onLeft: () => Effect.failSync(error),
-        onRight: Effect.succeed
       })
     )
 )
@@ -5632,25 +5476,11 @@ export const schedule = dual<
   <R, E, R2, A>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, A, unknown>
-  ): Stream.Stream<R | R2, E, A> => pipe(self, scheduleEither(schedule), collectRight)
-)
-
-/** @internal */
-export const scheduleEither = dual<
-  <R2, A, B>(
-    schedule: Schedule.Schedule<R2, A, B>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, Either.Either<B, A>>,
-  <R, E, R2, A, B>(
-    self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, B>
-  ) => Stream.Stream<R2 | R, E, Either.Either<B, A>>
->(
-  2,
-  <R, E, R2, A, B>(
-    self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, B>
-  ): Stream.Stream<R | R2, E, Either.Either<B, A>> =>
-    pipe(self, scheduleWith(schedule, (a): Either.Either<B, A> => Either.right(a), Either.left))
+  ): Stream.Stream<R | R2, E, A> =>
+    collect(
+      scheduleWith(self, schedule, Option.some, Option.none),
+      identity
+    )
 )
 
 /** @internal */

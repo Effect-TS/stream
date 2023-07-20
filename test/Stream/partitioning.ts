@@ -10,27 +10,11 @@ import * as it from "@effect/stream/test/utils/extend"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
-  it.effect("partitionEither - allows repeated runs without hanging", () =>
-    Effect.gen(function*($) {
-      const stream = pipe(
-        Stream.fromIterable(Chunk.empty<number>()),
-        Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n))),
-        Effect.map(([evens, odds]) => pipe(evens, Stream.mergeEither(odds))),
-        Effect.flatMap(Stream.runCollect),
-        Effect.scoped
-      )
-      const result = yield* $(pipe(
-        Effect.all(Array.from({ length: 100 }, () => stream)),
-        Effect.as(0)
-      ))
-      assert.strictEqual(result, 0)
-    }))
-
-  it.effect("partitionEither - values", () =>
+  it.effect("partition - values", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(pipe(
         Stream.range(0, 6),
-        Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n))),
+        Stream.partition((n) => n % 2 === 0),
         Effect.flatMap(([evens, odds]) =>
           Effect.all({
             result1: Stream.runCollect(evens),
@@ -43,12 +27,12 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result2), [1, 3, 5])
     }))
 
-  it.effect("partitionEither - errors", () =>
+  it.effect("partition - errors", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(pipe(
         Stream.range(0, 1),
         Stream.concat(Stream.fail("boom")),
-        Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n))),
+        Stream.partition((n) => n % 2 === 0),
         Effect.flatMap(([evens, odds]) =>
           Effect.all({
             result1: Effect.either(Stream.runCollect(evens)),
@@ -61,11 +45,11 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(result2, Either.left("boom"))
     }))
 
-  it.effect("partitionEither - backpressure", () =>
+  it.effect("partition - backpressure", () =>
     Effect.gen(function*($) {
       const { result1, result2, result3 } = yield* $(pipe(
         Stream.range(0, 6),
-        Stream.partitionEitherBuffer((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n)), 1),
+        Stream.partitionBuffer((n) => (n % 2 === 0), 1),
         Effect.flatMap(([evens, odds]) =>
           Effect.gen(function*($) {
             const ref = yield* $(Ref.make(Chunk.empty<number>()))

@@ -4,6 +4,7 @@ import * as Either from "@effect/data/Either"
 import { identity, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
+import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
 import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
@@ -173,7 +174,10 @@ describe.concurrent("Stream", () => {
       const coordination = yield* $(chunkCoordination([Chunk.make(1, 2)]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhileSuccess,
+        Stream.collectWhile(Exit.match({
+          onFailure: Option.none,
+          onSuccess: Option.some
+        })),
         Stream.flattenChunks,
         Stream.tap(() => coordination.proceed),
         Stream.runCollect,

@@ -144,14 +144,6 @@ export declare namespace Stream {
 export const DefaultChunkSize: number = internal.DefaultChunkSize
 
 /**
- * Submerges the error case of an `Either` into the `Stream`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const absolve: <R, E, A>(self: Stream<R, E, Either.Either<E, A>>) => Stream<R, E, A> = internal.absolve
-
-/**
  * Creates a stream from a single value that will get cleaned up after the
  * stream is consumed.
  *
@@ -661,41 +653,6 @@ export const collectEffect: {
 } = internal.collectEffect
 
 /**
- * Filters any `Right` values.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2> =
-  internal.collectLeft
-
-/**
- * Filters any `Left` values.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A> =
-  internal.collectRight
-
-/**
- * Filters any 'None' values.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A> = internal.collectSome
-
-/**
- * Filters any `Exit.Failure` values.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A> =
-  internal.collectSuccess
-
-/**
  * Transforms all elements of the stream for as long as the specified partial
  * function is defined.
  *
@@ -705,42 +662,6 @@ export const collectSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>)
 export const collectWhile: <A, A2>(
   pf: (a: A) => Option.Option<A2>
 ) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2> = internal.collectWhile
-
-/**
- * Terminates the stream when encountering the first `Right`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectWhileLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2> =
-  internal.collectWhileLeft
-
-/**
- * Terminates the stream when encountering the first `None`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectWhileSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A> =
-  internal.collectWhileSome
-
-/**
- * Terminates the stream when encountering the first `Left`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectWhileRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A> =
-  internal.collectWhileRight
-
-/**
- * Terminates the stream when encountering the first `Exit.Failure`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectWhileSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A> =
-  internal.collectWhileSuccess
 
 /**
  * Effectfully transforms all elements of the stream for as long as the
@@ -1008,14 +929,6 @@ export const distributedWithDynamic: {
     Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
   >
 } = internal.distributedWithDynamic
-
-/**
- * The stream that ends with the specified `Exit` value.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const done: <E, A>(exit: Exit.Exit<E, A>) => Stream<never, E, A> = internal.done
 
 /**
  * Converts this stream to a stream that executes its effects but emits no
@@ -2701,25 +2614,6 @@ export const orElseIfEmptyStream: {
 } = internal.orElseIfEmptyStream
 
 /**
- * Switches to the provided stream in case this one fails with the `None`
- * value.
- *
- * See also `Stream.catchAll`.
- *
- * @since 1.0.0
- * @category error handling
- */
-export const orElseOptional: {
-  <R2, E2, A2>(
-    that: LazyArg<Stream<R2, Option.Option<E2>, A2>>
-  ): <R, E, A>(self: Stream<R, Option.Option<E>, A>) => Stream<R2 | R, Option.Option<E2 | E>, A2 | A>
-  <R, E, A, R2, E2, A2>(
-    self: Stream<R, Option.Option<E>, A>,
-    that: LazyArg<Stream<R2, Option.Option<E2>, A2>>
-  ): Stream<R | R2, Option.Option<E | E2>, A | A2>
-} = internal.orElseOptional
-
-/**
  * Succeeds with the specified value if this one fails with a typed error.
  *
  * @since 1.0.0
@@ -2820,45 +2714,6 @@ export const partitionBuffer: {
     bufferSize: number
   ): Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
 } = internal.partitionBuffer
-
-/**
- * Split a stream by an effectful predicate. The faster stream may advance by
- * up to buffer elements further than the slower one.
- *
- * @since 1.0.0
- * @category utils
- */
-export const partitionEither: {
-  <A, R2, E2, A2, A3>(
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ): <R, E>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
-} = internal.partitionEither
-
-/**
- * Like `partitionEither`, but with a configurable `bufferSize` parameter.
- *
- * @since 1.0.0
- * @category utils
- */
-export const partitionEitherBuffer: {
-  <A, R2, E2, A2, A3>(
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ): <R, E>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
-} = internal.partitionEitherBuffer
 
 /**
  * Peels off enough material from the stream to construct a `Z` using the
@@ -3194,27 +3049,6 @@ export const repeatElements: {
  * plus an additional recurrence, for a total of two repetitions of each value
  * in the stream.
  *
- * @since 1.0.0
- * @category utils
- */
-export const repeatElementsEither: {
-  <R2, B>(
-    schedule: Schedule.Schedule<R2, unknown, B>
-  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>>
-  <R, E, A, R2, B>(
-    self: Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, unknown, B>
-  ): Stream<R | R2, E, Either.Either<B, A>>
-} = internal.repeatElementsEither
-
-/**
- * Repeats each element of the stream using the provided schedule. When the
- * schedule is finished, then the output of the schedule will be emitted into
- * the stream. Repetitions are done in addition to the first execution, which
- * means using `Schedule.recurs(1)` actually results in the original effect,
- * plus an additional recurrence, for a total of two repetitions of each value
- * in the stream.
- *
  * This function accepts two conversion functions, which allow the output of
  * this stream and the output of the provided schedule to be unified into a
  * single type. For example, `Either` or similar data type.
@@ -3284,26 +3118,6 @@ export const retry: {
   <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
   <R, A, R2, E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream<R | R2, E, A>
 } = internal.retry
-
-/**
- * Fails with the error `None` if value is `Left`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const right: <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, Option.Option<E>, A2> =
-  internal.right
-
-/**
- * Fails with given error 'e' if value is `Left`.
- *
- * @since 1.0.0
- * @category utils
- */
-export const rightOrFail: {
-  <E2>(error: LazyArg<E2>): <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, E2 | E, A2>
-  <R, E, A, A2, E2>(self: Stream<R, E, Either.Either<A, A2>>, error: LazyArg<E2>): Stream<R, E | E2, A2>
-} = internal.rightOrFail
 
 /**
  * Runs the sink on the stream to produce either the sink's result or an error.
@@ -3757,20 +3571,6 @@ export const schedule: {
   <R2, A>(schedule: Schedule.Schedule<R2, A, unknown>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
   <R, E, R2, A>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, unknown>): Stream<R | R2, E, A>
 } = internal.schedule
-
-/**
- * Schedules the output of the stream using the provided `schedule` and emits
- * its output at the end (if `schedule` is finite).
- *
- * @since 1.0.0
- * @category utils
- */
-export const scheduleEither: {
-  <R2, A, B>(
-    schedule: Schedule.Schedule<R2, A, B>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, Either.Either<B, A>>
-  <R, E, R2, A, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, B>): Stream<R | R2, E, Either.Either<B, A>>
-} = internal.scheduleEither
 
 /**
  * Schedules the output of the stream using the provided `schedule` and emits

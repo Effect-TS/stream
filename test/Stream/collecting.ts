@@ -83,20 +83,6 @@ describe.concurrent("Stream", () => {
       )
     }))
 
-  it.effect("collectSome", () =>
-    Effect.gen(function*($) {
-      const stream = Stream.make(
-        Option.some(1),
-        Option.none() as Option.Option<number>,
-        Option.some(2)
-      )
-      const { result1, result2 } = yield* $(Effect.all({
-        result1: pipe(stream, Stream.collectSome, Stream.runCollect),
-        result2: pipe(stream, Stream.runCollect, Effect.map(Chunk.filterMap(identity)))
-      }))
-      assert.deepStrictEqual(Array.from(result1), Array.from(result2))
-    }))
-
   it.effect("collectWhile - simple example", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(

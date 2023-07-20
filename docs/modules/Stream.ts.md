@@ -27,7 +27,6 @@ Added in v1.0.0
   - [die](#die)
   - [dieMessage](#diemessage)
   - [dieSync](#diesync)
-  - [done](#done)
   - [empty](#empty)
   - [execute](#execute)
   - [fail](#fail)
@@ -157,7 +156,6 @@ Added in v1.0.0
   - [orElseIfEmpty](#orelseifempty)
   - [orElseIfEmptyChunk](#orelseifemptychunk)
   - [orElseIfEmptyStream](#orelseifemptystream)
-  - [orElseOptional](#orelseoptional)
   - [orElseSucceed](#orelsesucceed)
   - [refineOrDie](#refineordie)
   - [refineOrDieWith](#refineordiewith)
@@ -219,7 +217,6 @@ Added in v1.0.0
 - [type lambdas](#type-lambdas)
   - [StreamTypeLambda (interface)](#streamtypelambda-interface)
 - [utils](#utils)
-  - [absolve](#absolve)
   - [aggregate](#aggregate)
   - [aggregateWithin](#aggregatewithin)
   - [aggregateWithinEither](#aggregatewithineither)
@@ -241,16 +238,8 @@ Added in v1.0.0
   - [chunksWith](#chunkswith)
   - [collect](#collect)
   - [collectEffect](#collecteffect)
-  - [collectLeft](#collectleft)
-  - [collectRight](#collectright)
-  - [collectSome](#collectsome)
-  - [collectSuccess](#collectsuccess)
   - [collectWhile](#collectwhile)
   - [collectWhileEffect](#collectwhileeffect)
-  - [collectWhileLeft](#collectwhileleft)
-  - [collectWhileRight](#collectwhileright)
-  - [collectWhileSome](#collectwhilesome)
-  - [collectWhileSuccess](#collectwhilesuccess)
   - [combine](#combine)
   - [combineChunks](#combinechunks)
   - [concat](#concat)
@@ -306,8 +295,6 @@ Added in v1.0.0
   - [onError](#onerror)
   - [partition](#partition)
   - [partitionBuffer](#partitionbuffer)
-  - [partitionEither](#partitioneither)
-  - [partitionEitherBuffer](#partitioneitherbuffer)
   - [peel](#peel)
   - [pipeThrough](#pipethrough)
   - [pipeThroughChannel](#pipethroughchannel)
@@ -317,18 +304,14 @@ Added in v1.0.0
   - [repeat](#repeat)
   - [repeatEither](#repeateither)
   - [repeatElements](#repeatelements)
-  - [repeatElementsEither](#repeatelementseither)
   - [repeatElementsWith](#repeatelementswith)
   - [repeatWith](#repeatwith)
   - [retry](#retry)
-  - [right](#right)
-  - [rightOrFail](#rightorfail)
   - [scan](#scan)
   - [scanEffect](#scaneffect)
   - [scanReduce](#scanreduce)
   - [scanReduceEffect](#scanreduceeffect)
   - [schedule](#schedule)
-  - [scheduleEither](#scheduleeither)
   - [scheduleWith](#schedulewith)
   - [sliding](#sliding)
   - [slidingSize](#slidingsize)
@@ -566,18 +549,6 @@ The stream that dies with the specified lazily evaluated defect.
 
 ```ts
 export declare const dieSync: (evaluate: LazyArg<unknown>) => Stream<never, never, never>
-```
-
-Added in v1.0.0
-
-## done
-
-The stream that ends with the specified `Exit` value.
-
-**Signature**
-
-```ts
-export declare const done: <E, A>(exit: Exit.Exit<E, A>) => Stream<never, E, A>
 ```
 
 Added in v1.0.0
@@ -2583,30 +2554,6 @@ export declare const orElseIfEmptyStream: {
 
 Added in v1.0.0
 
-## orElseOptional
-
-Switches to the provided stream in case this one fails with the `None`
-value.
-
-See also `Stream.catchAll`.
-
-**Signature**
-
-```ts
-export declare const orElseOptional: {
-  <R2, E2, A2>(that: LazyArg<Stream<R2, Option.Option<E2>, A2>>): <R, E, A>(
-    self: Stream<R, Option.Option<E>, A>
-  ) => Stream<R2 | R, Option.Option<E2 | E>, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, Option.Option<E>, A>, that: LazyArg<Stream<R2, Option.Option<E2>, A2>>): Stream<
-    R | R2,
-    Option.Option<E | E2>,
-    A | A2
-  >
-}
-```
-
-Added in v1.0.0
-
 ## orElseSucceed
 
 Succeeds with the specified value if this one fails with a typed error.
@@ -3528,18 +3475,6 @@ Added in v1.0.0
 
 # utils
 
-## absolve
-
-Submerges the error case of an `Either` into the `Stream`.
-
-**Signature**
-
-```ts
-export declare const absolve: <R, E, A>(self: Stream<R, E, Either.Either<E, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
 ## aggregate
 
 Aggregates elements of this stream using the provided sink for as long as
@@ -3931,54 +3866,6 @@ export declare const collectEffect: {
 
 Added in v1.0.0
 
-## collectLeft
-
-Filters any `Right` values.
-
-**Signature**
-
-```ts
-export declare const collectLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2>
-```
-
-Added in v1.0.0
-
-## collectRight
-
-Filters any `Left` values.
-
-**Signature**
-
-```ts
-export declare const collectRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectSome
-
-Filters any 'None' values.
-
-**Signature**
-
-```ts
-export declare const collectSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectSuccess
-
-Filters any `Exit.Failure` values.
-
-**Signature**
-
-```ts
-export declare const collectSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
 ## collectWhile
 
 Transforms all elements of the stream for as long as the specified partial
@@ -4005,54 +3892,6 @@ specified partial function is defined.
 export declare const collectWhileEffect: <A, R2, E2, A2>(
   pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
 ) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
-## collectWhileLeft
-
-Terminates the stream when encountering the first `Right`.
-
-**Signature**
-
-```ts
-export declare const collectWhileLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2>
-```
-
-Added in v1.0.0
-
-## collectWhileRight
-
-Terminates the stream when encountering the first `Left`.
-
-**Signature**
-
-```ts
-export declare const collectWhileRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectWhileSome
-
-Terminates the stream when encountering the first `None`.
-
-**Signature**
-
-```ts
-export declare const collectWhileSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectWhileSuccess
-
-Terminates the stream when encountering the first `Exit.Failure`.
-
-**Signature**
-
-```ts
-export declare const collectWhileSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A>
 ```
 
 Added in v1.0.0
@@ -5140,48 +4979,6 @@ export declare const partitionBuffer: {
 
 Added in v1.0.0
 
-## partitionEither
-
-Split a stream by an effectful predicate. The faster stream may advance by
-up to buffer elements further than the slower one.
-
-**Signature**
-
-```ts
-export declare const partitionEither: {
-  <A, R2, E2, A2, A3>(predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
-}
-```
-
-Added in v1.0.0
-
-## partitionEitherBuffer
-
-Like `partitionEither`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const partitionEitherBuffer: {
-  <A, R2, E2, A2, A3>(predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>, bufferSize: number): <R, E>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
-}
-```
-
-Added in v1.0.0
-
 ## peel
 
 Peels off enough material from the stream to construct a `Z` using the
@@ -5350,32 +5147,6 @@ export declare const repeatElements: {
 
 Added in v1.0.0
 
-## repeatElementsEither
-
-Repeats each element of the stream using the provided schedule. When the
-schedule is finished, then the output of the schedule will be emitted into
-the stream. Repetitions are done in addition to the first execution, which
-means using `Schedule.recurs(1)` actually results in the original effect,
-plus an additional recurrence, for a total of two repetitions of each value
-in the stream.
-
-**Signature**
-
-```ts
-export declare const repeatElementsEither: {
-  <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, Either.Either<B, A>>
-  <R, E, A, R2, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, unknown, B>): Stream<
-    R | R2,
-    E,
-    Either.Either<B, A>
-  >
-}
-```
-
-Added in v1.0.0
-
 ## repeatElementsWith
 
 Repeats each element of the stream using the provided schedule. When the
@@ -5448,33 +5219,6 @@ stream again.
 export declare const retry: {
   <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
   <R, A, R2, E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream<R | R2, E, A>
-}
-```
-
-Added in v1.0.0
-
-## right
-
-Fails with the error `None` if value is `Left`.
-
-**Signature**
-
-```ts
-export declare const right: <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, Option.Option<E>, A2>
-```
-
-Added in v1.0.0
-
-## rightOrFail
-
-Fails with given error 'e' if value is `Left`.
-
-**Signature**
-
-```ts
-export declare const rightOrFail: {
-  <E2>(error: LazyArg<E2>): <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, E2 | E, A2>
-  <R, E, A, A2, E2>(self: Stream<R, E, Either.Either<A, A2>>, error: LazyArg<E2>): Stream<R, E | E2, A2>
 }
 ```
 
@@ -5563,24 +5307,6 @@ Schedules the output of the stream using the provided `schedule`.
 export declare const schedule: {
   <R2, A>(schedule: Schedule.Schedule<R2, A, unknown>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
   <R, E, R2, A>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, unknown>): Stream<R | R2, E, A>
-}
-```
-
-Added in v1.0.0
-
-## scheduleEither
-
-Schedules the output of the stream using the provided `schedule` and emits
-its output at the end (if `schedule` is finite).
-
-**Signature**
-
-```ts
-export declare const scheduleEither: {
-  <R2, A, B>(schedule: Schedule.Schedule<R2, A, B>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, Either.Either<B, A>>
-  <R, E, R2, A, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, B>): Stream<R | R2, E, Either.Either<B, A>>
 }
 ```
 

@@ -146,7 +146,10 @@ describe.concurrent("Stream", () => {
       ]))
       const stream = pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhileSuccess,
+        Stream.collectWhile(Exit.match({
+          onSuccess: Option.some,
+          onFailure: Option.none
+        })),
         Stream.debounce(Duration.seconds(1)),
         Stream.tap(() => coordination.proceed)
       )
@@ -184,7 +187,7 @@ describe.concurrent("Stream", () => {
       ]))
       const stream = pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhileSuccess,
+        Stream.collectWhile(Exit.match({ onSuccess: Option.some, onFailure: Option.none })),
         Stream.debounce(Duration.seconds(1)),
         Stream.tap(() => coordination.proceed)
       )
@@ -211,7 +214,7 @@ describe.concurrent("Stream", () => {
       ]))
       const stream = pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhileSuccess,
+        Stream.collectWhile(Exit.match({ onSuccess: Option.some, onFailure: Option.none })),
         Stream.debounce(Duration.seconds(1)),
         Stream.tap(() => coordination.proceed)
       )

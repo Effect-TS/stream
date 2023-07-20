@@ -1,6 +1,6 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Either from "@effect/data/Either"
-import { pipe } from "@effect/data/Function"
+import { identity, pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Cause from "@effect/io/Cause"
 import * as Effect from "@effect/io/Effect"
@@ -19,7 +19,7 @@ describe.concurrent("Stream", () => {
           chunk,
           Chunk.map(Either.right),
           Stream.fromIterable,
-          Stream.absolve,
+          Stream.mapEffect(identity),
           Stream.runCollect
         )
       )
@@ -32,7 +32,7 @@ describe.concurrent("Stream", () => {
         pipe(
           Stream.fromIterable(pipe(Chunk.range(1, 10), Chunk.map(Either.right))),
           Stream.concat(Stream.succeed(Either.left("Ouch"))),
-          Stream.absolve,
+          Stream.mapEffect(identity),
           Stream.runCollect,
           Effect.exit
         )
@@ -46,7 +46,7 @@ describe.concurrent("Stream", () => {
       const stream = pipe(xss, Stream.concat(Stream.succeed(Either.left("Ouch"))), Stream.concat(xss))
       const { result1, result2 } = yield* $(Effect.all({
         result1: Stream.runCollect(stream),
-        result2: pipe(Stream.absolve(stream), Stream.either, Stream.runCollect)
+        result2: pipe(Stream.mapEffect(stream, identity), Stream.either, Stream.runCollect)
       }))
       assert.deepStrictEqual(
         Array.from(pipe(result1, Chunk.take(result2.length))),
@@ -60,7 +60,7 @@ describe.concurrent("Stream", () => {
       const stream = pipe(xss, Stream.concat(Stream.fail("Ouch")))
       const { result1, result2 } = yield* $(Effect.all({
         result1: Effect.exit(Stream.runCollect(stream)),
-        result2: pipe(stream, Stream.either, Stream.absolve, Stream.runCollect, Effect.exit)
+        result2: pipe(stream, Stream.either, Stream.mapEffect(identity), Stream.runCollect, Effect.exit)
       }))
       assert.deepStrictEqual(Exit.unannotate(result1), Exit.fail("Ouch"))
       assert.deepStrictEqual(Exit.unannotate(result2), Exit.fail("Ouch"))
@@ -325,18 +325,6 @@ describe.concurrent("Stream", () => {
         Effect.either
       ))
       assert.deepStrictEqual(result, Either.left("Ouch"))
-    }))
-
-  it.effect("orElseOptional", () =>
-    Effect.gen(function*($) {
-      const stream1 = pipe(Stream.succeed(1), Stream.concat(Stream.fail(Option.none())))
-      const stream2 = Stream.succeed(2)
-      const result = yield* $(pipe(
-        stream1,
-        Stream.orElseOptional(() => stream2),
-        Stream.runCollect
-      ))
-      assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
   it.effect("orElseSucceed", () =>
