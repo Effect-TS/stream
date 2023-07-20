@@ -877,17 +877,21 @@ export const dieMessage: (message: string) => Stream<never, never, never> = inte
  */
 export const distributedWith: {
   <N extends number, A>(
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): <R, E>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
   <R, E, N extends number, A>(
     self: Stream<R, E, A>,
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
 } = internal.distributedWith
 
@@ -904,8 +908,10 @@ export const distributedWith: {
  */
 export const distributedWithDynamic: {
   <E, A, _>(
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): <R>(
     self: Stream<R, E, A>
   ) => Effect.Effect<
@@ -915,8 +921,10 @@ export const distributedWithDynamic: {
   >
   <R, E, A, _>(
     self: Stream<R, E, A>,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): Effect.Effect<
     Scope.Scope | R,
     never,

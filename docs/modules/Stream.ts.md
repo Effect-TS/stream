@@ -4068,17 +4068,20 @@ function will receive the indices of the queues in the resulting list.
 
 ```ts
 export declare const distributedWith: {
-  <N extends number, A>(n: N, maximumLag: number, decide: (a: A) => Effect.Effect<never, never, Predicate<number>>): <
-    R,
-    E
-  >(
+  <N extends number, A>(options: {
+    readonly size: N
+    readonly maximumLag: number
+    readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  }): <R, E>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
   <R, E, N extends number, A>(
     self: Stream<R, E, A>,
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
 }
 ```
@@ -4098,7 +4101,10 @@ will continue but no longer backpressure on them.
 
 ```ts
 export declare const distributedWithDynamic: {
-  <E, A, _>(maximumLag: number, decide: (a: A) => Effect.Effect<never, never, Predicate<number>>): <R>(
+  <E, A, _>(options: {
+    readonly maximumLag: number
+    readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  }): <R>(
     self: Stream<R, E, A>
   ) => Effect.Effect<
     Scope.Scope | R,
@@ -4107,8 +4113,7 @@ export declare const distributedWithDynamic: {
   >
   <R, E, A, _>(
     self: Stream<R, E, A>,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: { readonly maximumLag: number; readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>> }
   ): Effect.Effect<
     Scope.Scope | R,
     never,

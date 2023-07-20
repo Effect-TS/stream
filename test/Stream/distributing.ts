@@ -12,7 +12,10 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.empty,
-        Stream.distributedWithDynamic(1, () => Effect.succeed(constTrue)),
+        Stream.distributedWithDynamic({
+          maximumLag: 1,
+          decide: () => Effect.succeed(constTrue)
+        }),
         Effect.flatMap((add) => {
           const subscribe = pipe(
             add,

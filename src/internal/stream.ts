@@ -1793,9 +1793,11 @@ export const dieMessage = (message: string): Stream.Stream<never, never, never> 
 /** @internal */
 export const distributedWith = dual<
   <N extends number, A>(
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ) => <R, E>(
     self: Stream.Stream<R, E, A>
   ) => Effect.Effect<
@@ -1805,21 +1807,25 @@ export const distributedWith = dual<
   >,
   <R, E, N extends number, A>(
     self: Stream.Stream<R, E, A>,
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ) => Effect.Effect<
     Scope.Scope | R,
     never,
     Stream.Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>
   >
 >(
-  4,
+  2,
   <R, E, N extends number, A>(
     self: Stream.Stream<R, E, A>,
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): Effect.Effect<
     R | Scope.Scope,
     never,
@@ -1830,15 +1836,15 @@ export const distributedWith = dual<
       Effect.flatMap((deferred) =>
         pipe(
           self,
-          distributedWithDynamic(
-            maximumLag,
-            (a) => Effect.flatMap(Deferred.await(deferred), (f) => f(a))
-          ),
+          distributedWithDynamic({
+            maximumLag: options.maximumLag,
+            decide: (a) => Effect.flatMap(Deferred.await(deferred), (f) => f(a))
+          }),
           Effect.flatMap((next) =>
             pipe(
               Effect.all(
                 Chunk.map(
-                  Chunk.range(0, n - 1),
+                  Chunk.range(0, options.size - 1),
                   (id) => Effect.map(next, ([key, queue]) => [[key, id], queue] as const)
                 )
               ),
@@ -1858,7 +1864,7 @@ export const distributedWith = dual<
                 )
                 return pipe(
                   Deferred.succeed(deferred, (a: A) =>
-                    Effect.map(decide(a), (f) => (key: number) => pipe(f(mappings.get(key)!)))),
+                    Effect.map(options.decide(a), (f) => (key: number) => pipe(f(mappings.get(key)!)))),
                   Effect.as(
                     Array.from(queues) as Stream.Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>
                   )
@@ -1883,8 +1889,10 @@ const newDistributedWithDynamicId = () => {
 /** @internal */
 export const distributedWithDynamic = dual<
   <E, A, _>(
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ) => <R>(
     self: Stream.Stream<R, E, A>
   ) => Effect.Effect<
@@ -1894,22 +1902,26 @@ export const distributedWithDynamic = dual<
   >,
   <R, E, A, _>(
     self: Stream.Stream<R, E, A>,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ) => Effect.Effect<
     Scope.Scope | R,
     never,
     Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
   >
->(3, <R, E, A, _>(
+>(2, <R, E, A, _>(
   self: Stream.Stream<R, E, A>,
-  maximumLag: number,
-  decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  options: {
+    readonly maximumLag: number
+    readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  }
 ): Effect.Effect<
   R | Scope.Scope,
   never,
   Effect.Effect<never, never, readonly [number, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>]>
-> => distributedWithDynamicCallback(self, maximumLag, decide, () => Effect.unit))
+> => distributedWithDynamicCallback(self, options.maximumLag, options.decide, () => Effect.unit))
 
 export const distributedWithDynamicCallback = dual<
   <E, A, _>(
@@ -4548,14 +4560,14 @@ export const partitionBuffer = dual<
 > =>
   pipe(
     map(self, (a): Either.Either<A, A> => predicate(a) ? Either.left(a) : Either.right(a)),
-    distributedWith(
-      2,
-      bufferSize,
-      Either.match({
+    distributedWith({
+      size: 2,
+      maximumLag: bufferSize,
+      decide: Either.match({
         onLeft: () => Effect.succeed((n) => n === 0),
         onRight: () => Effect.succeed((n) => n === 1)
       })
-    ),
+    }),
     Effect.flatMap(([queue1, queue2]) =>
       Effect.succeed([
         filterMap(
