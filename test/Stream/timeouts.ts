@@ -94,7 +94,7 @@ describe.concurrent("Stream", () => {
       ]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhile(Exit.match({ onSuccess: Option.some, onFailure: Option.none })),
+        Stream.filterMapWhile(Exit.match({ onSuccess: Option.some, onFailure: Option.none })),
         Stream.flattenChunks,
         Stream.timeoutTo(Duration.seconds(2), Stream.succeed(4)),
         Stream.tap(() => coordination.proceed),

@@ -19,7 +19,7 @@ describe.concurrent("Stream", () => {
             Effect.map(([_, queue]) =>
               pipe(
                 Stream.fromQueue(queue),
-                Stream.collectWhile(Exit.match({
+                Stream.filterMapWhile(Exit.match({
                   onFailure: Option.none,
                   onSuccess: Option.some
                 }))

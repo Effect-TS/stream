@@ -233,10 +233,6 @@ Added in v1.0.0
   - [changesWithEffect](#changeswitheffect)
   - [chunks](#chunks)
   - [chunksWith](#chunkswith)
-  - [collect](#collect)
-  - [collectEffect](#collecteffect)
-  - [collectWhile](#collectwhile)
-  - [collectWhileEffect](#collectwhileeffect)
   - [combine](#combine)
   - [combineChunks](#combinechunks)
   - [concat](#concat)
@@ -258,6 +254,10 @@ Added in v1.0.0
   - [either](#either)
   - [ensuring](#ensuring)
   - [ensuringWith](#ensuringwith)
+  - [filterMap](#filtermap)
+  - [filterMapEffect](#filtermapeffect)
+  - [filterMapWhile](#filtermapwhile)
+  - [filterMapWhileEffect](#filtermapwhileeffect)
   - [forever](#forever)
   - [groupByKey](#groupbykey)
   - [groupByKeyBuffer](#groupbykeybuffer)
@@ -3860,72 +3860,6 @@ export declare const chunksWith: <R, E, A, R2, E2, A2>(
 
 Added in v1.0.0
 
-## collect
-
-Performs a filter and map in a single step.
-
-**Signature**
-
-```ts
-export declare const collect: {
-  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
-}
-```
-
-Added in v1.0.0
-
-## collectEffect
-
-Performs an effectful filter and map in a single step.
-
-**Signature**
-
-```ts
-export declare const collectEffect: {
-  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## collectWhile
-
-Transforms all elements of the stream for as long as the specified partial
-function is defined.
-
-**Signature**
-
-```ts
-export declare const collectWhile: <A, A2>(
-  pf: (a: A) => Option.Option<A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
-```
-
-Added in v1.0.0
-
-## collectWhileEffect
-
-Effectfully transforms all elements of the stream for as long as the
-specified partial function is defined.
-
-**Signature**
-
-```ts
-export declare const collectWhileEffect: <A, R2, E2, A2>(
-  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
 ## combine
 
 Combines the elements from this stream and the specified stream by
@@ -4366,6 +4300,72 @@ export declare const ensuringWith: {
     finalizer: (exit: Exit.Exit<E, unknown>) => Effect.Effect<R2, never, unknown>
   ): Stream<R | R2, E, A>
 }
+```
+
+Added in v1.0.0
+
+## filterMap
+
+Performs a filter and map in a single step.
+
+**Signature**
+
+```ts
+export declare const filterMap: {
+  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
+}
+```
+
+Added in v1.0.0
+
+## filterMapEffect
+
+Performs an effectful filter and map in a single step.
+
+**Signature**
+
+```ts
+export declare const filterMapEffect: {
+  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
+```
+
+Added in v1.0.0
+
+## filterMapWhile
+
+Transforms all elements of the stream for as long as the specified partial
+function is defined.
+
+**Signature**
+
+```ts
+export declare const filterMapWhile: <A, A2>(
+  pf: (a: A) => Option.Option<A2>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+```
+
+Added in v1.0.0
+
+## filterMapWhileEffect
+
+Effectfully transforms all elements of the stream for as long as the
+specified partial function is defined.
+
+**Signature**
+
+```ts
+export declare const filterMapWhileEffect: <A, R2, E2, A2>(
+  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
 ```
 
 Added in v1.0.0

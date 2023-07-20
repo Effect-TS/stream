@@ -174,7 +174,7 @@ describe.concurrent("Stream", () => {
       const coordination = yield* $(chunkCoordination([Chunk.make(1, 2)]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhile(Exit.match({
+        Stream.filterMapWhile(Exit.match({
           onFailure: Option.none,
           onSuccess: Option.some
         })),

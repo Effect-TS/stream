@@ -171,7 +171,7 @@ describe.concurrent("Stream", () => {
       ]))
       const stream = pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhile(Exit.match({
+        Stream.filterMapWhile(Exit.match({
           onSuccess: Option.some,
           onFailure: Option.none
         })),
@@ -209,7 +209,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhile(Exit.match({
+        Stream.filterMapWhile(Exit.match({
           onSuccess: Option.some,
           onFailure: Option.none
         })),

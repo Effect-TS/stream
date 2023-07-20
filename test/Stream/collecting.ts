@@ -12,7 +12,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Either.left(1), Either.right(2), Either.left(3)),
-        Stream.collect((either) =>
+        Stream.filterMap((either) =>
           Either.isRight(either) ?
             Option.some(either.right) :
             Option.none()
@@ -26,7 +26,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Either.left(1), Either.right(2), Either.left(3)),
-        Stream.collectEffect((either) =>
+        Stream.filterMapEffect((either) =>
           Either.isRight(either) ?
             Option.some(Effect.succeed(either.right * 2)) :
             Option.none()
@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         Stream.fromChunks(...chunks),
-        Stream.collectEffect((either) =>
+        Stream.filterMapEffect((either) =>
           Either.isRight(either) ?
             Option.some(Effect.succeed(either.right * 10)) :
             Option.none()
@@ -58,7 +58,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Either.left(1), Either.right(2), Either.left(3)),
-        Stream.collectEffect(() => Option.some(Effect.fail("Ouch"))),
+        Stream.filterMapEffect(() => Option.some(Effect.fail("Ouch"))),
         Stream.runDrain,
         Effect.either
       ))
@@ -69,7 +69,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3),
-        Stream.collectEffect((n) =>
+        Stream.filterMapEffect((n) =>
           n === 3 ?
             Option.some(Effect.fail("boom")) :
             Option.some(Effect.succeed(n))
@@ -87,7 +87,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(4)),
-        Stream.collectWhile(identity),
+        Stream.filterMapWhile(identity),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2])
@@ -98,7 +98,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(Option.some(1)),
         Stream.concat(Stream.fail("Ouch")),
-        Stream.collectWhile((option) => Option.isNone(option) ? Option.some(1) : Option.none()),
+        Stream.filterMapWhile((option) => Option.isNone(option) ? Option.some(1) : Option.none()),
         Stream.runDrain,
         Effect.either
       ))
@@ -109,7 +109,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(4)),
-        Stream.collectWhileEffect((option) =>
+        Stream.filterMapWhileEffect((option) =>
           Option.isSome(option) ?
             Option.some(Effect.succeed(option.value * 2)) :
             Option.none()
@@ -124,7 +124,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(Option.some(1)),
         Stream.concat(Stream.fail("Ouch")),
-        Stream.collectWhileEffect((option) =>
+        Stream.filterMapWhileEffect((option) =>
           Option.isNone(option) ?
             Option.some(Effect.succeed(1)) :
             Option.none()
@@ -139,7 +139,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(3)),
-        Stream.collectWhileEffect(() => Option.some(Effect.fail("Ouch"))),
+        Stream.filterMapWhileEffect(() => Option.some(Effect.fail("Ouch"))),
         Stream.runDrain,
         Effect.either
       ))
@@ -150,7 +150,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.collectWhileEffect((n) =>
+        Stream.filterMapWhileEffect((n) =>
           n === 3 ?
             Option.some(Effect.fail("boom")) :
             Option.some(Effect.succeed(n))

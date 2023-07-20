@@ -669,55 +669,6 @@ export const chunksWith: <R, E, A, R2, E2, A2>(
 ) => (self: Stream<R, E, A>) => Stream<R | R2, E | E2, A2> = internal.chunksWith
 
 /**
- * Performs a filter and map in a single step.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collect: {
-  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
-} = internal.collect
-
-/**
- * Performs an effectful filter and map in a single step.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectEffect: {
-  <A, R2, E2, A2>(
-    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(
-    self: Stream<R, E, A>,
-    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-  ): Stream<R | R2, E | E2, A2>
-} = internal.collectEffect
-
-/**
- * Transforms all elements of the stream for as long as the specified partial
- * function is defined.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectWhile: <A, A2>(
-  pf: (a: A) => Option.Option<A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2> = internal.collectWhile
-
-/**
- * Effectfully transforms all elements of the stream for as long as the
- * specified partial function is defined.
- *
- * @since 1.0.0
- * @category utils
- */
-export const collectWhileEffect: <A, R2, E2, A2>(
-  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2> = internal.collectWhileEffect
-
-/**
  * Combines the elements from this stream and the specified stream by
  * repeatedly applying the function `f` to extract an element using both sides
  * and conceptually "offer" it to the destination stream. `f` can maintain
@@ -1223,6 +1174,55 @@ export const filterEffect: {
   <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
   <R, E, A, R2, E2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<R | R2, E | E2, A>
 } = internal.filterEffect
+
+/**
+ * Performs a filter and map in a single step.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const filterMap: {
+  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
+} = internal.filterMap
+
+/**
+ * Performs an effectful filter and map in a single step.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const filterMapEffect: {
+  <A, R2, E2, A2>(
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+  ): Stream<R | R2, E | E2, A2>
+} = internal.filterMapEffect
+
+/**
+ * Transforms all elements of the stream for as long as the specified partial
+ * function is defined.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const filterMapWhile: <A, A2>(
+  pf: (a: A) => Option.Option<A2>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2> = internal.filterMapWhile
+
+/**
+ * Effectfully transforms all elements of the stream for as long as the
+ * specified partial function is defined.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+export const filterMapWhileEffect: <A, R2, E2, A2>(
+  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2> = internal.filterMapWhileEffect
 
 /**
  * Creates a one-element stream that never fails and executes the finalizer

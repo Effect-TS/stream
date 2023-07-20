@@ -365,7 +365,7 @@ describe.concurrent("Stream", () => {
             ),
             schedule: Schedule.spaced(Duration.millis(100))
           }),
-          Stream.collect((either) =>
+          Stream.filterMap((either) =>
             Either.isRight(either) ?
               Option.some(either.right) :
               Option.none()
