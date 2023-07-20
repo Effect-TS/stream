@@ -77,7 +77,7 @@ export class StreamImpl<R, E, A> implements Stream.Stream<R, E, A> {
 
 /** @internal */
 export const isStream = (u: unknown): u is Stream.Stream<unknown, unknown, unknown> =>
-  typeof u === "object" && u != null && StreamTypeId in u
+  (typeof u === "object" && u != null && StreamTypeId in u) || Effect.isEffect(u)
 
 /** @internal */
 export const DefaultChunkSize = 4096
@@ -2697,9 +2697,21 @@ const flatMapParSwitchBuffer = dual<
 )
 
 /** @internal */
-export const flatten = <R, E, R2, E2, A>(
-  self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>
-): Stream.Stream<R | R2, E | E2, A> => pipe(self, flatMap(identity))
+export const flatten = dual<
+  (options?: {
+    readonly concurrency?: number | "unbounded"
+    readonly bufferSize?: number
+  }) => <R, E, R2, E2, A>(
+    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>
+  ) => Stream.Stream<R | R2, E | E2, A>,
+  <R, E, R2, E2, A>(
+    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ) => Stream.Stream<R | R2, E | E2, A>
+>((args) => isStream(args[0]), (self, options) => flatMap(self, identity, options))
 
 /** @internal */
 export const flattenChunks = <R, E, A>(self: Stream.Stream<R, E, Chunk.Chunk<A>>): Stream.Stream<R, E, A> => {
@@ -2713,14 +2725,41 @@ export const flattenChunks = <R, E, A>(self: Stream.Stream<R, E, Chunk.Chunk<A>>
 }
 
 /** @internal */
-export const flattenEffect = <R, E, R2, E2, A>(
-  self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>
-): Stream.Stream<R | R2, E | E2, A> => pipe(self, mapEffect(identity))
-
-/** @internal */
-export const flattenExit = <R, E, E2, A>(self: Stream.Stream<R, E, Exit.Exit<E2, A>>): Stream.Stream<R, E | E2, A> =>
-  // TODO: remove
-  mapEffect(self, (exit) => Effect.suspend(() => exit))
+export const flattenEffect = dual<
+  (
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+    }
+  ) => <R, E, R2, E2, A>(
+    self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>
+  ) => Stream.Stream<R | R2, E | E2, A>,
+  <R, E, R2, E2, A>(
+    self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+    }
+  ) => Stream.Stream<R | R2, E | E2, A>
+>(
+  (args) => isStream(args[0]),
+  (self, options) =>
+    options?.unordered ?
+      flatMap(self, (a) => fromEffect(a), { concurrency: options.concurrency }) :
+      matchConcurrency(
+        options?.concurrency,
+        () => mapEffect(self, identity),
+        (n) =>
+          new StreamImpl(
+            pipe(
+              toChannel(self),
+              channel.concatMap(channel.writeChunk),
+              channel.mapOutEffectPar(identity, n),
+              channel.mapOut(Chunk.of)
+            )
+          )
+      )
+)
 
 /** @internal */
 export const flattenExitOption = <R, E, E2, A>(
@@ -2776,65 +2815,6 @@ export const flattenExitOption = <R, E, E2, A>(
 /** @internal */
 export const flattenIterables = <R, E, A>(self: Stream.Stream<R, E, Iterable<A>>): Stream.Stream<R, E, A> =>
   pipe(self, map(Chunk.fromIterable), flattenChunks)
-
-/** @internal */
-export const flattenPar = dual<
-  (
-    n: number
-  ) => <R, E, R2, E2, A>(self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>) => Stream.Stream<R | R2, E | E2, A>,
-  <R, E, R2, E2, A>(
-    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
-    n: number
-  ) => Stream.Stream<R | R2, E | E2, A>
->(
-  2,
-  <R, E, R2, E2, A>(
-    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
-    n: number
-  ): Stream.Stream<R | R2, E | E2, A> => flattenParBuffer(self, n, 16)
-)
-
-/** @internal */
-export const flattenParBuffer = dual<
-  (
-    n: number,
-    bufferSize: number
-  ) => <R, E, R2, E2, A>(self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>) => Stream.Stream<R | R2, E | E2, A>,
-  <R, E, R2, E2, A>(
-    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
-    n: number,
-    bufferSize: number
-  ) => Stream.Stream<R | R2, E | E2, A>
->(
-  3,
-  <R, E, R2, E2, A>(
-    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
-    n: number,
-    bufferSize: number
-  ): Stream.Stream<R | R2, E | E2, A> => flatMap(self, identity, { concurrency: n, bufferSize })
-)
-
-/** @internal */
-export const flattenParUnbounded = <R, E, R2, E2, A>(
-  self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>
-): Stream.Stream<R | R2, E | E2, A> => flattenParUnboundedBuffer(self, 16)
-
-/** @internal */
-export const flattenParUnboundedBuffer = dual<
-  (
-    bufferSize: number
-  ) => <R, E, R2, E2, A>(self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>) => Stream.Stream<R | R2, E | E2, A>,
-  <R, E, R2, E2, A>(
-    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
-    bufferSize: number
-  ) => Stream.Stream<R | R2, E | E2, A>
->(
-  2,
-  <R, E, R2, E2, A>(
-    self: Stream.Stream<R, E, Stream.Stream<R2, E2, A>>,
-    bufferSize: number
-  ): Stream.Stream<R | R2, E | E2, A> => flatMap(self, identity, { concurrency: "unbounded", bufferSize })
-)
 
 /** @internal */
 export const flattenTake = <R, E, E2, A>(self: Stream.Stream<R, E, Take.Take<E2, A>>): Stream.Stream<R, E | E2, A> =>
@@ -3880,37 +3860,6 @@ export const mapEffectPar = dual<
 )
 
 /** @internal */
-export const flattenEffectPar = dual<
-  (
-    n: number
-  ) => <R, E, E2, R2, A>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream.Stream<R2 | R, E2 | E, A>,
-  <R, E, A, R2, E2>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>, n: number) => Stream.Stream<R | R2, E | E2, A>
->(
-  2,
-  <R, E, A, R2, E2>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream.Stream<R | R2, E | E2, A> =>
-    new StreamImpl(
-      pipe(
-        toChannel(self),
-        channel.concatMap(channel.writeChunk),
-        channel.mapOutEffectPar(identity, n),
-        channel.mapOut(Chunk.of)
-      )
-    )
-)
-
-/** @internal */
-export const flattenEffectParUnordered = dual<
-  (
-    n: number
-  ) => <R, E, E2, R2, A>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream.Stream<R2 | R, E2 | E, A>,
-  <R, E, A, R2, E2>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>, n: number) => Stream.Stream<R | R2, E | E2, A>
->(
-  2,
-  <R, E, A, R2, E2>(self: Stream.Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream.Stream<R | R2, E | E2, A> =>
-    flatMap(self, (a) => fromEffect(a), { concurrency: n })
-)
-
-/** @internal */
 export const mapEffectParUnordered = dual<
   <A, R2, E2, A2>(
     n: number,
@@ -3990,16 +3939,16 @@ export const mergeHaltStrategy = dual<
 )
 
 /** @internal */
-export const mergeAll = (n: number, bufferSize = 16) => {
-  return <R, E, A>(...streams: Array<Stream.Stream<R, E, A>>): Stream.Stream<R, E, A> =>
-    pipe(fromIterable(streams), flattenParBuffer(n, bufferSize))
-}
-
-/** @internal */
-export const mergeAllUnbounded = (bufferSize = 16) => {
-  return <R, E, A>(...streams: Array<Stream.Stream<R, E, A>>): Stream.Stream<R, E, A> =>
-    pipe(fromIterable(streams), flattenParBuffer(Number.POSITIVE_INFINITY, bufferSize))
-}
+export const mergeAll = dual<
+  (options: {
+    readonly concurrency: number | "unbounded"
+    readonly bufferSize?: number
+  }) => <R, E, A>(streams: Iterable<Stream.Stream<R, E, A>>) => Stream.Stream<R, E, A>,
+  <R, E, A>(streams: Iterable<Stream.Stream<R, E, A>>, options: {
+    readonly concurrency: number | "unbounded"
+    readonly bufferSize?: number
+  }) => Stream.Stream<R, E, A>
+>((args) => Symbol.iterator in args[0], (streams, options) => flatten(fromIterable(streams), options))
 
 /** @internal */
 export const mergeHaltEither = dual<

@@ -31,7 +31,7 @@ describe.concurrent("Stream", () => {
   it.effect("mergeAll - short circuiting", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.mergeAll(2)(Stream.never(), Stream.make(1)),
+        Stream.mergeAll([Stream.never(), Stream.make(1)], { concurrency: 2 }),
         Stream.take(1),
         Stream.runCollect
       ))

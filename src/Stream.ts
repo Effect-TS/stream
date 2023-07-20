@@ -1298,8 +1298,21 @@ export const flatMap: {
  * @since 1.0.0
  * @category sequencing
  */
-export const flatten: <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A> =
-  internal.flatten
+export const flatten: {
+  (
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(
+    self: Stream<R, E, Stream<R2, E2, A>>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ): Stream<R | R2, E | E2, A>
+} = internal.flatten
 
 /**
  * Submerges the chunks carried by this stream into the stream's structure,
@@ -1317,44 +1330,21 @@ export const flattenChunks: <R, E, A>(self: Stream<R, E, Chunk.Chunk<A>>) => Str
  * @since 1.0.0
  * @category sequencing
  */
-export const flattenEffect: <R, E, R2, E2, A>(
-  self: Stream<R, E, Effect.Effect<R2, E2, A>>
-) => Stream<R | R2, E | E2, A> = internal.flattenEffect
-
-/**
- * Flattens `Effect` values into the stream's structure, preserving all
- * information about the effect.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenEffectPar: {
-  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-} = internal.flattenEffectPar
-
-/**
- * Flattens `Effect` values into the stream's structure, preserving all
- * information about the effect. The element order is
- * not enforced by this combinator, and elements may be reordered.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenEffectParUnordered: {
-  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-} = internal.flattenEffectParUnordered
-
-/**
- * Flattens `Exit` values. `Exit.Failure` values translate to stream
- * failures while `Exit.Success` values translate to stream elements.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenExit: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E | E2, A> =
-  internal.flattenExit
+export const flattenEffect: {
+  (
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+    }
+  ): <R, E, R2, E2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(
+    self: Stream<R, E, Effect.Effect<R2, E2, A>>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+    }
+  ): Stream<R | R2, E | E2, A>
+} = internal.flattenEffect
 
 /**
  * Unwraps `Exit` values that also signify end-of-stream by failing with `None`.
@@ -1380,51 +1370,6 @@ export const flattenExitOption: <R, E, E2, A>(
  * @category sequencing
  */
 export const flattenIterables: <R, E, A>(self: Stream<R, E, Iterable<A>>) => Stream<R, E, A> = internal.flattenIterables
-
-/**
- * Flattens a stream of streams into a stream by executing a non-deterministic
- * concurrent merge. Up to `n` streams may be consumed in parallel and up to
- * `outputBuffer` elements may be buffered by this operator.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenPar: {
-  (n: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-} = internal.flattenPar
-
-/**
- * Like `flattenPar`, but with a configurable `bufferSize` parameter.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenParBuffer: {
-  (n: number, bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number, bufferSize: number): Stream<R | R2, E | E2, A>
-} = internal.flattenParBuffer
-
-/**
- * Like `Stream.flattenPar`, but executes all streams concurrently.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenParUnbounded: <R, E, R2, E2, A>(
-  self: Stream<R, E, Stream<R2, E2, A>>
-) => Stream<R | R2, E | E2, A> = internal.flattenParUnbounded
-
-/**
- * Like `Stream.flattenParUnbounded`, but with `bufferSize` parameter.
- *
- * @since 1.0.0
- * @category sequencing
- */
-export const flattenParUnboundedBuffer: {
-  (bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, bufferSize: number): Stream<R | R2, E | E2, A>
-} = internal.flattenParUnboundedBuffer
 
 /**
  * Unwraps `Exit` values and flatten chunks that also signify end-of-stream
@@ -2314,20 +2259,21 @@ export const mergeHaltStrategy: {
  * @since 1.0.0
  * @category utils
  */
-export const mergeAll: (
-  n: number,
-  bufferSize?: number
-) => <R, E, A>(...streams: Array<Stream<R, E, A>>) => Stream<R, E, A> = internal.mergeAll
-
-/**
- * Like `Stream.mergeAll`, but runs all streams concurrently.
- *
- * @since 1.0.0
- * @category utils
- */
-export const mergeAllUnbounded: (
-  bufferSize?: number
-) => <R, E, A>(...streams: Array<Stream<R, E, A>>) => Stream<R, E, A> = internal.mergeAllUnbounded
+export const mergeAll: {
+  (
+    options: {
+      readonly concurrency: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ): <R, E, A>(streams: Iterable<Stream<R, E, A>>) => Stream<R, E, A>
+  <R, E, A>(
+    streams: Iterable<Stream<R, E, A>>,
+    options: {
+      readonly concurrency: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ): Stream<R, E, A>
+} = internal.mergeAll
 
 /**
  * Merges this stream and the specified stream together to a common element

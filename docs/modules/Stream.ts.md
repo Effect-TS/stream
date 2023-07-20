@@ -196,15 +196,8 @@ Added in v1.0.0
   - [flatten](#flatten)
   - [flattenChunks](#flattenchunks)
   - [flattenEffect](#flatteneffect)
-  - [flattenEffectPar](#flatteneffectpar)
-  - [flattenEffectParUnordered](#flatteneffectparunordered)
-  - [flattenExit](#flattenexit)
   - [flattenExitOption](#flattenexitoption)
   - [flattenIterables](#flatteniterables)
-  - [flattenPar](#flattenpar)
-  - [flattenParBuffer](#flattenparbuffer)
-  - [flattenParUnbounded](#flattenparunbounded)
-  - [flattenParUnboundedBuffer](#flattenparunboundedbuffer)
   - [flattenTake](#flattentake)
   - [tap](#tap)
   - [tapError](#taperror)
@@ -273,7 +266,6 @@ Added in v1.0.0
   - [mapBoth](#mapboth)
   - [merge](#merge)
   - [mergeAll](#mergeall)
-  - [mergeAllUnbounded](#mergeallunbounded)
   - [mergeEither](#mergeeither)
   - [mergeHaltEither](#mergehalteither)
   - [mergeHaltLeft](#mergehaltleft)
@@ -3213,7 +3205,15 @@ strict order of all the streams.
 **Signature**
 
 ```ts
-export declare const flatten: <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+export declare const flatten: {
+  (options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }): <R, E, R2, E2, A>(
+    self: Stream<R, E, Stream<R2, E2, A>>
+  ) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(
+    self: Stream<R, E, Stream<R2, E2, A>>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3239,55 +3239,15 @@ information about the effect.
 **Signature**
 
 ```ts
-export declare const flattenEffect: <R, E, R2, E2, A>(
-  self: Stream<R, E, Effect.Effect<R2, E2, A>>
-) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenEffectPar
-
-Flattens `Effect` values into the stream's structure, preserving all
-information about the effect.
-
-**Signature**
-
-```ts
-export declare const flattenEffectPar: {
-  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+export declare const flattenEffect: {
+  (options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }): <R, E, R2, E2, A>(
+    self: Stream<R, E, Effect.Effect<R2, E2, A>>
+  ) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(
+    self: Stream<R, E, Effect.Effect<R2, E2, A>>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }
+  ): Stream<R | R2, E | E2, A>
 }
-```
-
-Added in v1.0.0
-
-## flattenEffectParUnordered
-
-Flattens `Effect` values into the stream's structure, preserving all
-information about the effect. The element order is
-not enforced by this combinator, and elements may be reordered.
-
-**Signature**
-
-```ts
-export declare const flattenEffectParUnordered: {
-  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## flattenExit
-
-Flattens `Exit` values. `Exit.Failure` values translate to stream
-failures while `Exit.Success` values translate to stream elements.
-
-**Signature**
-
-```ts
-export declare const flattenExit: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E | E2, A>
 ```
 
 Added in v1.0.0
@@ -3321,67 +3281,6 @@ while still preserving them.
 
 ```ts
 export declare const flattenIterables: <R, E, A>(self: Stream<R, E, Iterable<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## flattenPar
-
-Flattens a stream of streams into a stream by executing a non-deterministic
-concurrent merge. Up to `n` streams may be consumed in parallel and up to
-`outputBuffer` elements may be buffered by this operator.
-
-**Signature**
-
-```ts
-export declare const flattenPar: {
-  (n: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## flattenParBuffer
-
-Like `flattenPar`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flattenParBuffer: {
-  (n: number, bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number, bufferSize: number): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## flattenParUnbounded
-
-Like `Stream.flattenPar`, but executes all streams concurrently.
-
-**Signature**
-
-```ts
-export declare const flattenParUnbounded: <R, E, R2, E2, A>(
-  self: Stream<R, E, Stream<R2, E2, A>>
-) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenParUnboundedBuffer
-
-Like `Stream.flattenParUnbounded`, but with `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flattenParUnboundedBuffer: {
-  (bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, bufferSize: number): Stream<R | R2, E | E2, A>
-}
 ```
 
 Added in v1.0.0
@@ -4642,24 +4541,15 @@ buffered by this operator.
 **Signature**
 
 ```ts
-export declare const mergeAll: (
-  n: number,
-  bufferSize?: number
-) => <R, E, A>(...streams: Stream<R, E, A>[]) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## mergeAllUnbounded
-
-Like `Stream.mergeAll`, but runs all streams concurrently.
-
-**Signature**
-
-```ts
-export declare const mergeAllUnbounded: (
-  bufferSize?: number
-) => <R, E, A>(...streams: Stream<R, E, A>[]) => Stream<R, E, A>
+export declare const mergeAll: {
+  (options: { readonly concurrency: number | 'unbounded'; readonly bufferSize?: number }): <R, E, A>(
+    streams: Iterable<Stream<R, E, A>>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    streams: Iterable<Stream<R, E, A>>,
+    options: { readonly concurrency: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
