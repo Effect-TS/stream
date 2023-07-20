@@ -186,13 +186,17 @@ export const aggregate: {
  */
 export const aggregateWithin: {
   <R2, E2, A, A2, B, R3, C>(
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): Stream<R | R2 | R3, E | E2, B>
 } = internal.aggregateWithin
 
@@ -215,13 +219,17 @@ export const aggregateWithin: {
  */
 export const aggregateWithinEither: {
   <R2, E2, A, A2, B, R3, C>(
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): Stream<R | R2 | R3, E | E2, Either.Either<C, B>>
 } = internal.aggregateWithinEither
 

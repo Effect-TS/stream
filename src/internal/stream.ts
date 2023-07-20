@@ -98,54 +98,65 @@ export const aggregate = dual<
   <R, E, R2, E2, A, A2, B>(
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A | A2, A2, B>
-  ): Stream.Stream<R | R2, E | E2, B> => aggregateWithin(self, sink, Schedule.forever)
+  ): Stream.Stream<R | R2, E | E2, B> => aggregateWithin(self, { sink, schedule: Schedule.forever })
 )
 
 /** @internal */
 export const aggregateWithin = dual<
   <R2, E2, A, A2, B, R3, C>(
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R3 | R, E2 | E, B>,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ) => Stream.Stream<R2 | R3 | R, E2 | E, B>
 >(
-  3,
+  2,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): Stream.Stream<R | R2 | R3, E | E2, B> =>
-    pipe(
-      self,
-      aggregateWithinEither(sink, schedule),
-      collect(Either.match({
+    collect(
+      aggregateWithinEither(self, options),
+      Either.match({
         onLeft: Option.none,
         onRight: Option.some
-      }))
+      })
     )
 )
 
 /** @internal */
 export const aggregateWithinEither = dual<
   <R2, E2, A, A2, B, R3, C>(
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ) => Stream.Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
 >(
-  3,
+  2,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    { schedule, sink }: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): Stream.Stream<R | R2 | R3, E | E2, Either.Either<C, B>> => {
     const layer = Effect.all([
       Handoff.make<HandoffSignal.HandoffSignal<E | E2, A>>(),
@@ -3240,7 +3251,10 @@ export const groupedWithin = dual<
     chunkSize: number,
     duration: Duration.Duration
   ): Stream.Stream<R, E, Chunk.Chunk<A>> =>
-    pipe(self, aggregateWithin(_sink.collectAllN(chunkSize), Schedule.spaced(duration)))
+    aggregateWithin(self, {
+      sink: _sink.collectAllN(chunkSize),
+      schedule: Schedule.spaced(duration)
+    })
 )
 
 /** @internal */
