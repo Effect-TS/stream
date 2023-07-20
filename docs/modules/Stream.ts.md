@@ -38,24 +38,16 @@ Added in v1.0.0
   - [fromChannel](#fromchannel)
   - [fromChunk](#fromchunk)
   - [fromChunkHub](#fromchunkhub)
-  - [fromChunkHubScoped](#fromchunkhubscoped)
-  - [fromChunkHubScopedWithShutdown](#fromchunkhubscopedwithshutdown)
-  - [fromChunkHubWithShutdown](#fromchunkhubwithshutdown)
   - [fromChunkQueue](#fromchunkqueue)
-  - [fromChunkQueueWithShutdown](#fromchunkqueuewithshutdown)
   - [fromChunks](#fromchunks)
   - [fromEffect](#fromeffect)
   - [fromEffectOption](#fromeffectoption)
   - [fromHub](#fromhub)
-  - [fromHubScoped](#fromhubscoped)
-  - [fromHubScopedWithShutdown](#fromhubscopedwithshutdown)
-  - [fromHubWithShutdown](#fromhubwithshutdown)
   - [fromIterable](#fromiterable)
   - [fromIterableEffect](#fromiterableeffect)
   - [fromIteratorSucceed](#fromiteratorsucceed)
   - [fromPull](#frompull)
   - [fromQueue](#fromqueue)
-  - [fromQueueWithShutdown](#fromqueuewithshutdown)
   - [fromReadableStream](#fromreadablestream)
   - [fromReadableStreamByob](#fromreadablestreambyob)
   - [fromSchedule](#fromschedule)
@@ -671,55 +663,18 @@ Creates a stream from a subscription to a `Hub`.
 **Signature**
 
 ```ts
-export declare const fromChunkHub: <A>(hub: Hub.Hub<Chunk.Chunk<A>>) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromChunkHubScoped
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-**Signature**
-
-```ts
-export declare const fromChunkHubScoped: <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromChunkHubScopedWithShutdown
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromChunkHubScopedWithShutdown: <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromChunkHubWithShutdown
-
-Creates a stream from a subscription to a `Hub`.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromChunkHubWithShutdown: <A>(hub: Hub.Hub<Chunk.Chunk<A>>) => Stream<never, never, A>
+export declare const fromChunkHub: {
+  <A>(hub: Hub.Hub<Chunk.Chunk<A>>, options: { readonly scoped: true; readonly shutdown?: boolean }): Effect.Effect<
+    Scope.Scope,
+    never,
+    Stream<never, never, A>
+  >
+  <A>(hub: Hub.Hub<Chunk.Chunk<A>>, options?: { readonly scoped?: false; readonly shutdown?: boolean }): Stream<
+    never,
+    never,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -731,21 +686,10 @@ Creates a stream from a `Queue` of values.
 **Signature**
 
 ```ts
-export declare const fromChunkQueue: <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromChunkQueueWithShutdown
-
-Creates a stream from a `Queue` of values.
-
-The queue will be shutdown once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromChunkQueueWithShutdown: <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>) => Stream<never, never, A>
+export declare const fromChunkQueue: <A>(
+  queue: Queue.Dequeue<Chunk.Chunk<A>>,
+  options?: { readonly shutdown?: boolean }
+) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -795,57 +739,16 @@ Creates a stream from a subscription to a `Hub`.
 **Signature**
 
 ```ts
-export declare const fromHub: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromHubScoped
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-**Signature**
-
-```ts
-export declare const fromHubScoped: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromHubScopedWithShutdown
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromHubScopedWithShutdown: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromHubWithShutdown
-
-Creates a stream from a subscription to a `Hub`.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromHubWithShutdown: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A>
+export declare const fromHub: {
+  <A>(
+    hub: Hub.Hub<A>,
+    options: { readonly scoped: true; readonly maxChunkSize?: number; readonly shutdown?: boolean }
+  ): Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
+  <A>(
+    hub: Hub.Hub<A>,
+    options?: { readonly scoped?: false; readonly maxChunkSize?: number; readonly shutdown?: boolean }
+  ): Stream<never, never, A>
+}
 ```
 
 Added in v1.0.0
@@ -912,22 +815,9 @@ Creates a stream from a queue of values
 **Signature**
 
 ```ts
-export declare const fromQueue: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromQueueWithShutdown
-
-Creates a stream from a queue of values. The queue will be shutdown once
-the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromQueueWithShutdown: <A>(
+export declare const fromQueue: <A>(
   queue: Queue.Dequeue<A>,
-  maxChunkSize?: number
+  options?: { readonly maxChunkSize?: number; readonly shutdown?: boolean }
 ) => Stream<never, never, A>
 ```
 

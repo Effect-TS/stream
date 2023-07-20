@@ -193,7 +193,7 @@ describe.concurrent("Stream", () => {
       const queue = yield* $(Queue.unbounded<number>())
       yield* $(pipe(Queue.offerAll(queue, [1, 2, 3, 4, 5, 6, 7])))
       const result = yield* $(pipe(
-        Stream.fromQueue(queue, 2),
+        Stream.fromQueue(queue, { maxChunkSize: 2 }),
         Stream.mapChunks((chunk) => Chunk.of(Array.from(chunk))),
         Stream.take(3),
         Stream.runCollect

@@ -43,14 +43,13 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
     return pipe(
       Ref.get(this.ref),
       Effect.flatMap((a) =>
-        pipe(
-          stream.fromHubScoped(this.hub),
-          Effect.map((s) =>
-            pipe(
+        Effect.map(
+          stream.fromHub(this.hub, { scoped: true }),
+          (s) =>
+            stream.concat(
               stream.make(a),
-              stream.concat(s)
+              s
             )
-          )
         )
       ),
       this.semaphore.withPermits(1),

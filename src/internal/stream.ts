@@ -723,7 +723,7 @@ export const broadcast = dual<
     self,
     broadcastedQueues(n, maximumLag),
     Effect.map((tuple) =>
-      tuple.map((queue) => flattenTake(fromQueueWithShutdown(queue))) as Stream.Stream.DynamicTuple<
+      tuple.map((queue) => flattenTake(fromQueue(queue, { shutdown: true }))) as Stream.Stream.DynamicTuple<
         Stream.Stream<never, E, A>,
         N
       >
@@ -2866,27 +2866,28 @@ export const fromChunk = <A>(chunk: Chunk.Chunk<A>): Stream.Stream<never, never,
   new StreamImpl(Chunk.isEmpty(chunk) ? core.unit() : core.write(chunk))
 
 /** @internal */
-export const fromChunkHub = <A>(hub: Hub.Hub<Chunk.Chunk<A>>): Stream.Stream<never, never, A> =>
-  pipe(scoped(Hub.subscribe(hub)), flatMap(fromChunkQueue))
+export const fromChunkHub: {
+  <A>(hub: Hub.Hub<Chunk.Chunk<A>>, options: {
+    readonly scoped: true
+    readonly shutdown?: boolean
+  }): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>>
+  <A>(hub: Hub.Hub<Chunk.Chunk<A>>, options?: {
+    readonly scoped?: false
+    readonly shutdown?: boolean
+  }): Stream.Stream<never, never, A>
+} = (hub, options): any => {
+  if (options?.scoped) {
+    const effect = Effect.map(Hub.subscribe(hub), fromChunkQueue)
+    return options.shutdown ? Effect.map(effect, ensuring(Hub.shutdown(hub))) : effect
+  }
+  const stream = flatMap(scoped(Hub.subscribe(hub)), fromChunkQueue)
+  return options?.shutdown ? ensuring(stream, Hub.shutdown(hub)) : stream
+}
 
 /** @internal */
-export const fromChunkHubScoped = <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
-  pipe(Hub.subscribe(hub), Effect.map(fromChunkQueue))
-
-/** @internal */
-export const fromChunkHubWithShutdown = <A>(hub: Hub.Hub<Chunk.Chunk<A>>): Stream.Stream<never, never, A> =>
-  pipe(fromChunkHub(hub), ensuring(Hub.shutdown(hub)))
-
-/** @internal */
-export const fromChunkHubScopedWithShutdown = <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
-  pipe(fromChunkHubScoped(hub), Effect.map(ensuring(Hub.shutdown(hub))))
-
-/** @internal */
-export const fromChunkQueue = <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>): Stream.Stream<never, never, A> =>
+export const fromChunkQueue = <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>, options?: {
+  readonly shutdown?: boolean
+}): Stream.Stream<never, never, A> =>
   pipe(
     Queue.take(queue),
     Effect.catchAllCause((cause) =>
@@ -2899,12 +2900,9 @@ export const fromChunkQueue = <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>): Stream.
         )
       )
     ),
-    repeatEffectChunkOption
+    repeatEffectChunkOption,
+    options?.shutdown ? ensuring(Queue.shutdown(queue)) : identity
   )
-
-/** @internal */
-export const fromChunkQueueWithShutdown = <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>): Stream.Stream<never, never, A> =>
-  pipe(fromChunkQueue(queue), ensuring(Queue.shutdown(queue)))
 
 /** @internal */
 export const fromChunks = <A>(
@@ -2930,37 +2928,34 @@ export const fromEffectOption = <R, E, A>(effect: Effect.Effect<R, Option.Option
   )
 
 /** @internal */
-export const fromHub = <A>(hub: Hub.Hub<A>, maxChunkSize = DefaultChunkSize): Stream.Stream<never, never, A> =>
-  pipe(
+export const fromHub: {
+  <A>(hub: Hub.Hub<A>, options: {
+    readonly scoped: true
+    readonly maxChunkSize?: number
+    readonly shutdown?: boolean
+  }): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>>
+  <A>(hub: Hub.Hub<A>, options?: {
+    readonly scoped?: false
+    readonly maxChunkSize?: number
+    readonly shutdown?: boolean
+  }): Stream.Stream<never, never, A>
+} = (hub, options): any => {
+  const maxChunkSize = options?.maxChunkSize ?? DefaultChunkSize
+
+  if (options?.scoped) {
+    const effect = Effect.map(
+      Hub.subscribe(hub),
+      (queue) => fromQueue(queue, { maxChunkSize, shutdown: true })
+    )
+
+    return options.shutdown ? Effect.map(effect, ensuring(Hub.shutdown(hub))) : effect
+  }
+  const stream = flatMap(
     scoped(Hub.subscribe(hub)),
-    flatMap((queue) => fromQueue(queue, maxChunkSize))
+    (queue) => fromQueue(queue, { maxChunkSize })
   )
-
-/** @internal */
-export const fromHubScoped = <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize = DefaultChunkSize
-): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
-  Effect.map(
-    Hub.subscribe(hub),
-    (queue) => fromQueueWithShutdown(queue, maxChunkSize)
-  )
-
-/** @internal */
-export const fromHubWithShutdown = <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize = DefaultChunkSize
-): Stream.Stream<never, never, A> => pipe(fromHub(hub, maxChunkSize), ensuring(Hub.shutdown(hub)))
-
-/** @internal */
-export const fromHubScopedWithShutdown = <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize = DefaultChunkSize
-): Effect.Effect<Scope.Scope, never, Stream.Stream<never, never, A>> =>
-  Effect.map(
-    fromHubScoped(hub, maxChunkSize),
-    ensuring(Hub.shutdown(hub))
-  )
+  return options?.shutdown ? ensuring(stream, Hub.shutdown(hub)) : stream
+}
 
 /** @internal */
 export const fromIterable = <A>(iterable: Iterable<A>): Stream.Stream<never, never, A> =>
@@ -3029,10 +3024,13 @@ export const fromPull = <R, R2, E, A>(
 /** @internal */
 export const fromQueue = <A>(
   queue: Queue.Dequeue<A>,
-  maxChunkSize = DefaultChunkSize
+  options?: {
+    readonly maxChunkSize?: number
+    readonly shutdown?: boolean
+  }
 ): Stream.Stream<never, never, A> =>
   pipe(
-    Queue.takeBetween(queue, 1, maxChunkSize),
+    Queue.takeBetween(queue, 1, options?.maxChunkSize ?? DefaultChunkSize),
     Effect.catchAllCause((cause) =>
       pipe(
         Queue.isShutdown(queue),
@@ -3043,14 +3041,9 @@ export const fromQueue = <A>(
         )
       )
     ),
-    repeatEffectChunkOption
+    repeatEffectChunkOption,
+    options?.shutdown ? ensuring(Queue.shutdown(queue)) : identity
   )
-
-/** @internal */
-export const fromQueueWithShutdown = <A>(
-  queue: Queue.Dequeue<A>,
-  maxChunkSize = DefaultChunkSize
-): Stream.Stream<never, never, A> => pipe(fromQueue(queue, maxChunkSize), ensuring(Queue.shutdown(queue)))
 
 /** @internal */
 export const fromSchedule = <R, A>(schedule: Schedule.Schedule<R, unknown, A>): Stream.Stream<R, never, A> =>
@@ -3059,11 +3052,6 @@ export const fromSchedule = <R, A>(schedule: Schedule.Schedule<R, unknown, A>): 
     Effect.map((driver) => repeatEffectOption(driver.next(void 0))),
     unwrap
   )
-
-export class ReadableStreamError {
-  readonly _tag = "ReadableStreamError"
-  constructor(readonly reason: unknown) {}
-}
 
 /** @internal */
 export const fromReadableStream = <A, E>(
@@ -4505,14 +4493,14 @@ export const partitionBuffer = dual<
     Effect.flatMap(([queue1, queue2]) =>
       Effect.succeed([
         filterMap(
-          flattenExitOption(fromQueueWithShutdown(queue1)),
+          flattenExitOption(fromQueue(queue1, { shutdown: true })),
           Either.match({
             onLeft: Option.some,
             onRight: Option.none
           })
         ),
         filterMap(
-          flattenExitOption(fromQueueWithShutdown(queue2)),
+          flattenExitOption(fromQueue(queue2, { shutdown: true })),
           Either.match({
             onLeft: Option.none,
             onRight: Option.some
@@ -6181,7 +6169,7 @@ export const tapSink = dual<
     pipe(
       fromEffect(Effect.all([Queue.bounded<Take.Take<E | E2, A>>(1), Deferred.make<never, void>()])),
       flatMap(([queue, deferred]) => {
-        const right = flattenTake(fromQueue(queue, 1))
+        const right = flattenTake(fromQueue(queue, { maxChunkSize: 1 }))
         const loop: Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, unknown> = core
           .readWithCause(
             (chunk: Chunk.Chunk<A>) =>

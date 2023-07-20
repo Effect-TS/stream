@@ -72,7 +72,7 @@ export const evaluateBuffer = dual<
   ): Stream.Stream<R | R2, E | E2, A> =>
     stream.flatMap(
       self.grouped,
-      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue))),
+      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueue(queue, { shutdown: true }))),
       { concurrency: "unbounded", bufferSize }
     )
 )
@@ -219,7 +219,7 @@ export const groupByBuffer = dual<
                 }))
               ))
           )
-          return stream.flattenExitOption(stream.fromQueueWithShutdown(output))
+          return stream.flattenExitOption(stream.fromQueue(output, { shutdown: true }))
         })
       )
     )
@@ -402,7 +402,7 @@ export const groupByKeyBuffer = dual<
               channel.drain,
               channelExecutor.runScoped,
               Effect.forkScoped,
-              Effect.as(stream.flattenTake(stream.fromQueueWithShutdown(queue)))
+              Effect.as(stream.flattenTake(stream.fromQueue(queue, { shutdown: true })))
             )
           )
         )

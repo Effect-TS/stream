@@ -1435,44 +1435,16 @@ export const fromChunk: <A>(chunk: Chunk.Chunk<A>) => Stream<never, never, A> = 
  * @since 1.0.0
  * @category constructors
  */
-export const fromChunkHub: <A>(hub: Hub.Hub<Chunk.Chunk<A>>) => Stream<never, never, A> = internal.fromChunkHub
-
-/**
- * Creates a stream from a subscription to a `Hub` in the context of a scoped
- * effect. The scoped effect describes subscribing to receive messages from
- * the hub while the stream describes taking messages from the hub.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromChunkHubScoped: <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>> = internal.fromChunkHubScoped
-
-/**
- * Creates a stream from a subscription to a `Hub`.
- *
- * The hub will be shut down once the stream is closed.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromChunkHubWithShutdown: <A>(hub: Hub.Hub<Chunk.Chunk<A>>) => Stream<never, never, A> =
-  internal.fromChunkHubWithShutdown
-
-/**
- * Creates a stream from a subscription to a `Hub` in the context of a scoped
- * effect. The scoped effect describes subscribing to receive messages from
- * the hub while the stream describes taking messages from the hub.
- *
- * The hub will be shut down once the stream is closed.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromChunkHubScopedWithShutdown: <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>> = internal.fromChunkHubScopedWithShutdown
+export const fromChunkHub: {
+  <A>(
+    hub: Hub.Hub<Chunk.Chunk<A>>,
+    options: { readonly scoped: true; readonly shutdown?: boolean }
+  ): Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
+  <A>(
+    hub: Hub.Hub<Chunk.Chunk<A>>,
+    options?: { readonly scoped?: false; readonly shutdown?: boolean }
+  ): Stream<never, never, A>
+} = internal.fromChunkHub
 
 /**
  * Creates a stream from a `Queue` of values.
@@ -1480,19 +1452,10 @@ export const fromChunkHubScopedWithShutdown: <A>(
  * @since 1.0.0
  * @category constructors
  */
-export const fromChunkQueue: <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>) => Stream<never, never, A> =
-  internal.fromChunkQueue
-
-/**
- * Creates a stream from a `Queue` of values.
- *
- * The queue will be shutdown once the stream is closed.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromChunkQueueWithShutdown: <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>) => Stream<never, never, A> =
-  internal.fromChunkQueueWithShutdown
+export const fromChunkQueue: <A>(
+  queue: Queue.Dequeue<Chunk.Chunk<A>>,
+  options?: { readonly shutdown?: boolean }
+) => Stream<never, never, A> = internal.fromChunkQueue
 
 /**
  * Creates a stream from an arbitrary number of chunks.
@@ -1527,46 +1490,16 @@ export const fromEffectOption: <R, E, A>(effect: Effect.Effect<R, Option.Option<
  * @since 1.0.0
  * @category constructors
  */
-export const fromHub: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A> = internal.fromHub
-
-/**
- * Creates a stream from a subscription to a `Hub` in the context of a scoped
- * effect. The scoped effect describes subscribing to receive messages from
- * the hub while the stream describes taking messages from the hub.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromHubScoped: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>> = internal.fromHubScoped
-
-/**
- * Creates a stream from a subscription to a `Hub`.
- *
- * The hub will be shut down once the stream is closed.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromHubWithShutdown: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A> =
-  internal.fromHubWithShutdown
-
-/**
- * Creates a stream from a subscription to a `Hub` in the context of a scoped
- * effect. The scoped effect describes subscribing to receive messages from
- * the hub while the stream describes taking messages from the hub.
- *
- * The hub will be shut down once the stream is closed.
- *
- * @since 1.0.0
- * @category constructors
- */
-export const fromHubScopedWithShutdown: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>> = internal.fromHubScopedWithShutdown
+export const fromHub: {
+  <A>(
+    hub: Hub.Hub<A>,
+    options: { readonly scoped: true; readonly maxChunkSize?: number; readonly shutdown?: boolean }
+  ): Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
+  <A>(
+    hub: Hub.Hub<A>,
+    options?: { readonly scoped?: false; readonly maxChunkSize?: number; readonly shutdown?: boolean }
+  ): Stream<never, never, A>
+} = internal.fromHub
 
 /**
  * Creates a stream from an `Iterable` collection of values.
@@ -1613,19 +1546,10 @@ export const fromPull: <R, R2, E, A>(
  * @since 1.0.0
  * @category constructors
  */
-export const fromQueue: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => Stream<never, never, A> =
-  internal.fromQueue
-
-/**
- * Creates a stream from a queue of values. The queue will be shutdown once
- * the stream is closed.
- *
- * @param maxChunkSize The maximum number of queued elements to put in one chunk in the stream
- * @since 1.0.0
- * @category constructors
- */
-export const fromQueueWithShutdown: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => Stream<never, never, A> =
-  internal.fromQueueWithShutdown
+export const fromQueue: <A>(
+  queue: Queue.Dequeue<A>,
+  options?: { readonly maxChunkSize?: number; readonly shutdown?: boolean }
+) => Stream<never, never, A> = internal.fromQueue
 
 /**
  * Creates a stream from a `ReadableStream`.
