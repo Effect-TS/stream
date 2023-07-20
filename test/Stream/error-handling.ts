@@ -230,6 +230,33 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(result, Either.left("boom"))
     }))
 
+  it.effect("catchTag", () =>
+    Effect.gen(function*(_) {
+      class ErrorA {
+        readonly _tag = "ErrorA"
+      }
+      class ErrorB {
+        readonly _tag = "ErrorB"
+      }
+
+      const result1 = yield* _(
+        Stream.fail(new ErrorA()),
+        Stream.catchTag("ErrorA", () => Stream.make(1, 2)),
+        Stream.runCollect
+      )
+
+      const result2 = yield* _(
+        Stream.fail(new ErrorA()),
+        Stream.flatMap(() => Stream.fail(new ErrorB())),
+        Stream.catchTag("ErrorB", () => Stream.make(1, 2)),
+        Stream.runCollect,
+        Effect.either
+      )
+
+      expect(Chunk.toReadonlyArray(result1)).toEqual([1, 2])
+      assert(Either.isLeft(result2) && result2.left._tag === "ErrorA")
+    }))
+
   it.effect("onError", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))

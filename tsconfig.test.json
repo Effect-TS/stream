@@ -6,7 +6,6 @@
     "noEmit": true,
     "types": [
       "vitest/globals",
-      "node"
     ],
     "paths": {
       "@effect/io/*": [

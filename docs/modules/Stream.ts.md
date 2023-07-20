@@ -148,6 +148,8 @@ Added in v1.0.0
   - [catchAllCause](#catchallcause)
   - [catchSome](#catchsome)
   - [catchSomeCause](#catchsomecause)
+  - [catchTag](#catchtag)
+  - [catchTags](#catchtags)
   - [orDie](#ordie)
   - [orDieWith](#ordiewith)
   - [orElse](#orelse)
@@ -2418,6 +2420,98 @@ export declare const catchSomeCause: {
     self: Stream<R, E, A>,
     pf: (cause: Cause.Cause<E>) => Option.Option<Stream<R2, E2, A2>>
   ): Stream<R | R2, E | E2, A | A2>
+}
+```
+
+Added in v1.0.0
+
+## catchTag
+
+Switches over to the stream produced by the provided function in case this
+one fails with an error matching the given `_tag`.
+
+**Signature**
+
+```ts
+export declare const catchTag: {
+  <K extends E['_tag'] & string, E extends { _tag: string }, R1, E1, A1>(
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream<R1, E1, A1>
+  ): <R, A>(self: Stream<R, E, A>) => Stream<R1 | R, E1 | Exclude<E, { _tag: K }>, A1 | A>
+  <R, E extends { _tag: string }, A, K extends E['_tag'] & string, R1, E1, A1>(
+    self: Stream<R, E, A>,
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream<R1, E1, A1>
+  ): Stream<R | R1, E1 | Exclude<E, { _tag: K }>, A | A1>
+}
+```
+
+Added in v1.0.0
+
+## catchTags
+
+Switches over to the stream produced by one of the provided functions, in
+case this one fails with an error matching one of the given `_tag`'s.
+
+**Signature**
+
+```ts
+export declare const catchTags: {
+  <
+    E extends { _tag: string },
+    Cases extends { [K in E['_tag']]+?: ((error: Extract<E, { _tag: K }>) => Stream<any, any, any>) | undefined }
+  >(
+    cases: Cases
+  ): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<
+    | R
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer R, infer _E, infer _A>
+          ? R
+          : never
+      }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer E, infer _A>
+          ? E
+          : never
+      }[keyof Cases],
+    | A
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer _E, infer A>
+          ? A
+          : never
+      }[keyof Cases]
+  >
+  <
+    R,
+    E extends { _tag: string },
+    A,
+    Cases extends { [K in E['_tag']]+?: ((error: Extract<E, { _tag: K }>) => Stream<any, any, any>) | undefined }
+  >(
+    self: Stream<R, E, A>,
+    cases: Cases
+  ): Stream<
+    | R
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer R, infer _E, infer _A>
+          ? R
+          : never
+      }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer E, infer _A>
+          ? E
+          : never
+      }[keyof Cases],
+    | A
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer _E, infer A>
+          ? A
+          : never
+      }[keyof Cases]
+  >
 }
 ```
 

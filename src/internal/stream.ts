@@ -1063,6 +1063,93 @@ export const catchSomeCause = dual<
     pipe(self, catchAllCause((cause) => pipe(pf(cause), Option.getOrElse(() => failCause<E | E2>(cause)))))
 )
 
+/* @internal */
+export const catchTag = dual<
+  <K extends E["_tag"] & string, E extends { _tag: string }, R1, E1, A1>(
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream.Stream<R1, E1, A1>
+  ) => <R, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R | R1, Exclude<E, { _tag: K }> | E1, A | A1>,
+  <R, E extends { _tag: string }, A, K extends E["_tag"] & string, R1, E1, A1>(
+    self: Stream.Stream<R, E, A>,
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream.Stream<R1, E1, A1>
+  ) => Stream.Stream<R | R1, Exclude<E, { _tag: K }> | E1, A | A1>
+>(3, (self, k, f) =>
+  catchAll(self, (e) => {
+    if ("_tag" in e && e["_tag"] === k) {
+      return f(e as any)
+    }
+    return fail(e as any)
+  }))
+
+/** @internal */
+export const catchTags: {
+  <
+    E extends { _tag: string },
+    Cases extends {
+      [K in E["_tag"]]+?: (error: Extract<E, { _tag: K }>) => Stream.Stream<any, any, any>
+    }
+  >(
+    cases: Cases
+  ): <R, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<
+    | R
+    | {
+      [K in keyof Cases]: Cases[K] extends
+        ((...args: Array<any>) => Stream.Stream.Variance<infer R, infer _E, infer _A>) ? R
+        : never
+    }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+      [K in keyof Cases]: Cases[K] extends
+        ((...args: Array<any>) => Stream.Stream.Variance<infer _R, infer E, infer _A>) ? E
+        : never
+    }[keyof Cases],
+    | A
+    | {
+      [K in keyof Cases]: Cases[K] extends
+        ((...args: Array<any>) => Stream.Stream.Variance<infer _R, infer _E, infer A>) ? A
+        : never
+    }[keyof Cases]
+  >
+  <
+    R,
+    E extends { _tag: string },
+    A,
+    Cases extends {
+      [K in E["_tag"]]+?: (error: Extract<E, { _tag: K }>) => Stream.Stream<any, any, any>
+    }
+  >(
+    self: Stream.Stream<R, E, A>,
+    cases: Cases
+  ): Stream.Stream<
+    | R
+    | {
+      [K in keyof Cases]: Cases[K] extends
+        ((...args: Array<any>) => Stream.Stream.Variance<infer R, infer _E, infer _A>) ? R
+        : never
+    }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+      [K in keyof Cases]: Cases[K] extends
+        ((...args: Array<any>) => Stream.Stream.Variance<infer _R, infer E, infer _A>) ? E
+        : never
+    }[keyof Cases],
+    | A
+    | {
+      [K in keyof Cases]: Cases[K] extends
+        ((...args: Array<any>) => Stream.Stream.Variance<infer _R, infer _E, infer A>) ? A
+        : never
+    }[keyof Cases]
+  >
+} = dual(2, (self, cases) =>
+  catchAll(self, (e: any) => {
+    const keys = Object.keys(cases)
+    if ("_tag" in e && keys.includes(e["_tag"])) {
+      return cases[e["_tag"]](e as any)
+    }
+    return fail(e as any)
+  }))
+
 /** @internal */
 export const changes = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> =>
   pipe(self, changesWith((x, y) => Equal.equals(y)(x)))

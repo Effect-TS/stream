@@ -551,6 +551,84 @@ export const catchSome: {
 
 /**
  * Switches over to the stream produced by the provided function in case this
+ * one fails with an error matching the given `_tag`.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+export const catchTag: {
+  <K extends E["_tag"] & string, E extends { _tag: string }, R1, E1, A1>(
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream<R1, E1, A1>
+  ): <R, A>(self: Stream<R, E, A>) => Stream<R1 | R, E1 | Exclude<E, { _tag: K }>, A1 | A>
+  <R, E extends { _tag: string }, A, K extends E["_tag"] & string, R1, E1, A1>(
+    self: Stream<R, E, A>,
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream<R1, E1, A1>
+  ): Stream<R | R1, E1 | Exclude<E, { _tag: K }>, A | A1>
+} = internal.catchTag
+
+/**
+ * Switches over to the stream produced by one of the provided functions, in
+ * case this one fails with an error matching one of the given `_tag`'s.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+export const catchTags: {
+  <
+    E extends { _tag: string },
+    Cases extends { [K in E["_tag"]]+?: ((error: Extract<E, { _tag: K }>) => Stream<any, any, any>) | undefined }
+  >(
+    cases: Cases
+  ): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<
+    | R
+    | {
+      [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer R, infer _E, infer _A> ? R
+        : never
+    }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+      [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer E, infer _A> ? E
+        : never
+    }[keyof Cases],
+    | A
+    | {
+      [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer _E, infer A> ? A
+        : never
+    }[keyof Cases]
+  >
+  <
+    R,
+    E extends { _tag: string },
+    A,
+    Cases extends { [K in E["_tag"]]+?: ((error: Extract<E, { _tag: K }>) => Stream<any, any, any>) | undefined }
+  >(
+    self: Stream<R, E, A>,
+    cases: Cases
+  ): Stream<
+    | R
+    | {
+      [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer R, infer _E, infer _A> ? R
+        : never
+    }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+      [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer E, infer _A> ? E
+        : never
+    }[keyof Cases],
+    | A
+    | {
+      [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer _E, infer A> ? A
+        : never
+    }[keyof Cases]
+  >
+} = internal.catchTags
+
+/**
+ * Switches over to the stream produced by the provided function in case this
  * one fails with some errors. Allows recovery from all causes of failure,
  * including interruption if the stream is uninterruptible.
  *
