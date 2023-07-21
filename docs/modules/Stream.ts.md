@@ -159,7 +159,6 @@ Added in v1.0.0
 - [grouping](#grouping)
   - [groupAdjacentBy](#groupadjacentby)
   - [groupBy](#groupby)
-  - [groupByBuffer](#groupbybuffer)
 - [mapping](#mapping)
   - [as](#as)
   - [map](#map)
@@ -241,7 +240,6 @@ Added in v1.0.0
   - [filterMapWhileEffect](#filtermapwhileeffect)
   - [forever](#forever)
   - [groupByKey](#groupbykey)
-  - [groupByKeyBuffer](#groupbykeybuffer)
   - [grouped](#grouped)
   - [groupedWithin](#groupedwithin)
   - [haltAfter](#haltafter)
@@ -2629,35 +2627,16 @@ More powerful version of `Stream.groupByKey`.
 
 ```ts
 export declare const groupBy: {
-  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>): <R, E>(
-    self: Stream<R, E, A>
-  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
-  <R, E, A, R2, E2, K, V>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>): GroupBy.GroupBy<
-    R | R2,
-    E | E2,
-    K,
-    V
-  >
-}
-```
-
-Added in v1.0.0
-
-## groupByBuffer
-
-Like `groupBy`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const groupByBuffer: {
-  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>, bufferSize: number): <R, E>(
+  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>, options?: { readonly bufferSize?: number }): <
+    R,
+    E
+  >(
     self: Stream<R, E, A>
   ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
   <R, E, A, R2, E2, K, V>(
     self: Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ): GroupBy.GroupBy<R | R2, E | E2, K, V>
 }
 ```
@@ -4134,23 +4113,15 @@ pipe(
 
 ```ts
 export declare const groupByKey: {
-  <A, K>(f: (a: A) => K): <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
-  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K): GroupBy.GroupBy<R, E, K, A>
-}
-```
-
-Added in v1.0.0
-
-## groupByKeyBuffer
-
-Like `groupByKey`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const groupByKeyBuffer: {
-  <A, K>(f: (a: A) => K, bufferSize: number): <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
-  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K, bufferSize: number): GroupBy.GroupBy<R, E, K, A>
+  <A, K>(f: (a: A) => K, options?: { readonly bufferSize?: number }): <R, E>(
+    self: Stream<R, E, A>
+  ) => GroupBy.GroupBy<R, E, K, A>
+  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K, options?: { readonly bufferSize?: number }): GroupBy.GroupBy<
+    R,
+    E,
+    K,
+    A
+  >
 }
 ```
 

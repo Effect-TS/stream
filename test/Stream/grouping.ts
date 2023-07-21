@@ -26,7 +26,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         Stream.fromIterable(words),
-        Stream.groupByKeyBuffer(identity, 8192),
+        Stream.groupByKey(identity, { bufferSize: 8192 }),
         GroupBy.evaluate((key, stream) =>
           pipe(
             Stream.runCollect(stream),
@@ -51,7 +51,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         Stream.fromIterable(words),
-        Stream.groupByKeyBuffer(identity, 1050),
+        Stream.groupByKey(identity, { bufferSize: 1050 }),
         GroupBy.first(2),
         GroupBy.evaluate((key, stream) =>
           pipe(
@@ -70,7 +70,7 @@ describe.concurrent("Stream", () => {
       const words = Array.from({ length: 100 }, () => Array.from({ length: 100 }, (_, i) => i)).flat()
       const result = yield* $(pipe(
         Stream.fromIterable(words),
-        Stream.groupByKeyBuffer(identity, 1050),
+        Stream.groupByKey(identity, { bufferSize: 1050 }),
         GroupBy.filter((n) => n <= 5),
         GroupBy.evaluate((key, stream) =>
           pipe(
