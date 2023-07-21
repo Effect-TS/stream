@@ -163,7 +163,7 @@ export const groupBy = dual<
           const ref = yield* $(Ref.make<Map<K, number>>(new Map()))
           const add = yield* $(
             pipe(
-              stream.mapEffect(self, f),
+              stream.mapEffectSequential(self, f),
               stream.distributedWithDynamicCallback(
                 options?.bufferSize ?? 16,
                 ([key, value]) => Effect.flatMap(Deferred.await(decider), (f) => f(key, value)),
@@ -207,6 +207,114 @@ export const groupBy = dual<
       )
     )
 )
+
+/** @internal */
+export const mapEffectOptions = dual<
+  {
+    <A, R2, E2, A2>(
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options?: {
+        readonly concurrency?: number | "unbounded"
+        readonly unordered?: boolean
+      }
+    ): <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>
+    <A, R2, E2, A2, K>(
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options: {
+        readonly key: (a: A) => K
+        readonly bufferSize?: number
+      }
+    ): <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>
+  },
+  {
+    <R, E, A, R2, E2, A2>(
+      self: Stream.Stream<R, E, A>,
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options?: {
+        readonly concurrency?: number | "unbounded"
+        readonly unordered?: boolean
+      }
+    ): Stream.Stream<R2 | R, E2 | E, A2>
+    <R, E, A, R2, E2, A2, K>(
+      self: Stream.Stream<R, E, A>,
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options: {
+        readonly key: (a: A) => K
+        readonly bufferSize?: number
+      }
+    ): Stream.Stream<R2 | R, E2 | E, A2>
+  }
+>(
+  (args) => typeof args[0] !== "function",
+  (<R, E, A, R2, E2, A2, K>(
+    self: Stream.Stream<R, E, A>,
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options?: {
+      readonly key?: (a: A) => K
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+      readonly bufferSize?: number
+    }
+  ): Stream.Stream<R | R2, E | E2, A2> => {
+    if (options?.key) {
+      return evaluate(
+        groupByKey(self, options.key, { bufferSize: options.bufferSize }),
+        (_, s) => pipe(s, stream.mapEffectSequential(f))
+      )
+    }
+
+    return stream.matchConcurrency(
+      options?.concurrency,
+      () => stream.mapEffectSequential(self, f),
+      (n) =>
+        options?.unordered ?
+          stream.flatMap(self, (a) => stream.fromEffect(f(a)), { concurrency: n }) :
+          stream.mapEffectPar(self, n, f)
+    )
+  }) as any
+)
+
+/** @internal */
+export const bindEffect = dual<
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ) => <R, E>(self: Stream.Stream<R, E, K>) => Stream.Stream<
+    R | R2,
+    E | E2,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >,
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream.Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+    }
+  ) => Stream.Stream<
+    R | R2,
+    E | E2,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >
+>((args) => typeof args[0] !== "string", <R, E, N extends string, K, R2, E2, A>(
+  self: Stream.Stream<R, E, K>,
+  tag: Exclude<N, keyof K>,
+  f: (_: K) => Effect.Effect<R2, E2, A>,
+  options?: {
+    readonly concurrency?: number | "unbounded"
+    readonly unordered?: boolean
+  }
+) =>
+  mapEffectOptions(self, (k) =>
+    Effect.map(
+      f(k),
+      (a): Effect.MergeRecord<K, { [k in N]: A }> => ({ ...k, [tag]: a } as any)
+    ), options))
 
 const mapDequeue = <A, B>(dequeue: Queue.Dequeue<A>, f: (a: A) => B): Queue.Dequeue<B> => new MapDequeue(dequeue, f)
 
@@ -396,53 +504,6 @@ export const groupByKey = dual<
       )
     ))
   }
-)
-
-/** @internal */
-export const mapEffectParByKey = dual<
-  <R2, E2, A2, A, K>(
-    keyBy: (a: A) => K,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2>
->(
-  3,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> => mapEffectParByKeyBuffer(self, keyBy, 16, f)
-)
-
-/** @internal */
-export const mapEffectParByKeyBuffer = dual<
-  <R2, E2, A2, A, K>(
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2>
->(
-  4,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> =>
-    pipe(
-      groupByKey(self, keyBy, { bufferSize }),
-      evaluate((_, s) => pipe(s, stream.mapEffect(f)))
-    )
 )
 
 /**

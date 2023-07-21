@@ -2323,7 +2323,7 @@ export const contextWith = <R, A>(f: (env: Context.Context<R>) => A): Stream.Str
 /** @internal */
 export const contextWithEffect = <R0, R, E, A>(
   f: (env: Context.Context<R0>) => Effect.Effect<R, E, A>
-): Stream.Stream<R0 | R, E, A> => pipe(context<R0>(), mapEffect(f))
+): Stream.Stream<R0 | R, E, A> => pipe(context<R0>(), mapEffectSequential(f))
 
 /** @internal */
 export const contextWithStream = <R0, R, E, A>(
@@ -2647,7 +2647,8 @@ export const flatMap = dual<
   }
 )
 
-const matchConcurrency = <A>(
+/** @internal */
+export const matchConcurrency = <A>(
   concurrency: number | "unbounded" | undefined,
   sequential: () => A,
   bounded: (n: number) => A
@@ -2748,7 +2749,7 @@ export const flattenEffect = dual<
       flatMap(self, (a) => fromEffect(a), { concurrency: options.concurrency }) :
       matchConcurrency(
         options?.concurrency,
-        () => mapEffect(self, identity),
+        () => mapEffectSequential(self, identity),
         (n) =>
           new StreamImpl(
             pipe(
@@ -3761,7 +3762,7 @@ export const mapConcatChunkEffect = dual<
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, Chunk.Chunk<A2>>
-  ): Stream.Stream<R | R2, E | E2, A2> => pipe(self, mapEffect(f), mapConcatChunk(identity))
+  ): Stream.Stream<R | R2, E | E2, A2> => pipe(self, mapEffectSequential(f), mapConcatChunk(identity))
 )
 
 /** @internal */
@@ -3779,11 +3780,11 @@ export const mapConcatEffect = dual<
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, Iterable<A2>>
   ): Stream.Stream<R | R2, E | E2, A2> =>
-    pipe(self, mapEffect((a) => pipe(f(a), Effect.map(Chunk.fromIterable))), mapConcatChunk(identity))
+    pipe(self, mapEffectSequential((a) => pipe(f(a), Effect.map(Chunk.fromIterable))), mapConcatChunk(identity))
 )
 
 /** @internal */
-export const mapEffect = dual<
+export const mapEffectSequential = dual<
   <A, R2, E2, A2>(
     f: (a: A) => Effect.Effect<R2, E2, A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
@@ -3851,26 +3852,6 @@ export const mapEffectPar = dual<
         channel.mapOut(Chunk.of)
       )
     )
-)
-
-/** @internal */
-export const mapEffectParUnordered = dual<
-  <A, R2, E2, A2>(
-    n: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    n: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2>
->(
-  3,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    n: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> => flatMap(self, (a) => fromEffect(f(a)), { concurrency: n })
 )
 
 /** @internal */
@@ -5688,7 +5669,7 @@ export const someOrFail = dual<
 >(
   2,
   <R, E, A, E2>(self: Stream.Stream<R, E, Option.Option<A>>, error: LazyArg<E2>): Stream.Stream<R, E | E2, A> =>
-    mapEffect(
+    mapEffectSequential(
       self,
       Option.match({
         onNone: () => Effect.failSync(error),
@@ -6115,7 +6096,7 @@ export const tap = dual<
   <R, E, A, R2, E2, _>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, _>
-  ): Stream.Stream<R | R2, E | E2, A> => mapEffect(self, (a) => Effect.as(f(a), a))
+  ): Stream.Stream<R | R2, E | E2, A> => mapEffectSequential(self, (a) => Effect.as(f(a), a))
 )
 
 /** @internal */
@@ -7747,7 +7728,7 @@ export const zipLatestWith = dual<
                     pipe(
                       repeatEffectOption(left),
                       mergeEither(repeatEffectOption(right)),
-                      mapEffect(Either.match({
+                      mapEffectSequential(Either.match({
                         onLeft: (leftChunk) =>
                           pipe(
                             Ref.modify(latest, ([_, rightLatest]) =>
@@ -8065,6 +8046,99 @@ const zipChunks = <A, B, C>(
     Either.right(pipe(right, Chunk.drop(left.length)))
   ] as const
 }
+
+// Do notation
+
+/** @internal */
+export const Do: Stream.Stream<never, never, {}> = succeed({})
+
+/** @internal */
+export const bind = dual<
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Stream.Stream<R2, E2, A>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ) => <R, E>(self: Stream.Stream<R, E, K>) => Stream.Stream<
+    R | R2,
+    E | E2,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >,
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream.Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Stream.Stream<R2, E2, A>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ) => Stream.Stream<
+    R | R2,
+    E | E2,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >
+>((args) => typeof args[0] !== "string", <R, E, N extends string, K, R2, E2, A>(
+  self: Stream.Stream<R, E, K>,
+  tag: Exclude<N, keyof K>,
+  f: (_: K) => Stream.Stream<R2, E2, A>,
+  options?: {
+    readonly concurrency?: number | "unbounded"
+    readonly bufferSize?: number
+  }
+) =>
+  flatMap(self, (k) =>
+    map(
+      f(k),
+      (a): Effect.MergeRecord<K, { [k in N]: A }> => ({ ...k, [tag]: a } as any)
+    ), options))
+
+/* @internal */
+export const bindTo = dual<
+  <N extends string>(tag: N) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<
+    R,
+    E,
+    Record<N, A>
+  >,
+  <R, E, A, N extends string>(
+    self: Stream.Stream<R, E, A>,
+    tag: N
+  ) => Stream.Stream<
+    R,
+    E,
+    Record<N, A>
+  >
+>(
+  2,
+  <R, E, A, N extends string>(self: Stream.Stream<R, E, A>, tag: N): Stream.Stream<R, E, Record<N, A>> =>
+    map(self, (a) => ({ [tag]: a } as Record<N, A>))
+)
+
+/* @internal */
+export const let_ = dual<
+  <N extends string, K, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => A
+  ) => <R, E>(self: Stream.Stream<R, E, K>) => Stream.Stream<
+    R,
+    E,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >,
+  <R, E, K, N extends string, A>(
+    self: Stream.Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => A
+  ) => Stream.Stream<
+    R,
+    E,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >
+>(3, <R, E, K, N extends string, A>(self: Stream.Stream<R, E, K>, tag: Exclude<N, keyof K>, f: (_: K) => A) =>
+  map(
+    self,
+    (k): Effect.MergeRecord<K, { [k in N]: A }> => ({ ...k, [tag]: f(k) } as any)
+  ))
 
 // Circular with Channel
 

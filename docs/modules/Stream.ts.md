@@ -132,6 +132,12 @@ Added in v1.0.0
   - [toQueueSlidingCapacity](#toqueueslidingcapacity)
   - [toQueueUnbounded](#toqueueunbounded)
   - [toReadableStream](#toreadablestream)
+- [do notation](#do-notation)
+  - [Do](#do)
+  - [bind](#bind)
+  - [bindEffect](#bindeffect)
+  - [bindTo](#bindto)
+  - [let](#let)
 - [elements](#elements)
   - [find](#find)
   - [findEffect](#findeffect)
@@ -171,10 +177,6 @@ Added in v1.0.0
   - [mapConcatChunkEffect](#mapconcatchunkeffect)
   - [mapConcatEffect](#mapconcateffect)
   - [mapEffect](#mapeffect)
-  - [mapEffectPar](#mapeffectpar)
-  - [mapEffectParByKey](#mapeffectparbykey)
-  - [mapEffectParByKeyBuffer](#mapeffectparbykeybuffer)
-  - [mapEffectParUnordered](#mapeffectparunordered)
   - [mapError](#maperror)
   - [mapErrorCause](#maperrorcause)
 - [models](#models)
@@ -2169,6 +2171,100 @@ export declare const toReadableStream: <E, A>(source: Stream<never, E, A>) => Re
 
 Added in v1.0.0
 
+# do notation
+
+## Do
+
+**Signature**
+
+```ts
+export declare const Do: Stream<never, never, {}>
+```
+
+Added in v1.0.0
+
+## bind
+
+Binds a value from a stream in a `do` scope
+
+**Signature**
+
+```ts
+export declare const bind: {
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Stream<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): <R, E>(self: Stream<R, E, K>) => Stream<R2 | R, E2 | E, Effect.MergeRecord<K, { [k in N]: A }>>
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Stream<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R | R2, E | E2, Effect.MergeRecord<K, { [k in N]: A }>>
+}
+```
+
+Added in v1.0.0
+
+## bindEffect
+
+Binds an effectful value in a `do` scope
+
+**Signature**
+
+```ts
+export declare const bindEffect: {
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): <R, E>(self: Stream<R, E, K>) => Stream<R2 | R, E2 | E, Effect.MergeRecord<K, { [k in N]: A }>>
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R | R2, E | E2, Effect.MergeRecord<K, { [k in N]: A }>>
+}
+```
+
+Added in v1.0.0
+
+## bindTo
+
+**Signature**
+
+```ts
+export declare const bindTo: {
+  <N extends string>(tag: N): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Record<N, A>>
+  <R, E, A, N extends string>(self: Stream<R, E, A>, tag: N): Stream<R, E, Record<N, A>>
+}
+```
+
+Added in v1.0.0
+
+## let
+
+Bind a value in a `do` scope
+
+**Signature**
+
+```ts
+export declare const let: {
+  <N extends string, K, A>(tag: Exclude<N, keyof K>, f: (_: K) => A): <R, E>(
+    self: Stream<R, E, K>
+  ) => Stream<R, E, Effect.MergeRecord<K, { [k in N]: A }>>
+  <R, E, K, N extends string, A>(self: Stream<R, E, K>, tag: Exclude<N, keyof K>, f: (_: K) => A): Stream<
+    R,
+    E,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >
+}
+```
+
+Added in v1.0.0
+
 # elements
 
 ## find
@@ -2831,102 +2927,24 @@ Maps over elements of the stream with the specified effectful function.
 
 ```ts
 export declare const mapEffect: {
-  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## mapEffectPar
-
-Maps over elements of the stream with the specified effectful function,
-executing up to `n` invocations of `f` concurrently. Transformed elements
-will be emitted in the original order.
-
-**Signature**
-
-```ts
-export declare const mapEffectPar: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## mapEffectParByKey
-
-Maps over elements of the stream with the specified effectful function,
-partitioned by `p` executing invocations of `f` concurrently. The number of
-concurrent invocations of `f` is determined by the number of different
-outputs of type `K`. Up to `buffer` elements may be buffered per partition.
-Transformed elements may be reordered but the order within a partition is
-maintained.
-
-**Signature**
-
-```ts
-export declare const mapEffectParByKey: {
-  <R2, E2, A2, A, K>(keyBy: (a: A) => K, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, R2, E2, A2, A, K>(self: Stream<R, E, A>, keyBy: (a: A) => K, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## mapEffectParByKeyBuffer
-
-Like `mapEffectParByKey`, but with a `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const mapEffectParByKeyBuffer: {
-  <R2, E2, A2, A, K>(keyBy: (a: A) => K, bufferSize: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, R2, E2, A2, A, K>(
+  <A, R2, E2, A2>(
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <A, R2, E2, A2, K>(
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options: { readonly key: (a: A) => K; readonly bufferSize?: number | undefined }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }
   ): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## mapEffectParUnordered
-
-Maps over elements of the stream with the specified effectful function,
-executing up to `n` invocations of `f` concurrently. The element order is
-not enforced by this combinator, and elements may be reordered.
-
-**Signature**
-
-```ts
-export declare const mapEffectParUnordered: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
+  <R, E, A, R2, E2, A2, K>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options: { readonly key: (a: A) => K; readonly bufferSize?: number | undefined }
+  ): Stream<R | R2, E | E2, A2>
 }
 ```
 
