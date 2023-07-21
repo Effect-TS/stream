@@ -5480,7 +5480,7 @@ export const schedule = dual<
     schedule: Schedule.Schedule<R2, A, unknown>
   ): Stream.Stream<R | R2, E, A> =>
     filterMap(
-      scheduleWith(self, schedule, Option.some, Option.none),
+      scheduleWith(self, schedule, { onElement: Option.some, onSchedule: Option.none }),
       identity
     )
 )
@@ -5489,22 +5489,28 @@ export const schedule = dual<
 export const scheduleWith = dual<
   <R2, A, B, C>(
     schedule: Schedule.Schedule<R2, A, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, C>,
   <R, E, R2, A, B, C>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, A, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ) => Stream.Stream<R2 | R, E, C>
 >(
-  4,
+  3,
   <R, E, R2, A, B, C>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, A, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ): Stream.Stream<R | R2, E, C> => {
     const loop = (
       driver: Schedule.ScheduleDriver<R2, A, B>,
@@ -5526,7 +5532,7 @@ export const scheduleWith = dual<
               Effect.orDie,
               Effect.map((b) =>
                 pipe(
-                  core.write(Chunk.make(f(next.value), g(b))),
+                  core.write(Chunk.make(options.onElement(next.value), options.onSchedule(b))),
                   core.flatMap(() => loop(driver, iterator))
                 )
               ),
@@ -5534,7 +5540,7 @@ export const scheduleWith = dual<
             ),
           onSuccess: () =>
             Effect.succeed(pipe(
-              core.write(Chunk.of(f(next.value))),
+              core.write(Chunk.of(options.onElement(next.value))),
               core.flatMap(() => loop(driver, iterator))
             ))
         })
