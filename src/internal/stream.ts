@@ -4826,7 +4826,10 @@ export const repeatEither = dual<
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>
   ): Stream.Stream<R | R2, E, Either.Either<B, A>> =>
-    pipe(self, repeatWith(schedule, (a): Either.Either<B, A> => Either.right(a), Either.left))
+    repeatWith(self, schedule, {
+      onElement: (a): Either.Either<B, A> => Either.right(a),
+      onSchedule: Either.left
+    })
 )
 
 /** @internal */
@@ -4943,28 +4946,34 @@ export const repeatValue = <A>(value: A): Stream.Stream<never, never, A> =>
 export const repeatWith = dual<
   <R2, B, A, C>(
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, C>,
   <R, E, R2, B, A, C>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ) => Stream.Stream<R2 | R, E, C>
 >(
-  4,
+  3,
   <R, E, R2, B, A, C>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ): Stream.Stream<R | R2, E, C> => {
     return pipe(
       Schedule.driver(schedule),
       Effect.map((driver) => {
-        const scheduleOutput = pipe(driver.last(), Effect.orDie, Effect.map(g))
-        const process = pipe(self, map(f), toChannel)
+        const scheduleOutput = pipe(driver.last(), Effect.orDie, Effect.map(options.onSchedule))
+        const process = pipe(self, map(options.onElement), toChannel)
         const loop: Channel.Channel<R | R2, unknown, unknown, unknown, E, Chunk.Chunk<C>, void> = channel.unwrap(
           Effect.match(driver.next(void 0), {
             onFailure: core.unit,
