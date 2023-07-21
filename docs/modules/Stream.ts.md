@@ -299,9 +299,7 @@ Added in v1.0.0
   - [takeWhile](#takewhile)
   - [tapErrorCause](#taperrorcause)
   - [throttleEnforce](#throttleenforce)
-  - [throttleEnforceBurst](#throttleenforceburst)
   - [throttleEnforceEffect](#throttleenforceeffect)
-  - [throttleEnforceEffectBurst](#throttleenforceeffectburst)
   - [throttleShape](#throttleshape)
   - [throttleShapeBurst](#throttleshapeburst)
   - [throttleShapeEffect](#throttleshapeeffect)
@@ -5223,37 +5221,20 @@ constraints are dropped. The weight of each chunk is determined by the
 
 ```ts
 export declare const throttleEnforce: {
-  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R, E, A>
+  <A>(options: {
+    readonly cost: (chunk: Chunk.Chunk<A>) => number
+    readonly units: number
+    readonly duration: Duration.Duration
+    readonly burst?: number | undefined
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
   <R, E, A>(
     self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleEnforceBurst
-
-Like `throttleEnforce`, but with a configurable `burst` parameter.
-
-**Signature**
-
-```ts
-export declare const throttleEnforceBurst: {
-  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration, burst: number): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R, E, A>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => number
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number | undefined
+    }
   ): Stream<R, E, A>
 }
 ```
@@ -5273,42 +5254,20 @@ constraints are dropped. The weight of each chunk is determined by the
 
 ```ts
 export declare const throttleEnforceEffect: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <A, R2, E2>(options: {
+    readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
+    readonly units: number
+    readonly duration: Duration.Duration
+    readonly burst?: number | undefined
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
   <R, E, A, R2, E2>(
     self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleEnforceEffectBurst
-
-Like `throttleEnforceEffect`, but with a configurable `burst` parameter.
-
-**Signature**
-
-```ts
-export declare const throttleEnforceEffectBurst: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number | undefined
+    }
   ): Stream<R | R2, E | E2, A>
 }
 ```

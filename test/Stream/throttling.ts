@@ -20,7 +20,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.throttleEnforce(() => 0, 0, Duration.infinity),
+        Stream.throttleEnforce({ cost: () => 0, units: 0, duration: Duration.infinity }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
@@ -30,7 +30,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.throttleEnforce(() => 1, 0, Duration.infinity),
+        Stream.throttleEnforce({ cost: () => 1, units: 0, duration: Duration.infinity }),
         Stream.runCollect
       ))
       assert.isTrue(Chunk.isEmpty(result))
@@ -41,7 +41,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* _(
         Stream.fromSchedule(Schedule.spaced(Duration.millis(100))),
         Stream.take(10),
-        Stream.throttleEnforce(() => 1, 1, Duration.millis(200)),
+        Stream.throttleEnforce({ cost: () => 1, units: 1, duration: Duration.millis(200) }),
         Stream.runCollect,
         Effect.fork
       )
