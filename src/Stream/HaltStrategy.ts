@@ -13,6 +13,12 @@ export type HaltStrategy = Left | Right | Both | Either
  * @since 1.0.0
  * @category models
  */
+export type HaltStrategyInput = HaltStrategy | "left" | "right" | "both" | "either"
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
 export interface Left {
   readonly _tag: "Left"
 }
@@ -64,6 +70,12 @@ export const Both: HaltStrategy = internal.Both
  * @category constructors
  */
 export const Either: HaltStrategy = internal.Either
+
+/**
+ * @since 1.0.0
+ * @category constructors
+ */
+export const fromInput: (input: HaltStrategyInput) => HaltStrategy = internal.fromInput
 
 /**
  * @since 1.0.0

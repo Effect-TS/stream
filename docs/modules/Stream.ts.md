@@ -259,14 +259,9 @@ Added in v1.0.0
   - [merge](#merge)
   - [mergeAll](#mergeall)
   - [mergeEither](#mergeeither)
-  - [mergeHaltEither](#mergehalteither)
-  - [mergeHaltLeft](#mergehaltleft)
-  - [mergeHaltRight](#mergehaltright)
-  - [mergeHaltStrategy](#mergehaltstrategy)
   - [mergeLeft](#mergeleft)
   - [mergeRight](#mergeright)
   - [mergeWith](#mergewith)
-  - [mergeWithHaltStrategy](#mergewithhaltstrategy)
   - [mkString](#mkstring)
   - [onDone](#ondone)
   - [onError](#onerror)
@@ -4409,8 +4404,18 @@ no termination strategy is specified.
 
 ```ts
 export declare const merge: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+  <R2, E2, A2>(that: Stream<R2, E2, A2>, options?: { readonly haltStrategy?: HaltStrategy.HaltStrategyInput }): <
+    R,
+    E,
+    A
+  >(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    options?: { readonly haltStrategy?: HaltStrategy.HaltStrategyInput }
+  ): Stream<R | R2, E | E2, A | A2>
 }
 ```
 
@@ -4451,75 +4456,6 @@ export declare const mergeEither: {
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, Either.Either<A, A2>>
   <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, Either.Either<A, A2>>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltEither
-
-Merges this stream and the specified stream together. New produced stream
-will terminate when either stream terminates.
-
-**Signature**
-
-```ts
-export declare const mergeHaltEither: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltLeft
-
-Merges this stream and the specified stream together. New produced stream
-will terminate when this stream terminates.
-
-**Signature**
-
-```ts
-export declare const mergeHaltLeft: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltRight
-
-Merges this stream and the specified stream together. New produced stream
-will terminate when the specified stream terminates.
-
-**Signature**
-
-```ts
-export declare const mergeHaltRight: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltStrategy
-
-Like `merge`, but with a configurable `strategy` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeHaltStrategy: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>, strategy: HaltStrategy.HaltStrategy): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, strategy: HaltStrategy.HaltStrategy): Stream<
-    R | R2,
-    E | E2,
-    A | A2
-  >
 }
 ```
 
@@ -4569,40 +4505,22 @@ no termination strategy is specified.
 
 ```ts
 export declare const mergeWith: {
-  <R2, E2, A2, A, A3, A4>(that: Stream<R2, E2, A2>, left: (a: A) => A3, right: (a2: A2) => A4): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A3 | A4>
-  <R, E, R2, E2, A2, A, A3, A4>(
-    self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
-  ): Stream<R | R2, E | E2, A3 | A4>
-}
-```
-
-Added in v1.0.0
-
-## mergeWithHaltStrategy
-
-Like `mergeWith`, but with a configurable `strategy` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeWithHaltStrategy: {
   <R2, E2, A2, A, A3, A4>(
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
+    other: Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput | undefined
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3 | A4>
   <R, E, R2, E2, A2, A, A3, A4>(
     self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
+    other: Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput | undefined
+    }
   ): Stream<R | R2, E | E2, A3 | A4>
 }
 ```

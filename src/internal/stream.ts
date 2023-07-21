@@ -3879,38 +3879,32 @@ export const mapErrorCause = dual<
 /** @internal */
 export const merge = dual<
   <R2, E2, A2>(
-    that: Stream.Stream<R2, E2, A2>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2 | A>,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2 | A>
->(
-  2,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A | A2> => mergeHaltStrategy(self, that, HaltStrategy.Both)
-)
-
-/** @internal */
-export const mergeHaltStrategy = dual<
-  <R2, E2, A2>(
     that: Stream.Stream<R2, E2, A2>,
-    strategy: HaltStrategy.HaltStrategy
+    options?: {
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2 | A>,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
     that: Stream.Stream<R2, E2, A2>,
-    strategy: HaltStrategy.HaltStrategy
+    options?: {
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ) => Stream.Stream<R2 | R, E2 | E, A2 | A>
 >(
-  3,
+  (args) => isStream(args[1]),
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
     that: Stream.Stream<R2, E2, A2>,
-    strategy: HaltStrategy.HaltStrategy
-  ): Stream.Stream<R | R2, E | E2, A | A2> => mergeWithHaltStrategy(self, that, identity, identity, strategy)
+    options?: {
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
+  ): Stream.Stream<R | R2, E | E2, A | A2> =>
+    mergeWith(self, that, {
+      onSelf: identity,
+      onOther: identity,
+      haltStrategy: options?.haltStrategy
+    })
 )
 
 /** @internal */
@@ -3926,57 +3920,6 @@ export const mergeAll = dual<
 >((args) => Symbol.iterator in args[0], (streams, options) => flatten(fromIterable(streams), options))
 
 /** @internal */
-export const mergeHaltEither = dual<
-  <R2, E2, A2>(
-    that: Stream.Stream<R2, E2, A2>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2 | A>,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2 | A>
->(
-  2,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A | A2> => mergeHaltStrategy(self, that, haltStrategy.Either)
-)
-
-/** @internal */
-export const mergeHaltLeft = dual<
-  <R2, E2, A2>(
-    that: Stream.Stream<R2, E2, A2>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2 | A>,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2 | A>
->(
-  2,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A | A2> => mergeHaltStrategy(self, that, haltStrategy.Left)
-)
-
-/** @internal */
-export const mergeHaltRight = dual<
-  <R2, E2, A2>(
-    that: Stream.Stream<R2, E2, A2>
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2 | A>,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2 | A>
->(
-  2,
-  <R, E, A, R2, E2, A2>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A | A2> => mergeHaltStrategy(self, that, haltStrategy.Right)
-)
-
-/** @internal */
 export const mergeEither = dual<
   <R2, E2, A2>(
     that: Stream.Stream<R2, E2, A2>
@@ -3990,7 +3933,8 @@ export const mergeEither = dual<
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
     that: Stream.Stream<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, Either.Either<A, A2>> => mergeWith(self, that, Either.left, Either.right)
+  ): Stream.Stream<R | R2, E | E2, Either.Either<A, A2>> =>
+    mergeWith(self, that, { onSelf: Either.left, onOther: Either.right })
 )
 
 /** @internal */
@@ -4030,50 +3974,34 @@ export const mergeRight = dual<
 /** @internal */
 export const mergeWith = dual<
   <R2, E2, A2, A, A3, A4>(
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
+    other: Stream.Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A3 | A4>,
   <R, E, R2, E2, A2, A, A3, A4>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
+    other: Stream.Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ) => Stream.Stream<R2 | R, E2 | E, A3 | A4>
 >(
-  4,
+  3,
   <R, E, R2, E2, A2, A, A3, A4>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
-  ): Stream.Stream<R | R2, E | E2, A3 | A4> => mergeWithHaltStrategy(self, that, left, right, HaltStrategy.Both)
-)
-
-/** @internal */
-export const mergeWithHaltStrategy = dual<
-  <R2, E2, A2, A, A3, A4>(
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A3 | A4>,
-  <R, E, R2, E2, A2, A, A3, A4>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
-  ) => Stream.Stream<R2 | R, E2 | E, A3 | A4>
->(
-  5,
-  <R, E, R2, E2, A2, A, A3, A4>(
-    self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
+    other: Stream.Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ): Stream.Stream<R | R2, E | E2, A3 | A4> => {
+    const strategy = options.haltStrategy ? haltStrategy.fromInput(options.haltStrategy) : HaltStrategy.Both
     const handler = (terminate: boolean) =>
       (exit: Exit.Exit<E | E2, unknown>): MergeDecision.MergeDecision<R | R2, E | E2, unknown, E | E2, unknown> =>
         terminate || !Exit.isSuccess(exit) ?
@@ -4083,8 +4011,8 @@ export const mergeWithHaltStrategy = dual<
 
     return new StreamImpl<R | R2, E | E2, A3 | A4>(
       channel.mergeWith(
-        toChannel(map(self, left)),
-        toChannel(map(that, right)),
+        toChannel(map(self, options.onSelf)),
+        toChannel(map(other, options.onOther)),
         handler(strategy._tag === "Either" || strategy._tag === "Left"),
         handler(strategy._tag === "Either" || strategy._tag === "Right")
       )
@@ -6192,15 +6120,14 @@ export const tapSink = dual<
               Deferred.await(deferred)
             ))
           )),
-          mergeHaltStrategy(
+          merge(
             execute(pipe(
               run(right, sink),
               Effect.ensuring(Effect.zipRight(
                 Queue.shutdown(queue),
                 Deferred.succeed(deferred, void 0)
               ))
-            )),
-            haltStrategy.Both
+            ))
           )
         )
       })

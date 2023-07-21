@@ -46,7 +46,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.fromQueue(queue2)
       const fiber = yield* $(pipe(
         stream1,
-        Stream.mergeHaltLeft(stream2),
+        Stream.merge(stream2, { haltStrategy: "left" }),
         Stream.runCollect,
         Effect.fork
       ))
@@ -64,7 +64,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.fromEffect(pipe(Effect.sleep(Duration.seconds(5)), Effect.as(4)))
       const result = yield* $(pipe(
         stream1,
-        Stream.mergeHaltLeft(stream2),
+        Stream.merge(stream2, { haltStrategy: "left" }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
@@ -78,7 +78,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.fromQueue(queue2)
       const fiber = yield* $(pipe(
         stream1,
-        Stream.mergeHaltRight(stream2),
+        Stream.merge(stream2, { haltStrategy: "right" }),
         Stream.runCollect,
         Effect.fork
       ))
@@ -98,7 +98,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.fromQueue(queue2)
       const fiber = yield* $(pipe(
         stream1,
-        Stream.mergeHaltEither(stream2),
+        Stream.merge(stream2, { haltStrategy: "either" }),
         Stream.runCollect,
         Effect.fork
       ))
@@ -149,7 +149,7 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.fail("Ouch")
       const result = yield* $(pipe(
         stream1,
-        Stream.mergeWith(stream2, constVoid, constVoid),
+        Stream.mergeWith(stream2, { onSelf: constVoid, onOther: constVoid }),
         Stream.runCollect,
         Effect.either
       ))

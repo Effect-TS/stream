@@ -23,6 +23,22 @@ export const Either: HaltStrategy.HaltStrategy = {
 }
 
 /** @internal */
+export const fromInput = (input: HaltStrategy.HaltStrategyInput): HaltStrategy.HaltStrategy => {
+  switch (input) {
+    case "left":
+      return Left
+    case "right":
+      return Right
+    case "both":
+      return Both
+    case "either":
+      return Either
+    default:
+      return input
+  }
+}
+
+/** @internal */
 export const isLeft = (self: HaltStrategy.HaltStrategy): self is HaltStrategy.Left => self._tag === OpCodes.OP_LEFT
 
 /** @internal */

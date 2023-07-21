@@ -2081,27 +2081,16 @@ export const mapErrorCause: {
  * @category utils
  */
 export const merge: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-} = internal.merge
-
-/**
- * Like `merge`, but with a configurable `strategy` parameter.
- *
- * @since 1.0.0
- * @category utils
- */
-export const mergeHaltStrategy: {
   <R2, E2, A2>(
     that: Stream<R2, E2, A2>,
-    strategy: HaltStrategy.HaltStrategy
+    options?: { readonly haltStrategy?: HaltStrategy.HaltStrategyInput }
   ): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
   <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
     that: Stream<R2, E2, A2>,
-    strategy: HaltStrategy.HaltStrategy
+    options?: { readonly haltStrategy?: HaltStrategy.HaltStrategyInput }
   ): Stream<R | R2, E | E2, A | A2>
-} = internal.mergeHaltStrategy
+} = internal.merge
 
 /**
  * Merges a variable list of streams in a non-deterministic fashion. Up to `n`
@@ -2139,75 +2128,23 @@ export const mergeAll: {
  */
 export const mergeWith: {
   <R2, E2, A2, A, A3, A4>(
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
+    other: Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3 | A4>
   <R, E, R2, E2, A2, A, A3, A4>(
     self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
+    other: Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput
+    }
   ): Stream<R | R2, E | E2, A3 | A4>
 } = internal.mergeWith
-
-/**
- * Like `mergeWith`, but with a configurable `strategy` parameter.
- *
- * @since 1.0.0
- * @category utils
- */
-export const mergeWithHaltStrategy: {
-  <R2, E2, A2, A, A3, A4>(
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3 | A4>
-  <R, E, R2, E2, A2, A, A3, A4>(
-    self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
-  ): Stream<R | R2, E | E2, A3 | A4>
-} = internal.mergeWithHaltStrategy
-
-/**
- * Merges this stream and the specified stream together. New produced stream
- * will terminate when either stream terminates.
- *
- * @since 1.0.0
- * @category utils
- */
-export const mergeHaltEither: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-} = internal.mergeHaltEither
-
-/**
- * Merges this stream and the specified stream together. New produced stream
- * will terminate when this stream terminates.
- *
- * @since 1.0.0
- * @category utils
- */
-export const mergeHaltLeft: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-} = internal.mergeHaltLeft
-
-/**
- * Merges this stream and the specified stream together. New produced stream
- * will terminate when the specified stream terminates.
- *
- * @since 1.0.0
- * @category utils
- */
-export const mergeHaltRight: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-} = internal.mergeHaltRight
 
 /**
  * Merges this stream and the specified stream together to produce a stream of
