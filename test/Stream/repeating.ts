@@ -276,7 +276,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         Stream.make("A", "B", "C"),
-        Stream.repeatElementsWith(schedule, identity, String),
+        Stream.repeatElementsWith(schedule, { onElement: identity, onSchedule: String }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), ["A", "123", "B", "123", "C", "123"])

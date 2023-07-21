@@ -2776,14 +2776,12 @@ export const repeatElements: {
 export const repeatElementsWith: {
   <R2, B, A, C>(
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
   <R, E, R2, B, A, C>(
     self: Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): Stream<R | R2, E, C>
 } = internal.repeatElementsWith
 

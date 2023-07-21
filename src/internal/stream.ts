@@ -4845,7 +4845,7 @@ export const repeatElements = dual<
     schedule: Schedule.Schedule<R2, unknown, B>
   ): Stream.Stream<R | R2, E, A> =>
     filterMap(
-      repeatElementsWith(self, schedule, (a) => Option.some(a), Option.none),
+      repeatElementsWith(self, schedule, { onElement: (a) => Option.some(a), onSchedule: Option.none }),
       identity
     )
 )
@@ -4854,22 +4854,28 @@ export const repeatElements = dual<
 export const repeatElementsWith = dual<
   <R2, B, A, C>(
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, C>,
   <R, E, R2, B, A, C>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ) => Stream.Stream<R2 | R, E, C>
 >(
-  4,
+  3,
   <R, E, R2, B, A, C>(
     self: Stream.Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: {
+      readonly onElement: (a: A) => C
+      readonly onSchedule: (b: B) => C
+    }
   ): Stream.Stream<R | R2, E, C> => {
     const driver = pipe(
       Schedule.driver(schedule),
@@ -4881,7 +4887,7 @@ export const repeatElementsWith = dual<
             onNone: () => loop,
             onSome: (a) =>
               channel.zipRight(
-                core.write(Chunk.of(f(a))),
+                core.write(Chunk.of(options.onElement(a))),
                 step(pipe(input, Chunk.drop(1)), a)
               )
           })
@@ -4891,7 +4897,7 @@ export const repeatElementsWith = dual<
         ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<C>, void> => {
           const advance = pipe(
             driver.next(a),
-            Effect.as(pipe(core.write(Chunk.of(f(a))), core.flatMap(() => step(input, a))))
+            Effect.as(pipe(core.write(Chunk.of(options.onElement(a))), core.flatMap(() => step(input, a))))
           )
           const reset: Effect.Effect<
             R2,
@@ -4905,7 +4911,7 @@ export const repeatElementsWith = dual<
                 driver.reset(),
                 Effect.map(() =>
                   pipe(
-                    core.write(Chunk.of(g(b))),
+                    core.write(Chunk.of(options.onSchedule(b))),
                     channel.zipRight(feed(input))
                   )
                 )
