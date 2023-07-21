@@ -3518,23 +3518,29 @@ export const intersperse = dual<
 /** @internal */
 export const intersperseAffixes = dual<
   <A2, A3, A4>(
-    start: A2,
-    middle: A3,
-    end: A4
+    options: {
+      readonly start: A2
+      readonly middle: A3
+      readonly end: A4
+    }
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A2 | A3 | A4 | A>,
   <R, E, A, A2, A3, A4>(
     self: Stream.Stream<R, E, A>,
-    start: A2,
-    middle: A3,
-    end: A4
+    options: {
+      readonly start: A2
+      readonly middle: A3
+      readonly end: A4
+    }
   ) => Stream.Stream<R, E, A2 | A3 | A4 | A>
 >(
-  4,
+  2,
   <R, E, A, A2, A3, A4>(
     self: Stream.Stream<R, E, A>,
-    start: A2,
-    middle: A3,
-    end: A4
+    { end, middle, start }: {
+      readonly start: A2
+      readonly middle: A3
+      readonly end: A4
+    }
   ): Stream.Stream<R, E, A | A2 | A3 | A4> =>
     pipe(
       make(start),
