@@ -6820,28 +6820,36 @@ export const zipFlatten = dual<
 /** @internal */
 export const zipAll = dual<
   <R2, E2, A2, A>(
-    that: Stream.Stream<R2, E2, A2>,
-    defaultLeft: A,
-    defaultRight: A2
+    options: {
+      readonly other: Stream.Stream<R2, E2, A2>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, readonly [A, A2]>,
   <R, E, R2, E2, A2, A>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    defaultLeft: A,
-    defaultRight: A2
+    options: {
+      readonly other: Stream.Stream<R2, E2, A2>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+    }
   ) => Stream.Stream<R2 | R, E2 | E, readonly [A, A2]>
 >(
-  4,
+  2,
   <R, E, R2, E2, A2, A>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    defaultLeft: A,
-    defaultRight: A2
+    options: {
+      readonly other: Stream.Stream<R2, E2, A2>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+    }
   ): Stream.Stream<R | R2, E | E2, readonly [A, A2]> =>
-    pipe(
-      self,
-      zipAllWith(that, (a) => [a, defaultRight], (a2) => [defaultLeft, a2], (a, a2) => [a, a2])
-    )
+    zipAllWith(self, {
+      other: options.other,
+      onSelf: (a) => [a, options.defaultOther],
+      onOther: (a2) => [options.defaultSelf, a2],
+      onBoth: (a, a2) => [a, a2]
+    })
 )
 
 /** @internal */
@@ -6859,9 +6867,15 @@ export const zipAllLeft = dual<
   3,
   <R, E, R2, E2, A2, A>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    defaultLeft: A
-  ): Stream.Stream<R | R2, E | E2, A> => pipe(self, zipAllWith(that, identity, () => defaultLeft, (a) => a))
+    other: Stream.Stream<R2, E2, A2>,
+    defaultSelf: A
+  ): Stream.Stream<R | R2, E | E2, A> =>
+    zipAllWith(self, {
+      other,
+      onSelf: identity,
+      onOther: () => defaultSelf,
+      onBoth: (a) => a
+    })
 )
 
 /** @internal */
@@ -6879,121 +6893,162 @@ export const zipAllRight = dual<
   3,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
+    other: Stream.Stream<R2, E2, A2>,
     defaultRight: A2
-  ): Stream.Stream<R | R2, E | E2, A2> => pipe(self, zipAllWith(that, () => defaultRight, identity, (_, a2) => a2))
+  ): Stream.Stream<R | R2, E | E2, A2> =>
+    zipAllWith(self, {
+      other,
+      onSelf: () => defaultRight,
+      onOther: identity,
+      onBoth: (_, a2) => a2
+    })
 )
 
 /** @internal */
 export const zipAllSortedByKey = dual<
   <R2, E2, A2, A, K>(
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ) => <R, E>(
     self: Stream.Stream<R, E, readonly [K, A]>
   ) => Stream.Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ) => Stream.Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>
 >(
-  5,
+  2,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): Stream.Stream<R | R2, E | E2, readonly [K, readonly [A, A2]]> =>
-    zipAllSortedByKeyWith(
-      self,
-      that,
-      (a) => [a, defaultRight] as const,
-      (a2) => [defaultLeft, a2] as const,
-      (a, a2) => [a, a2] as const,
-      order
-    )
+    zipAllSortedByKeyWith(self, {
+      other: options.other,
+      onSelf: (a) => [a, options.defaultOther] as const,
+      onOther: (a2) => [options.defaultSelf, a2] as const,
+      onBoth: (a, a2) => [a, a2] as const,
+      order: options.order
+    })
 )
 
 /** @internal */
 export const zipAllSortedByKeyLeft = dual<
   <R2, E2, A2, A, K>(
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly order: Order.Order<K>
+    }
   ) => <R, E>(self: Stream.Stream<R, E, readonly [K, A]>) => Stream.Stream<R2 | R, E2 | E, readonly [K, A]>,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly order: Order.Order<K>
+    }
   ) => Stream.Stream<R2 | R, E2 | E, readonly [K, A]>
 >(
-  4,
+  2,
   <R, E, R2, E2, A2, A, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly order: Order.Order<K>
+    }
   ): Stream.Stream<R | R2, E | E2, readonly [K, A]> =>
-    zipAllSortedByKeyWith(self, that, identity, () => defaultLeft, (a) => a, order)
+    zipAllSortedByKeyWith(self, {
+      other: options.other,
+      onSelf: identity,
+      onOther: () => options.defaultSelf,
+      onBoth: (a) => a,
+      order: options.order
+    })
 )
 
 /** @internal */
 export const zipAllSortedByKeyRight = dual<
   <R2, E2, A2, K>(
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ) => <R, E, A>(self: Stream.Stream<R, E, readonly [K, A]>) => Stream.Stream<R2 | R, E2 | E, readonly [K, A2]>,
   <R, E, A, R2, E2, A2, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ) => Stream.Stream<R2 | R, E2 | E, readonly [K, A2]>
 >(
-  4,
+  2,
   <R, E, A, R2, E2, A2, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): Stream.Stream<R | R2, E | E2, readonly [K, A2]> =>
-    zipAllSortedByKeyWith(self, that, () => defaultRight, identity, (_, a2) => a2, order)
+    zipAllSortedByKeyWith(self, {
+      other: options.other,
+      onSelf: () => options.defaultOther,
+      onOther: identity,
+      onBoth: (_, a2) => a2,
+      order: options.order
+    })
 )
 
 /** @internal */
 export const zipAllSortedByKeyWith = dual<
   <R2, E2, A, A3, A2, K>(
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+      readonly order: Order.Order<K>
+    }
   ) => <R, E>(self: Stream.Stream<R, E, readonly [K, A]>) => Stream.Stream<R2 | R, E2 | E, readonly [K, A3]>,
   <R, E, R2, E2, A, A3, A2, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+      readonly order: Order.Order<K>
+    }
   ) => Stream.Stream<R2 | R, E2 | E, readonly [K, A3]>
 >(
-  6,
+  2,
   <R, E, R2, E2, A, A3, A2, K>(
     self: Stream.Stream<R, E, readonly [K, A]>,
-    that: Stream.Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream.Stream<R2, E2, readonly [K, A2]>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+      readonly order: Order.Order<K>
+    }
   ): Stream.Stream<R | R2, E | E2, readonly [K, A3]> => {
     const pull = (
       state: ZipAllState.ZipAllState<readonly [K, A], readonly [K, A2]>,
@@ -7019,7 +7074,7 @@ export const zipAllSortedByKeyWith = dual<
               onSuccess: (leftChunk) =>
                 Exit.succeed(
                   [
-                    Chunk.map(leftChunk, ([k, a]) => [k, left(a)] as const),
+                    Chunk.map(leftChunk, ([k, a]) => [k, options.onSelf(a)] as const),
                     ZipAllState.DrainLeft
                   ] as const
                 )
@@ -7034,7 +7089,7 @@ export const zipAllSortedByKeyWith = dual<
               onSuccess: (rightChunk) =>
                 Exit.succeed(
                   [
-                    Chunk.map(rightChunk, ([k, a2]) => [k, right(a2)] as const),
+                    Chunk.map(rightChunk, ([k, a2]) => [k, options.onOther(a2)] as const),
                     ZipAllState.DrainRight
                   ] as const
                 )
@@ -7067,7 +7122,7 @@ export const zipAllSortedByKeyWith = dual<
                   return Effect.succeed(
                     Exit.succeed(
                       [
-                        pipe(leftOption.value, Chunk.map(([k, a]) => [k, left(a)] as const)),
+                        pipe(leftOption.value, Chunk.map(([k, a]) => [k, options.onSelf(a)] as const)),
                         ZipAllState.DrainLeft
                       ] as const
                     )
@@ -7080,7 +7135,7 @@ export const zipAllSortedByKeyWith = dual<
                   return Effect.succeed(
                     Exit.succeed(
                       [
-                        pipe(rightOption.value, Chunk.map(([k, a2]) => [k, right(a2)] as const)),
+                        pipe(rightOption.value, Chunk.map(([k, a2]) => [k, options.onOther(a2)] as const)),
                         ZipAllState.DrainRight
                       ] as const
                     )
@@ -7097,7 +7152,7 @@ export const zipAllSortedByKeyWith = dual<
               onNone: () =>
                 Effect.succeed(
                   Exit.succeed([
-                    pipe(state.rightChunk, Chunk.map(([k, a2]) => [k, right(a2)] as const)),
+                    pipe(state.rightChunk, Chunk.map(([k, a2]) => [k, options.onOther(a2)] as const)),
                     ZipAllState.DrainRight
                   ])
                 ),
@@ -7125,7 +7180,7 @@ export const zipAllSortedByKeyWith = dual<
                 Effect.succeed(
                   Exit.succeed(
                     [
-                      Chunk.map(state.leftChunk, ([k, a]) => [k, left(a)] as const),
+                      Chunk.map(state.leftChunk, ([k, a]) => [k, options.onSelf(a)] as const),
                       ZipAllState.DrainLeft
                     ] as const
                   )
@@ -7174,9 +7229,9 @@ export const zipAllSortedByKeyWith = dual<
       let a2 = rightTuple[1]
       let loop = true
       while (loop) {
-        const compare = order(k1, k2)
+        const compare = options.order(k1, k2)
         if (compare === 0) {
-          builder.push([k1, both(a, a2)])
+          builder.push([k1, options.onBoth(a, a2)])
           if (hasNext(leftChunk, leftIndex) && hasNext(rightChunk, rightIndex)) {
             leftIndex = leftIndex + 1
             rightIndex = rightIndex + 1
@@ -7197,7 +7252,7 @@ export const zipAllSortedByKeyWith = dual<
             loop = false
           }
         } else if (compare < 0) {
-          builder.push([k1, left(a)] as const)
+          builder.push([k1, options.onSelf(a)] as const)
           if (hasNext(leftChunk, leftIndex)) {
             leftIndex = leftIndex + 1
             leftTuple = pipe(leftChunk, Chunk.unsafeGet(leftIndex))
@@ -7215,7 +7270,7 @@ export const zipAllSortedByKeyWith = dual<
             loop = false
           }
         } else {
-          builder.push([k2, right(a2)] as const)
+          builder.push([k2, options.onOther(a2)] as const)
           if (hasNext(rightChunk, rightIndex)) {
             rightIndex = rightIndex + 1
             rightTuple = pipe(rightChunk, Chunk.unsafeGet(rightIndex))
@@ -7236,36 +7291,39 @@ export const zipAllSortedByKeyWith = dual<
       }
       return [Chunk.unsafeFromArray(builder), state!] as const
     }
-    return pipe(
-      self,
-      combineChunks(that, ZipAllState.PullBoth, pull)
-    )
+    return combineChunks(self, options.other, ZipAllState.PullBoth, pull)
   }
 )
 
 /** @internal */
 export const zipAllWith = dual<
   <R2, E2, A2, A, A3>(
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
+    options: {
+      readonly other: Stream.Stream<R2, E2, A2>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+    }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A3>,
   <R, E, R2, E2, A2, A, A3>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
+    options: {
+      readonly other: Stream.Stream<R2, E2, A2>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+    }
   ) => Stream.Stream<R2 | R, E2 | E, A3>
 >(
-  5,
+  2,
   <R, E, R2, E2, A2, A, A3>(
     self: Stream.Stream<R, E, A>,
-    that: Stream.Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
+    options: {
+      readonly other: Stream.Stream<R2, E2, A2>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+    }
   ): Stream.Stream<R | R2, E | E2, A3> => {
     const pull = (
       state: ZipAllState.ZipAllState<A, A2>,
@@ -7283,7 +7341,7 @@ export const zipAllWith = dual<
             onSuccess: (leftChunk) =>
               Effect.succeed(Exit.succeed(
                 [
-                  Chunk.map(leftChunk, left),
+                  Chunk.map(leftChunk, options.onSelf),
                   ZipAllState.DrainLeft
                 ] as const
               ))
@@ -7295,7 +7353,7 @@ export const zipAllWith = dual<
             onSuccess: (rightChunk) =>
               Effect.succeed(Exit.succeed(
                 [
-                  Chunk.map(rightChunk, right),
+                  Chunk.map(rightChunk, options.onOther),
                   ZipAllState.DrainRight
                 ] as const
               ))
@@ -7318,12 +7376,12 @@ export const zipAllWith = dual<
                   if (Chunk.isEmpty(rightOption.value)) {
                     return pull(ZipAllState.PullRight(leftOption.value), pullLeft, pullRight)
                   }
-                  return Effect.succeed(Exit.succeed(zip(leftOption.value, rightOption.value, both)))
+                  return Effect.succeed(Exit.succeed(zip(leftOption.value, rightOption.value, options.onBoth)))
                 }
                 if (Option.isSome(leftOption) && Option.isNone(rightOption)) {
                   return Effect.succeed(Exit.succeed(
                     [
-                      Chunk.map(leftOption.value, left),
+                      Chunk.map(leftOption.value, options.onSelf),
                       ZipAllState.DrainLeft
                     ] as const
                   ))
@@ -7331,7 +7389,7 @@ export const zipAllWith = dual<
                 if (Option.isNone(leftOption) && Option.isSome(rightOption)) {
                   return Effect.succeed(Exit.succeed(
                     [
-                      Chunk.map(rightOption.value, right),
+                      Chunk.map(rightOption.value, options.onOther),
                       ZipAllState.DrainRight
                     ] as const
                   ))
@@ -7347,7 +7405,7 @@ export const zipAllWith = dual<
               onNone: () =>
                 Effect.succeed(Exit.succeed(
                   [
-                    Chunk.map(state.rightChunk, right),
+                    Chunk.map(state.rightChunk, options.onOther),
                     ZipAllState.DrainRight
                   ] as const
                 )),
@@ -7365,7 +7423,7 @@ export const zipAllWith = dual<
               if (Chunk.isEmpty(state.rightChunk)) {
                 return pull(ZipAllState.PullRight(leftChunk), pullLeft, pullRight)
               }
-              return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk, both)))
+              return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk, options.onBoth)))
             }
           })
         }
@@ -7376,7 +7434,7 @@ export const zipAllWith = dual<
                 Effect.succeed(
                   Exit.succeed(
                     [
-                      Chunk.map(state.leftChunk, left),
+                      Chunk.map(state.leftChunk, options.onSelf),
                       ZipAllState.DrainLeft
                     ] as const
                   )
@@ -7403,7 +7461,7 @@ export const zipAllWith = dual<
                   pullRight
                 )
               }
-              return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk, both)))
+              return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk, options.onBoth)))
             }
           })
         }
@@ -7430,10 +7488,7 @@ export const zipAllWith = dual<
         }
       }
     }
-    return pipe(
-      self,
-      combineChunks(that, ZipAllState.PullBoth, pull)
-    )
+    return combineChunks(self, options.other, ZipAllState.PullBoth, pull)
   }
 )
 

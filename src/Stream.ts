@@ -3973,15 +3973,11 @@ export const zipFlatten: {
  */
 export const zipAll: {
   <R2, E2, A2, A>(
-    that: Stream<R2, E2, A2>,
-    defaultLeft: A,
-    defaultRight: A2
+    options: { readonly other: Stream<R2, E2, A2>; readonly defaultSelf: A; readonly defaultOther: A2 }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
   <R, E, R2, E2, A2, A>(
     self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    defaultLeft: A,
-    defaultRight: A2
+    options: { readonly other: Stream<R2, E2, A2>; readonly defaultSelf: A; readonly defaultOther: A2 }
   ): Stream<R | R2, E | E2, readonly [A, A2]>
 } = internal.zipAll
 
@@ -4034,17 +4030,21 @@ export const zipAllRight: {
  */
 export const zipAllSortedByKey: {
   <R2, E2, A2, A, K>(
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, readonly [A, A2]]>
 } = internal.zipAllSortedByKey
 
@@ -4063,15 +4063,19 @@ export const zipAllSortedByKey: {
  */
 export const zipAllSortedByKeyLeft: {
   <R2, E2, A2, A, K>(
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly order: Order.Order<K>
+    }
   ): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A]>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, A]>
 } = internal.zipAllSortedByKeyLeft
 
@@ -4090,15 +4094,19 @@ export const zipAllSortedByKeyLeft: {
  */
 export const zipAllSortedByKeyRight: {
   <R2, E2, A2, K>(
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): <R, E, A>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A2]>
   <R, E, A, R2, E2, A2, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, A2]>
 } = internal.zipAllSortedByKeyRight
 
@@ -4118,19 +4126,23 @@ export const zipAllSortedByKeyRight: {
  */
 export const zipAllSortedByKeyWith: {
   <R2, E2, A, A3, A2, K>(
-    that: Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+      readonly order: Order.Order<K>
+    }
   ): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A3]>
   <R, E, R2, E2, A, A3, A2, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, A3]>
 } = internal.zipAllSortedByKeyWith
 
@@ -4146,17 +4158,21 @@ export const zipAllSortedByKeyWith: {
  */
 export const zipAllWith: {
   <R2, E2, A2, A, A3>(
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
+    options: {
+      readonly other: Stream<R2, E2, A2>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
   <R, E, R2, E2, A2, A, A3>(
     self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
+    options: {
+      readonly other: Stream<R2, E2, A2>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+    }
   ): Stream<R | R2, E | E2, A3>
 } = internal.zipAllWith
 
