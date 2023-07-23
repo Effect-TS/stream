@@ -702,7 +702,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.range(0, 10),
-        Stream.toQueueCapacity(1),
+        Stream.toQueue({ capacity: 1 }),
         Effect.flatMap((queue) =>
           pipe(
             Stream.fromQueue(queue),
@@ -725,7 +725,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.range(0, 10),
         Stream.concat(Stream.fail(error)),
-        Stream.toQueueCapacity(1),
+        Stream.toQueue({ capacity: 1 }),
         Effect.flatMap((queue) =>
           pipe(
             Stream.fromQueue(queue),

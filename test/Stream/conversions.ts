@@ -19,7 +19,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         stream,
-        Stream.toQueueCapacity(1_000),
+        Stream.toQueue({ capacity: 1_000 }),
         Effect.flatMap((queue) =>
           pipe(
             Queue.size(queue),
@@ -45,7 +45,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(Stream.succeed)
       )
       const result = yield* $(pipe(
-        Stream.toQueueUnbounded(stream),
+        Stream.toQueue(stream, { strategy: "unbounded" }),
         Effect.flatMap((queue) =>
           pipe(
             Queue.size(queue),
@@ -67,7 +67,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const queue = yield* $(pipe(
         Stream.dieMessage("die"),
-        Stream.toQueueOfElementsCapacity(1),
+        Stream.toQueueOfElements({ capacity: 1 }),
         Effect.flatMap(Queue.take),
         Effect.scoped
       ))

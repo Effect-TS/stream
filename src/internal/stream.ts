@@ -829,7 +829,7 @@ export const buffer = dual<
   } else if (options.strategy === "sliding") {
     return bufferSliding(self, options.capacity)
   }
-  const queue = toQueueOfElementsCapacity(self, options.capacity)
+  const queue = toQueueOfElements(self, options)
   return new StreamImpl(
     channel.unwrapScoped(
       Effect.map(queue, (queue) => {
@@ -869,7 +869,7 @@ export const bufferChunks = dual<
   } else if (options.strategy === "sliding") {
     return bufferChunksSliding(self, options.capacity)
   }
-  const queue = toQueueCapacity(self, options.capacity)
+  const queue = toQueue(self, options)
   return new StreamImpl(
     channel.unwrapScoped(
       Effect.map(queue, (queue) => {
@@ -932,7 +932,7 @@ const bufferSliding = dual<
 })
 
 const bufferUnbounded = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R, E, A> => {
-  const queue = toQueueUnbounded(self)
+  const queue = toQueue(self, { strategy: "unbounded" })
   return new StreamImpl(
     channel.unwrapScoped(
       Effect.map(queue, (queue) => {
@@ -6466,123 +6466,63 @@ export const toPull = <R, E, A>(
     ))
 
 /** @internal */
-export const toQueue = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueCapacity(self, 2)
-
-/** @internal */
-export const toQueueCapacity = dual<
+export const toQueue = dual<
   (
-    capacity: number
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    capacity: number
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
->(2, <R, E, A>(
-  self: Stream.Stream<R, E, A>,
-  capacity: number
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-  pipe(
-    Effect.acquireRelease(
-      Queue.bounded<Take.Take<E, A>>(capacity),
-      (queue) => Queue.shutdown(queue)
-    ),
-    Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
-  ))
-
-/** @internal */
-export const toQueueDropping = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueDroppingCapacity(self, 2)
-
-/** @internal */
-export const toQueueDroppingCapacity = dual<
-  (
-    capacity: number
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    capacity: number
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
->(2, <R, E, A>(
-  self: Stream.Stream<R, E, A>,
-  capacity: number
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-  pipe(
-    Effect.acquireRelease(
-      Queue.dropping<Take.Take<E, A>>(capacity),
-      (queue) => Queue.shutdown(queue)
-    ),
-    Effect.tap((queue) => pipe(self, runIntoQueueScoped(queue), Effect.forkScoped))
-  ))
-
-/** @internal */
-export const toQueueOfElements = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
-  toQueueOfElementsCapacity(self, 2)
-
-/** @internal */
-export const toQueueOfElementsCapacity = dual<
-  (
-    capacity: number
+    options?: {
+      readonly strategy?: "suspend" | "sliding" | "dropping"
+      readonly capacity?: number
+    } | { readonly strategy: "unbounded" }
   ) => <R, E, A>(
     self: Stream.Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>,
+  ) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>,
   <R, E, A>(
     self: Stream.Stream<R, E, A>,
-    capacity: number
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
->(2, <R, E, A>(
-  self: Stream.Stream<R, E, A>,
-  capacity: number
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> =>
-  pipe(
-    Effect.acquireRelease(
-      Queue.bounded<Exit.Exit<Option.Option<E>, A>>(capacity),
-      (queue) => Queue.shutdown(queue)
-    ),
-    Effect.tap((queue) => Effect.forkScoped(runIntoQueueElementsScoped(self, queue)))
-  ))
-
-/** @internal */
-export const toQueueSliding = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> => toQueueSlidingCapacity(self, 2)
-
-/** @internal */
-export const toQueueSlidingCapacity = dual<
-  (
-    capacity: number
-  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    capacity: number
+    options?: {
+      readonly strategy?: "suspend" | "sliding" | "dropping"
+      readonly capacity?: number
+    } | { readonly strategy: "unbounded" }
   ) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>>
->(2, <R, E, A>(
+>((args) => isStream(args[0]), <R, E, A>(
   self: Stream.Stream<R, E, A>,
-  capacity: number
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-  pipe(
+  options?: {
+    readonly strategy?: "suspend" | "sliding" | "dropping"
+    readonly capacity?: number
+  } | { readonly strategy: "unbounded" }
+) =>
+  Effect.tap(
     Effect.acquireRelease(
-      Queue.sliding<Take.Take<E, A>>(capacity),
+      options?.strategy === "unbounded" ?
+        Queue.unbounded<Take.Take<E, A>>() :
+        options?.strategy === "dropping" ?
+        Queue.dropping<Take.Take<E, A>>(options.capacity ?? 2) :
+        options?.strategy === "sliding" ?
+        Queue.sliding<Take.Take<E, A>>(options.capacity ?? 2) :
+        Queue.bounded<Take.Take<E, A>>(options?.capacity ?? 2),
       (queue) => Queue.shutdown(queue)
     ),
-    Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
+    (queue) => Effect.forkScoped(runIntoQueueScoped(self, queue))
   ))
 
 /** @internal */
-export const toQueueUnbounded = <R, E, A>(
-  self: Stream.Stream<R, E, A>
-): Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Take.Take<E, A>>> =>
-  pipe(
+export const toQueueOfElements = dual<
+  (options?: { readonly capacity?: number }) => <R, E, A>(
+    self: Stream.Stream<R, E, A>
+  ) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>,
+  <R, E, A>(
+    self: Stream.Stream<R, E, A>,
+    options?: { readonly capacity?: number }
+  ) => Effect.Effect<R | Scope.Scope, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
+>((args) => isStream(args[0]), <R, E, A>(
+  self: Stream.Stream<R, E, A>,
+  options?: { readonly capacity?: number }
+) =>
+  Effect.tap(
     Effect.acquireRelease(
-      Queue.unbounded<Take.Take<E, A>>(),
+      Queue.bounded<Exit.Exit<Option.Option<E>, A>>(options?.capacity ?? 2),
       (queue) => Queue.shutdown(queue)
     ),
-    Effect.tap((queue) => Effect.forkScoped(runIntoQueueScoped(self, queue)))
-  )
+    (queue) => Effect.forkScoped(runIntoQueueElementsScoped(self, queue))
+  ))
 
 /** @internal */
 export const toReadableStream = <E, A>(source: Stream.Stream<never, E, A>) => {

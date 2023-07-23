@@ -123,14 +123,7 @@ Added in v1.0.0
   - [toHub](#tohub)
   - [toPull](#topull)
   - [toQueue](#toqueue)
-  - [toQueueCapacity](#toqueuecapacity)
-  - [toQueueDropping](#toqueuedropping)
-  - [toQueueDroppingCapacity](#toqueuedroppingcapacity)
   - [toQueueOfElements](#toqueueofelements)
-  - [toQueueOfElementsCapacity](#toqueueofelementscapacity)
-  - [toQueueSliding](#toqueuesliding)
-  - [toQueueSlidingCapacity](#toqueueslidingcapacity)
-  - [toQueueUnbounded](#toqueueunbounded)
   - [toReadableStream](#toreadablestream)
 - [do notation](#do-notation)
   - [Do](#do)
@@ -1991,69 +1984,23 @@ Added in v1.0.0
 Converts the stream to a scoped queue of chunks. After the scope is closed,
 the queue will never again produce values and should be discarded.
 
-**Signature**
-
-```ts
-export declare const toQueue: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueCapacity
-
-Like `toQueue`, but with a configurable `capacity` parameter.
+Defaults to the "suspend" back pressure strategy with a capacity of 2.
 
 **Signature**
 
 ```ts
-export declare const toQueueCapacity: {
-  (capacity: number): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
-    Scope.Scope | R,
-    never,
-    Queue.Dequeue<Take.Take<E, A>>
-  >
-}
-```
-
-Added in v1.0.0
-
-## toQueueDropping
-
-Converts the stream to a dropping scoped queue of chunks. After the scope
-is closed, the queue will never again produce values and should be
-discarded.
-
-**Signature**
-
-```ts
-export declare const toQueueDropping: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueDroppingCapacity
-
-Like `toQueueDropping`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const toQueueDroppingCapacity: {
-  (capacity: number): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
-    Scope.Scope | R,
-    never,
-    Queue.Dequeue<Take.Take<E, A>>
-  >
+export declare const toQueue: {
+  (
+    options?:
+      | { readonly strategy?: 'dropping' | 'sliding' | 'suspend'; readonly capacity?: number }
+      | { readonly strategy: 'unbounded' }
+  ): <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options?:
+      | { readonly strategy?: 'dropping' | 'sliding' | 'suspend'; readonly capacity?: number }
+      | { readonly strategy: 'unbounded' }
+  ): Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
 }
 ```
 
@@ -2064,84 +2011,21 @@ Added in v1.0.0
 Converts the stream to a scoped queue of elements. After the scope is
 closed, the queue will never again produce values and should be discarded.
 
-**Signature**
-
-```ts
-export declare const toQueueOfElements: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueOfElementsCapacity
-
-Like `toQueueOfElements`, but with a configurable `capacity` parameter.
+Defaults to a capacity of 2.
 
 **Signature**
 
 ```ts
-export declare const toQueueOfElementsCapacity: {
-  (capacity: number): <R, E, A>(
+export declare const toQueueOfElements: {
+  (options?: { readonly capacity?: number }): <R, E, A>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
+  <R, E, A>(self: Stream<R, E, A>, options?: { readonly capacity?: number }): Effect.Effect<
     Scope.Scope | R,
     never,
     Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>
   >
 }
-```
-
-Added in v1.0.0
-
-## toQueueSliding
-
-Converts the stream to a sliding scoped queue of chunks. After the scope is
-closed, the queue will never again produce values and should be discarded.
-
-**Signature**
-
-```ts
-export declare const toQueueSliding: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueSlidingCapacity
-
-Like `toQueueSliding`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const toQueueSlidingCapacity: {
-  (capacity: number): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
-    Scope.Scope | R,
-    never,
-    Queue.Dequeue<Take.Take<E, A>>
-  >
-}
-```
-
-Added in v1.0.0
-
-## toQueueUnbounded
-
-Converts the stream into an unbounded scoped queue. After the scope is
-closed, the queue will never again produce values and should be discarded.
-
-**Signature**
-
-```ts
-export declare const toQueueUnbounded: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
 ```
 
 Added in v1.0.0

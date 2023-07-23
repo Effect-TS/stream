@@ -3735,123 +3735,45 @@ export const toPull: <R, E, A>(
  * Converts the stream to a scoped queue of chunks. After the scope is closed,
  * the queue will never again produce values and should be discarded.
  *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueue: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>> = internal.toQueue
-
-/**
- * Like `toQueue`, but with a configurable `capacity` parameter.
+ * Defaults to the "suspend" back pressure strategy with a capacity of 2.
  *
  * @since 1.0.0
  * @category destructors
  */
-export const toQueueCapacity: {
+export const toQueue: {
   (
-    capacity: number
+    options?: { readonly strategy?: "dropping" | "sliding" | "suspend"; readonly capacity?: number } | {
+      readonly strategy: "unbounded"
+    }
   ): <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
   <R, E, A>(
     self: Stream<R, E, A>,
-    capacity: number
+    options?: { readonly strategy?: "dropping" | "sliding" | "suspend"; readonly capacity?: number } | {
+      readonly strategy: "unbounded"
+    }
   ): Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-} = internal.toQueueCapacity
-
-/**
- * Converts the stream to a dropping scoped queue of chunks. After the scope
- * is closed, the queue will never again produce values and should be
- * discarded.
- *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueueDropping: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>> = internal.toQueueDropping
-
-/**
- * Like `toQueueDropping`, but with a configurable `capacity` parameter.
- *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueueDroppingCapacity: {
-  (
-    capacity: number
-  ): <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    capacity: number
-  ): Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-} = internal.toQueueDroppingCapacity
+} = internal.toQueue
 
 /**
  * Converts the stream to a scoped queue of elements. After the scope is
  * closed, the queue will never again produce values and should be discarded.
  *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueueOfElements: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>> = internal.toQueueOfElements
-
-/**
- * Like `toQueueOfElements`, but with a configurable `capacity` parameter.
+ * Defaults to a capacity of 2.
  *
  * @since 1.0.0
  * @category destructors
  */
-export const toQueueOfElementsCapacity: {
+export const toQueueOfElements: {
   (
-    capacity: number
+    options?: { readonly capacity?: number }
   ): <R, E, A>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
   <R, E, A>(
     self: Stream<R, E, A>,
-    capacity: number
+    options?: { readonly capacity?: number }
   ): Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
-} = internal.toQueueOfElementsCapacity
-
-/**
- * Converts the stream to a sliding scoped queue of chunks. After the scope is
- * closed, the queue will never again produce values and should be discarded.
- *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueueSliding: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>> = internal.toQueueSliding
-
-/**
- * Like `toQueueSliding`, but with a configurable `capacity` parameter.
- *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueueSlidingCapacity: {
-  (
-    capacity: number
-  ): <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    capacity: number
-  ): Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-} = internal.toQueueSlidingCapacity
-
-/**
- * Converts the stream into an unbounded scoped queue. After the scope is
- * closed, the queue will never again produce values and should be discarded.
- *
- * @since 1.0.0
- * @category destructors
- */
-export const toQueueUnbounded: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>> = internal.toQueueUnbounded
+} = internal.toQueueOfElements
 
 /**
  * Converts the stream to a `ReadableStream`.
