@@ -6156,13 +6156,14 @@ export const tapSink = dual<
 )
 
 /** @internal */
-export const throttleEnforce = dual<
+export const throttle = dual<
   <A>(
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
       readonly duration: Duration.Duration
       readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
     }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
   <R, E, A>(
@@ -6172,6 +6173,7 @@ export const throttleEnforce = dual<
       readonly units: number
       readonly duration: Duration.Duration
       readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
     }
   ) => Stream.Stream<R, E, A>
 >(
@@ -6183,22 +6185,24 @@ export const throttleEnforce = dual<
       readonly units: number
       readonly duration: Duration.Duration
       readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
     }
   ): Stream.Stream<R, E, A> =>
-    throttleEnforceEffect(self, {
+    throttleEffect(self, {
       ...options,
       cost: (chunk) => Effect.succeed(options.cost(chunk))
     })
 )
 
 /** @internal */
-export const throttleEnforceEffect = dual<
+export const throttleEffect = dual<
   <A, R2, E2>(
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
       readonly duration: Duration.Duration
       readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
     }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A>,
   <R, E, A, R2, E2>(
@@ -6208,6 +6212,7 @@ export const throttleEnforceEffect = dual<
       readonly units: number
       readonly duration: Duration.Duration
       readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
     }
   ) => Stream.Stream<R2 | R, E2 | E, A>
 >(
@@ -6219,186 +6224,108 @@ export const throttleEnforceEffect = dual<
       readonly units: number
       readonly duration: Duration.Duration
       readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
     }
   ): Stream.Stream<R | R2, E | E2, A> => {
-    const burst = options.burst ?? 0
-    const loop = (
-      tokens: number,
-      timestampMillis: number
-    ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void> =>
-      core.readWithCause(
-        (input: Chunk.Chunk<A>) =>
-          pipe(
-            options.cost(input),
-            Effect.zip(Clock.currentTimeMillis),
-            Effect.map(([weight, currentTimeMillis]) => {
-              const elapsed = currentTimeMillis - timestampMillis
-              const cycles = elapsed / Duration.toMillis(options.duration)
-              const sum = tokens + (cycles * options.units)
-              const max = options.units + burst < 0 ? Number.POSITIVE_INFINITY : options.units + burst
-              const available = sum < 0 ? max : Math.min(sum, max)
-              if (weight <= available) {
-                return pipe(
-                  core.write(input),
-                  core.flatMap(() => loop(available - weight, currentTimeMillis))
-                )
-              }
-              return loop(tokens, timestampMillis)
-            }),
-            channel.unwrap
-          ),
-        core.failCause,
-        core.unit
-      )
-    const throttled = pipe(
-      Clock.currentTimeMillis,
-      Effect.map((currentTimeMillis) => loop(options.units, currentTimeMillis)),
-      channel.unwrap
-    )
-    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(throttled)))
+    if (options.strategy === "enforce") {
+      return throttleEnforceEffect(self, options.cost, options.units, options.duration, options.burst ?? 0)
+    }
+    return throttleShapeEffect(self, options.cost, options.units, options.duration, options.burst ?? 0)
   }
 )
 
-/** @internal */
-export const throttleShape = dual<
-  <A>(
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ) => Stream.Stream<R, E, A>
->(
-  4,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ): Stream.Stream<R, E, A> => throttleShapeBurst(self, costFn, units, duration, 0)
-)
-
-/** @internal */
-export const throttleShapeBurst = dual<
-  <A>(
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ) => Stream.Stream<R, E, A>
->(
-  5,
-  <R, E, A>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): Stream.Stream<R, E, A> =>
-    throttleShapeEffectBurst(self, (chunk) => Effect.succeed(costFn(chunk)), units, duration, burst)
-)
-
-/** @internal */
-export const throttleShapeEffect = dual<
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A>,
-  <R, E, A, R2, E2>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ) => Stream.Stream<R2 | R, E2 | E, A>
->(
-  4,
-  <R, E, A, R2, E2>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): Stream.Stream<R | R2, E | E2, A> => throttleShapeEffectBurst(self, costFn, units, duration, 0)
-)
-
-/** @internal */
-export const throttleShapeEffectBurst = dual<
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A>,
-  <R, E, A, R2, E2>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ) => Stream.Stream<R2 | R, E2 | E, A>
->(
-  5,
-  <R, E, A, R2, E2>(
-    self: Stream.Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): Stream.Stream<R | R2, E | E2, A> => {
-    const loop = (
-      tokens: number,
-      timestampMillis: number
-    ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void> =>
-      core.readWithCause(
-        (input: Chunk.Chunk<A>) =>
-          pipe(
-            costFn(input),
-            Effect.zip(Clock.currentTimeMillis),
-            Effect.map(([weight, currentTimeMillis]) => {
-              const elapsed = currentTimeMillis - timestampMillis
-              const cycles = elapsed / Duration.toMillis(duration)
-              const sum = tokens + (cycles * units)
-              const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst
-              const available = sum < 0 ? max : Math.min(sum, max)
-              const remaining = available - weight
-              const waitCycles = remaining >= 0 ? 0 : -remaining / units
-              const delay = Duration.millis(Math.max(0, waitCycles * Duration.toMillis(duration)))
-              if (pipe(delay, Duration.greaterThan(Duration.zero))) {
-                return pipe(
-                  core.fromEffect(Clock.sleep(delay)),
-                  channel.zipRight(core.write(input)),
-                  core.flatMap(() => loop(remaining, currentTimeMillis))
-                )
-              }
+const throttleEnforceEffect = <R, E, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+  units: number,
+  duration: Duration.Duration,
+  burst: number
+): Stream.Stream<R | R2, E | E2, A> => {
+  const loop = (
+    tokens: number,
+    timestampMillis: number
+  ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void> =>
+    core.readWithCause(
+      (input: Chunk.Chunk<A>) =>
+        pipe(
+          cost(input),
+          Effect.zip(Clock.currentTimeMillis),
+          Effect.map(([weight, currentTimeMillis]) => {
+            const elapsed = currentTimeMillis - timestampMillis
+            const cycles = elapsed / Duration.toMillis(duration)
+            const sum = tokens + (cycles * units)
+            const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst
+            const available = sum < 0 ? max : Math.min(sum, max)
+            if (weight <= available) {
               return pipe(
                 core.write(input),
+                core.flatMap(() => loop(available - weight, currentTimeMillis))
+              )
+            }
+            return loop(tokens, timestampMillis)
+          }),
+          channel.unwrap
+        ),
+      core.failCause,
+      core.unit
+    )
+  const throttled = pipe(
+    Clock.currentTimeMillis,
+    Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
+    channel.unwrap
+  )
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(throttled)))
+}
+
+const throttleShapeEffect = <R, E, A, R2, E2>(
+  self: Stream.Stream<R, E, A>,
+  costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
+  units: number,
+  duration: Duration.Duration,
+  burst: number
+): Stream.Stream<R | R2, E | E2, A> => {
+  const loop = (
+    tokens: number,
+    timestampMillis: number
+  ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void> =>
+    core.readWithCause(
+      (input: Chunk.Chunk<A>) =>
+        pipe(
+          costFn(input),
+          Effect.zip(Clock.currentTimeMillis),
+          Effect.map(([weight, currentTimeMillis]) => {
+            const elapsed = currentTimeMillis - timestampMillis
+            const cycles = elapsed / Duration.toMillis(duration)
+            const sum = tokens + (cycles * units)
+            const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst
+            const available = sum < 0 ? max : Math.min(sum, max)
+            const remaining = available - weight
+            const waitCycles = remaining >= 0 ? 0 : -remaining / units
+            const delay = Duration.millis(Math.max(0, waitCycles * Duration.toMillis(duration)))
+            if (pipe(delay, Duration.greaterThan(Duration.zero))) {
+              return pipe(
+                core.fromEffect(Clock.sleep(delay)),
+                channel.zipRight(core.write(input)),
                 core.flatMap(() => loop(remaining, currentTimeMillis))
               )
-            }),
-            channel.unwrap
-          ),
-        core.failCause,
-        core.unit
-      )
-    const throttled = pipe(
-      Clock.currentTimeMillis,
-      Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
-      channel.unwrap
+            }
+            return pipe(
+              core.write(input),
+              core.flatMap(() => loop(remaining, currentTimeMillis))
+            )
+          }),
+          channel.unwrap
+        ),
+      core.failCause,
+      core.unit
     )
-    return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(throttled)))
-  }
-)
+  const throttled = pipe(
+    Clock.currentTimeMillis,
+    Effect.map((currentTimeMillis) => loop(units, currentTimeMillis)),
+    channel.unwrap
+  )
+  return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(throttled)))
+}
 
 /** @internal */
 export const tick = (interval: Duration.Duration): Stream.Stream<never, never, void> =>

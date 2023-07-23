@@ -3560,158 +3560,80 @@ export const tapSink: {
 } = internal.tapSink
 
 /**
- * Throttles the chunks of this stream according to the given bandwidth
- * parameters using the token bucket algorithm. Allows for burst in the
- * processing of elements by allowing the token bucket to accumulate tokens up
- * to a `units + burst` threshold. Chunks that do not meet the bandwidth
- * constraints are dropped. The weight of each chunk is determined by the
- * `costFn` function.
- *
- * @since 1.0.0
- * @category utils
- */
-export const throttleEnforce: {
-  <A>(
-    options: {
-      readonly cost: (chunk: Chunk.Chunk<A>) => number
-      readonly units: number
-      readonly duration: Duration.Duration
-      readonly burst?: number
-    }
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    options: {
-      readonly cost: (chunk: Chunk.Chunk<A>) => number
-      readonly units: number
-      readonly duration: Duration.Duration
-      readonly burst?: number
-    }
-  ): Stream<R, E, A>
-} = internal.throttleEnforce
-
-/**
- * Throttles the chunks of this stream according to the given bandwidth
- * parameters using the token bucket algorithm. Allows for burst in the
- * processing of elements by allowing the token bucket to accumulate tokens up
- * to a `units + burst` threshold. Chunks that do not meet the bandwidth
- * constraints are dropped. The weight of each chunk is determined by the
- * `costFn` effectful function.
- *
- * @since 1.0.0
- * @category utils
- */
-export const throttleEnforceEffect: {
-  <A, R2, E2>(
-    options: {
-      readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
-      readonly units: number
-      readonly duration: Duration.Duration
-      readonly burst?: number
-    }
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
-    self: Stream<R, E, A>,
-    options: {
-      readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
-      readonly units: number
-      readonly duration: Duration.Duration
-      readonly burst?: number
-    }
-  ): Stream<R | R2, E | E2, A>
-} = internal.throttleEnforceEffect
-
-/**
  * Delays the chunks of this stream according to the given bandwidth
  * parameters using the token bucket algorithm. Allows for burst in the
  * processing of elements by allowing the token bucket to accumulate tokens up
  * to a `units + burst` threshold. The weight of each chunk is determined by
  * the `costFn` function.
  *
- * @since 1.0.0
- * @category utils
- */
-export const throttleShape: {
-  <A>(
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ): Stream<R, E, A>
-} = internal.throttleShape
-
-/**
- * Like `throttleShape`, but with a configurable `burst` parameter.
+ * If using the "enforce" strategy, chunks that do not meet the bandwidth
+ * constraints are dropped. If using the "shape" strategy, chunks are delayed
+ * until they can be emitted without exceeding the bandwidth constraints.
+ *
+ * Defaults to the "shape" strategy.
  *
  * @since 1.0.0
  * @category utils
  */
-export const throttleShapeBurst: {
+export const throttle: {
   <A>(
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => number
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
   <R, E, A>(
     self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => number
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
+    }
   ): Stream<R, E, A>
-} = internal.throttleShapeBurst
+} = internal.throttle
 
 /**
  * Delays the chunks of this stream according to the given bandwidth
  * parameters using the token bucket algorithm. Allows for burst in the
  * processing of elements by allowing the token bucket to accumulate tokens up
  * to a `units + burst` threshold. The weight of each chunk is determined by
- * the `costFn` effectful function.
+ * the effectful `costFn` function.
+ *
+ * If using the "enforce" strategy, chunks that do not meet the bandwidth
+ * constraints are dropped. If using the "shape" strategy, chunks are delayed
+ * until they can be emitted without exceeding the bandwidth constraints.
+ *
+ * Defaults to the "shape" strategy.
  *
  * @since 1.0.0
  * @category utils
  */
-export const throttleShapeEffect: {
+export const throttleEffect: {
   <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
   <R, E, A, R2, E2>(
     self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number
+      readonly strategy?: "enforce" | "shape"
+    }
   ): Stream<R | R2, E | E2, A>
-} = internal.throttleShapeEffect
-
-/**
- * Like `throttleShapeEffect`, but with a configurable `burst` parameter.
- *
- * @since 1.0.0
- * @category utils
- */
-export const throttleShapeEffectBurst: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): Stream<R | R2, E | E2, A>
-} = internal.throttleShapeEffectBurst
+} = internal.throttleEffect
 
 /**
  * A stream that emits Unit values spaced by the specified duration.

@@ -20,7 +20,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.throttleEnforce({ cost: () => 0, units: 0, duration: Duration.infinity }),
+        Stream.throttle({ cost: () => 0, units: 0, duration: Duration.infinity, strategy: "enforce" }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
@@ -30,7 +30,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.throttleEnforce({ cost: () => 1, units: 0, duration: Duration.infinity }),
+        Stream.throttle({ cost: () => 1, units: 0, duration: Duration.infinity, strategy: "enforce" }),
         Stream.runCollect
       ))
       assert.isTrue(Chunk.isEmpty(result))
@@ -41,7 +41,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* _(
         Stream.fromSchedule(Schedule.spaced(Duration.millis(100))),
         Stream.take(10),
-        Stream.throttleEnforce({ cost: () => 1, units: 1, duration: Duration.millis(200) }),
+        Stream.throttle({ cost: () => 1, units: 1, duration: Duration.millis(200), strategy: "enforce" }),
         Stream.runCollect,
         Effect.fork
       )
@@ -55,7 +55,12 @@ describe.concurrent("Stream", () => {
       const queue = yield* $(Queue.bounded<number>(10))
       const fiber = yield* $(pipe(
         Stream.fromQueue(queue),
-        Stream.throttleShape(Chunk.reduce(0, (x, y) => x + y), 1, Duration.seconds(1)),
+        Stream.throttle({
+          strategy: "shape",
+          cost: Chunk.reduce(0, (x, y) => x + y),
+          units: 1,
+          duration: Duration.seconds(1)
+        }),
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
@@ -82,7 +87,12 @@ describe.concurrent("Stream", () => {
       const queue = yield* $(Queue.bounded<number>(10))
       const result = yield* $(pipe(
         Stream.fromQueue(queue),
-        Stream.throttleShape(() => 100_000, 1, Duration.zero),
+        Stream.throttle({
+          strategy: "shape",
+          cost: () => 100_000,
+          units: 1,
+          duration: Duration.zero
+        }),
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
@@ -104,7 +114,13 @@ describe.concurrent("Stream", () => {
       const queue = yield* $(Queue.bounded<number>(10))
       const fiber = yield* $(pipe(
         Stream.fromQueue(queue),
-        Stream.throttleShapeBurst(Chunk.reduce(0, (x, y) => x + y), 1, Duration.seconds(1), 2),
+        Stream.throttle({
+          strategy: "shape",
+          cost: Chunk.reduce(0, (x, y) => x + y),
+          units: 1,
+          duration: Duration.seconds(1),
+          burst: 2
+        }),
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
@@ -130,7 +146,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
-        Stream.throttleShape(() => 0, 1, Duration.infinity),
+        Stream.throttle({
+          strategy: "shape",
+          cost: () => 0,
+          units: 1,
+          duration: Duration.infinity
+        }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
