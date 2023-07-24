@@ -105,7 +105,11 @@ const collectAllNLoop = <In>(
 export const collectAllFrom = <R, E, In, L extends In, Z>(
   self: Sink.Sink<R, E, In, L, Z>
 ): Sink.Sink<R, E, In, L, Chunk.Chunk<Z>> =>
-  pipe(self, collectAllWhileWith(Chunk.empty<Z>(), constTrue, (chunk, z) => pipe(chunk, Chunk.append(z))))
+  collectAllWhileWith(self, {
+    initial: Chunk.empty<Z>(),
+    while: constTrue,
+    body: (chunk, z) => pipe(chunk, Chunk.append(z))
+  })
 
 /** @internal */
 export const collectAllToMap = <In, K>(
@@ -243,23 +247,29 @@ const collectAllWhileEffectReader = <In, R, E>(
 /** @internal */
 export const collectAllWhileWith = dual<
   <Z, S>(
-    z: S,
-    p: Predicate<Z>,
-    f: (s: S, z: Z) => S
+    options: {
+      readonly initial: S
+      readonly while: Predicate<Z>
+      readonly body: (s: S, z: Z) => S
+    }
   ) => <R, E, In, L extends In>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R, E, In, L, S>,
   <R, E, In, L extends In, Z, S>(
     self: Sink.Sink<R, E, In, L, Z>,
-    z: S,
-    p: Predicate<Z>,
-    f: (s: S, z: Z) => S
+    options: {
+      readonly initial: S
+      readonly while: Predicate<Z>
+      readonly body: (s: S, z: Z) => S
+    }
   ) => Sink.Sink<R, E, In, L, S>
 >(
-  4,
+  2,
   <R, E, In, L extends In, Z, S>(
     self: Sink.Sink<R, E, In, L, Z>,
-    z: S,
-    p: Predicate<Z>,
-    f: (s: S, z: Z) => S
+    options: {
+      readonly initial: S
+      readonly while: Predicate<Z>
+      readonly body: (s: S, z: Z) => S
+    }
   ): Sink.Sink<R, E, In, L, S> => {
     const refs = pipe(
       Ref.make(Chunk.empty<In>()),
@@ -277,7 +287,9 @@ export const collectAllWhileWith = dual<
         return pipe(
           upstreamMarker,
           core.pipeTo(channel.bufferChunk(leftoversRef)),
-          core.pipeTo(collectAllWhileWithLoop(self, leftoversRef, upstreamDoneRef, z, p, f))
+          core.pipeTo(
+            collectAllWhileWithLoop(self, leftoversRef, upstreamDoneRef, options.initial, options.while, options.body)
+          )
         )
       })
     )
