@@ -89,7 +89,7 @@ export interface StreamUnifyBlacklist extends Effect.EffectUnifyBlacklist {
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Omit<Stream<R, E, A>, "pipe"> {}
+  interface Effect<R, E, A> extends Stream<R, E, A> {}
   interface EffectUnifyBlacklist {
     Stream?: true
   }

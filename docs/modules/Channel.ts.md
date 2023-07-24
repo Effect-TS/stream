@@ -134,9 +134,6 @@ Added in v1.0.0
 - [zipping](#zipping)
   - [zip](#zip)
   - [zipLeft](#zipleft)
-  - [zipPar](#zippar)
-  - [zipParLeft](#zipparleft)
-  - [zipParRight](#zipparright)
   - [zipRight](#zipright)
 
 ---
@@ -2673,7 +2670,8 @@ the terminal values of both channels.
 ```ts
 export declare const zip: {
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
@@ -2687,7 +2685,8 @@ export declare const zip: {
   >
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel<
     Env | Env1,
     InErr & InErr1,
@@ -2713,7 +2712,8 @@ terminal value of this channel.
 ```ts
 export declare const zipLeft: {
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
@@ -2727,7 +2727,8 @@ export declare const zipLeft: {
   >
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel<
     Env | Env1,
     InErr & InErr1,
@@ -2736,123 +2737,6 @@ export declare const zipLeft: {
     OutErr | OutErr1,
     OutElem | OutElem1,
     OutDone
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipPar
-
-Creates a new channel which runs in parallel this and the other channel and
-when both succeeds finishes with a tuple of both channel's done value.
-
-**Signature**
-
-```ts
-export declare const zipPar: {
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    readonly [OutDone, OutDone1]
-  >
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    readonly [OutDone, OutDone1]
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipParLeft
-
-Creates a new channel which runs in parallel this and the other channel and
-when both succeeds finishes with the first one's done value.
-
-**Signature**
-
-```ts
-export declare const zipParLeft: {
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone
-  >
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipParRight
-
-Creates a new channel which runs in parallel this and the other channel and
-when both succeeds finishes with the second one's done value.
-
-**Signature**
-
-```ts
-export declare const zipParRight: {
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone1
-  >
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone1
   >
 }
 ```
@@ -2870,7 +2754,8 @@ terminal value of that channel.
 ```ts
 export declare const zipRight: {
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
@@ -2884,7 +2769,8 @@ export declare const zipRight: {
   >
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel<
     Env | Env1,
     InErr & InErr1,

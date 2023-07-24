@@ -109,7 +109,7 @@ export interface ChannelUnifyBlacklist extends Effect.EffectUnifyBlacklist {
  * @category models
  */
 declare module "@effect/io/Effect" {
-  interface Effect<R, E, A> extends Omit<Channel<R, unknown, unknown, unknown, E, never, A>, "pipe"> {}
+  interface Effect<R, E, A> extends Channel<R, unknown, unknown, unknown, E, never, A> {}
   interface EffectUnifyBlacklist {
     Channel?: true
   }
@@ -2083,7 +2083,8 @@ export const writeChunk: <OutElem>(
  */
 export const zip: {
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
@@ -2097,7 +2098,8 @@ export const zip: {
   >
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel<
     Env | Env1,
     InErr & InErr1,
@@ -2119,7 +2121,8 @@ export const zip: {
  */
 export const zipLeft: {
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
@@ -2133,7 +2136,8 @@ export const zipLeft: {
   >
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel<
     Env | Env1,
     InErr & InErr1,
@@ -2155,7 +2159,8 @@ export const zipLeft: {
  */
 export const zipRight: {
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
@@ -2169,7 +2174,8 @@ export const zipRight: {
   >
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel<
     Env | Env1,
     InErr & InErr1,
@@ -2180,111 +2186,6 @@ export const zipRight: {
     OutDone1
   >
 } = channel.zipRight
-
-/**
- * Creates a new channel which runs in parallel this and the other channel and
- * when both succeeds finishes with a tuple of both channel's done value.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipPar: {
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    readonly [OutDone, OutDone1]
-  >
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    readonly [OutDone, OutDone1]
-  >
-} = channel.zipPar
-
-/**
- * Creates a new channel which runs in parallel this and the other channel and
- * when both succeeds finishes with the first one's done value.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipParLeft: {
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone
-  >
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone
-  >
-} = channel.zipParLeft
-
-/**
- * Creates a new channel which runs in parallel this and the other channel and
- * when both succeeds finishes with the second one's done value.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipParRight: {
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone1
-  >
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone1
-  >
-} = channel.zipParRight
 
 /**
  * Represents a generic checked exception which occurs when a `Channel` is

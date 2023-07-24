@@ -6,7 +6,7 @@ import type { LazyArg } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import { pipeArguments } from "@effect/data/Pipeable"
 import * as Cause from "@effect/io/Cause"
-import type * as Effect from "@effect/io/Effect"
+import * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Channel from "@effect/stream/Channel"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
@@ -185,6 +185,17 @@ export interface Suspend extends
     readonly channel: LazyArg<ErasedChannel>
   }>
 {}
+
+/** @internal */
+export const isChannel = (u: unknown): u is Channel.Channel<
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  unknown
+> => (typeof u === "object" && u != null && ChannelTypeId in u) || Effect.isEffect(u)
 
 /** @internal */
 export const acquireReleaseOut = dual<

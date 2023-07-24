@@ -2341,7 +2341,8 @@ const writeChunkWriter = <OutElem>(
 /** @internal */
 export const zip = dual<
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel.Channel<
@@ -2355,7 +2356,8 @@ export const zip = dual<
   >,
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ) => Channel.Channel<
     Env1 | Env,
     InErr & InErr1,
@@ -2366,141 +2368,13 @@ export const zip = dual<
     readonly [OutDone, OutDone1]
   >
 >(
-  2,
+  (args) => core.isChannel(args[1]),
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel.Channel<
     Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    readonly [OutDone, OutDone1]
-  > => core.flatMap(self, (a) => map(that, (b) => [a, b] as const))
-)
-
-/** @internal */
-export const zipLeft = dual<
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel.Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone
-  >,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ) => Channel.Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone
-  >
->(
-  2,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel.Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone
-  > => core.flatMap(self, (z) => as(that, z))
-)
-
-/** @internal */
-export const zipRight = dual<
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel.Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone1
-  >,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ) => Channel.Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    OutDone1
-  >
->(
-  2,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel.Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem | OutElem1,
-    OutDone1
-  > => core.flatMap(self, () => that)
-)
-
-/** @internal */
-export const zipPar = dual<
-  <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel.Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    readonly [OutDone, OutDone1]
-  >,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ) => Channel.Channel<
-    Env1 | Env,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr1 | OutErr,
-    OutElem1 | OutElem,
-    readonly [OutDone, OutDone1]
-  >
->(
-  2,
-  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
-  ): Channel.Channel<
-    Env1 | Env,
     InErr & InErr1,
     InElem & InElem1,
     InDone & InDone1,
@@ -2508,17 +2382,20 @@ export const zipPar = dual<
     OutElem | OutElem1,
     readonly [OutDone, OutDone1]
   > =>
-    mergeWith(self, {
-      other: that,
-      onSelfDone: (exit1) => mergeDecision.Await((exit2) => Effect.suspend(() => Exit.zip(exit1, exit2))),
-      onOtherDone: (exit2) => mergeDecision.Await((exit1) => Effect.suspend(() => Exit.zip(exit1, exit2)))
-    })
+    options?.concurrent ?
+      mergeWith(self, {
+        other: that,
+        onSelfDone: (exit1) => mergeDecision.Await((exit2) => Effect.suspend(() => Exit.zip(exit1, exit2))),
+        onOtherDone: (exit2) => mergeDecision.Await((exit1) => Effect.suspend(() => Exit.zip(exit1, exit2)))
+      }) :
+      core.flatMap(self, (a) => map(that, (b) => [a, b] as const))
 )
 
 /** @internal */
-export const zipParLeft = dual<
+export const zipLeft = dual<
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel.Channel<
@@ -2532,7 +2409,8 @@ export const zipParLeft = dual<
   >,
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ) => Channel.Channel<
     Env1 | Env,
     InErr & InErr1,
@@ -2543,25 +2421,30 @@ export const zipParLeft = dual<
     OutDone
   >
 >(
-  2,
+  (args) => core.isChannel(args[1]),
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel.Channel<
-    Env1 | Env,
+    Env | Env1,
     InErr & InErr1,
     InElem & InElem1,
     InDone & InDone1,
     OutErr | OutErr1,
     OutElem | OutElem1,
     OutDone
-  > => map(zipPar(self, that), (tuple) => tuple[0])
+  > =>
+    options?.concurrent ?
+      map(zip(self, that, { concurrent: true }), (tuple) => tuple[0]) :
+      core.flatMap(self, (z) => as(that, z))
 )
 
 /** @internal */
-export const zipParRight = dual<
+export const zipRight = dual<
   <Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel.Channel<
@@ -2575,7 +2458,8 @@ export const zipParRight = dual<
   >,
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ) => Channel.Channel<
     Env1 | Env,
     InErr & InErr1,
@@ -2586,19 +2470,23 @@ export const zipParRight = dual<
     OutDone1
   >
 >(
-  2,
+  (args) => core.isChannel(args[1]),
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    that: Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
+    options?: { readonly concurrent?: boolean }
   ): Channel.Channel<
-    Env1 | Env,
+    Env | Env1,
     InErr & InErr1,
     InElem & InElem1,
     InDone & InDone1,
     OutErr | OutErr1,
     OutElem | OutElem1,
     OutDone1
-  > => map(zipPar(self, that), (tuple) => tuple[1])
+  > =>
+    options?.concurrent ?
+      map(zip(self, that, { concurrent: true }), (tuple) => tuple[1]) :
+      core.flatMap(self, () => that)
 )
 
 /** @internal */
