@@ -648,13 +648,17 @@ export const fold: <S, In>(s: S, contFn: Predicate<S>, f: (z: S, input: In) => S
  */
 export const foldSink: {
   <R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
-    onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+    options: {
+      readonly onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>
+      readonly onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+    }
   ): <R>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
   <R, R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
     self: Sink<R, E, In, L, Z>,
-    onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+    options: {
+      readonly onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>
+      readonly onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+    }
   ): Sink<R | R1 | R2, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
 } = internal.foldSink
 
@@ -784,10 +788,12 @@ export const foldUntilEffect: <S, R, E, In>(
  * @category constructors
  */
 export const foldWeighted: <S, In>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => number,
-  f: (s: S, input: In) => S
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => number
+    readonly body: (s: S, input: In) => S
+  }
 ) => Sink<never, never, In, In, S> = internal.foldWeighted
 
 /**
@@ -828,11 +834,13 @@ export const foldWeighted: <S, In>(
  * @category constructors
  */
 export const foldWeightedDecompose: <S, In>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => number,
-  decompose: (input: In) => Chunk.Chunk<In>,
-  f: (s: S, input: In) => S
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => number
+    readonly decompose: (input: In) => Chunk.Chunk<In>
+    readonly body: (s: S, input: In) => S
+  }
 ) => Sink<never, never, In, In, S> = internal.foldWeightedDecompose
 
 /**
@@ -853,11 +861,13 @@ export const foldWeightedDecompose: <S, In>(
  * @category constructors
  */
 export const foldWeightedDecomposeEffect: <S, In, R, E, R2, E2, R3, E3>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => Effect.Effect<R, E, number>,
-  decompose: (input: In) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-  f: (s: S, input: In) => Effect.Effect<R3, E3, S>
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => Effect.Effect<R, E, number>
+    readonly decompose: (input: In) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+    readonly body: (s: S, input: In) => Effect.Effect<R3, E3, S>
+  }
 ) => Sink<R | R2 | R3, E | E2 | E3, In, In, S> = internal.foldWeightedDecomposeEffect
 
 /**
@@ -874,10 +884,12 @@ export const foldWeightedDecomposeEffect: <S, In, R, E, R2, E2, R3, E3>(
  * @category constructors
  */
 export const foldWeightedEffect: <S, In, R, E, R2, E2>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => Effect.Effect<R, E, number>,
-  f: (s: S, input: In) => Effect.Effect<R2, E2, S>
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => Effect.Effect<R, E, number>
+    readonly body: (s: S, input: In) => Effect.Effect<R2, E2, S>
+  }
 ) => Sink<R | R2, E | E2, In, In, S> = internal.foldWeightedEffect
 
 /**

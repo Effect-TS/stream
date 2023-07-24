@@ -137,18 +137,18 @@ export const collectAllToMapN = <In, K>(
   key: (input: In) => K,
   merge: (x: In, y: In) => In
 ): Sink.Sink<never, never, In, In, HashMap.HashMap<K, In>> => {
-  return foldWeighted<HashMap.HashMap<K, In>, In>(
-    HashMap.empty(),
-    n,
-    (acc, input) => pipe(acc, HashMap.has(key(input))) ? 0 : 1,
-    (acc, input) => {
+  return foldWeighted<HashMap.HashMap<K, In>, In>({
+    initial: HashMap.empty(),
+    maxCost: n,
+    cost: (acc, input) => pipe(acc, HashMap.has(key(input))) ? 0 : 1,
+    body: (acc, input) => {
       const k: K = key(input)
       const v: In = pipe(acc, HashMap.has(k)) ?
         merge(pipe(acc, HashMap.unsafeGet(k)), input) :
         input
       return pipe(acc, HashMap.set(k, v))
     }
-  )
+  })
 }
 
 /** @internal */
@@ -160,12 +160,12 @@ export const collectAllToSet = <In>(): Sink.Sink<never, never, In, never, HashSe
 
 /** @internal */
 export const collectAllToSetN = <In>(n: number): Sink.Sink<never, never, In, In, HashSet.HashSet<In>> =>
-  foldWeighted<HashSet.HashSet<In>, In>(
-    HashSet.empty(),
-    n,
-    (acc, input) => pipe(acc, HashSet.has(input)) ? 0 : 1,
-    (acc, input) => pipe(acc, HashSet.add(input))
-  )
+  foldWeighted<HashSet.HashSet<In>, In>({
+    initial: HashSet.empty(),
+    maxCost: n,
+    cost: (acc, input) => HashSet.has(acc, input) ? 0 : 1,
+    body: (acc, input) => HashSet.add(acc, input)
+  })
 
 /** @internal */
 export const collectAllUntil = <In>(p: Predicate<In>): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> => {
@@ -881,20 +881,26 @@ const foldChunkSplit = <S, In>(
 /** @internal */
 export const foldSink = dual<
   <R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
-    onFailure: (err: E) => Sink.Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink.Sink<R2, E2, In2, L2, Z2>
+    options: {
+      readonly onFailure: (err: E) => Sink.Sink<R1, E1, In1, L1, Z1>
+      readonly onSuccess: (z: Z) => Sink.Sink<R2, E2, In2, L2, Z2>
+    }
   ) => <R>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>,
   <R, R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    onFailure: (err: E) => Sink.Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink.Sink<R2, E2, In2, L2, Z2>
+    options: {
+      readonly onFailure: (err: E) => Sink.Sink<R1, E1, In1, L1, Z1>
+      readonly onSuccess: (z: Z) => Sink.Sink<R2, E2, In2, L2, Z2>
+    }
   ) => Sink.Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
 >(
-  3,
+  2,
   <R, R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    onFailure: (err: E) => Sink.Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink.Sink<R2, E2, In2, L2, Z2>
+    options: {
+      readonly onFailure: (err: E) => Sink.Sink<R1, E1, In1, L1, Z1>
+      readonly onSuccess: (z: Z) => Sink.Sink<R2, E2, In2, L2, Z2>
+    }
   ): Sink.Sink<R | R1 | R2, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2> => {
     const newChannel: Channel.Channel<
       R | R1 | R2,
@@ -905,11 +911,10 @@ export const foldSink = dual<
       Chunk.Chunk<L1 | L2>,
       Z1 | Z2
     > = pipe(
-      self,
-      toChannel,
+      toChannel(self),
       core.collectElements,
       channel.foldChannel({
-        onFailure: (error) => toChannel(onFailure(error)),
+        onFailure: (error) => toChannel(options.onFailure(error)),
         onSuccess: ([leftovers, z]) =>
           core.suspend(() => {
             const leftoversRef = {
@@ -929,19 +934,17 @@ export const foldSink = dual<
             const continuationSink = pipe(
               refReader,
               channel.zipRight(passthrough),
-              core.pipeTo(toChannel(onSuccess(z)))
+              core.pipeTo(toChannel(options.onSuccess(z)))
             )
-            return pipe(
-              continuationSink,
-              core.collectElements,
-              core.flatMap(([newLeftovers, z1]) =>
+            return core.flatMap(
+              core.collectElements(continuationSink),
+              ([newLeftovers, z1]) =>
                 pipe(
                   core.succeed(leftoversRef.ref),
                   core.flatMap(channel.writeChunk),
                   channel.zipRight(channel.writeChunk(newLeftovers)),
                   channel.as(z1)
                 )
-              )
             )
           })
       })
@@ -1116,21 +1119,41 @@ export const foldUntilEffect = <S, R, E, In>(
 
 /** @internal */
 export const foldWeighted = <S, In>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => number,
-  f: (s: S, input: In) => S
-): Sink.Sink<never, never, In, In, S> => foldWeightedDecompose(s, max, costFn, Chunk.of, f)
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => number
+    readonly body: (s: S, input: In) => S
+  }
+): Sink.Sink<never, never, In, In, S> =>
+  foldWeightedDecompose({
+    ...options,
+    decompose: Chunk.of
+  })
 
 /** @internal */
 export const foldWeightedDecompose = <S, In>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => number,
-  decompose: (input: In) => Chunk.Chunk<In>,
-  f: (s: S, input: In) => S
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => number
+    readonly decompose: (input: In) => Chunk.Chunk<In>
+    readonly body: (s: S, input: In) => S
+  }
 ): Sink.Sink<never, never, In, In, S> =>
-  suspend(() => new SinkImpl(foldWeightedDecomposeLoop(s, 0, false, max, costFn, decompose, f)))
+  suspend(() =>
+    new SinkImpl(
+      foldWeightedDecomposeLoop(
+        options.initial,
+        0,
+        false,
+        options.maxCost,
+        options.cost,
+        options.decompose,
+        options.body
+      )
+    )
+  )
 
 /** @internal */
 const foldWeightedDecomposeLoop = <S, In>(
@@ -1207,28 +1230,41 @@ const foldWeightedDecomposeFold = <In, S>(
 
 /** @internal */
 export const foldWeightedDecomposeEffect = <S, In, R, E, R2, E2, R3, E3>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => Effect.Effect<R, E, number>,
-  decompose: (input: In) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-  f: (s: S, input: In) => Effect.Effect<R3, E3, S>
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => Effect.Effect<R, E, number>
+    readonly decompose: (input: In) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+    readonly body: (s: S, input: In) => Effect.Effect<R3, E3, S>
+  }
 ): Sink.Sink<R | R2 | R3, E | E2 | E3, In, In, S> =>
-  suspend(() => new SinkImpl(foldWeightedDecomposeEffectLoop(s, max, costFn, decompose, f, 0, false)))
+  suspend(() =>
+    new SinkImpl(
+      foldWeightedDecomposeEffectLoop(
+        options.initial,
+        options.maxCost,
+        options.cost,
+        options.decompose,
+        options.body,
+        0,
+        false
+      )
+    )
+  )
 
 /** @internal */
 export const foldWeightedEffect = <S, In, R, E, R2, E2>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => Effect.Effect<R, E, number>,
-  f: (s: S, input: In) => Effect.Effect<R2, E2, S>
+  options: {
+    readonly initial: S
+    readonly maxCost: number
+    readonly cost: (s: S, input: In) => Effect.Effect<R, E, number>
+    readonly body: (s: S, input: In) => Effect.Effect<R2, E2, S>
+  }
 ): Sink.Sink<R | R2, E | E2, In, In, S> =>
-  foldWeightedDecomposeEffect(
-    s,
-    max,
-    costFn,
-    (input) => Effect.succeed(Chunk.of(input)),
-    f
-  )
+  foldWeightedDecomposeEffect({
+    ...options,
+    decompose: (input) => Effect.succeed(Chunk.of(input))
+  })
 
 /** @internal */
 const foldWeightedDecomposeEffectLoop = <S, In, R, E, R2, E2, R3, E3>(
@@ -1327,7 +1363,7 @@ export const flatMap = dual<
   <R, E, R1, E1, In, In1 extends In, L, L1, Z, Z1>(
     self: Sink.Sink<R, E, In, L, Z>,
     f: (z: Z) => Sink.Sink<R1, E1, In1, L1, Z1>
-  ): Sink.Sink<R | R1, E | E1, In & In1, L | L1, Z1> => pipe(self, foldSink(fail, f))
+  ): Sink.Sink<R | R1, E | E1, In & In1, L | L1, Z1> => foldSink(self, { onFailure: fail, onSuccess: f })
 )
 
 /** @internal */

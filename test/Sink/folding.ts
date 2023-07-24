@@ -136,12 +136,12 @@ describe.concurrent("Sink", () => {
       const result = yield* $(
         pipe(
           Stream.make(1, 5, 2, 3),
-          Stream.transduce(Sink.foldWeighted(
-            Chunk.empty<number>(),
-            12,
-            (_, n) => n * 2,
-            (acc, curr) => pipe(acc, Chunk.append(curr))
-          )),
+          Stream.transduce(Sink.foldWeighted({
+            initial: Chunk.empty<number>(),
+            maxCost: 12,
+            cost: (_, n) => n * 2,
+            body: (acc, curr) => pipe(acc, Chunk.append(curr))
+          })),
           Stream.runCollect
         )
       )
@@ -156,13 +156,13 @@ describe.concurrent("Sink", () => {
       const result = yield* $(
         pipe(
           Stream.empty,
-          Stream.transduce(Sink.foldWeightedDecompose(
-            0,
-            1_000,
-            (_, n) => n,
-            Chunk.of,
-            (acc, curr) => acc + curr
-          )),
+          Stream.transduce(Sink.foldWeightedDecompose({
+            initial: 0,
+            maxCost: 1_000,
+            cost: (_, n) => n,
+            decompose: Chunk.of,
+            body: (acc, curr) => acc + curr
+          })),
           Stream.runCollect
         )
       )
@@ -174,13 +174,13 @@ describe.concurrent("Sink", () => {
       const result = yield* $(
         pipe(
           Stream.make(1, 5, 1),
-          Stream.transduce(Sink.foldWeightedDecompose(
-            Chunk.empty<number>(),
-            4,
-            (_, n) => n,
-            (n) => n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n),
-            (acc, curr) => pipe(acc, Chunk.append(curr))
-          )),
+          Stream.transduce(Sink.foldWeightedDecompose({
+            initial: Chunk.empty<number>(),
+            maxCost: 4,
+            cost: (_, n) => n,
+            decompose: (n) => n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n),
+            body: (acc, curr) => pipe(acc, Chunk.append(curr))
+          })),
           Stream.runCollect
         )
       )
@@ -195,12 +195,12 @@ describe.concurrent("Sink", () => {
       const result = yield* $(
         pipe(
           Stream.make(1, 5, 2, 3),
-          Stream.transduce(Sink.foldWeightedEffect(
-            Chunk.empty<number>(),
-            12,
-            (_, n) => Effect.succeed(n * 2),
-            (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
-          )),
+          Stream.transduce(Sink.foldWeightedEffect({
+            initial: Chunk.empty<number>(),
+            maxCost: 12,
+            cost: (_, n) => Effect.succeed(n * 2),
+            body: (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
+          })),
           Stream.runCollect
         )
       )
@@ -215,13 +215,13 @@ describe.concurrent("Sink", () => {
       const result = yield* $(
         pipe(
           Stream.empty,
-          Stream.transduce(Sink.foldWeightedDecomposeEffect(
-            0,
-            1_000,
-            (_, n) => Effect.succeed(n),
-            (input) => Effect.succeed(Chunk.of(input)),
-            (acc, curr) => Effect.succeed(acc + curr)
-          )),
+          Stream.transduce(Sink.foldWeightedDecomposeEffect({
+            initial: 0,
+            maxCost: 1_000,
+            cost: (_, n) => Effect.succeed(n),
+            decompose: (input) => Effect.succeed(Chunk.of(input)),
+            body: (acc, curr) => Effect.succeed(acc + curr)
+          })),
           Stream.runCollect
         )
       )
@@ -233,13 +233,13 @@ describe.concurrent("Sink", () => {
       const result = yield* $(
         pipe(
           Stream.make(1, 5, 1),
-          Stream.transduce(Sink.foldWeightedDecomposeEffect(
-            Chunk.empty<number>(),
-            4,
-            (_, n) => Effect.succeed(n),
-            (n) => Effect.succeed(n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n)),
-            (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
-          )),
+          Stream.transduce(Sink.foldWeightedDecomposeEffect({
+            initial: Chunk.empty<number>(),
+            maxCost: 4,
+            cost: (_, n) => Effect.succeed(n),
+            decompose: (n) => Effect.succeed(n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n)),
+            body: (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
+          })),
           Stream.runCollect
         )
       )
@@ -253,14 +253,14 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.fail("boom"),
-        Sink.foldSink(
-          (err) =>
+        Sink.foldSink({
+          onFailure: (err) =>
             pipe(
               Sink.collectAll<number>(),
               Sink.map((chunk) => [Array.from(chunk), err] as const)
             ),
-          (_) => absurd<Sink.Sink<never, string, number, never, readonly [Array<number>, string]>>(_)
-        )
+          onSuccess: (_) => absurd<Sink.Sink<never, string, number, never, readonly [Array<number>, string]>>(_)
+        })
       )
       const result = yield* $(
         pipe(

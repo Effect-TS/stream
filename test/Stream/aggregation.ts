@@ -121,12 +121,12 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         pipe(
           Stream.fromIterable(input),
-          Stream.aggregate(Sink.foldWeighted(
-            Chunk.empty<number>(),
-            4,
-            (_, n) => n,
-            (acc, curr) => Chunk.append(acc, curr)
-          )),
+          Stream.aggregate(Sink.foldWeighted({
+            initial: Chunk.empty<number>(),
+            maxCost: 4,
+            cost: (_, n) => n,
+            body: (acc, curr) => Chunk.append(acc, curr)
+          })),
           Stream.runCollect
         )
       )
@@ -357,12 +357,12 @@ describe.concurrent("Stream", () => {
         pipe(
           Stream.fromIterable(input),
           Stream.aggregateWithinEither({
-            sink: Sink.foldWeighted(
-              Chunk.empty<number>(),
-              4,
-              (_, n) => n,
-              (acc, curr) => Chunk.append(acc, curr)
-            ),
+            sink: Sink.foldWeighted({
+              initial: Chunk.empty<number>(),
+              maxCost: 4,
+              cost: (_, n) => n,
+              body: (acc, curr) => Chunk.append(acc, curr)
+            }),
             schedule: Schedule.spaced(Duration.millis(100))
           }),
           Stream.filterMap((either) =>

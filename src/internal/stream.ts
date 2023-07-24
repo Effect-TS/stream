@@ -4275,58 +4275,55 @@ export const peel = dual<
       pipe(
         Handoff.make<Signal>(),
         Effect.map((handoff) => {
-          const consumer = pipe(
-            _sink.collectLeftover(sink),
-            _sink.foldSink(
-              (error) =>
+          const consumer = _sink.foldSink(_sink.collectLeftover(sink), {
+            onFailure: (error) =>
+              _sink.zipRight(
+                _sink.fromEffect(Deferred.fail(deferred, error)),
+                _sink.fail(error)
+              ),
+            onSuccess: ([z, leftovers]) => {
+              const loop: Channel.Channel<
+                never,
+                E,
+                Chunk.Chunk<A>,
+                unknown,
+                E | E2,
+                Chunk.Chunk<A>,
+                void
+              > = core
+                .readWithCause({
+                  onInput: (elements) =>
+                    core.flatMap(
+                      core.fromEffect(
+                        Handoff.offer<Signal>(handoff, { _tag: OP_EMIT, elements })
+                      ),
+                      () => loop
+                    ),
+                  onFailure: (cause) =>
+                    channel.zipRight(
+                      core.fromEffect(Handoff.offer<Signal>(handoff, { _tag: OP_HALT, cause })),
+                      core.failCause(cause)
+                    ),
+                  onDone: (_) =>
+                    channel.zipRight(
+                      core.fromEffect(Handoff.offer<Signal>(handoff, { _tag: OP_END })),
+                      core.unit()
+                    )
+                })
+              return _sink.fromChannel(
                 pipe(
-                  _sink.fromEffect(Deferred.fail(deferred, error)),
-                  _sink.zipRight(_sink.fail(error))
-                ),
-              ([z, leftovers]) => {
-                const loop: Channel.Channel<
-                  never,
-                  E,
-                  Chunk.Chunk<A>,
-                  unknown,
-                  E | E2,
-                  Chunk.Chunk<A>,
-                  void
-                > = core
-                  .readWithCause({
-                    onInput: (elements) =>
-                      core.flatMap(
-                        core.fromEffect(
-                          Handoff.offer<Signal>(handoff, { _tag: OP_EMIT, elements })
-                        ),
-                        () => loop
-                      ),
-                    onFailure: (cause) =>
-                      channel.zipRight(
-                        core.fromEffect(Handoff.offer<Signal>(handoff, { _tag: OP_HALT, cause })),
-                        core.failCause(cause)
-                      ),
-                    onDone: (_) =>
-                      channel.zipRight(
-                        core.fromEffect(Handoff.offer<Signal>(handoff, { _tag: OP_END })),
-                        core.unit()
-                      )
-                  })
-                return _sink.fromChannel(
-                  pipe(
-                    core.fromEffect(Deferred.succeed(deferred, z)),
-                    channel.zipRight(core.fromEffect(
-                      pipe(
-                        handoff,
-                        Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
-                      )
-                    )),
-                    channel.zipRight(loop)
-                  )
+                  core.fromEffect(Deferred.succeed(deferred, z)),
+                  channel.zipRight(core.fromEffect(
+                    pipe(
+                      handoff,
+                      Handoff.offer<Signal>({ _tag: OP_EMIT, elements: leftovers })
+                    )
+                  )),
+                  channel.zipRight(loop)
                 )
-              }
-            )
-          )
+              )
+            }
+          })
 
           const producer: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
             Handoff.take(handoff),
