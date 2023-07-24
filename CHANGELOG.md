@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.30.1
+
+### Patch Changes
+
+- [#135](https://github.com/Effect-TS/stream/pull/135) [`b57ca68`](https://github.com/Effect-TS/stream/commit/b57ca68f0182f0fbc907ee14d3287f173e603c06) Thanks [@tim-smart](https://github.com/tim-smart)! - ensure tacit api usage doesn't override types
+
 ## 0.30.0
 
 ### Minor Changes
