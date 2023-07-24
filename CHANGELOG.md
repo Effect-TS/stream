@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.30.0
+
+### Minor Changes
+
+- [#133](https://github.com/Effect-TS/stream/pull/133) [`18d3631`](https://github.com/Effect-TS/stream/commit/18d36312af93cd3628205e02fe739794afe5c616) Thanks [@tim-smart](https://github.com/tim-smart)! - api updates - object options and consolidation
+
 ## 0.29.0
 
 ### Minor Changes
