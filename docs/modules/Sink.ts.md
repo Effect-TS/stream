@@ -1447,10 +1447,13 @@ functions.
 
 ```ts
 export declare const dimap: {
-  <In0, In, Z, Z2>(f: (input: In0) => In, g: (z: Z) => Z2): <R, E, L>(
+  <In0, In, Z, Z2>(options: { readonly onInput: (input: In0) => In; readonly onDone: (z: Z) => Z2 }): <R, E, L>(
     self: Sink<R, E, In, L, Z>
   ) => Sink<R, E, In0, L, Z2>
-  <R, E, L, In0, In, Z, Z2>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In, g: (z: Z) => Z2): Sink<R, E, In0, L, Z2>
+  <R, E, L, In0, In, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    options: { readonly onInput: (input: In0) => In; readonly onDone: (z: Z) => Z2 }
+  ): Sink<R, E, In0, L, Z2>
 }
 ```
 
@@ -1465,13 +1468,13 @@ functions.
 
 ```ts
 export declare const dimapChunks: {
-  <In0, In, Z, Z2>(f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>, g: (z: Z) => Z2): <R, E, L>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R, E, In0, L, Z2>
+  <In0, In, Z, Z2>(options: {
+    readonly onInput: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
+    readonly onDone: (z: Z) => Z2
+  }): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z2>
   <R, E, L, In0, In, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
-    f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>,
-    g: (z: Z) => Z2
+    options: { readonly onInput: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>; readonly onDone: (z: Z) => Z2 }
   ): Sink<R, E, In0, L, Z2>
 }
 ```
@@ -1487,14 +1490,16 @@ provided functions. `f` and `g` must preserve chunking-invariance.
 
 ```ts
 export declare const dimapChunksEffect: {
-  <In0, R2, E2, In, Z, R3, E3, Z2>(
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
+  <In0, R2, E2, In, Z, R3, E3, Z2>(options: {
+    readonly onInput: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+    readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+  }): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
   <R, E, L, In0, R2, E2, In, Z, R3, E3, Z2>(
     self: Sink<R, E, In, L, Z>,
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
+    options: {
+      readonly onInput: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+      readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+    }
   ): Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2>
 }
 ```
@@ -1510,14 +1515,16 @@ provided functions.
 
 ```ts
 export declare const dimapEffect: {
-  <In0, R2, E2, In, Z, R3, E3, Z2>(
-    f: (input: In0) => Effect.Effect<R2, E2, In>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
+  <In0, R2, E2, In, Z, R3, E3, Z2>(options: {
+    readonly onInput: (input: In0) => Effect.Effect<R2, E2, In>
+    readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+  }): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
   <R, E, L, In0, R2, E2, In, Z, R3, E3, Z2>(
     self: Sink<R, E, In, L, Z>,
-    f: (input: In0) => Effect.Effect<R2, E2, In>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
+    options: {
+      readonly onInput: (input: In0) => Effect.Effect<R2, E2, In>
+      readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+    }
   ): Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2>
 }
 ```
@@ -1709,16 +1716,18 @@ Repeatedly runs the sink for as long as its results satisfy the predicate
 
 ```ts
 export declare const collectAllWhileWith: {
-  <Z, S>(z: S, p: Predicate<Z>, f: (s: S, z: Z) => S): <R, E, In, L extends In>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R, E, In, L, S>
-  <R, E, In, L extends In, Z, S>(self: Sink<R, E, In, L, Z>, z: S, p: Predicate<Z>, f: (s: S, z: Z) => S): Sink<
+  <Z, S>(options: { readonly initial: S; readonly while: Predicate<Z>; readonly body: (s: S, z: Z) => S }): <
     R,
     E,
     In,
-    L,
-    S
-  >
+    L extends In
+  >(
+    self: Sink<R, E, In, L, Z>
+  ) => Sink<R, E, In, L, S>
+  <R, E, In, L extends In, Z, S>(
+    self: Sink<R, E, In, L, Z>,
+    options: { readonly initial: S; readonly while: Predicate<Z>; readonly body: (s: S, z: Z) => S }
+  ): Sink<R, E, In, L, S>
 }
 ```
 

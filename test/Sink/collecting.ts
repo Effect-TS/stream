@@ -232,11 +232,11 @@ describe.concurrent("Sink", () => {
           Stream.rechunk(chunkSize),
           Stream.run(pipe(
             Sink.sum(),
-            Sink.collectAllWhileWith(
-              -1,
-              (n) => n === n,
-              (acc, curr) => acc + curr
-            )
+            Sink.collectAllWhileWith({
+              initial: -1,
+              while: (n) => n === n,
+              body: (acc, curr) => acc + curr
+            })
           ))
         )
       const result1 = yield* $(program(1))
@@ -251,14 +251,14 @@ describe.concurrent("Sink", () => {
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.head<number>(),
-        Sink.collectAllWhileWith(
-          Chunk.empty<number>(),
-          Option.match({
+        Sink.collectAllWhileWith({
+          initial: Chunk.empty<number>(),
+          while: Option.match({
             onNone: constTrue,
             onSome: (n) => n < 5
           }),
-          (acc, option) => Option.isSome(option) ? pipe(acc, Chunk.append(option.value)) : acc
-        )
+          body: (acc, option) => Option.isSome(option) ? pipe(acc, Chunk.append(option.value)) : acc
+        })
       )
       const stream = pipe(Stream.fromChunk(Chunk.range(1, 100)))
       const result = yield* $(pipe(
