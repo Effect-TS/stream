@@ -244,10 +244,10 @@ describe.concurrent("Channel", () => {
               ),
             constVoid,
             constVoid,
-            UpstreamPullRequest.match(
-              () => UpstreamPullStrategy.PullAfterNext(Option.none()),
-              () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
-            ),
+            UpstreamPullRequest.match({
+              onPulled: () => UpstreamPullStrategy.PullAfterNext(Option.none()),
+              onNoUpstream: () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
+            }),
             Option.match({
               onNone: () => ChildExecutorDecision.Yield(),
               onSome: () => ChildExecutorDecision.Continue()

@@ -56,25 +56,31 @@ export const isPullAfterAllEnqueued = <A>(
 /** @internal */
 export const match = dual<
   <A, Z>(
-    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
-    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+    options: {
+      readonly onNext: (emitSeparator: Option.Option<A>) => Z
+      readonly onAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+    }
   ) => (self: UpstreamPullStrategy.UpstreamPullStrategy<A>) => Z,
   <A, Z>(
     self: UpstreamPullStrategy.UpstreamPullStrategy<A>,
-    onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
-    onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+    options: {
+      readonly onNext: (emitSeparator: Option.Option<A>) => Z
+      readonly onAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+    }
   ) => Z
->(3, <A, Z>(
+>(2, <A, Z>(
   self: UpstreamPullStrategy.UpstreamPullStrategy<A>,
-  onPullAfterNext: (emitSeparator: Option.Option<A>) => Z,
-  onPullAfterAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  { onAllEnqueued, onNext }: {
+    readonly onNext: (emitSeparator: Option.Option<A>) => Z
+    readonly onAllEnqueued: (emitSeparator: Option.Option<A>) => Z
+  }
 ): Z => {
   switch (self._tag) {
     case OpCodes.OP_PULL_AFTER_NEXT: {
-      return onPullAfterNext(self.emitSeparator)
+      return onNext(self.emitSeparator)
     }
     case OpCodes.OP_PULL_AFTER_ALL_ENQUEUED: {
-      return onPullAfterAllEnqueued(self.emitSeparator)
+      return onAllEnqueued(self.emitSeparator)
     }
   }
 })

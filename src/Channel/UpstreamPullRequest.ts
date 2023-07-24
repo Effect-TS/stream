@@ -101,8 +101,10 @@ export const isNoUpstream: <A>(self: UpstreamPullRequest<A>) => self is NoUpstre
  */
 export const match: {
   <A, Z>(
-    onPulled: (value: A) => Z,
-    onNoUpstream: (activeDownstreamCount: number) => Z
+    options: { readonly onPulled: (value: A) => Z; readonly onNoUpstream: (activeDownstreamCount: number) => Z }
   ): (self: UpstreamPullRequest<A>) => Z
-  <A, Z>(self: UpstreamPullRequest<A>, onPulled: (value: A) => Z, onNoUpstream: (activeDownstreamCount: number) => Z): Z
+  <A, Z>(
+    self: UpstreamPullRequest<A>,
+    options: { readonly onPulled: (value: A) => Z; readonly onNoUpstream: (activeDownstreamCount: number) => Z }
+  ): Z
 } = internal.match

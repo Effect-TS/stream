@@ -199,7 +199,7 @@ describe.concurrent("Stream", () => {
       const stream = Stream.fromIterable(chunk)
       const f = (n: number) => Effect.succeed(n * 2)
       const { result1, result2 } = yield* $(Effect.all({
-        result1: pipe(stream, Stream.mapEffectPar(concurrency, f), Stream.runCollect),
+        result1: pipe(stream, Stream.mapEffect(f, { concurrency }), Stream.runCollect),
         result2: Effect.forEach(chunk, f, { concurrency })
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
@@ -210,7 +210,7 @@ describe.concurrent("Stream", () => {
       const queue = yield* $(Queue.unbounded<number>())
       yield* $(pipe(
         Stream.range(0, 9),
-        Stream.mapEffectPar(1, (n) => pipe(Queue.offer(queue, n))),
+        Stream.mapEffect((n) => pipe(Queue.offer(queue, n)), { concurrency: 1 }),
         Stream.runDrain
       ))
       const result = yield* $(Queue.takeAll(queue))
@@ -223,12 +223,12 @@ describe.concurrent("Stream", () => {
       const latch = yield* $(Deferred.make<never, void>())
       const fiber = yield* $(pipe(
         Stream.make(void 0),
-        Stream.mapEffectPar(1, () =>
+        Stream.mapEffect(() =>
           pipe(
             Deferred.succeed<never, void>(latch, void 0),
             Effect.zipRight(Effect.never),
             Effect.onInterrupt(() => Ref.set(ref, true))
-          )),
+          ), { concurrency: 2 }),
         Stream.runDrain,
         Effect.fork
       ))
@@ -245,7 +245,7 @@ describe.concurrent("Stream", () => {
       const stream = Stream.fromChunk(chunk)
       const { result1, result2 } = yield* $(Effect.all({
         result1: pipe(stream, Stream.mapEffect(Effect.succeed), Stream.runCollect),
-        result2: pipe(stream, Stream.mapEffectPar(n, Effect.succeed), Stream.runCollect)
+        result2: pipe(stream, Stream.mapEffect(Effect.succeed, { concurrency: n }), Stream.runCollect)
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))
     }))
@@ -255,7 +255,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.fromIterable(Chunk.range(0, 10)),
         Stream.interruptWhen(Effect.never),
-        Stream.mapEffectPar(8, () => pipe(Effect.succeed(1), Effect.repeatN(200))),
+        Stream.mapEffect(() => pipe(Effect.succeed(1), Effect.repeatN(200)), { concurrency: 8 }),
         Stream.runDrain,
         Effect.exit
       ))
@@ -269,8 +269,7 @@ describe.concurrent("Stream", () => {
       const latch2 = yield* $(Deferred.make<never, void>())
       const result = yield* $(pipe(
         Stream.make(1, 2, 3),
-        Stream.mapEffectPar(
-          3,
+        Stream.mapEffect(
           (n) =>
             n === 1 ?
               pipe(
@@ -288,7 +287,8 @@ describe.concurrent("Stream", () => {
                 Deferred.await(latch1),
                 Effect.zipRight(Deferred.await(latch1)),
                 Effect.zipRight(Effect.fail("boom"))
-              )
+              ),
+          { concurrency: 3 }
         ),
         Stream.runDrain,
         Effect.exit
@@ -302,8 +302,8 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.fromIterable(Chunk.range(1, 50)),
-        Stream.mapEffectPar(20, (n) => n < 10 ? Effect.succeed(n) : Effect.fail("boom")),
-        Stream.mapEffectPar(20, (n) => Effect.succeed(n)),
+        Stream.mapEffect((n) => n < 10 ? Effect.succeed(n) : Effect.fail("boom"), { concurrency: 20 }),
+        Stream.mapEffect((n) => Effect.succeed(n), { concurrency: 20 }),
         Stream.runCollect,
         Effect.either
       ))
@@ -315,7 +315,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(pipe(
         Stream.range(1, 11),
         Stream.concat(Stream.fail(Cause.RuntimeException("boom"))),
-        Stream.mapEffectPar(2, () => Effect.sleep(Duration.seconds(1))),
+        Stream.mapEffect(() => Effect.sleep(Duration.seconds(1)), { concurrency: 2 }),
         Stream.runDrain,
         Effect.fork
       ))
@@ -328,7 +328,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.fromIterable(Chunk.range(0, 3)),
-        Stream.mapEffectParUnordered(10, () => Effect.fail("fail")),
+        Stream.mapEffect(() => Effect.fail("fail"), { concurrency: 10, unordered: true }),
         Stream.runDrain,
         Effect.exit
       ))

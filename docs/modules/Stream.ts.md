@@ -27,7 +27,6 @@ Added in v1.0.0
   - [die](#die)
   - [dieMessage](#diemessage)
   - [dieSync](#diesync)
-  - [done](#done)
   - [empty](#empty)
   - [execute](#execute)
   - [fail](#fail)
@@ -39,24 +38,16 @@ Added in v1.0.0
   - [fromChannel](#fromchannel)
   - [fromChunk](#fromchunk)
   - [fromChunkHub](#fromchunkhub)
-  - [fromChunkHubScoped](#fromchunkhubscoped)
-  - [fromChunkHubScopedWithShutdown](#fromchunkhubscopedwithshutdown)
-  - [fromChunkHubWithShutdown](#fromchunkhubwithshutdown)
   - [fromChunkQueue](#fromchunkqueue)
-  - [fromChunkQueueWithShutdown](#fromchunkqueuewithshutdown)
   - [fromChunks](#fromchunks)
   - [fromEffect](#fromeffect)
   - [fromEffectOption](#fromeffectoption)
   - [fromHub](#fromhub)
-  - [fromHubScoped](#fromhubscoped)
-  - [fromHubScopedWithShutdown](#fromhubscopedwithshutdown)
-  - [fromHubWithShutdown](#fromhubwithshutdown)
   - [fromIterable](#fromiterable)
   - [fromIterableEffect](#fromiterableeffect)
   - [fromIteratorSucceed](#fromiteratorsucceed)
   - [fromPull](#frompull)
   - [fromQueue](#fromqueue)
-  - [fromQueueWithShutdown](#fromqueuewithshutdown)
   - [fromReadableStream](#fromreadablestream)
   - [fromReadableStreamByob](#fromreadablestreambyob)
   - [fromSchedule](#fromschedule)
@@ -132,15 +123,14 @@ Added in v1.0.0
   - [toHub](#tohub)
   - [toPull](#topull)
   - [toQueue](#toqueue)
-  - [toQueueCapacity](#toqueuecapacity)
-  - [toQueueDropping](#toqueuedropping)
-  - [toQueueDroppingCapacity](#toqueuedroppingcapacity)
   - [toQueueOfElements](#toqueueofelements)
-  - [toQueueOfElementsCapacity](#toqueueofelementscapacity)
-  - [toQueueSliding](#toqueuesliding)
-  - [toQueueSlidingCapacity](#toqueueslidingcapacity)
-  - [toQueueUnbounded](#toqueueunbounded)
   - [toReadableStream](#toreadablestream)
+- [do notation](#do-notation)
+  - [Do](#do)
+  - [bind](#bind)
+  - [bindEffect](#bindeffect)
+  - [bindTo](#bindto)
+  - [let](#let)
 - [elements](#elements)
   - [find](#find)
   - [findEffect](#findeffect)
@@ -149,6 +139,8 @@ Added in v1.0.0
   - [catchAllCause](#catchallcause)
   - [catchSome](#catchsome)
   - [catchSomeCause](#catchsomecause)
+  - [catchTag](#catchtag)
+  - [catchTags](#catchtags)
   - [orDie](#ordie)
   - [orDieWith](#ordiewith)
   - [orElse](#orelse)
@@ -157,7 +149,6 @@ Added in v1.0.0
   - [orElseIfEmpty](#orelseifempty)
   - [orElseIfEmptyChunk](#orelseifemptychunk)
   - [orElseIfEmptyStream](#orelseifemptystream)
-  - [orElseOptional](#orelseoptional)
   - [orElseSucceed](#orelsesucceed)
   - [refineOrDie](#refineordie)
   - [refineOrDieWith](#refineordiewith)
@@ -167,7 +158,6 @@ Added in v1.0.0
 - [grouping](#grouping)
   - [groupAdjacentBy](#groupadjacentby)
   - [groupBy](#groupby)
-  - [groupByBuffer](#groupbybuffer)
 - [mapping](#mapping)
   - [as](#as)
   - [map](#map)
@@ -180,10 +170,6 @@ Added in v1.0.0
   - [mapConcatChunkEffect](#mapconcatchunkeffect)
   - [mapConcatEffect](#mapconcateffect)
   - [mapEffect](#mapeffect)
-  - [mapEffectPar](#mapeffectpar)
-  - [mapEffectParByKey](#mapeffectparbykey)
-  - [mapEffectParByKeyBuffer](#mapeffectparbykeybuffer)
-  - [mapEffectParUnordered](#mapeffectparunordered)
   - [mapError](#maperror)
   - [mapErrorCause](#maperrorcause)
 - [models](#models)
@@ -193,22 +179,11 @@ Added in v1.0.0
 - [sequencing](#sequencing)
   - [branchAfter](#branchafter)
   - [flatMap](#flatmap)
-  - [flatMapPar](#flatmappar)
-  - [flatMapParBuffer](#flatmapparbuffer)
-  - [flatMapParSwitch](#flatmapparswitch)
-  - [flatMapParSwitchBuffer](#flatmapparswitchbuffer)
   - [flatten](#flatten)
   - [flattenChunks](#flattenchunks)
   - [flattenEffect](#flatteneffect)
-  - [flattenEffectPar](#flatteneffectpar)
-  - [flattenEffectParUnordered](#flatteneffectparunordered)
-  - [flattenExit](#flattenexit)
   - [flattenExitOption](#flattenexitoption)
   - [flattenIterables](#flatteniterables)
-  - [flattenPar](#flattenpar)
-  - [flattenParBuffer](#flattenparbuffer)
-  - [flattenParUnbounded](#flattenparunbounded)
-  - [flattenParUnboundedBuffer](#flattenparunboundedbuffer)
   - [flattenTake](#flattentake)
   - [tap](#tap)
   - [tapError](#taperror)
@@ -219,7 +194,6 @@ Added in v1.0.0
 - [type lambdas](#type-lambdas)
   - [StreamTypeLambda (interface)](#streamtypelambda-interface)
 - [utils](#utils)
-  - [absolve](#absolve)
   - [aggregate](#aggregate)
   - [aggregateWithin](#aggregatewithin)
   - [aggregateWithinEither](#aggregatewithineither)
@@ -229,28 +203,11 @@ Added in v1.0.0
   - [broadcastedQueuesDynamic](#broadcastedqueuesdynamic)
   - [buffer](#buffer)
   - [bufferChunks](#bufferchunks)
-  - [bufferChunksDropping](#bufferchunksdropping)
-  - [bufferChunksSliding](#bufferchunkssliding)
-  - [bufferDropping](#bufferdropping)
-  - [bufferSliding](#buffersliding)
-  - [bufferUnbounded](#bufferunbounded)
   - [changes](#changes)
   - [changesWith](#changeswith)
   - [changesWithEffect](#changeswitheffect)
   - [chunks](#chunks)
   - [chunksWith](#chunkswith)
-  - [collect](#collect)
-  - [collectEffect](#collecteffect)
-  - [collectLeft](#collectleft)
-  - [collectRight](#collectright)
-  - [collectSome](#collectsome)
-  - [collectSuccess](#collectsuccess)
-  - [collectWhile](#collectwhile)
-  - [collectWhileEffect](#collectwhileeffect)
-  - [collectWhileLeft](#collectwhileleft)
-  - [collectWhileRight](#collectwhileright)
-  - [collectWhileSome](#collectwhilesome)
-  - [collectWhileSuccess](#collectwhilesuccess)
   - [combine](#combine)
   - [combineChunks](#combinechunks)
   - [concat](#concat)
@@ -272,9 +229,12 @@ Added in v1.0.0
   - [either](#either)
   - [ensuring](#ensuring)
   - [ensuringWith](#ensuringwith)
+  - [filterMap](#filtermap)
+  - [filterMapEffect](#filtermapeffect)
+  - [filterMapWhile](#filtermapwhile)
+  - [filterMapWhileEffect](#filtermapwhileeffect)
   - [forever](#forever)
   - [groupByKey](#groupbykey)
-  - [groupByKeyBuffer](#groupbykeybuffer)
   - [grouped](#grouped)
   - [groupedWithin](#groupedwithin)
   - [haltAfter](#haltafter)
@@ -291,23 +251,15 @@ Added in v1.0.0
   - [mapBoth](#mapboth)
   - [merge](#merge)
   - [mergeAll](#mergeall)
-  - [mergeAllUnbounded](#mergeallunbounded)
   - [mergeEither](#mergeeither)
-  - [mergeHaltEither](#mergehalteither)
-  - [mergeHaltLeft](#mergehaltleft)
-  - [mergeHaltRight](#mergehaltright)
-  - [mergeHaltStrategy](#mergehaltstrategy)
   - [mergeLeft](#mergeleft)
   - [mergeRight](#mergeright)
   - [mergeWith](#mergewith)
-  - [mergeWithHaltStrategy](#mergewithhaltstrategy)
   - [mkString](#mkstring)
   - [onDone](#ondone)
   - [onError](#onerror)
   - [partition](#partition)
   - [partitionBuffer](#partitionbuffer)
-  - [partitionEither](#partitioneither)
-  - [partitionEitherBuffer](#partitioneitherbuffer)
   - [peel](#peel)
   - [pipeThrough](#pipethrough)
   - [pipeThroughChannel](#pipethroughchannel)
@@ -317,18 +269,14 @@ Added in v1.0.0
   - [repeat](#repeat)
   - [repeatEither](#repeateither)
   - [repeatElements](#repeatelements)
-  - [repeatElementsEither](#repeatelementseither)
   - [repeatElementsWith](#repeatelementswith)
   - [repeatWith](#repeatwith)
   - [retry](#retry)
-  - [right](#right)
-  - [rightOrFail](#rightorfail)
   - [scan](#scan)
   - [scanEffect](#scaneffect)
   - [scanReduce](#scanreduce)
   - [scanReduceEffect](#scanreduceeffect)
   - [schedule](#schedule)
-  - [scheduleEither](#scheduleeither)
   - [scheduleWith](#schedulewith)
   - [sliding](#sliding)
   - [slidingSize](#slidingsize)
@@ -343,14 +291,8 @@ Added in v1.0.0
   - [takeUntilEffect](#takeuntileffect)
   - [takeWhile](#takewhile)
   - [tapErrorCause](#taperrorcause)
-  - [throttleEnforce](#throttleenforce)
-  - [throttleEnforceBurst](#throttleenforceburst)
-  - [throttleEnforceEffect](#throttleenforceeffect)
-  - [throttleEnforceEffectBurst](#throttleenforceeffectburst)
-  - [throttleShape](#throttleshape)
-  - [throttleShapeBurst](#throttleshapeburst)
-  - [throttleShapeEffect](#throttleshapeeffect)
-  - [throttleShapeEffectBurst](#throttleshapeeffectburst)
+  - [throttle](#throttle)
+  - [throttleEffect](#throttleeffect)
   - [timeout](#timeout)
   - [timeoutFail](#timeoutfail)
   - [timeoutFailCause](#timeoutfailcause)
@@ -570,18 +512,6 @@ export declare const dieSync: (evaluate: LazyArg<unknown>) => Stream<never, neve
 
 Added in v1.0.0
 
-## done
-
-The stream that ends with the specified `Exit` value.
-
-**Signature**
-
-```ts
-export declare const done: <E, A>(exit: Exit.Exit<E, A>) => Stream<never, E, A>
-```
-
-Added in v1.0.0
-
 ## empty
 
 The empty stream.
@@ -715,55 +645,18 @@ Creates a stream from a subscription to a `Hub`.
 **Signature**
 
 ```ts
-export declare const fromChunkHub: <A>(hub: Hub.Hub<Chunk.Chunk<A>>) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromChunkHubScoped
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-**Signature**
-
-```ts
-export declare const fromChunkHubScoped: <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromChunkHubScopedWithShutdown
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromChunkHubScopedWithShutdown: <A>(
-  hub: Hub.Hub<Chunk.Chunk<A>>
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromChunkHubWithShutdown
-
-Creates a stream from a subscription to a `Hub`.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromChunkHubWithShutdown: <A>(hub: Hub.Hub<Chunk.Chunk<A>>) => Stream<never, never, A>
+export declare const fromChunkHub: {
+  <A>(hub: Hub.Hub<Chunk.Chunk<A>>, options: { readonly scoped: true; readonly shutdown?: boolean }): Effect.Effect<
+    Scope.Scope,
+    never,
+    Stream<never, never, A>
+  >
+  <A>(hub: Hub.Hub<Chunk.Chunk<A>>, options?: { readonly scoped?: false; readonly shutdown?: boolean }): Stream<
+    never,
+    never,
+    A
+  >
+}
 ```
 
 Added in v1.0.0
@@ -775,21 +668,10 @@ Creates a stream from a `Queue` of values.
 **Signature**
 
 ```ts
-export declare const fromChunkQueue: <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromChunkQueueWithShutdown
-
-Creates a stream from a `Queue` of values.
-
-The queue will be shutdown once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromChunkQueueWithShutdown: <A>(queue: Queue.Dequeue<Chunk.Chunk<A>>) => Stream<never, never, A>
+export declare const fromChunkQueue: <A>(
+  queue: Queue.Dequeue<Chunk.Chunk<A>>,
+  options?: { readonly shutdown?: boolean }
+) => Stream<never, never, A>
 ```
 
 Added in v1.0.0
@@ -839,57 +721,16 @@ Creates a stream from a subscription to a `Hub`.
 **Signature**
 
 ```ts
-export declare const fromHub: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromHubScoped
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-**Signature**
-
-```ts
-export declare const fromHubScoped: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromHubScopedWithShutdown
-
-Creates a stream from a subscription to a `Hub` in the context of a scoped
-effect. The scoped effect describes subscribing to receive messages from
-the hub while the stream describes taking messages from the hub.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromHubScopedWithShutdown: <A>(
-  hub: Hub.Hub<A>,
-  maxChunkSize?: number
-) => Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
-```
-
-Added in v1.0.0
-
-## fromHubWithShutdown
-
-Creates a stream from a subscription to a `Hub`.
-
-The hub will be shut down once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromHubWithShutdown: <A>(hub: Hub.Hub<A>, maxChunkSize?: number) => Stream<never, never, A>
+export declare const fromHub: {
+  <A>(
+    hub: Hub.Hub<A>,
+    options: { readonly scoped: true; readonly maxChunkSize?: number; readonly shutdown?: boolean }
+  ): Effect.Effect<Scope.Scope, never, Stream<never, never, A>>
+  <A>(
+    hub: Hub.Hub<A>,
+    options?: { readonly scoped?: false; readonly maxChunkSize?: number; readonly shutdown?: boolean }
+  ): Stream<never, never, A>
+}
 ```
 
 Added in v1.0.0
@@ -956,22 +797,9 @@ Creates a stream from a queue of values
 **Signature**
 
 ```ts
-export declare const fromQueue: <A>(queue: Queue.Dequeue<A>, maxChunkSize?: number) => Stream<never, never, A>
-```
-
-Added in v1.0.0
-
-## fromQueueWithShutdown
-
-Creates a stream from a queue of values. The queue will be shutdown once
-the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromQueueWithShutdown: <A>(
+export declare const fromQueue: <A>(
   queue: Queue.Dequeue<A>,
-  maxChunkSize?: number
+  options?: { readonly maxChunkSize?: number; readonly shutdown?: boolean }
 ) => Stream<never, never, A>
 ```
 
@@ -2156,69 +1984,23 @@ Added in v1.0.0
 Converts the stream to a scoped queue of chunks. After the scope is closed,
 the queue will never again produce values and should be discarded.
 
-**Signature**
-
-```ts
-export declare const toQueue: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueCapacity
-
-Like `toQueue`, but with a configurable `capacity` parameter.
+Defaults to the "suspend" back pressure strategy with a capacity of 2.
 
 **Signature**
 
 ```ts
-export declare const toQueueCapacity: {
-  (capacity: number): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
-    Scope.Scope | R,
-    never,
-    Queue.Dequeue<Take.Take<E, A>>
-  >
-}
-```
-
-Added in v1.0.0
-
-## toQueueDropping
-
-Converts the stream to a dropping scoped queue of chunks. After the scope
-is closed, the queue will never again produce values and should be
-discarded.
-
-**Signature**
-
-```ts
-export declare const toQueueDropping: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueDroppingCapacity
-
-Like `toQueueDropping`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const toQueueDroppingCapacity: {
-  (capacity: number): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
-    Scope.Scope | R,
-    never,
-    Queue.Dequeue<Take.Take<E, A>>
-  >
+export declare const toQueue: {
+  (
+    options?:
+      | { readonly strategy?: 'dropping' | 'sliding' | 'suspend'; readonly capacity?: number }
+      | { readonly strategy: 'unbounded' }
+  ): <R, E, A>(self: Stream<R, E, A>) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options?:
+      | { readonly strategy?: 'dropping' | 'sliding' | 'suspend'; readonly capacity?: number }
+      | { readonly strategy: 'unbounded' }
+  ): Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
 }
 ```
 
@@ -2229,84 +2011,21 @@ Added in v1.0.0
 Converts the stream to a scoped queue of elements. After the scope is
 closed, the queue will never again produce values and should be discarded.
 
-**Signature**
-
-```ts
-export declare const toQueueOfElements: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueOfElementsCapacity
-
-Like `toQueueOfElements`, but with a configurable `capacity` parameter.
+Defaults to a capacity of 2.
 
 **Signature**
 
 ```ts
-export declare const toQueueOfElementsCapacity: {
-  (capacity: number): <R, E, A>(
+export declare const toQueueOfElements: {
+  (options?: { readonly capacity?: number }): <R, E, A>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
+  <R, E, A>(self: Stream<R, E, A>, options?: { readonly capacity?: number }): Effect.Effect<
     Scope.Scope | R,
     never,
     Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>
   >
 }
-```
-
-Added in v1.0.0
-
-## toQueueSliding
-
-Converts the stream to a sliding scoped queue of chunks. After the scope is
-closed, the queue will never again produce values and should be discarded.
-
-**Signature**
-
-```ts
-export declare const toQueueSliding: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-```
-
-Added in v1.0.0
-
-## toQueueSlidingCapacity
-
-Like `toQueueSliding`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const toQueueSlidingCapacity: {
-  (capacity: number): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Effect.Effect<
-    Scope.Scope | R,
-    never,
-    Queue.Dequeue<Take.Take<E, A>>
-  >
-}
-```
-
-Added in v1.0.0
-
-## toQueueUnbounded
-
-Converts the stream into an unbounded scoped queue. After the scope is
-closed, the queue will never again produce values and should be discarded.
-
-**Signature**
-
-```ts
-export declare const toQueueUnbounded: <R, E, A>(
-  self: Stream<R, E, A>
-) => Effect.Effect<Scope.Scope | R, never, Queue.Dequeue<Take.Take<E, A>>>
 ```
 
 Added in v1.0.0
@@ -2321,6 +2040,100 @@ See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
 
 ```ts
 export declare const toReadableStream: <E, A>(source: Stream<never, E, A>) => ReadableStream<A>
+```
+
+Added in v1.0.0
+
+# do notation
+
+## Do
+
+**Signature**
+
+```ts
+export declare const Do: Stream<never, never, {}>
+```
+
+Added in v1.0.0
+
+## bind
+
+Binds a value from a stream in a `do` scope
+
+**Signature**
+
+```ts
+export declare const bind: {
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Stream<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): <R, E>(self: Stream<R, E, K>) => Stream<R2 | R, E2 | E, Effect.MergeRecord<K, { [k in N]: A }>>
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Stream<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R | R2, E | E2, Effect.MergeRecord<K, { [k in N]: A }>>
+}
+```
+
+Added in v1.0.0
+
+## bindEffect
+
+Binds an effectful value in a `do` scope
+
+**Signature**
+
+```ts
+export declare const bindEffect: {
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): <R, E>(self: Stream<R, E, K>) => Stream<R2 | R, E2 | E, Effect.MergeRecord<K, { [k in N]: A }>>
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R | R2, E | E2, Effect.MergeRecord<K, { [k in N]: A }>>
+}
+```
+
+Added in v1.0.0
+
+## bindTo
+
+**Signature**
+
+```ts
+export declare const bindTo: {
+  <N extends string>(tag: N): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Record<N, A>>
+  <R, E, A, N extends string>(self: Stream<R, E, A>, tag: N): Stream<R, E, Record<N, A>>
+}
+```
+
+Added in v1.0.0
+
+## let
+
+Bind a value in a `do` scope
+
+**Signature**
+
+```ts
+export declare const let: {
+  <N extends string, K, A>(tag: Exclude<N, keyof K>, f: (_: K) => A): <R, E>(
+    self: Stream<R, E, K>
+  ) => Stream<R, E, Effect.MergeRecord<K, { [k in N]: A }>>
+  <R, E, K, N extends string, A>(self: Stream<R, E, K>, tag: Exclude<N, keyof K>, f: (_: K) => A): Stream<
+    R,
+    E,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >
+}
 ```
 
 Added in v1.0.0
@@ -2447,6 +2260,98 @@ export declare const catchSomeCause: {
     self: Stream<R, E, A>,
     pf: (cause: Cause.Cause<E>) => Option.Option<Stream<R2, E2, A2>>
   ): Stream<R | R2, E | E2, A | A2>
+}
+```
+
+Added in v1.0.0
+
+## catchTag
+
+Switches over to the stream produced by the provided function in case this
+one fails with an error matching the given `_tag`.
+
+**Signature**
+
+```ts
+export declare const catchTag: {
+  <K extends E['_tag'] & string, E extends { _tag: string }, R1, E1, A1>(
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream<R1, E1, A1>
+  ): <R, A>(self: Stream<R, E, A>) => Stream<R1 | R, E1 | Exclude<E, { _tag: K }>, A1 | A>
+  <R, E extends { _tag: string }, A, K extends E['_tag'] & string, R1, E1, A1>(
+    self: Stream<R, E, A>,
+    k: K,
+    f: (e: Extract<E, { _tag: K }>) => Stream<R1, E1, A1>
+  ): Stream<R | R1, E1 | Exclude<E, { _tag: K }>, A | A1>
+}
+```
+
+Added in v1.0.0
+
+## catchTags
+
+Switches over to the stream produced by one of the provided functions, in
+case this one fails with an error matching one of the given `_tag`'s.
+
+**Signature**
+
+```ts
+export declare const catchTags: {
+  <
+    E extends { _tag: string },
+    Cases extends { [K in E['_tag']]+?: ((error: Extract<E, { _tag: K }>) => Stream<any, any, any>) | undefined }
+  >(
+    cases: Cases
+  ): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<
+    | R
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer R, infer _E, infer _A>
+          ? R
+          : never
+      }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer E, infer _A>
+          ? E
+          : never
+      }[keyof Cases],
+    | A
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer _E, infer A>
+          ? A
+          : never
+      }[keyof Cases]
+  >
+  <
+    R,
+    E extends { _tag: string },
+    A,
+    Cases extends { [K in E['_tag']]+?: ((error: Extract<E, { _tag: K }>) => Stream<any, any, any>) | undefined }
+  >(
+    self: Stream<R, E, A>,
+    cases: Cases
+  ): Stream<
+    | R
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer R, infer _E, infer _A>
+          ? R
+          : never
+      }[keyof Cases],
+    | Exclude<E, { _tag: keyof Cases }>
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer E, infer _A>
+          ? E
+          : never
+      }[keyof Cases],
+    | A
+    | {
+        [K in keyof Cases]: Cases[K] extends (...args: Array<any>) => Stream.Variance<infer _R, infer _E, infer A>
+          ? A
+          : never
+      }[keyof Cases]
+  >
 }
 ```
 
@@ -2583,30 +2488,6 @@ export declare const orElseIfEmptyStream: {
 
 Added in v1.0.0
 
-## orElseOptional
-
-Switches to the provided stream in case this one fails with the `None`
-value.
-
-See also `Stream.catchAll`.
-
-**Signature**
-
-```ts
-export declare const orElseOptional: {
-  <R2, E2, A2>(that: LazyArg<Stream<R2, Option.Option<E2>, A2>>): <R, E, A>(
-    self: Stream<R, Option.Option<E>, A>
-  ) => Stream<R2 | R, Option.Option<E2 | E>, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, Option.Option<E>, A>, that: LazyArg<Stream<R2, Option.Option<E2>, A2>>): Stream<
-    R | R2,
-    Option.Option<E | E2>,
-    A | A2
-  >
-}
-```
-
-Added in v1.0.0
-
 ## orElseSucceed
 
 Succeeds with the specified value if this one fails with a typed error.
@@ -2715,35 +2596,16 @@ More powerful version of `Stream.groupByKey`.
 
 ```ts
 export declare const groupBy: {
-  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>): <R, E>(
-    self: Stream<R, E, A>
-  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
-  <R, E, A, R2, E2, K, V>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>): GroupBy.GroupBy<
-    R | R2,
-    E | E2,
-    K,
-    V
-  >
-}
-```
-
-Added in v1.0.0
-
-## groupByBuffer
-
-Like `groupBy`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const groupByBuffer: {
-  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>, bufferSize: number): <R, E>(
+  <A, R2, E2, K, V>(f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>, options?: { readonly bufferSize?: number }): <
+    R,
+    E
+  >(
     self: Stream<R, E, A>
   ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
   <R, E, A, R2, E2, K, V>(
     self: Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ): GroupBy.GroupBy<R | R2, E | E2, K, V>
 }
 ```
@@ -2938,102 +2800,24 @@ Maps over elements of the stream with the specified effectful function.
 
 ```ts
 export declare const mapEffect: {
-  <A, R2, E2, A2>(f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## mapEffectPar
-
-Maps over elements of the stream with the specified effectful function,
-executing up to `n` invocations of `f` concurrently. Transformed elements
-will be emitted in the original order.
-
-**Signature**
-
-```ts
-export declare const mapEffectPar: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## mapEffectParByKey
-
-Maps over elements of the stream with the specified effectful function,
-partitioned by `p` executing invocations of `f` concurrently. The number of
-concurrent invocations of `f` is determined by the number of different
-outputs of type `K`. Up to `buffer` elements may be buffered per partition.
-Transformed elements may be reordered but the order within a partition is
-maintained.
-
-**Signature**
-
-```ts
-export declare const mapEffectParByKey: {
-  <R2, E2, A2, A, K>(keyBy: (a: A) => K, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, R2, E2, A2, A, K>(self: Stream<R, E, A>, keyBy: (a: A) => K, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## mapEffectParByKeyBuffer
-
-Like `mapEffectParByKey`, but with a `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const mapEffectParByKeyBuffer: {
-  <R2, E2, A2, A, K>(keyBy: (a: A) => K, bufferSize: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, R2, E2, A2, A, K>(
+  <A, R2, E2, A2>(
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <A, R2, E2, A2, K>(
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options: { readonly key: (a: A) => K; readonly bufferSize?: number | undefined }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }
   ): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## mapEffectParUnordered
-
-Maps over elements of the stream with the specified effectful function,
-executing up to `n` invocations of `f` concurrently. The element order is
-not enforced by this combinator, and elements may be reordered.
-
-**Signature**
-
-```ts
-export declare const mapEffectParUnordered: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Effect.Effect<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
+  <R, E, A, R2, E2, A2, K>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options: { readonly key: (a: A) => K; readonly bufferSize?: number | undefined }
+  ): Stream<R | R2, E | E2, A2>
 }
 ```
 
@@ -3159,92 +2943,15 @@ streams produced by passing each element of this stream to `f0`
 
 ```ts
 export declare const flatMap: {
-  <A, R2, E2, A2>(f: (a: A) => Stream<R2, E2, A2>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## flatMapPar
-
-Maps each element of this stream to another stream and returns the
-non-deterministic merge of those streams, executing up to `n` inner streams
-concurrently. Up to `bufferSize` elements of the produced streams may be
-buffered in memory by this operator.
-
-**Signature**
-
-```ts
-export declare const flatMapPar: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## flatMapParBuffer
-
-Like `flatMapPar`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flatMapParBuffer: {
-  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## flatMapParSwitch
-
-Maps each element of this stream to another stream and returns the
-non-deterministic merge of those streams, executing up to `n` inner streams
-concurrently. When a new stream is created from an element of the source
-stream, the oldest executing stream is cancelled. Up to `bufferSize`
-elements of the produced streams may be buffered in memory by this
-operator.
-
-**Signature**
-
-```ts
-export declare const flatMapParSwitch: {
-  <A, R2, E2, A2>(n: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, f: (a: A) => Stream<R2, E2, A2>): Stream<R | R2, E | E2, A2>
-}
-```
-
-Added in v1.0.0
-
-## flatMapParSwitchBuffer
-
-Like `flatMapParSwitch`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flatMapParSwitchBuffer: {
-  <A, R2, E2, A2>(n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, n: number, bufferSize: number, f: (a: A) => Stream<R2, E2, A2>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
+  <A, R2, E2, A2>(
+    f: (a: A) => Stream<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number; readonly switch?: boolean }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    f: (a: A) => Stream<R2, E2, A2>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number; readonly switch?: boolean }
+  ): Stream<R | R2, E | E2, A2>
 }
 ```
 
@@ -3258,7 +2965,15 @@ strict order of all the streams.
 **Signature**
 
 ```ts
-export declare const flatten: <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
+export declare const flatten: {
+  (options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }): <R, E, R2, E2, A>(
+    self: Stream<R, E, Stream<R2, E2, A>>
+  ) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(
+    self: Stream<R, E, Stream<R2, E2, A>>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R | R2, E | E2, A>
+}
 ```
 
 Added in v1.0.0
@@ -3284,55 +2999,15 @@ information about the effect.
 **Signature**
 
 ```ts
-export declare const flattenEffect: <R, E, R2, E2, A>(
-  self: Stream<R, E, Effect.Effect<R2, E2, A>>
-) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenEffectPar
-
-Flattens `Effect` values into the stream's structure, preserving all
-information about the effect.
-
-**Signature**
-
-```ts
-export declare const flattenEffectPar: {
-  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
+export declare const flattenEffect: {
+  (options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }): <R, E, R2, E2, A>(
+    self: Stream<R, E, Effect.Effect<R2, E2, A>>
+  ) => Stream<R | R2, E | E2, A>
+  <R, E, R2, E2, A>(
+    self: Stream<R, E, Effect.Effect<R2, E2, A>>,
+    options?: { readonly concurrency?: number | 'unbounded'; readonly unordered?: boolean }
+  ): Stream<R | R2, E | E2, A>
 }
-```
-
-Added in v1.0.0
-
-## flattenEffectParUnordered
-
-Flattens `Effect` values into the stream's structure, preserving all
-information about the effect. The element order is
-not enforced by this combinator, and elements may be reordered.
-
-**Signature**
-
-```ts
-export declare const flattenEffectParUnordered: {
-  (n: number): <R, E, E2, R2, A>(self: Stream<R, E, Effect.Effect<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, Effect.Effect<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## flattenExit
-
-Flattens `Exit` values. `Exit.Failure` values translate to stream
-failures while `Exit.Success` values translate to stream elements.
-
-**Signature**
-
-```ts
-export declare const flattenExit: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E | E2, A>
 ```
 
 Added in v1.0.0
@@ -3366,67 +3041,6 @@ while still preserving them.
 
 ```ts
 export declare const flattenIterables: <R, E, A>(self: Stream<R, E, Iterable<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## flattenPar
-
-Flattens a stream of streams into a stream by executing a non-deterministic
-concurrent merge. Up to `n` streams may be consumed in parallel and up to
-`outputBuffer` elements may be buffered by this operator.
-
-**Signature**
-
-```ts
-export declare const flattenPar: {
-  (n: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## flattenParBuffer
-
-Like `flattenPar`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flattenParBuffer: {
-  (n: number, bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, n: number, bufferSize: number): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## flattenParUnbounded
-
-Like `Stream.flattenPar`, but executes all streams concurrently.
-
-**Signature**
-
-```ts
-export declare const flattenParUnbounded: <R, E, R2, E2, A>(
-  self: Stream<R, E, Stream<R2, E2, A>>
-) => Stream<R | R2, E | E2, A>
-```
-
-Added in v1.0.0
-
-## flattenParUnboundedBuffer
-
-Like `Stream.flattenParUnbounded`, but with `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const flattenParUnboundedBuffer: {
-  (bufferSize: number): <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>) => Stream<R | R2, E | E2, A>
-  <R, E, R2, E2, A>(self: Stream<R, E, Stream<R2, E2, A>>, bufferSize: number): Stream<R | R2, E | E2, A>
-}
 ```
 
 Added in v1.0.0
@@ -3528,18 +3142,6 @@ Added in v1.0.0
 
 # utils
 
-## absolve
-
-Submerges the error case of an `Either` into the `Stream`.
-
-**Signature**
-
-```ts
-export declare const absolve: <R, E, A>(self: Stream<R, E, Either.Either<E, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
 ## aggregate
 
 Aggregates elements of this stream using the provided sink for as long as
@@ -3573,14 +3175,16 @@ Like `aggregateWithinEither`, but only returns the `Right` results.
 
 ```ts
 export declare const aggregateWithin: {
-  <R2, E2, A, A2, B, R3, C>(
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
+  <R2, E2, A, A2, B, R3, C>(options: {
+    readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+    readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): Stream<R | R2 | R3, E | E2, B>
 }
 ```
@@ -3604,14 +3208,16 @@ between pulls.
 
 ```ts
 export declare const aggregateWithinEither: {
-  <R2, E2, A, A2, B, R3, C>(
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
+  <R2, E2, A, A2, B, R3, C>(options: {
+    readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+    readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
-    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    options: {
+      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
+      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+    }
   ): Stream<R | R2 | R3, E | E2, Either.Either<C, B>>
 }
 ```
@@ -3717,8 +3323,17 @@ buffering up to `capacity` elements in a queue.
 
 ```ts
 export declare const buffer: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+  (
+    options:
+      | { readonly capacity: 'unbounded' }
+      | { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options:
+      | { readonly capacity: 'unbounded' }
+      | { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }
+  ): Stream<R, E, A>
 }
 ```
 
@@ -3733,86 +3348,14 @@ buffering up to `capacity` chunks in a queue.
 
 ```ts
 export declare const bufferChunks: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
+  (options: { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    options: { readonly capacity: number; readonly strategy?: 'dropping' | 'sliding' | 'suspend' }
+  ): Stream<R, E, A>
 }
-```
-
-Added in v1.0.0
-
-## bufferChunksDropping
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` chunks in a dropping queue.
-
-**Signature**
-
-```ts
-export declare const bufferChunksDropping: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferChunksSliding
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` chunks in a sliding queue.
-
-**Signature**
-
-```ts
-export declare const bufferChunksSliding: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferDropping
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` elements in a dropping queue.
-
-**Signature**
-
-```ts
-export declare const bufferDropping: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferSliding
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering up to `capacity` elements in a sliding queue.
-
-**Signature**
-
-```ts
-export declare const bufferSliding: {
-  (capacity: number): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, capacity: number): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## bufferUnbounded
-
-Allows a faster producer to progress independently of a slower consumer by
-buffering chunks into an unbounded queue.
-
-**Signature**
-
-```ts
-export declare const bufferUnbounded: <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
 ```
 
 Added in v1.0.0
@@ -3891,168 +3434,6 @@ the stream exposed.
 export declare const chunksWith: <R, E, A, R2, E2, A2>(
   f: (stream: Stream<R, E, Chunk.Chunk<A>>) => Stream<R2, E2, Chunk.Chunk<A2>>
 ) => (self: Stream<R, E, A>) => Stream<R | R2, E | E2, A2>
-```
-
-Added in v1.0.0
-
-## collect
-
-Performs a filter and map in a single step.
-
-**Signature**
-
-```ts
-export declare const collect: {
-  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
-}
-```
-
-Added in v1.0.0
-
-## collectEffect
-
-Performs an effectful filter and map in a single step.
-
-**Signature**
-
-```ts
-export declare const collectEffect: {
-  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
-    R | R2,
-    E | E2,
-    A2
-  >
-}
-```
-
-Added in v1.0.0
-
-## collectLeft
-
-Filters any `Right` values.
-
-**Signature**
-
-```ts
-export declare const collectLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2>
-```
-
-Added in v1.0.0
-
-## collectRight
-
-Filters any `Left` values.
-
-**Signature**
-
-```ts
-export declare const collectRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectSome
-
-Filters any 'None' values.
-
-**Signature**
-
-```ts
-export declare const collectSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectSuccess
-
-Filters any `Exit.Failure` values.
-
-**Signature**
-
-```ts
-export declare const collectSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectWhile
-
-Transforms all elements of the stream for as long as the specified partial
-function is defined.
-
-**Signature**
-
-```ts
-export declare const collectWhile: <A, A2>(
-  pf: (a: A) => Option.Option<A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
-```
-
-Added in v1.0.0
-
-## collectWhileEffect
-
-Effectfully transforms all elements of the stream for as long as the
-specified partial function is defined.
-
-**Signature**
-
-```ts
-export declare const collectWhileEffect: <A, R2, E2, A2>(
-  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-```
-
-Added in v1.0.0
-
-## collectWhileLeft
-
-Terminates the stream when encountering the first `Right`.
-
-**Signature**
-
-```ts
-export declare const collectWhileLeft: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, E2>
-```
-
-Added in v1.0.0
-
-## collectWhileRight
-
-Terminates the stream when encountering the first `Left`.
-
-**Signature**
-
-```ts
-export declare const collectWhileRight: <R, E, E2, A>(self: Stream<R, E, Either.Either<E2, A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectWhileSome
-
-Terminates the stream when encountering the first `None`.
-
-**Signature**
-
-```ts
-export declare const collectWhileSome: <R, E, A>(self: Stream<R, E, Option.Option<A>>) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## collectWhileSuccess
-
-Terminates the stream when encountering the first `Exit.Failure`.
-
-**Signature**
-
-```ts
-export declare const collectWhileSuccess: <R, E, E2, A>(self: Stream<R, E, Exit.Exit<E2, A>>) => Stream<R, E, A>
 ```
 
 Added in v1.0.0
@@ -4265,17 +3646,20 @@ function will receive the indices of the queues in the resulting list.
 
 ```ts
 export declare const distributedWith: {
-  <N extends number, A>(n: N, maximumLag: number, decide: (a: A) => Effect.Effect<never, never, Predicate<number>>): <
-    R,
-    E
-  >(
+  <N extends number, A>(options: {
+    readonly size: N
+    readonly maximumLag: number
+    readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  }): <R, E>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
   <R, E, N extends number, A>(
     self: Stream<R, E, A>,
-    n: N,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: {
+      readonly size: N
+      readonly maximumLag: number
+      readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    }
   ): Effect.Effect<Scope.Scope | R, never, Stream.DynamicTuple<Queue.Dequeue<Exit.Exit<Option.Option<E>, A>>, N>>
 }
 ```
@@ -4295,7 +3679,10 @@ will continue but no longer backpressure on them.
 
 ```ts
 export declare const distributedWithDynamic: {
-  <E, A, _>(maximumLag: number, decide: (a: A) => Effect.Effect<never, never, Predicate<number>>): <R>(
+  <E, A, _>(options: {
+    readonly maximumLag: number
+    readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+  }): <R>(
     self: Stream<R, E, A>
   ) => Effect.Effect<
     Scope.Scope | R,
@@ -4304,8 +3691,7 @@ export declare const distributedWithDynamic: {
   >
   <R, E, A, _>(
     self: Stream<R, E, A>,
-    maximumLag: number,
-    decide: (a: A) => Effect.Effect<never, never, Predicate<number>>
+    options: { readonly maximumLag: number; readonly decide: (a: A) => Effect.Effect<never, never, Predicate<number>> }
   ): Effect.Effect<
     Scope.Scope | R,
     never,
@@ -4501,6 +3887,72 @@ export declare const ensuringWith: {
 
 Added in v1.0.0
 
+## filterMap
+
+Performs a filter and map in a single step.
+
+**Signature**
+
+```ts
+export declare const filterMap: {
+  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
+}
+```
+
+Added in v1.0.0
+
+## filterMapEffect
+
+Performs an effectful filter and map in a single step.
+
+**Signature**
+
+```ts
+export declare const filterMapEffect: {
+  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
+}
+```
+
+Added in v1.0.0
+
+## filterMapWhile
+
+Transforms all elements of the stream for as long as the specified partial
+function is defined.
+
+**Signature**
+
+```ts
+export declare const filterMapWhile: <A, A2>(
+  pf: (a: A) => Option.Option<A2>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+```
+
+Added in v1.0.0
+
+## filterMapWhileEffect
+
+Effectfully transforms all elements of the stream for as long as the
+specified partial function is defined.
+
+**Signature**
+
+```ts
+export declare const filterMapWhileEffect: <A, R2, E2, A2>(
+  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+```
+
+Added in v1.0.0
+
 ## forever
 
 Repeats this stream forever.
@@ -4552,23 +4004,15 @@ pipe(
 
 ```ts
 export declare const groupByKey: {
-  <A, K>(f: (a: A) => K): <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
-  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K): GroupBy.GroupBy<R, E, K, A>
-}
-```
-
-Added in v1.0.0
-
-## groupByKeyBuffer
-
-Like `groupByKey`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const groupByKeyBuffer: {
-  <A, K>(f: (a: A) => K, bufferSize: number): <R, E>(self: Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>
-  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K, bufferSize: number): GroupBy.GroupBy<R, E, K, A>
+  <A, K>(f: (a: A) => K, options?: { readonly bufferSize?: number }): <R, E>(
+    self: Stream<R, E, A>
+  ) => GroupBy.GroupBy<R, E, K, A>
+  <R, E, A, K>(self: Stream<R, E, A>, f: (a: A) => K, options?: { readonly bufferSize?: number }): GroupBy.GroupBy<
+    R,
+    E,
+    K,
+    A
+  >
 }
 ```
 
@@ -4799,8 +4243,13 @@ Intersperse the specified element, also adding a prefix and a suffix.
 
 ```ts
 export declare const intersperseAffixes: {
-  <A2, A3, A4>(start: A2, middle: A3, end: A4): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A2 | A3 | A4 | A>
-  <R, E, A, A2, A3, A4>(self: Stream<R, E, A>, start: A2, middle: A3, end: A4): Stream<R, E, A | A2 | A3 | A4>
+  <A2, A3, A4>(options: { readonly start: A2; readonly middle: A3; readonly end: A4 }): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, A2 | A3 | A4 | A>
+  <R, E, A, A2, A3, A4>(
+    self: Stream<R, E, A>,
+    options: { readonly start: A2; readonly middle: A3; readonly end: A4 }
+  ): Stream<R, E, A | A2 | A3 | A4>
 }
 ```
 
@@ -4833,8 +4282,18 @@ no termination strategy is specified.
 
 ```ts
 export declare const merge: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
+  <R2, E2, A2>(that: Stream<R2, E2, A2>, options?: { readonly haltStrategy?: HaltStrategy.HaltStrategyInput }): <
+    R,
+    E,
+    A
+  >(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E2 | E, A2 | A>
+  <R, E, A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    that: Stream<R2, E2, A2>,
+    options?: { readonly haltStrategy?: HaltStrategy.HaltStrategyInput }
+  ): Stream<R | R2, E | E2, A | A2>
 }
 ```
 
@@ -4849,24 +4308,15 @@ buffered by this operator.
 **Signature**
 
 ```ts
-export declare const mergeAll: (
-  n: number,
-  bufferSize?: number
-) => <R, E, A>(...streams: Stream<R, E, A>[]) => Stream<R, E, A>
-```
-
-Added in v1.0.0
-
-## mergeAllUnbounded
-
-Like `Stream.mergeAll`, but runs all streams concurrently.
-
-**Signature**
-
-```ts
-export declare const mergeAllUnbounded: (
-  bufferSize?: number
-) => <R, E, A>(...streams: Stream<R, E, A>[]) => Stream<R, E, A>
+export declare const mergeAll: {
+  (options: { readonly concurrency: number | 'unbounded'; readonly bufferSize?: number }): <R, E, A>(
+    streams: Iterable<Stream<R, E, A>>
+  ) => Stream<R, E, A>
+  <R, E, A>(
+    streams: Iterable<Stream<R, E, A>>,
+    options: { readonly concurrency: number | 'unbounded'; readonly bufferSize?: number }
+  ): Stream<R, E, A>
+}
 ```
 
 Added in v1.0.0
@@ -4884,75 +4334,6 @@ export declare const mergeEither: {
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, Either.Either<A, A2>>
   <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, Either.Either<A, A2>>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltEither
-
-Merges this stream and the specified stream together. New produced stream
-will terminate when either stream terminates.
-
-**Signature**
-
-```ts
-export declare const mergeHaltEither: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltLeft
-
-Merges this stream and the specified stream together. New produced stream
-will terminate when this stream terminates.
-
-**Signature**
-
-```ts
-export declare const mergeHaltLeft: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltRight
-
-Merges this stream and the specified stream together. New produced stream
-will terminate when the specified stream terminates.
-
-**Signature**
-
-```ts
-export declare const mergeHaltRight: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>): Stream<R | R2, E | E2, A | A2>
-}
-```
-
-Added in v1.0.0
-
-## mergeHaltStrategy
-
-Like `merge`, but with a configurable `strategy` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeHaltStrategy: {
-  <R2, E2, A2>(that: Stream<R2, E2, A2>, strategy: HaltStrategy.HaltStrategy): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, strategy: HaltStrategy.HaltStrategy): Stream<
-    R | R2,
-    E | E2,
-    A | A2
-  >
 }
 ```
 
@@ -5002,40 +4383,22 @@ no termination strategy is specified.
 
 ```ts
 export declare const mergeWith: {
-  <R2, E2, A2, A, A3, A4>(that: Stream<R2, E2, A2>, left: (a: A) => A3, right: (a2: A2) => A4): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, A3 | A4>
-  <R, E, R2, E2, A2, A, A3, A4>(
-    self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4
-  ): Stream<R | R2, E | E2, A3 | A4>
-}
-```
-
-Added in v1.0.0
-
-## mergeWithHaltStrategy
-
-Like `mergeWith`, but with a configurable `strategy` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeWithHaltStrategy: {
   <R2, E2, A2, A, A3, A4>(
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
+    other: Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput | undefined
+    }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3 | A4>
   <R, E, R2, E2, A2, A, A3, A4>(
     self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A4,
-    strategy: HaltStrategy.HaltStrategy
+    other: Stream<R2, E2, A2>,
+    options: {
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A4
+      readonly haltStrategy?: HaltStrategy.HaltStrategyInput | undefined
+    }
   ): Stream<R | R2, E | E2, A3 | A4>
 }
 ```
@@ -5135,48 +4498,6 @@ export declare const partitionBuffer: {
     E,
     readonly [Stream<never, E, A>, Stream<never, E, A>]
   >
-}
-```
-
-Added in v1.0.0
-
-## partitionEither
-
-Split a stream by an effectful predicate. The faster stream may advance by
-up to buffer elements further than the slower one.
-
-**Signature**
-
-```ts
-export declare const partitionEither: {
-  <A, R2, E2, A2, A3>(predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>
-  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
-}
-```
-
-Added in v1.0.0
-
-## partitionEitherBuffer
-
-Like `partitionEither`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const partitionEitherBuffer: {
-  <A, R2, E2, A2, A3>(predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>, bufferSize: number): <R, E>(
-    self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
-  <R, E, A, R2, E2, A2, A3>(
-    self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
-    bufferSize: number
-  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
 }
 ```
 
@@ -5350,32 +4671,6 @@ export declare const repeatElements: {
 
 Added in v1.0.0
 
-## repeatElementsEither
-
-Repeats each element of the stream using the provided schedule. When the
-schedule is finished, then the output of the schedule will be emitted into
-the stream. Repetitions are done in addition to the first execution, which
-means using `Schedule.recurs(1)` actually results in the original effect,
-plus an additional recurrence, for a total of two repetitions of each value
-in the stream.
-
-**Signature**
-
-```ts
-export declare const repeatElementsEither: {
-  <R2, B>(schedule: Schedule.Schedule<R2, unknown, B>): <R, E, A>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, Either.Either<B, A>>
-  <R, E, A, R2, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, unknown, B>): Stream<
-    R | R2,
-    E,
-    Either.Either<B, A>
-  >
-}
-```
-
-Added in v1.0.0
-
 ## repeatElementsWith
 
 Repeats each element of the stream using the provided schedule. When the
@@ -5393,14 +4688,14 @@ single type. For example, `Either` or similar data type.
 
 ```ts
 export declare const repeatElementsWith: {
-  <R2, B, A, C>(schedule: Schedule.Schedule<R2, unknown, B>, f: (a: A) => C, g: (b: B) => C): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, C>
+  <R2, B, A, C>(
+    schedule: Schedule.Schedule<R2, unknown, B>,
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
   <R, E, R2, B, A, C>(
     self: Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): Stream<R | R2, E, C>
 }
 ```
@@ -5418,14 +4713,14 @@ be unified with the stream elements using the provided functions.
 
 ```ts
 export declare const repeatWith: {
-  <R2, B, A, C>(schedule: Schedule.Schedule<R2, unknown, B>, f: (a: A) => C, g: (b: B) => C): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, C>
+  <R2, B, A, C>(
+    schedule: Schedule.Schedule<R2, unknown, B>,
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
   <R, E, R2, B, A, C>(
     self: Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, unknown, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): Stream<R | R2, E, C>
 }
 ```
@@ -5448,33 +4743,6 @@ stream again.
 export declare const retry: {
   <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
   <R, A, R2, E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream<R | R2, E, A>
-}
-```
-
-Added in v1.0.0
-
-## right
-
-Fails with the error `None` if value is `Left`.
-
-**Signature**
-
-```ts
-export declare const right: <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, Option.Option<E>, A2>
-```
-
-Added in v1.0.0
-
-## rightOrFail
-
-Fails with given error 'e' if value is `Left`.
-
-**Signature**
-
-```ts
-export declare const rightOrFail: {
-  <E2>(error: LazyArg<E2>): <R, E, A, A2>(self: Stream<R, E, Either.Either<A, A2>>) => Stream<R, E2 | E, A2>
-  <R, E, A, A2, E2>(self: Stream<R, E, Either.Either<A, A2>>, error: LazyArg<E2>): Stream<R, E | E2, A2>
 }
 ```
 
@@ -5568,24 +4836,6 @@ export declare const schedule: {
 
 Added in v1.0.0
 
-## scheduleEither
-
-Schedules the output of the stream using the provided `schedule` and emits
-its output at the end (if `schedule` is finite).
-
-**Signature**
-
-```ts
-export declare const scheduleEither: {
-  <R2, A, B>(schedule: Schedule.Schedule<R2, A, B>): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, Either.Either<B, A>>
-  <R, E, R2, A, B>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, B>): Stream<R | R2, E, Either.Either<B, A>>
-}
-```
-
-Added in v1.0.0
-
 ## scheduleWith
 
 Schedules the output of the stream using the provided `schedule` and emits
@@ -5596,14 +4846,14 @@ to align the stream and schedule outputs on the same type.
 
 ```ts
 export declare const scheduleWith: {
-  <R2, A, B, C>(schedule: Schedule.Schedule<R2, A, B>, f: (a: A) => C, g: (b: B) => C): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E, C>
+  <R2, A, B, C>(
+    schedule: Schedule.Schedule<R2, A, B>,
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
   <R, E, R2, A, B, C>(
     self: Stream<R, E, A>,
     schedule: Schedule.Schedule<R2, A, B>,
-    f: (a: A) => C,
-    g: (b: B) => C
+    options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): Stream<R | R2, E, C>
 }
 ```
@@ -5838,112 +5088,7 @@ export declare const tapErrorCause: {
 
 Added in v1.0.0
 
-## throttleEnforce
-
-Throttles the chunks of this stream according to the given bandwidth
-parameters using the token bucket algorithm. Allows for burst in the
-processing of elements by allowing the token bucket to accumulate tokens up
-to a `units + burst` threshold. Chunks that do not meet the bandwidth
-constraints are dropped. The weight of each chunk is determined by the
-`costFn` function.
-
-**Signature**
-
-```ts
-export declare const throttleEnforce: {
-  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R, E, A>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
-  ): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleEnforceBurst
-
-Like `throttleEnforce`, but with a configurable `burst` parameter.
-
-**Signature**
-
-```ts
-export declare const throttleEnforceBurst: {
-  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration, burst: number): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R, E, A>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleEnforceEffect
-
-Throttles the chunks of this stream according to the given bandwidth
-parameters using the token bucket algorithm. Allows for burst in the
-processing of elements by allowing the token bucket to accumulate tokens up
-to a `units + burst` threshold. Chunks that do not meet the bandwidth
-constraints are dropped. The weight of each chunk is determined by the
-`costFn` effectful function.
-
-**Signature**
-
-```ts
-export declare const throttleEnforceEffect: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleEnforceEffectBurst
-
-Like `throttleEnforceEffect`, but with a configurable `burst` parameter.
-
-**Signature**
-
-```ts
-export declare const throttleEnforceEffectBurst: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleShape
+## throttle
 
 Delays the chunks of this stream according to the given bandwidth
 parameters using the token bucket algorithm. Allows for burst in the
@@ -5951,95 +5096,72 @@ processing of elements by allowing the token bucket to accumulate tokens up
 to a `units + burst` threshold. The weight of each chunk is determined by
 the `costFn` function.
 
+If using the "enforce" strategy, chunks that do not meet the bandwidth
+constraints are dropped. If using the "shape" strategy, chunks are delayed
+until they can be emitted without exceeding the bandwidth constraints.
+
+Defaults to the "shape" strategy.
+
 **Signature**
 
 ```ts
-export declare const throttleShape: {
-  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R, E, A>
+export declare const throttle: {
+  <A>(options: {
+    readonly cost: (chunk: Chunk.Chunk<A>) => number
+    readonly units: number
+    readonly duration: Duration.Duration
+    readonly burst?: number | undefined
+    readonly strategy?: 'enforce' | 'shape' | undefined
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
   <R, E, A>(
     self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => number
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number | undefined
+      readonly strategy?: 'enforce' | 'shape' | undefined
+    }
   ): Stream<R, E, A>
 }
 ```
 
 Added in v1.0.0
 
-## throttleShapeBurst
-
-Like `throttleShape`, but with a configurable `burst` parameter.
-
-**Signature**
-
-```ts
-export declare const throttleShapeBurst: {
-  <A>(costFn: (chunk: Chunk.Chunk<A>) => number, units: number, duration: Duration.Duration, burst: number): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R, E, A>
-  <R, E, A>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => number,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): Stream<R, E, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleShapeEffect
+## throttleEffect
 
 Delays the chunks of this stream according to the given bandwidth
 parameters using the token bucket algorithm. Allows for burst in the
 processing of elements by allowing the token bucket to accumulate tokens up
 to a `units + burst` threshold. The weight of each chunk is determined by
-the `costFn` effectful function.
+the effectful `costFn` function.
+
+If using the "enforce" strategy, chunks that do not meet the bandwidth
+constraints are dropped. If using the "shape" strategy, chunks are delayed
+until they can be emitted without exceeding the bandwidth constraints.
+
+Defaults to the "shape" strategy.
 
 **Signature**
 
 ```ts
-export declare const throttleShapeEffect: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+export declare const throttleEffect: {
+  <A, R2, E2>(options: {
+    readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
+    readonly units: number
+    readonly duration: Duration.Duration
+    readonly burst?: number | undefined
+    readonly strategy?: 'enforce' | 'shape' | undefined
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
   <R, E, A, R2, E2>(
     self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration
-  ): Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## throttleShapeEffectBurst
-
-Like `throttleShapeEffect`, but with a configurable `burst` parameter.
-
-**Signature**
-
-```ts
-export declare const throttleShapeEffectBurst: {
-  <A, R2, E2>(
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
-    self: Stream<R, E, A>,
-    costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
-    units: number,
-    duration: Duration.Duration,
-    burst: number
+    options: {
+      readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
+      readonly units: number
+      readonly duration: Duration.Duration
+      readonly burst?: number | undefined
+      readonly strategy?: 'enforce' | 'shape' | undefined
+    }
   ): Stream<R | R2, E | E2, A>
 }
 ```
@@ -6222,14 +5344,15 @@ have different lengths and one of the streams has ended before the other.
 
 ```ts
 export declare const zipAll: {
-  <R2, E2, A2, A>(that: Stream<R2, E2, A2>, defaultLeft: A, defaultRight: A2): <R, E>(
-    self: Stream<R, E, A>
-  ) => Stream<R2 | R, E2 | E, readonly [A, A2]>
-  <R, E, R2, E2, A2, A>(self: Stream<R, E, A>, that: Stream<R2, E2, A2>, defaultLeft: A, defaultRight: A2): Stream<
-    R | R2,
-    E | E2,
-    readonly [A, A2]
-  >
+  <R2, E2, A2, A>(options: {
+    readonly other: Stream<R2, E2, A2>
+    readonly defaultSelf: A
+    readonly defaultOther: A2
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, readonly [A, A2]>
+  <R, E, R2, E2, A2, A>(
+    self: Stream<R, E, A>,
+    options: { readonly other: Stream<R2, E2, A2>; readonly defaultSelf: A; readonly defaultOther: A2 }
+  ): Stream<R | R2, E | E2, readonly [A, A2]>
 }
 ```
 
@@ -6291,18 +5414,20 @@ streams are sorted by distinct keys.
 
 ```ts
 export declare const zipAllSortedByKey: {
-  <R2, E2, A2, A, K>(that: Stream<R2, E2, readonly [K, A2]>, defaultLeft: A, defaultRight: A2, order: Order.Order<K>): <
-    R,
-    E
-  >(
-    self: Stream<R, E, readonly [K, A]>
-  ) => Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>
+  <R2, E2, A2, A, K>(options: {
+    readonly other: Stream<R2, E2, readonly [K, A2]>
+    readonly defaultSelf: A
+    readonly defaultOther: A2
+    readonly order: Order.Order<K>
+  }): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, readonly [A, A2]]>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, readonly [A, A2]]>
 }
 ```
@@ -6324,14 +5449,18 @@ streams are sorted by distinct keys.
 
 ```ts
 export declare const zipAllSortedByKeyLeft: {
-  <R2, E2, A2, A, K>(that: Stream<R2, E2, readonly [K, A2]>, defaultLeft: A, order: Order.Order<K>): <R, E>(
-    self: Stream<R, E, readonly [K, A]>
-  ) => Stream<R2 | R, E2 | E, readonly [K, A]>
+  <R2, E2, A2, A, K>(options: {
+    readonly other: Stream<R2, E2, readonly [K, A2]>
+    readonly defaultSelf: A
+    readonly order: Order.Order<K>
+  }): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A]>
   <R, E, R2, E2, A2, A, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultLeft: A,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultSelf: A
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, A]>
 }
 ```
@@ -6353,14 +5482,18 @@ streams are sorted by distinct keys.
 
 ```ts
 export declare const zipAllSortedByKeyRight: {
-  <R2, E2, A2, K>(that: Stream<R2, E2, readonly [K, A2]>, defaultRight: A2, order: Order.Order<K>): <R, E, A>(
-    self: Stream<R, E, readonly [K, A]>
-  ) => Stream<R2 | R, E2 | E, readonly [K, A2]>
+  <R2, E2, A2, K>(options: {
+    readonly other: Stream<R2, E2, readonly [K, A2]>
+    readonly defaultOther: A2
+    readonly order: Order.Order<K>
+  }): <R, E, A>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A2]>
   <R, E, A, R2, E2, A2, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    defaultRight: A2,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly defaultOther: A2
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, A2]>
 }
 ```
@@ -6383,20 +5516,22 @@ streams are sorted by distinct keys.
 
 ```ts
 export declare const zipAllSortedByKeyWith: {
-  <R2, E2, A, A3, A2, K>(
-    that: Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
-  ): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A3]>
+  <R2, E2, A, A3, A2, K>(options: {
+    readonly other: Stream<R2, E2, readonly [K, A2]>
+    readonly onSelf: (a: A) => A3
+    readonly onOther: (a2: A2) => A3
+    readonly onBoth: (a: A, a2: A2) => A3
+    readonly order: Order.Order<K>
+  }): <R, E>(self: Stream<R, E, readonly [K, A]>) => Stream<R2 | R, E2 | E, readonly [K, A3]>
   <R, E, R2, E2, A, A3, A2, K>(
     self: Stream<R, E, readonly [K, A]>,
-    that: Stream<R2, E2, readonly [K, A2]>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3,
-    order: Order.Order<K>
+    options: {
+      readonly other: Stream<R2, E2, readonly [K, A2]>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+      readonly order: Order.Order<K>
+    }
   ): Stream<R | R2, E | E2, readonly [K, A3]>
 }
 ```
@@ -6415,18 +5550,20 @@ lengths and one of the streams has ended before the other.
 
 ```ts
 export declare const zipAllWith: {
-  <R2, E2, A2, A, A3>(
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
-  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
+  <R2, E2, A2, A, A3>(options: {
+    readonly other: Stream<R2, E2, A2>
+    readonly onSelf: (a: A) => A3
+    readonly onOther: (a2: A2) => A3
+    readonly onBoth: (a: A, a2: A2) => A3
+  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A3>
   <R, E, R2, E2, A2, A, A3>(
     self: Stream<R, E, A>,
-    that: Stream<R2, E2, A2>,
-    left: (a: A) => A3,
-    right: (a2: A2) => A3,
-    both: (a: A, a2: A2) => A3
+    options: {
+      readonly other: Stream<R2, E2, A2>
+      readonly onSelf: (a: A) => A3
+      readonly onOther: (a2: A2) => A3
+      readonly onBoth: (a: A, a2: A2) => A3
+    }
   ): Stream<R | R2, E | E2, A3>
 }
 ```

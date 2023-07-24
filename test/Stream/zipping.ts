@@ -54,16 +54,13 @@ describe.concurrent("Stream", () => {
     return fc.assert(fc.asyncProperty(chunksArb, chunksArb, async (as, bs) => {
       const left = Stream.fromChunks(...as)
       const right = Stream.fromChunks(...bs)
-      const actual = pipe(
-        left,
-        Stream.zipAllSortedByKeyWith(
-          right,
-          identity,
-          identity,
-          (x, y) => x + y,
-          Number.Order
-        )
-      )
+      const actual = Stream.zipAllSortedByKeyWith(left, {
+        other: right,
+        onSelf: identity,
+        onOther: identity,
+        onBoth: (x, y) => x + y,
+        order: Number.Order
+      })
       const expected = pipe(
         Chunk.flatten(as),
         Chunk.reduce(new Map(Array.from(Chunk.flatten(bs))), (map, [k, v]) =>
@@ -183,7 +180,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.never(),
-        Stream.zipAll(Stream.fail("Ouch"), Option.none(), Option.none()),
+        Stream.zipAll({
+          other: Stream.fail("Ouch"),
+          defaultSelf: Option.none(),
+          defaultOther: Option.none()
+        }),
         Stream.runCollect,
         Effect.either
       ))
@@ -352,10 +353,12 @@ describe.concurrent("Stream", () => {
           Stream.zipWithNext,
           Stream.runCollect
         ),
-        result2: pipe(
-          stream,
-          Stream.zipAll(pipe(stream, Stream.drop(1), Stream.map(Option.some)), 0, Option.none()),
-          Stream.runCollect
+        result2: Stream.runCollect(
+          Stream.zipAll(stream, {
+            other: Stream.map(Stream.drop(stream, 1), Option.some),
+            defaultSelf: 0,
+            defaultOther: Option.none()
+          })
         )
       }))
       assert.deepStrictEqual(Array.from(result1), Array.from(result2))

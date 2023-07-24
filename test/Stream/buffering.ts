@@ -20,7 +20,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         pipe(
           Stream.fromChunks(...chunks),
-          Stream.buffer(2),
+          Stream.buffer({ capacity: 2 }),
           Stream.runCollect
         )
       )
@@ -34,7 +34,7 @@ describe.concurrent("Stream", () => {
         pipe(
           Stream.range(0, 10),
           Stream.concat(Stream.fail(error)),
-          Stream.buffer(2),
+          Stream.buffer({ capacity: 2 }),
           Stream.runCollect,
           Effect.exit
         )
@@ -57,7 +57,7 @@ describe.concurrent("Stream", () => {
             ))
           )
         ),
-        Stream.buffer(2)
+        Stream.buffer({ capacity: 2 })
       )
       const result1 = yield* $(pipe(stream, Stream.take(2), Stream.runCollect))
       yield* $(Deferred.await(latch))
@@ -76,7 +76,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         pipe(
           Stream.fromChunks(...chunks),
-          Stream.bufferChunks(2),
+          Stream.bufferChunks({ capacity: 2 }),
           Stream.runCollect
         )
       )
@@ -90,7 +90,7 @@ describe.concurrent("Stream", () => {
         pipe(
           Stream.range(0, 10),
           Stream.concat(Stream.fail(error)),
-          Stream.bufferChunks(2),
+          Stream.bufferChunks({ capacity: 2 }),
           Stream.runCollect,
           Effect.exit
         )
@@ -113,7 +113,7 @@ describe.concurrent("Stream", () => {
             ))
           )
         ),
-        Stream.bufferChunks(2)
+        Stream.bufferChunks({ capacity: 2 })
       )
       const result1 = yield* $(pipe(stream, Stream.take(2), Stream.runCollect))
       yield* $(Deferred.await(latch))
@@ -130,7 +130,7 @@ describe.concurrent("Stream", () => {
           Stream.range(1, 1_000),
           Stream.concat(Stream.fail(error)),
           Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.bufferChunksDropping(2),
+          Stream.bufferChunks({ capacity: 2, strategy: "dropping" }),
           Stream.runCollect,
           Effect.exit
         )
@@ -175,7 +175,7 @@ describe.concurrent("Stream", () => {
         stream1,
         Stream.concat(stream2),
         Stream.concat(stream3),
-        Stream.bufferChunksDropping(8)
+        Stream.bufferChunks({ capacity: 8, strategy: "dropping" })
       )
       const { result1, result2, result3 } = yield* $(
         pipe(
@@ -225,7 +225,7 @@ describe.concurrent("Stream", () => {
           Stream.range(1, 1_000),
           Stream.concat(Stream.fail(error)),
           Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.bufferChunksSliding(2),
+          Stream.bufferChunks({ capacity: 2, strategy: "sliding" }),
           Stream.runCollect,
           Effect.exit
         )
@@ -274,7 +274,7 @@ describe.concurrent("Stream", () => {
         stream1,
         Stream.concat(stream2),
         Stream.concat(stream3),
-        Stream.bufferChunksSliding(8)
+        Stream.bufferChunks({ capacity: 8, strategy: "sliding" })
       )
       const { result1, result2, result3 } = yield* $(
         pipe(
@@ -320,7 +320,7 @@ describe.concurrent("Stream", () => {
           Stream.range(1, 1_000),
           Stream.concat(Stream.fail(error)),
           Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.bufferDropping(2),
+          Stream.buffer({ capacity: 2, strategy: "dropping" }),
           Stream.runCollect,
           Effect.exit
         )
@@ -365,7 +365,7 @@ describe.concurrent("Stream", () => {
         stream1,
         Stream.concat(stream2),
         Stream.concat(stream3),
-        Stream.bufferDropping(8)
+        Stream.buffer({ capacity: 8, strategy: "dropping" })
       )
       const { result1, result2, result3 } = yield* $(
         pipe(
@@ -415,7 +415,7 @@ describe.concurrent("Stream", () => {
           Stream.range(1, 1_000),
           Stream.concat(Stream.fail(error)),
           Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.bufferSliding(2),
+          Stream.buffer({ capacity: 2, strategy: "sliding" }),
           Stream.runCollect,
           Effect.exit
         )
@@ -460,7 +460,7 @@ describe.concurrent("Stream", () => {
         stream1,
         Stream.concat(stream2),
         Stream.concat(stream3),
-        Stream.bufferSliding(8)
+        Stream.buffer({ capacity: 8, strategy: "sliding" })
       )
       const { result1, result2, result3 } = yield* $(
         pipe(
@@ -502,7 +502,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.fromEffect(Effect.dieMessage("boom")),
-        Stream.bufferSliding(1),
+        Stream.buffer({ capacity: 1, strategy: "sliding" }),
         Stream.runDrain,
         Effect.exit
       ))
@@ -515,7 +515,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         pipe(
           Stream.fromIterable(chunk),
-          Stream.bufferUnbounded,
+          Stream.buffer({ capacity: "unbounded" }),
           Stream.runCollect
         )
       )
@@ -529,7 +529,7 @@ describe.concurrent("Stream", () => {
         pipe(
           Stream.range(0, 10),
           Stream.concat(Stream.fail(error)),
-          Stream.bufferUnbounded,
+          Stream.buffer({ capacity: "unbounded" }),
           Stream.runCollect,
           Effect.exit
         )
@@ -550,7 +550,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.rechunk(1_000),
-        Stream.bufferUnbounded
+        Stream.buffer({ capacity: "unbounded" })
       )
       const result1 = yield* $(pipe(stream, Stream.take(2), Stream.runCollect))
       yield* $(Deferred.await(latch))

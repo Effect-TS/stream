@@ -17,12 +17,14 @@ Added in v1.0.0
   - [Either](#either)
   - [Left](#left)
   - [Right](#right)
+  - [fromInput](#frominput)
 - [folding](#folding)
   - [match](#match)
 - [models](#models)
   - [Both (interface)](#both-interface)
   - [Either (interface)](#either-interface)
   - [HaltStrategy (type alias)](#haltstrategy-type-alias)
+  - [HaltStrategyInput (type alias)](#haltstrategyinput-type-alias)
   - [Left (interface)](#left-interface)
   - [Right (interface)](#right-interface)
 - [refinements](#refinements)
@@ -75,6 +77,16 @@ export declare const Right: HaltStrategy
 
 Added in v1.0.0
 
+## fromInput
+
+**Signature**
+
+```ts
+export declare const fromInput: (input: HaltStrategyInput) => HaltStrategy
+```
+
+Added in v1.0.0
+
 # folding
 
 ## match
@@ -122,6 +134,16 @@ Added in v1.0.0
 
 ```ts
 export type HaltStrategy = Left | Right | Both | Either
+```
+
+Added in v1.0.0
+
+## HaltStrategyInput (type alias)
+
+**Signature**
+
+```ts
+export type HaltStrategyInput = HaltStrategy | 'left' | 'right' | 'both' | 'either'
 ```
 
 Added in v1.0.0

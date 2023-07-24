@@ -62,10 +62,8 @@ Added in v1.0.0
   - [fromChannel](#fromchannel)
   - [fromEffect](#fromeffect)
   - [fromHub](#fromhub)
-  - [fromHubWithShutdown](#fromhubwithshutdown)
   - [fromPush](#frompush)
   - [fromQueue](#fromqueue)
-  - [fromQueueWithShutdown](#fromqueuewithshutdown)
   - [head](#head)
   - [last](#last)
   - [leftover](#leftover)
@@ -128,21 +126,15 @@ Added in v1.0.0
   - [ignoreLeftover](#ignoreleftover)
   - [race](#race)
   - [raceBoth](#raceboth)
-  - [raceBothCapacity](#racebothcapacity)
   - [raceWith](#racewith)
-  - [raceWithCapacity](#racewithcapacity)
   - [splitWhere](#splitwhere)
   - [summarized](#summarized)
   - [withDuration](#withduration)
 - [zipping](#zipping)
   - [zip](#zip)
   - [zipLeft](#zipleft)
-  - [zipPar](#zippar)
-  - [zipParLeft](#zipparleft)
-  - [zipParRight](#zipparright)
   - [zipRight](#zipright)
   - [zipWith](#zipwith)
-  - [zipWithPar](#zipwithpar)
 
 ---
 
@@ -682,12 +674,12 @@ folded.
 **Signature**
 
 ```ts
-export declare const foldWeighted: <S, In>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => number,
-  f: (s: S, input: In) => S
-) => Sink<never, never, In, In, S>
+export declare const foldWeighted: <S, In>(options: {
+  readonly initial: S
+  readonly maxCost: number
+  readonly cost: (s: S, input: In) => number
+  readonly body: (s: S, input: In) => S
+}) => Sink<never, never, In, In, S>
 ```
 
 Added in v1.0.0
@@ -730,13 +722,13 @@ effect value, and consequently it allows the sink to fail.
 **Signature**
 
 ```ts
-export declare const foldWeightedDecompose: <S, In>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => number,
-  decompose: (input: In) => Chunk.Chunk<In>,
-  f: (s: S, input: In) => S
-) => Sink<never, never, In, In, S>
+export declare const foldWeightedDecompose: <S, In>(options: {
+  readonly initial: S
+  readonly maxCost: number
+  readonly cost: (s: S, input: In) => number
+  readonly decompose: (input: In) => Chunk.Chunk<In>
+  readonly body: (s: S, input: In) => S
+}) => Sink<never, never, In, In, S>
 ```
 
 Added in v1.0.0
@@ -759,13 +751,13 @@ See `Sink.foldWeightedDecompose` for an example.
 **Signature**
 
 ```ts
-export declare const foldWeightedDecomposeEffect: <S, In, R, E, R2, E2, R3, E3>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => Effect.Effect<R, E, number>,
-  decompose: (input: In) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-  f: (s: S, input: In) => Effect.Effect<R3, E3, S>
-) => Sink<R | R2 | R3, E | E2 | E3, In, In, S>
+export declare const foldWeightedDecomposeEffect: <S, In, R, E, R2, E2, R3, E3>(options: {
+  readonly initial: S
+  readonly maxCost: number
+  readonly cost: (s: S, input: In) => Effect.Effect<R, E, number>
+  readonly decompose: (input: In) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+  readonly body: (s: S, input: In) => Effect.Effect<R3, E3, S>
+}) => Sink<R | R2 | R3, E | E2 | E3, In, In, S>
 ```
 
 Added in v1.0.0
@@ -779,12 +771,12 @@ structure of type `S`, until `max` worth of elements (determined by the
 **Signature**
 
 ```ts
-export declare const foldWeightedEffect: <S, In, R, E, R2, E2>(
-  s: S,
-  max: number,
-  costFn: (s: S, input: In) => Effect.Effect<R, E, number>,
-  f: (s: S, input: In) => Effect.Effect<R2, E2, S>
-) => Sink<R | R2, E | E2, In, In, S>
+export declare const foldWeightedEffect: <S, In, R, E, R2, E2>(options: {
+  readonly initial: S
+  readonly maxCost: number
+  readonly cost: (s: S, input: In) => Effect.Effect<R, E, number>
+  readonly body: (s: S, input: In) => Effect.Effect<R2, E2, S>
+}) => Sink<R | R2, E | E2, In, In, S>
 ```
 
 Added in v1.0.0
@@ -880,20 +872,10 @@ Create a sink which publishes each element to the specified hub.
 **Signature**
 
 ```ts
-export declare const fromHub: <In>(hub: Hub.Hub<In>) => Sink<never, never, In, never, void>
-```
-
-Added in v1.0.0
-
-## fromHubWithShutdown
-
-Create a sink which publishes each element to the specified hub. The hub
-will be shutdown once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromHubWithShutdown: <In>(hub: Hub.Hub<In>) => Sink<never, never, In, never, void>
+export declare const fromHub: <In>(
+  hub: Hub.Hub<In>,
+  options?: { readonly shutdown?: boolean }
+) => Sink<never, never, In, never, void>
 ```
 
 Added in v1.0.0
@@ -923,20 +905,10 @@ Create a sink which enqueues each element into the specified queue.
 **Signature**
 
 ```ts
-export declare const fromQueue: <In>(queue: Queue.Enqueue<In>) => Sink<never, never, In, never, void>
-```
-
-Added in v1.0.0
-
-## fromQueueWithShutdown
-
-Create a sink which enqueues each element into the specified queue. The
-queue will be shutdown once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromQueueWithShutdown: <In>(queue: Queue.Enqueue<In>) => Sink<never, never, In, never, void>
+export declare const fromQueue: <In>(
+  queue: Queue.Enqueue<In>,
+  options?: { readonly shutdown?: boolean }
+) => Sink<never, never, In, never, void>
 ```
 
 Added in v1.0.0
@@ -1330,14 +1302,16 @@ Folds over the result of the sink
 
 ```ts
 export declare const foldSink: {
-  <R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
-    onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
-  ): <R>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
+  <R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(options: {
+    readonly onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>
+    readonly onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+  }): <R>(self: Sink<R, E, In, L, Z>) => Sink<R1 | R2 | R, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
   <R, R1, R2, E, E1, E2, In, In1 extends In, In2 extends In, L, L1, L2, Z, Z1, Z2>(
     self: Sink<R, E, In, L, Z>,
-    onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>,
-    onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+    options: {
+      readonly onFailure: (err: E) => Sink<R1, E1, In1, L1, Z1>
+      readonly onSuccess: (z: Z) => Sink<R2, E2, In2, L2, Z2>
+    }
   ): Sink<R | R1 | R2, E1 | E2, In1 & In2, L1 | L2, Z1 | Z2>
 }
 ```
@@ -1447,10 +1421,13 @@ functions.
 
 ```ts
 export declare const dimap: {
-  <In0, In, Z, Z2>(f: (input: In0) => In, g: (z: Z) => Z2): <R, E, L>(
+  <In0, In, Z, Z2>(options: { readonly onInput: (input: In0) => In; readonly onDone: (z: Z) => Z2 }): <R, E, L>(
     self: Sink<R, E, In, L, Z>
   ) => Sink<R, E, In0, L, Z2>
-  <R, E, L, In0, In, Z, Z2>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In, g: (z: Z) => Z2): Sink<R, E, In0, L, Z2>
+  <R, E, L, In0, In, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    options: { readonly onInput: (input: In0) => In; readonly onDone: (z: Z) => Z2 }
+  ): Sink<R, E, In0, L, Z2>
 }
 ```
 
@@ -1465,13 +1442,13 @@ functions.
 
 ```ts
 export declare const dimapChunks: {
-  <In0, In, Z, Z2>(f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>, g: (z: Z) => Z2): <R, E, L>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R, E, In0, L, Z2>
+  <In0, In, Z, Z2>(options: {
+    readonly onInput: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
+    readonly onDone: (z: Z) => Z2
+  }): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z2>
   <R, E, L, In0, In, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
-    f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>,
-    g: (z: Z) => Z2
+    options: { readonly onInput: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>; readonly onDone: (z: Z) => Z2 }
   ): Sink<R, E, In0, L, Z2>
 }
 ```
@@ -1487,14 +1464,16 @@ provided functions. `f` and `g` must preserve chunking-invariance.
 
 ```ts
 export declare const dimapChunksEffect: {
-  <In0, R2, E2, In, Z, R3, E3, Z2>(
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
+  <In0, R2, E2, In, Z, R3, E3, Z2>(options: {
+    readonly onInput: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+    readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+  }): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
   <R, E, L, In0, R2, E2, In, Z, R3, E3, Z2>(
     self: Sink<R, E, In, L, Z>,
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
+    options: {
+      readonly onInput: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+      readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+    }
   ): Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2>
 }
 ```
@@ -1510,14 +1489,16 @@ provided functions.
 
 ```ts
 export declare const dimapEffect: {
-  <In0, R2, E2, In, Z, R3, E3, Z2>(
-    f: (input: In0) => Effect.Effect<R2, E2, In>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
-  ): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
+  <In0, R2, E2, In, Z, R3, E3, Z2>(options: {
+    readonly onInput: (input: In0) => Effect.Effect<R2, E2, In>
+    readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+  }): <R, E, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R3 | R, E2 | E3 | E, In0, L, Z2>
   <R, E, L, In0, R2, E2, In, Z, R3, E3, Z2>(
     self: Sink<R, E, In, L, Z>,
-    f: (input: In0) => Effect.Effect<R2, E2, In>,
-    g: (z: Z) => Effect.Effect<R3, E3, Z2>
+    options: {
+      readonly onInput: (input: In0) => Effect.Effect<R2, E2, In>
+      readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
+    }
   ): Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2>
 }
 ```
@@ -1709,16 +1690,18 @@ Repeatedly runs the sink for as long as its results satisfy the predicate
 
 ```ts
 export declare const collectAllWhileWith: {
-  <Z, S>(z: S, p: Predicate<Z>, f: (s: S, z: Z) => S): <R, E, In, L extends In>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R, E, In, L, S>
-  <R, E, In, L extends In, Z, S>(self: Sink<R, E, In, L, Z>, z: S, p: Predicate<Z>, f: (s: S, z: Z) => S): Sink<
+  <Z, S>(options: { readonly initial: S; readonly while: Predicate<Z>; readonly body: (s: S, z: Z) => S }): <
     R,
     E,
     In,
-    L,
-    S
-  >
+    L extends In
+  >(
+    self: Sink<R, E, In, L, Z>
+  ) => Sink<R, E, In, L, S>
+  <R, E, In, L extends In, Z, S>(
+    self: Sink<R, E, In, L, Z>,
+    options: { readonly initial: S; readonly while: Predicate<Z>; readonly body: (s: S, z: Z) => S }
+  ): Sink<R, E, In, L, S>
 }
 ```
 
@@ -1784,36 +1767,13 @@ from the one that finishes first.
 
 ```ts
 export declare const raceBoth: {
-  <R1, E1, In1, L1, Z1>(that: Sink<R1, E1, In1, L1, Z1>): <R, E, In, L, Z>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
-  <R, E, In, L, Z, R1, E1, In1, L1, Z1>(self: Sink<R, E, In, L, Z>, that: Sink<R1, E1, In1, L1, Z1>): Sink<
-    R | R1,
-    E | E1,
-    In & In1,
-    L | L1,
-    Either.Either<Z, Z1>
-  >
-}
-```
-
-Added in v1.0.0
-
-## raceBothCapacity
-
-Like `raceBoth`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const raceBothCapacity: {
-  <R1, E1, In1, L1, Z1>(that: Sink<R1, E1, In1, L1, Z1>, capacity: number): <R, E, In, L, Z>(
+  <R1, E1, In1, L1, Z1>(that: Sink<R1, E1, In1, L1, Z1>, options?: { readonly capacity?: number }): <R, E, In, L, Z>(
     self: Sink<R, E, In, L, Z>
   ) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R1, E1, In1, L1, Z1>,
-    capacity: number
+    options?: { readonly capacity?: number }
   ): Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>>
 }
 ```
@@ -1829,42 +1789,20 @@ function as soon as one result or the other has been computed.
 
 ```ts
 export declare const raceWith: {
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
+  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(options: {
+    readonly other: Sink<R2, E2, In2, L2, Z2>
+    readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+    readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+    readonly capacity?: number | undefined
+  }): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
   <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
     self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
-  ): Sink<R | R2, E2 | E, In & In2, L | L2, Z3 | Z4>
-}
-```
-
-Added in v1.0.0
-
-## raceWithCapacity
-
-Like `raceWith`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const raceWithCapacity: {
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
-  <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
+    options: {
+      readonly other: Sink<R2, E2, In2, L2, Z2>
+      readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+      readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+      readonly capacity?: number | undefined
+    }
   ): Sink<R | R2, E2 | E, In & In2, L | L2, Z3 | Z4>
 }
 ```
@@ -1936,16 +1874,15 @@ results into a tuple.
 
 ```ts
 export declare const zip: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    readonly [Z, Z2]
-  >
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
+  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]>
 }
 ```
 
@@ -1959,86 +1896,15 @@ Like `Sink.zip` but keeps only the result from this sink.
 
 ```ts
 export declare const zipLeft: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipPar
-
-Runs both sinks in parallel on the input and combines the results in a
-tuple.
-
-**Signature**
-
-```ts
-export declare const zipPar: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    readonly [Z, Z2]
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipParLeft
-
-Like `Sink.zipPar` but keeps only the result from this sink.
-
-**Signature**
-
-```ts
-export declare const zipParLeft: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipParRight
-
-Like `Sink.zipPar` but keeps only the result from `that` sink.
-
-**Signature**
-
-```ts
-export declare const zipParRight: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z2
-  >
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
+  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink<R | R2, E | E2, In & In2, L | L2, Z>
 }
 ```
 
@@ -2052,16 +1918,15 @@ Like `Sink.zip` but keeps only the result from `that` sink.
 
 ```ts
 export declare const zipRight: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z2
-  >
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
+  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink<R | R2, E | E2, In & In2, L | L2, Z2>
 }
 ```
 
@@ -2077,35 +1942,16 @@ results with `f`.
 
 ```ts
 export declare const zipWith: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(that: Sink<R2, E2, In2, L2, Z2>, f: (z: Z, z1: Z2) => Z3): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
-}
-```
-
-Added in v1.0.0
-
-## zipWithPar
-
-Runs both sinks in parallel on the input and combines the results using the
-provided function.
-
-**Signature**
-
-```ts
-export declare const zipWithPar: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(that: Sink<R2, E2, In2, L2, Z2>, f: (z: Z, z1: Z2) => Z3): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
 }
 ```

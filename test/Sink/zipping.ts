@@ -33,7 +33,7 @@ const zipParLaw = <A, B, C, E>(
     Effect.all({
       zb: pipe(stream, Stream.run(sink1), Effect.either),
       zc: pipe(stream, Stream.run(sink2), Effect.either),
-      zbc: pipe(stream, Stream.run(pipe(sink1, Sink.zipPar(sink2))), Effect.either)
+      zbc: pipe(stream, Stream.run(pipe(sink1, Sink.zip(sink2, { concurrent: true }))), Effect.either)
     }),
     Effect.map(({ zb, zbc, zc }) =>
       Either.match(zbc, {
@@ -50,7 +50,7 @@ describe.concurrent("Sink", () => {
         Stream.make(1, 2, 3),
         Stream.run(pipe(
           Sink.head(),
-          Sink.zipParLeft(Sink.succeed("hello"))
+          Sink.zipLeft(Sink.succeed("hello"), { concurrent: true })
         ))
       ))
       assert.deepStrictEqual(result, Option.some(1))
@@ -62,7 +62,7 @@ describe.concurrent("Sink", () => {
         Stream.make(1, 2, 3),
         Stream.run(pipe(
           Sink.head(),
-          Sink.zipParRight(Sink.succeed("hello"))
+          Sink.zipRight(Sink.succeed("hello"), { concurrent: true })
         ))
       ))
       assert.strictEqual(result, "hello")

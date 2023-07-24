@@ -45,7 +45,7 @@ describe.concurrent("Sink", () => {
   it.effect("fromQueueWithShutdown - should enqueue all elements and shutdown the queue", () =>
     Effect.gen(function*($) {
       const queue = yield* $(pipe(Queue.unbounded<number>(), Effect.map(createQueueSpy)))
-      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromQueueWithShutdown(queue))))
+      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromQueue(queue, { shutdown: true }))))
       const enqueuedValues = yield* $(Queue.takeAll(queue))
       const isShutdown = yield* $(Queue.isShutdown(queue))
       assert.deepStrictEqual(Array.from(enqueuedValues), [1, 2, 3])
@@ -81,7 +81,7 @@ describe.concurrent("Sink", () => {
   it.effect("fromHubWithShutdown - should shutdown the hub", () =>
     Effect.gen(function*($) {
       const hub = yield* $(Hub.unbounded<number>())
-      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromHubWithShutdown(hub))))
+      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromHub(hub, { shutdown: true }))))
       const isShutdown = yield* $(Hub.isShutdown(hub))
       assert.isTrue(isShutdown)
     }))

@@ -189,15 +189,19 @@ export const map: {
  */
 export const match: {
   <Z, E, Z2, A, Z3>(
-    onEnd: () => Z,
-    onError: (cause: Cause.Cause<E>) => Z2,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    options: {
+      readonly onEnd: () => Z
+      readonly onFailure: (cause: Cause.Cause<E>) => Z2
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    }
   ): (self: Take<E, A>) => Z | Z2 | Z3
   <Z, E, Z2, A, Z3>(
     self: Take<E, A>,
-    onEnd: () => Z,
-    onError: (cause: Cause.Cause<E>) => Z2,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    options: {
+      readonly onEnd: () => Z
+      readonly onFailure: (cause: Cause.Cause<E>) => Z2
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    }
   ): Z | Z2 | Z3
 } = internal.match
 
@@ -212,15 +216,19 @@ export const match: {
  */
 export const matchEffect: {
   <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
-    onEnd: () => Effect.Effect<R, E2, Z>,
-    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    options: {
+      readonly onEnd: () => Effect.Effect<R, E2, Z>
+      readonly onFailure: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    }
   ): (self: Take<E, A>) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
   <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
     self: Take<E, A>,
-    onEnd: () => Effect.Effect<R, E2, Z>,
-    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    options: {
+      readonly onEnd: () => Effect.Effect<R, E2, Z>
+      readonly onFailure: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    }
   ): Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
 } = internal.matchEffect
 

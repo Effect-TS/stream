@@ -79,12 +79,16 @@ export const isMergeDecision: (u: unknown) => u is MergeDecision<unknown, unknow
  */
 export const match: {
   <R, E0, Z0, E, Z, Z2>(
-    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
-    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    options: {
+      readonly onDone: (effect: Effect.Effect<R, E, Z>) => Z2
+      readonly onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    }
   ): (self: MergeDecision<R, E0, Z0, E, Z>) => Z2
   <R, E0, Z0, E, Z, Z2>(
     self: MergeDecision<R, E0, Z0, E, Z>,
-    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
-    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    options: {
+      readonly onDone: (effect: Effect.Effect<R, E, Z>) => Z2
+      readonly onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    }
   ): Z2
 } = internal.match

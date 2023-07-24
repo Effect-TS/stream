@@ -70,11 +70,10 @@ export const evaluateBuffer = dual<
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
     bufferSize: number
   ): Stream.Stream<R | R2, E | E2, A> =>
-    stream.flatMapParBuffer(
+    stream.flatMap(
       self.grouped,
-      Number.POSITIVE_INFINITY,
-      bufferSize,
-      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue)))
+      ([key, queue]) => f(key, stream.flattenTake(stream.fromQueue(queue, { shutdown: true }))),
+      { concurrency: "unbounded", bufferSize }
     )
 )
 
@@ -131,37 +130,20 @@ export const make = <R, E, K, V>(
 /** @internal */
 export const groupBy = dual<
   <A, R2, E2, K, V>(
-    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>,
-  <R, E, A, R2, E2, K, V>(
-    self: Stream.Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>
-  ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
->(
-  2,
-  <R, E, A, R2, E2, K, V>(
-    self: Stream.Stream<R, E, A>,
-    f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>
-  ): GroupBy.GroupBy<R | R2, E | E2, K, V> => groupByBuffer(self, f, 16)
-)
-
-/** @internal */
-export const groupByBuffer = dual<
-  <A, R2, E2, K, V>(
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>,
   <R, E, A, R2, E2, K, V>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ) => GroupBy.GroupBy<R2 | R, E2 | E, K, V>
 >(
-  3,
+  (args) => typeof args[0] !== "function",
   <R, E, A, R2, E2, K, V>(
     self: Stream.Stream<R, E, A>,
     f: (a: A) => Effect.Effect<R2, E2, readonly [K, V]>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ): GroupBy.GroupBy<R | R2, E | E2, K, V> =>
     make(
       stream.unwrapScoped(
@@ -174,16 +156,16 @@ export const groupByBuffer = dual<
           )
           const output = yield* $(Effect.acquireRelease(
             Queue.bounded<Exit.Exit<Option.Option<E | E2>, readonly [K, Queue.Dequeue<Take.Take<E | E2, V>>]>>(
-              bufferSize
+              options?.bufferSize ?? 16
             ),
             (queue) => Queue.shutdown(queue)
           ))
           const ref = yield* $(Ref.make<Map<K, number>>(new Map()))
           const add = yield* $(
             pipe(
-              stream.mapEffect(self, f),
+              stream.mapEffectSequential(self, f),
               stream.distributedWithDynamicCallback(
-                bufferSize,
+                options?.bufferSize ?? 16,
                 ([key, value]) => Effect.flatMap(Deferred.await(decider), (f) => f(key, value)),
                 (exit) => Queue.offer(output, exit)
               )
@@ -220,11 +202,119 @@ export const groupByBuffer = dual<
                 }))
               ))
           )
-          return stream.flattenExitOption(stream.fromQueueWithShutdown(output))
+          return stream.flattenExitOption(stream.fromQueue(output, { shutdown: true }))
         })
       )
     )
 )
+
+/** @internal */
+export const mapEffectOptions = dual<
+  {
+    <A, R2, E2, A2>(
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options?: {
+        readonly concurrency?: number | "unbounded"
+        readonly unordered?: boolean
+      }
+    ): <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>
+    <A, R2, E2, A2, K>(
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options: {
+        readonly key: (a: A) => K
+        readonly bufferSize?: number
+      }
+    ): <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>
+  },
+  {
+    <R, E, A, R2, E2, A2>(
+      self: Stream.Stream<R, E, A>,
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options?: {
+        readonly concurrency?: number | "unbounded"
+        readonly unordered?: boolean
+      }
+    ): Stream.Stream<R2 | R, E2 | E, A2>
+    <R, E, A, R2, E2, A2, K>(
+      self: Stream.Stream<R, E, A>,
+      f: (a: A) => Effect.Effect<R2, E2, A2>,
+      options: {
+        readonly key: (a: A) => K
+        readonly bufferSize?: number
+      }
+    ): Stream.Stream<R2 | R, E2 | E, A2>
+  }
+>(
+  (args) => typeof args[0] !== "function",
+  (<R, E, A, R2, E2, A2, K>(
+    self: Stream.Stream<R, E, A>,
+    f: (a: A) => Effect.Effect<R2, E2, A2>,
+    options?: {
+      readonly key?: (a: A) => K
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+      readonly bufferSize?: number
+    }
+  ): Stream.Stream<R | R2, E | E2, A2> => {
+    if (options?.key) {
+      return evaluate(
+        groupByKey(self, options.key, { bufferSize: options.bufferSize }),
+        (_, s) => pipe(s, stream.mapEffectSequential(f))
+      )
+    }
+
+    return stream.matchConcurrency(
+      options?.concurrency,
+      () => stream.mapEffectSequential(self, f),
+      (n) =>
+        options?.unordered ?
+          stream.flatMap(self, (a) => stream.fromEffect(f(a)), { concurrency: n }) :
+          stream.mapEffectPar(self, n, f)
+    )
+  }) as any
+)
+
+/** @internal */
+export const bindEffect = dual<
+  <N extends string, K, R2, E2, A>(
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly bufferSize?: number
+    }
+  ) => <R, E>(self: Stream.Stream<R, E, K>) => Stream.Stream<
+    R | R2,
+    E | E2,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >,
+  <R, E, N extends string, K, R2, E2, A>(
+    self: Stream.Stream<R, E, K>,
+    tag: Exclude<N, keyof K>,
+    f: (_: K) => Effect.Effect<R2, E2, A>,
+    options?: {
+      readonly concurrency?: number | "unbounded"
+      readonly unordered?: boolean
+    }
+  ) => Stream.Stream<
+    R | R2,
+    E | E2,
+    Effect.MergeRecord<K, { [k in N]: A }>
+  >
+>((args) => typeof args[0] !== "string", <R, E, N extends string, K, R2, E2, A>(
+  self: Stream.Stream<R, E, K>,
+  tag: Exclude<N, keyof K>,
+  f: (_: K) => Effect.Effect<R2, E2, A>,
+  options?: {
+    readonly concurrency?: number | "unbounded"
+    readonly unordered?: boolean
+  }
+) =>
+  mapEffectOptions(self, (k) =>
+    Effect.map(
+      f(k),
+      (a): Effect.MergeRecord<K, { [k in N]: A }> => ({ ...k, [tag]: a } as any)
+    ), options))
 
 const mapDequeue = <A, B>(dequeue: Queue.Dequeue<A>, f: (a: A) => B): Queue.Dequeue<B> => new MapDequeue(dequeue, f)
 
@@ -302,35 +392,35 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
 
 /** @internal */
 export const groupByKey = dual<
-  <A, K>(f: (a: A) => K) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>,
-  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K) => GroupBy.GroupBy<R, E, K, A>
+  <A, K>(
+    f: (a: A) => K,
+    options?: { readonly bufferSize?: number }
+  ) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>,
+  <R, E, A, K>(
+    self: Stream.Stream<R, E, A>,
+    f: (a: A) => K,
+    options?: { readonly bufferSize?: number }
+  ) => GroupBy.GroupBy<R, E, K, A>
 >(
-  2,
-  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K): GroupBy.GroupBy<R, E, K, A> =>
-    groupByKeyBuffer(self, f, 16)
-)
-
-/** @internal */
-export const groupByKeyBuffer = dual<
-  <A, K>(f: (a: A) => K, bufferSize: number) => <R, E>(self: Stream.Stream<R, E, A>) => GroupBy.GroupBy<R, E, K, A>,
-  <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K, bufferSize: number) => GroupBy.GroupBy<R, E, K, A>
->(3, <R, E, A, K>(self: Stream.Stream<R, E, A>, f: (a: A) => K, bufferSize: number): GroupBy.GroupBy<R, E, K, A> => {
-  const loop = (
-    map: Map<K, Queue.Queue<Take.Take<E, A>>>,
-    outerQueue: Queue.Queue<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>
-  ): Channel.Channel<R, E, Chunk.Chunk<A>, unknown, E, never, unknown> =>
-    core.readWithCause(
-      (input: Chunk.Chunk<A>) =>
-        pipe(
-          core.fromEffect(
-            pipe(
-              input,
-              groupByIterable(f),
-              Effect.forEach(([key, values]) => {
+  (args) => typeof args[0] !== "function",
+  <R, E, A, K>(
+    self: Stream.Stream<R, E, A>,
+    f: (a: A) => K,
+    options?: { readonly bufferSize?: number }
+  ): GroupBy.GroupBy<R, E, K, A> => {
+    const loop = (
+      map: Map<K, Queue.Queue<Take.Take<E, A>>>,
+      outerQueue: Queue.Queue<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>
+    ): Channel.Channel<R, E, Chunk.Chunk<A>, unknown, E, never, unknown> =>
+      core.readWithCause({
+        onInput: (input: Chunk.Chunk<A>) =>
+          core.flatMap(
+            core.fromEffect(
+              Effect.forEach(groupByIterable(input, f), ([key, values]) => {
                 const innerQueue = map.get(key)
                 if (innerQueue === undefined) {
                   return pipe(
-                    Queue.bounded<Take.Take<E, A>>(bufferSize),
+                    Queue.bounded<Take.Take<E, A>>(options?.bufferSize ?? 16),
                     Effect.flatMap((innerQueue) =>
                       pipe(
                         Effect.sync(() => {
@@ -353,110 +443,61 @@ export const groupByKeyBuffer = dual<
                     )
                   )
                 }
-                return pipe(
+                return Effect.catchSomeCause(
                   Queue.offer(innerQueue, take.chunk(values)),
-                  Effect.catchSomeCause((cause) =>
+                  (cause) =>
                     Cause.isInterruptedOnly(cause) ?
                       Option.some(Effect.unit) :
                       Option.none()
-                  )
                 )
               }, { discard: true })
-            )
+            ),
+            () => loop(map, outerQueue)
           ),
-          core.flatMap(() => loop(map, outerQueue))
-        ),
-      (cause) => core.fromEffect(Queue.offer(outerQueue, take.failCause(cause))),
-      () =>
-        pipe(
-          core.fromEffect(
-            pipe(
-              map.entries(),
-              Effect.forEach(([_, innerQueue]) =>
-                pipe(
-                  Queue.offer(innerQueue, take.end),
-                  Effect.catchSomeCause((cause) =>
-                    Cause.isInterruptedOnly(cause) ?
-                      Option.some(Effect.unit) :
-                      Option.none()
-                  )
-                ), { discard: true }),
-              Effect.zipRight(Queue.offer(outerQueue, take.end))
+        onFailure: (cause) => core.fromEffect(Queue.offer(outerQueue, take.failCause(cause))),
+        onDone: () =>
+          pipe(
+            core.fromEffect(
+              pipe(
+                Effect.forEach(map.entries(), ([_, innerQueue]) =>
+                  pipe(
+                    Queue.offer(innerQueue, take.end),
+                    Effect.catchSomeCause((cause) =>
+                      Cause.isInterruptedOnly(cause) ?
+                        Option.some(Effect.unit) :
+                        Option.none()
+                    )
+                  ), { discard: true }),
+                Effect.zipRight(Queue.offer(outerQueue, take.end))
+              )
             )
           )
-        )
-    )
-  return make(stream.unwrapScoped(
-    pipe(
-      Effect.sync(() => new Map<K, Queue.Queue<Take.Take<E, A>>>()),
-      Effect.flatMap((map) =>
-        pipe(
-          Effect.acquireRelease(
-            Queue.unbounded<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>(),
-            (queue) => Queue.shutdown(queue)
-          ),
-          Effect.flatMap((queue) =>
-            pipe(
-              self,
-              stream.toChannel,
-              core.pipeTo(loop(map, queue)),
-              channel.drain,
-              channelExecutor.runScoped,
-              Effect.forkScoped,
-              Effect.as(stream.flattenTake(stream.fromQueueWithShutdown(queue)))
+      })
+    return make(stream.unwrapScoped(
+      pipe(
+        Effect.sync(() => new Map<K, Queue.Queue<Take.Take<E, A>>>()),
+        Effect.flatMap((map) =>
+          pipe(
+            Effect.acquireRelease(
+              Queue.unbounded<Take.Take<E, readonly [K, Queue.Queue<Take.Take<E, A>>]>>(),
+              (queue) => Queue.shutdown(queue)
+            ),
+            Effect.flatMap((queue) =>
+              pipe(
+                self,
+                stream.toChannel,
+                core.pipeTo(loop(map, queue)),
+                channel.drain,
+                channelExecutor.runScoped,
+                Effect.forkScoped,
+                Effect.as(stream.flattenTake(stream.fromQueue(queue, { shutdown: true })))
+              )
             )
           )
         )
       )
-    )
-  ))
-})
-
-/** @internal */
-export const mapEffectParByKey = dual<
-  <R2, E2, A2, A, K>(
-    keyBy: (a: A) => K,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2>
->(
-  3,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> => mapEffectParByKeyBuffer(self, keyBy, 16, f)
-)
-
-/** @internal */
-export const mapEffectParByKeyBuffer = dual<
-  <R2, E2, A2, A, K>(
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ) => Stream.Stream<R2 | R, E2 | E, A2>
->(
-  4,
-  <R, E, R2, E2, A2, A, K>(
-    self: Stream.Stream<R, E, A>,
-    keyBy: (a: A) => K,
-    bufferSize: number,
-    f: (a: A) => Effect.Effect<R2, E2, A2>
-  ): Stream.Stream<R | R2, E | E2, A2> =>
-    pipe(
-      groupByKeyBuffer(self, keyBy, bufferSize),
-      evaluate((_, s) => pipe(s, stream.mapEffect(f)))
-    )
+    ))
+  }
 )
 
 /**

@@ -84,18 +84,24 @@ export const isMergeDecision = (
 /** @internal */
 export const match = dual<
   <R, E0, Z0, E, Z, Z2>(
-    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
-    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    options: {
+      readonly onDone: (effect: Effect.Effect<R, E, Z>) => Z2
+      readonly onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    }
   ) => (self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>) => Z2,
   <R, E0, Z0, E, Z, Z2>(
     self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>,
-    onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
-    onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    options: {
+      readonly onDone: (effect: Effect.Effect<R, E, Z>) => Z2
+      readonly onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+    }
   ) => Z2
->(3, <R, E0, Z0, E, Z, Z2>(
+>(2, <R, E0, Z0, E, Z, Z2>(
   self: MergeDecision.MergeDecision<R, E0, Z0, E, Z>,
-  onDone: (effect: Effect.Effect<R, E, Z>) => Z2,
-  onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+  { onAwait, onDone }: {
+    readonly onDone: (effect: Effect.Effect<R, E, Z>) => Z2
+    readonly onAwait: (f: (exit: Exit.Exit<E0, Z0>) => Effect.Effect<R, E, Z>) => Z2
+  }
 ): Z2 => {
   const op = self as Primitive
   switch (op._tag) {

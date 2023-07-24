@@ -110,7 +110,7 @@ describe.concurrent("Stream", () => {
           Stream.make(1),
           Stream.drain(Stream.fromEffect(Ref.update(ref, Chunk.prepend(3))))
         ),
-        Stream.flatten,
+        Stream.flatten(),
         Stream.runHead
       ))
       const result = yield* $(Ref.get(ref))

@@ -6,7 +6,7 @@ import type { LazyArg } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import { pipeArguments } from "@effect/data/Pipeable"
 import * as Cause from "@effect/io/Cause"
-import type * as Effect from "@effect/io/Effect"
+import * as Effect from "@effect/io/Effect"
 import type * as Exit from "@effect/io/Exit"
 import type * as Channel from "@effect/stream/Channel"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
@@ -187,6 +187,17 @@ export interface Suspend extends
 {}
 
 /** @internal */
+export const isChannel = (u: unknown): u is Channel.Channel<
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  unknown,
+  unknown
+> => (typeof u === "object" && u != null && ChannelTypeId in u) || Effect.isEffect(u)
+
+/** @internal */
 export const acquireReleaseOut = dual<
   <R2, Z>(
     release: (z: Z, e: Exit.Exit<unknown, unknown>) => Effect.Effect<R2, never, unknown>
@@ -276,19 +287,18 @@ export const collectElements = <Env, InErr, InElem, InDone, OutErr, OutElem, Out
 /** @internal */
 const collectElementsReader = <OutErr, OutElem, OutDone>(
   builder: Array<OutElem>
-): Channel.Channel<never, OutErr, OutElem, OutDone, OutErr, never, OutDone> => {
-  return readWith(
-    (outElem) =>
+): Channel.Channel<never, OutErr, OutElem, OutDone, OutErr, never, OutDone> =>
+  readWith({
+    onInput: (outElem) =>
       flatMap(
         sync(() => {
           builder.push(outElem)
         }),
         () => collectElementsReader<OutErr, OutElem, OutDone>(builder)
       ),
-    fail,
-    succeedNow
-  )
-}
+    onFailure: fail,
+    onDone: succeedNow
+  })
 
 /** @internal */
 export const concatAll = <Env, InErr, InElem, InDone, OutErr, OutElem>(
@@ -686,8 +696,12 @@ export const foldCauseChannel = dual<
     OutDone2,
     OutDone3
   >(
-    onError: (c: Cause.Cause<OutErr>) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-    onSuccess: (o: OutDone) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    options: {
+      readonly onFailure: (
+        c: Cause.Cause<OutErr>
+      ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>
+      readonly onSuccess: (o: OutDone) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    }
   ) => <Env, InErr, InElem, InDone, OutElem>(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel.Channel<
@@ -723,8 +737,12 @@ export const foldCauseChannel = dual<
     OutDone3
   >(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    onError: (c: Cause.Cause<OutErr>) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-    onSuccess: (o: OutDone) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    options: {
+      readonly onFailure: (
+        c: Cause.Cause<OutErr>
+      ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>
+      readonly onSuccess: (o: OutDone) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    }
   ) => Channel.Channel<
     Env1 | Env2 | Env,
     InErr & InErr1 & InErr2,
@@ -735,7 +753,7 @@ export const foldCauseChannel = dual<
     OutDone2 | OutDone3
   >
 >(
-  3,
+  2,
   <
     Env,
     InErr,
@@ -760,12 +778,12 @@ export const foldCauseChannel = dual<
     OutDone3
   >(
     self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    onError: (
-      c: Cause.Cause<OutErr>
-    ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-    onSuccess: (
-      o: OutDone
-    ) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    options: {
+      readonly onFailure: (
+        c: Cause.Cause<OutErr>
+      ) => Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>
+      readonly onSuccess: (o: OutDone) => Channel.Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    }
   ): Channel.Channel<
     Env | Env1 | Env2,
     InErr & InErr1 & InErr2,
@@ -778,7 +796,7 @@ export const foldCauseChannel = dual<
     const op = Object.create(proto)
     op._tag = OpCodes.OP_FOLD
     op.channel = self
-    op.k = new ContinuationKImpl(onSuccess, onError as any)
+    op.k = new ContinuationKImpl(options.onSuccess, options.onFailure as any)
     return op
   }
 )
@@ -872,9 +890,11 @@ export const readWith = <
   OutElem3,
   OutDone3
 >(
-  input: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  error: (error: InErr) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
-  done: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+  options: {
+    readonly onInput: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+    readonly onFailure: (error: InErr) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
+    readonly onDone: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+  }
 ): Channel.Channel<
   Env | Env2 | Env3,
   InErr,
@@ -884,11 +904,11 @@ export const readWith = <
   OutElem | OutElem2 | OutElem3,
   OutDone | OutDone2 | OutDone3
 > =>
-  readWithCause(
-    input,
-    (cause) => Either.match(Cause.failureOrCause(cause), { onLeft: error, onRight: failCause }),
-    done
-  )
+  readWithCause({
+    onInput: options.onInput,
+    onFailure: (cause) => Either.match(Cause.failureOrCause(cause), { onLeft: options.onFailure, onRight: failCause }),
+    onDone: options.onDone
+  })
 
 /** @internal */
 export const readWithCause = <
@@ -908,9 +928,13 @@ export const readWithCause = <
   OutElem3,
   OutDone3
 >(
-  input: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  halt: (cause: Cause.Cause<InErr>) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
-  done: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+  options: {
+    readonly onInput: (input: InElem) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+    readonly onFailure: (
+      cause: Cause.Cause<InErr>
+    ) => Channel.Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
+    readonly onDone: (done: InDone) => Channel.Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+  }
 ): Channel.Channel<
   Env | Env2 | Env3,
   InErr,
@@ -922,8 +946,8 @@ export const readWithCause = <
 > => {
   const op = Object.create(proto)
   op._tag = OpCodes.OP_READ
-  op.more = input
-  op.done = new ContinuationKImpl(done, halt as any)
+  op.more = options.onInput
+  op.done = new ContinuationKImpl(options.onDone, options.onFailure as any)
   return op
 }
 

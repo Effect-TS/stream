@@ -105,27 +105,33 @@ export const make = <E, A>(
 /** @internal */
 export const match = dual<
   <Z, E, Z2, A, Z3>(
-    onEnd: () => Z,
-    onError: (cause: Cause.Cause<E>) => Z2,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    options: {
+      readonly onEnd: () => Z
+      readonly onFailure: (cause: Cause.Cause<E>) => Z2
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    }
   ) => (self: Take.Take<E, A>) => Z | Z2 | Z3,
   <Z, E, Z2, A, Z3>(
     self: Take.Take<E, A>,
-    onEnd: () => Z,
-    onError: (cause: Cause.Cause<E>) => Z2,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    options: {
+      readonly onEnd: () => Z
+      readonly onFailure: (cause: Cause.Cause<E>) => Z2
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+    }
   ) => Z | Z2 | Z3
->(4, <Z, E, Z2, A, Z3>(
+>(2, <Z, E, Z2, A, Z3>(
   self: Take.Take<E, A>,
-  onEnd: () => Z,
-  onError: (cause: Cause.Cause<E>) => Z2,
-  onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+  { onEnd, onFailure, onSuccess }: {
+    readonly onEnd: () => Z
+    readonly onFailure: (cause: Cause.Cause<E>) => Z2
+    readonly onSuccess: (chunk: Chunk.Chunk<A>) => Z3
+  }
 ): Z | Z2 | Z3 =>
   Exit.match<Option.Option<E>, Chunk.Chunk<A>, Z | Z2 | Z3>(self.exit, {
     onFailure: (cause) =>
       Option.match(Cause.flipCauseOption(cause), {
         onNone: onEnd,
-        onSome: onError
+        onSome: onFailure
       }),
     onSuccess
   }))
@@ -133,27 +139,33 @@ export const match = dual<
 /** @internal */
 export const matchEffect = dual<
   <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
-    onEnd: () => Effect.Effect<R, E2, Z>,
-    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    options: {
+      readonly onEnd: () => Effect.Effect<R, E2, Z>
+      readonly onFailure: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    }
   ) => (self: Take.Take<E, A>) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>,
   <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
     self: Take.Take<E, A>,
-    onEnd: () => Effect.Effect<R, E2, Z>,
-    onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-    onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    options: {
+      readonly onEnd: () => Effect.Effect<R, E2, Z>
+      readonly onFailure: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>
+      readonly onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+    }
   ) => Effect.Effect<R | R2 | R3, E2 | E | E3, Z | Z2 | Z3>
->(4, <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
+>(2, <R, E2, Z, R2, E, Z2, A, R3, E3, Z3>(
   self: Take.Take<E, A>,
-  onEnd: () => Effect.Effect<R, E2, Z>,
-  onError: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>,
-  onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+  { onEnd, onFailure, onSuccess }: {
+    readonly onEnd: () => Effect.Effect<R, E2, Z>
+    readonly onFailure: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, Z2>
+    readonly onSuccess: (chunk: Chunk.Chunk<A>) => Effect.Effect<R3, E3, Z3>
+  }
 ): Effect.Effect<R | R2 | R3, E | E2 | E3, Z | Z2 | Z3> =>
   Exit.matchEffect<Option.Option<E>, Chunk.Chunk<A>, R | R2, E | E2, Z | Z2, R3, E3, Z3>(self.exit, {
     onFailure: (cause) =>
       Option.match(Cause.flipCauseOption(cause), {
         onNone: onEnd,
-        onSome: onError
+        onSome: onFailure
       }),
     onSuccess
   }))

@@ -22,7 +22,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(1, 2, 3, 4),
         Stream.map(String),
-        Stream.intersperseAffixes("[", ".", "]"),
+        Stream.intersperseAffixes({ start: "[", middle: ".", end: "]" }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), ["[", "1", ".", "2", ".", "3", ".", "4", "]"])
@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(pipe(
         Stream.make(1),
         Stream.map(String),
-        Stream.intersperseAffixes("[", ".", "]"),
+        Stream.intersperseAffixes({ start: "[", middle: ".", end: "]" }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), ["[", "1", "]"])

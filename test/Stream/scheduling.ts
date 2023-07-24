@@ -1,5 +1,4 @@
 import * as Duration from "@effect/data/Duration"
-import * as Either from "@effect/data/Either"
 import { identity, pipe } from "@effect/data/Function"
 import * as Clock from "@effect/io/Clock"
 import * as Effect from "@effect/io/Effect"
@@ -40,25 +39,6 @@ describe.concurrent("Stream", () => {
       ])
     }))
 
-  it.effect("scheduleEither", () =>
-    Effect.gen(function*($) {
-      const schedule = pipe(
-        Schedule.recurs(2),
-        Schedule.zipRight(Schedule.fromFunction<string, string>(() => "!"))
-      )
-      const result = yield* $(pipe(
-        Stream.make("A", "B", "C"),
-        Stream.scheduleEither(schedule),
-        Stream.runCollect
-      ))
-      assert.deepStrictEqual(Array.from(result), [
-        Either.right("A"),
-        Either.right("B"),
-        Either.right("C"),
-        Either.left("!")
-      ])
-    }))
-
   it.effect("scheduleWith", () =>
     Effect.gen(function*($) {
       const schedule = pipe(
@@ -67,7 +47,7 @@ describe.concurrent("Stream", () => {
       )
       const result = yield* $(pipe(
         Stream.make("A", "B", "C", "A", "B", "C"),
-        Stream.scheduleWith(schedule, (s) => s.toLowerCase(), identity),
+        Stream.scheduleWith(schedule, { onElement: (s) => s.toLowerCase(), onSchedule: identity }),
         Stream.runCollect
       ))
       assert.deepStrictEqual(Array.from(result), ["a", "b", "c", "Done", "a", "b", "c", "Done"])

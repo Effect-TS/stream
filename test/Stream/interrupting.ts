@@ -2,8 +2,10 @@ import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
 import * as Either from "@effect/data/Either"
 import { pipe } from "@effect/data/Function"
+import * as Option from "@effect/data/Option"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
+import * as Exit from "@effect/io/Exit"
 import * as Fiber from "@effect/io/Fiber"
 import * as TestClock from "@effect/io/internal/testing/testClock"
 import * as Queue from "@effect/io/Queue"
@@ -121,7 +123,10 @@ describe.concurrent("Stream", () => {
       ]))
       const fiber = yield* $(pipe(
         Stream.fromQueue(coordination.queue),
-        Stream.collectWhileSuccess,
+        Stream.filterMapWhile(Exit.match({
+          onFailure: Option.none,
+          onSuccess: Option.some
+        })),
         Stream.interruptAfter(Duration.seconds(5)),
         Stream.tap(() => coordination.proceed),
         Stream.runCollect,

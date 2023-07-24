@@ -43,16 +43,23 @@ export const isBufferSliding = (self: MergeStrategy.MergeStrategy): self is Merg
 
 /** @internal */
 export const match = dual<
-  <A>(onBackPressure: () => A, onBufferSliding: () => A) => (self: MergeStrategy.MergeStrategy) => A,
+  <A>(options: {
+    readonly onBackPressure: () => A
+    readonly onBufferSliding: () => A
+  }) => (self: MergeStrategy.MergeStrategy) => A,
   <A>(
     self: MergeStrategy.MergeStrategy,
-    onBackPressure: () => A,
-    onBufferSliding: () => A
+    options: {
+      readonly onBackPressure: () => A
+      readonly onBufferSliding: () => A
+    }
   ) => A
->(3, <A>(
+>(2, <A>(
   self: MergeStrategy.MergeStrategy,
-  onBackPressure: () => A,
-  onBufferSliding: () => A
+  { onBackPressure, onBufferSliding }: {
+    readonly onBackPressure: () => A
+    readonly onBufferSliding: () => A
+  }
 ): A => {
   switch (self._tag) {
     case OpCodes.OP_BACK_PRESSURE: {

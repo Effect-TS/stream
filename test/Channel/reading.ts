@@ -15,29 +15,29 @@ import { assert, describe } from "vitest"
 export const mapper = <A, B>(
   f: (a: A) => B
 ): Channel.Channel<never, unknown, A, unknown, never, B, void> => {
-  return Channel.readWith(
-    (a: A) =>
-      pipe(
+  return Channel.readWith({
+    onInput: (a: A) =>
+      Channel.flatMap(
         Channel.write(f(a)),
-        Channel.flatMap(() => mapper(f))
+        () => mapper(f)
       ),
-    Channel.unit,
-    Channel.unit
-  )
+    onFailure: Channel.unit,
+    onDone: Channel.unit
+  })
 }
 
 export const refWriter = <A>(
   ref: Ref.Ref<ReadonlyArray<A>>
 ): Channel.Channel<never, unknown, A, unknown, never, never, void> => {
-  return Channel.readWith(
-    (a: A) =>
-      pipe(
-        Channel.fromEffect(pipe(Ref.update(ref, ReadonlyArray.prepend(a)), Effect.asUnit)),
-        Channel.flatMap(() => refWriter(ref))
+  return Channel.readWith({
+    onInput: (a: A) =>
+      Channel.flatMap(
+        Channel.fromEffect(Effect.asUnit(Ref.update(ref, ReadonlyArray.prepend(a)))),
+        () => refWriter(ref)
       ),
-    Channel.unit,
-    Channel.unit
-  )
+    onFailure: Channel.unit,
+    onDone: Channel.unit
+  })
 }
 
 export const refReader = <A>(
@@ -105,16 +105,16 @@ describe.concurrent("Channel", () => {
         Channel.fromEffect(Ref.make<ReadonlyArray<number>>([])),
         Channel.flatMap((ref) => {
           const inner = (): Channel.Channel<never, unknown, number, unknown, never, number, void> =>
-            Channel.readWith(
-              (input: number) =>
+            Channel.readWith({
+              onInput: (input: number) =>
                 pipe(
                   Channel.fromEffect(Ref.update(ref, (array) => [...array, input])),
                   Channel.zipRight(Channel.write(input)),
                   Channel.flatMap(inner)
                 ),
-              Channel.unit,
-              Channel.unit
-            )
+              onFailure: Channel.unit,
+              onDone: Channel.unit
+            })
           return pipe(
             inner(),
             Channel.zipRight(Channel.fromEffect(Ref.get(ref)))
@@ -150,22 +150,22 @@ describe.concurrent("Channel", () => {
         n: number
       ): Channel.Channel<never, unknown, number, unknown, never, number, string> =>
         n > 0
-          ? Channel.readWith(
-            (i: number) => pipe(Channel.write(i), Channel.flatMap(() => readIntsN(n - 1))),
-            () => Channel.succeed("EOF"),
-            () => Channel.succeed("EOF")
-          )
+          ? Channel.readWith({
+            onInput: (i: number) => pipe(Channel.write(i), Channel.flatMap(() => readIntsN(n - 1))),
+            onFailure: () => Channel.succeed("EOF"),
+            onDone: () => Channel.succeed("EOF")
+          })
           : Channel.succeed("end")
 
       const sum = (
         label: string,
         n: number
       ): Channel.Channel<never, unknown, number, unknown, unknown, never, void> =>
-        Channel.readWith(
-          (input: number) => sum(label, n + input),
-          () => Channel.fromEffect(Ref.update(ref, (array) => [...array, n])),
-          () => Channel.fromEffect(Ref.update(ref, (array) => [...array, n]))
-        )
+        Channel.readWith({
+          onInput: (input: number) => sum(label, n + input),
+          onFailure: () => Channel.fromEffect(Ref.update(ref, (array) => [...array, n])),
+          onDone: () => Channel.fromEffect(Ref.update(ref, (array) => [...array, n]))
+        })
 
       const channel = pipe(
         intProducer,
@@ -236,11 +236,11 @@ describe.concurrent("Channel", () => {
       const destination = yield* $(Ref.make<ReadonlyArray<number>>([]))
       const twoWriters = pipe(
         refWriter(destination),
-        Channel.mergeWith(
-          refWriter(destination),
-          () => MergeDecision.AwaitConst(Effect.unit),
-          () => MergeDecision.AwaitConst(Effect.unit)
-        )
+        Channel.mergeWith({
+          other: refWriter(destination),
+          onSelfDone: () => MergeDecision.AwaitConst(Effect.unit),
+          onOtherDone: () => MergeDecision.AwaitConst(Effect.unit)
+        })
       )
       const [missing, surplus] = yield* $(
         pipe(
@@ -276,11 +276,11 @@ describe.concurrent("Channel", () => {
       const twoWriters = pipe(
         mapper(f),
         Channel.pipeTo(refWriter(destination)),
-        Channel.mergeWith(
-          pipe(mapper(f), Channel.pipeTo(refWriter(destination))),
-          () => MergeDecision.AwaitConst(Effect.unit),
-          () => MergeDecision.AwaitConst(Effect.unit)
-        )
+        Channel.mergeWith({
+          other: pipe(mapper(f), Channel.pipeTo(refWriter(destination))),
+          onSelfDone: () => MergeDecision.AwaitConst(Effect.unit),
+          onOtherDone: () => MergeDecision.AwaitConst(Effect.unit)
+        })
       )
       const [missing, surplus] = yield* $(
         pipe(
