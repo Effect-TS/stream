@@ -986,8 +986,8 @@ export const dropRight: {
  * @category utils
  */
 export const dropUntil: {
-  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+  <A, X extends A>(predicate: Predicate<X>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A, X extends A>(self: Stream<R, E, A>, predicate: Predicate<X>): Stream<R, E, A>
 } = internal.dropUntil
 
 /**
@@ -998,12 +998,12 @@ export const dropUntil: {
  * @category utils
  */
 export const dropUntilEffect: {
-  <A, R2, E2>(
-    predicate: (a: A) => Effect.Effect<R2, E2, boolean>
+  <A, X extends A, R2, E2>(
+    predicate: (a: X) => Effect.Effect<R2, E2, boolean>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
+  <R, E, A, X extends A, R2, E2>(
     self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, boolean>
+    predicate: (a: X) => Effect.Effect<R2, E2, boolean>
   ): Stream<R | R2, E | E2, A>
 } = internal.dropUntilEffect
 
@@ -1015,8 +1015,8 @@ export const dropUntilEffect: {
  * @category utils
  */
 export const dropWhile: {
-  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+  <A, X extends A>(predicate: Predicate<X>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A, X extends A>(self: Stream<R, E, A>, predicate: Predicate<X>): Stream<R, E, A>
 } = internal.dropWhile
 
 /**
@@ -1027,12 +1027,12 @@ export const dropWhile: {
  * @category utils
  */
 export const dropWhileEffect: {
-  <A, R2, E2>(
-    predicate: (a: A) => Effect.Effect<R2, E2, boolean>
+  <A, X extends A, R2, E2>(
+    predicate: (a: X) => Effect.Effect<R2, E2, boolean>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
+  <R, E, A, X extends A, R2, E2>(
     self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, boolean>
+    predicate: (a: X) => Effect.Effect<R2, E2, boolean>
   ): Stream<R | R2, E | E2, A>
 } = internal.dropWhileEffect
 
@@ -1167,9 +1167,9 @@ export const failCauseSync: <E>(evaluate: LazyArg<Cause.Cause<E>>) => Stream<nev
  */
 export const filter: {
   <A, B extends A>(refinement: Refinement<A, B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+  <A, X extends A>(predicate: Predicate<X>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
   <R, E, A, B extends A>(self: Stream<R, E, A>, refinement: Refinement<A, B>): Stream<R, E, B>
+  <R, E, A, X extends A>(self: Stream<R, E, A>, predicate: Predicate<X>): Stream<R, E, A>
 } = internal.filter
 
 /**
@@ -1179,8 +1179,13 @@ export const filter: {
  * @category filtering
  */
 export const filterEffect: {
-  <A, R2, E2>(f: (a: A) => Effect.Effect<R2, E2, boolean>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, boolean>): Stream<R | R2, E | E2, A>
+  <A, X extends A, R2, E2>(
+    f: (a: X) => Effect.Effect<R2, E2, boolean>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, X extends A, R2, E2>(
+    self: Stream<R, E, A>,
+    f: (a: X) => Effect.Effect<R2, E2, boolean>
+  ): Stream<R | R2, E | E2, A>
 } = internal.filterEffect
 
 /**
@@ -1190,8 +1195,8 @@ export const filterEffect: {
  * @category utils
  */
 export const filterMap: {
-  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
+  <A, X extends A, B>(pf: (a: X) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, X extends A, B>(self: Stream<R, E, A>, pf: (a: X) => Option.Option<B>): Stream<R, E, B>
 } = internal.filterMap
 
 /**
@@ -1201,12 +1206,12 @@ export const filterMap: {
  * @category utils
  */
 export const filterMapEffect: {
-  <A, R2, E2, A2>(
-    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+  <A, X extends A, R2, E2, A2>(
+    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, R2, E2, A2>(
+  <R, E, A, X extends A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
+    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
   ): Stream<R | R2, E | E2, A2>
 } = internal.filterMapEffect
 
@@ -1217,9 +1222,10 @@ export const filterMapEffect: {
  * @since 1.0.0
  * @category utils
  */
-export const filterMapWhile: <A, A2>(
-  pf: (a: A) => Option.Option<A2>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2> = internal.filterMapWhile
+export const filterMapWhile: {
+  <A, X extends A, A2>(pf: (a: X) => Option.Option<A2>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+  <R, E, A, X extends A, A2>(self: Stream<R, E, A>, pf: (a: X) => Option.Option<A2>): Stream<R, E, A2>
+} = internal.filterMapWhile
 
 /**
  * Effectfully transforms all elements of the stream for as long as the
@@ -1228,9 +1234,15 @@ export const filterMapWhile: <A, A2>(
  * @since 1.0.0
  * @category utils
  */
-export const filterMapWhileEffect: <A, R2, E2, A2>(
-  pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
-) => <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2> = internal.filterMapWhileEffect
+export const filterMapWhileEffect: {
+  <A, X extends A, R2, E2, A2>(
+    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2>
+  <R, E, A, X extends A, R2, E2, A2>(
+    self: Stream<R, E, A>,
+    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+  ): Stream<R | R2, E | E2, A2>
+} = internal.filterMapWhileEffect
 
 /**
  * Creates a one-element stream that never fails and executes the finalizer
@@ -1250,9 +1262,9 @@ export const finalizer: <R, _>(finalizer: Effect.Effect<R, never, _>) => Stream<
  */
 export const find: {
   <A, B extends A>(refinement: Refinement<A, B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <A>(predicate: Predicate<A>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <A, X extends A>(predicate: Predicate<X>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
   <R, E, A, B extends A>(self: Stream<R, E, A>, refinement: Refinement<A, B>): Stream<R, E, B>
-  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Stream<R, E, A>
+  <R, E, A, X extends A>(self: Stream<R, E, A>, predicate: Predicate<X>): Stream<R, E, A>
 } = internal.find
 
 /**
@@ -1263,12 +1275,12 @@ export const find: {
  * @category elements
  */
 export const findEffect: {
-  <A, R2, E2>(
-    predicate: (a: A) => Effect.Effect<R2, E2, boolean>
+  <A, X extends A, R2, E2>(
+    predicate: (a: X) => Effect.Effect<R2, E2, boolean>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2>(
+  <R, E, A, X extends A, R2, E2>(
     self: Stream<R, E, A>,
-    predicate: (a: A) => Effect.Effect<R2, E2, boolean>
+    predicate: (a: X) => Effect.Effect<R2, E2, boolean>
   ): Stream<R | R2, E | E2, A>
 } = internal.findEffect
 
@@ -3515,8 +3527,13 @@ export const takeWhile: {
  * @category sequencing
  */
 export const tap: {
-  <A, R2, E2, _>(f: (a: A) => Effect.Effect<R2, E2, _>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
-  <R, E, A, R2, E2, _>(self: Stream<R, E, A>, f: (a: A) => Effect.Effect<R2, E2, _>): Stream<R | R2, E | E2, A>
+  <A, X extends A, R2, E2, _>(
+    f: (a: X) => Effect.Effect<R2, E2, _>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
+  <R, E, A, X extends A, R2, E2, _>(
+    self: Stream<R, E, A>,
+    f: (a: X) => Effect.Effect<R2, E2, _>
+  ): Stream<R | R2, E | E2, A>
 } = internal.tap
 
 /**
@@ -3526,8 +3543,13 @@ export const tap: {
  * @category sequencing
  */
 export const tapError: {
-  <E, R2, E2, _>(f: (error: E) => Effect.Effect<R2, E2, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
-  <R, A, E, R2, E2, _>(self: Stream<R, E, A>, f: (error: E) => Effect.Effect<R2, E2, _>): Stream<R | R2, E | E2, A>
+  <E, X extends E, R2, E2, _>(
+    f: (error: X) => Effect.Effect<R2, E2, _>
+  ): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
+  <R, A, E, X extends E, R2, E2, _>(
+    self: Stream<R, E, A>,
+    f: (error: X) => Effect.Effect<R2, E2, _>
+  ): Stream<R | R2, E | E2, A>
 } = internal.tapError
 
 /**
@@ -3538,12 +3560,12 @@ export const tapError: {
  * @category utils
  */
 export const tapErrorCause: {
-  <E, R2, E2, _>(
-    f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>
+  <E, X extends E, R2, E2, _>(
+    f: (cause: Cause.Cause<X>) => Effect.Effect<R2, E2, _>
   ): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E | E2, A>
-  <R, A, E, R2, E2, _>(
+  <R, A, E, X extends E, R2, E2, _>(
     self: Stream<R, E, A>,
-    f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>
+    f: (cause: Cause.Cause<X>) => Effect.Effect<R2, E2, _>
   ): Stream<R | R2, E | E2, A>
 } = internal.tapErrorCause
 
