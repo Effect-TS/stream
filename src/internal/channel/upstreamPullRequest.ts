@@ -53,18 +53,24 @@ export const isNoUpstream = <A>(
 /** @internal */
 export const match = dual<
   <A, Z>(
-    onPulled: (value: A) => Z,
-    onNoUpstream: (activeDownstreamCount: number) => Z
+    options: {
+      readonly onPulled: (value: A) => Z
+      readonly onNoUpstream: (activeDownstreamCount: number) => Z
+    }
   ) => (self: UpstreamPullRequest.UpstreamPullRequest<A>) => Z,
   <A, Z>(
     self: UpstreamPullRequest.UpstreamPullRequest<A>,
-    onPulled: (value: A) => Z,
-    onNoUpstream: (activeDownstreamCount: number) => Z
+    options: {
+      readonly onPulled: (value: A) => Z
+      readonly onNoUpstream: (activeDownstreamCount: number) => Z
+    }
   ) => Z
->(3, <A, Z>(
+>(2, <A, Z>(
   self: UpstreamPullRequest.UpstreamPullRequest<A>,
-  onPulled: (value: A) => Z,
-  onNoUpstream: (activeDownstreamCount: number) => Z
+  { onNoUpstream, onPulled }: {
+    readonly onPulled: (value: A) => Z
+    readonly onNoUpstream: (activeDownstreamCount: number) => Z
+  }
 ): Z => {
   switch (self._tag) {
     case OpCodes.OP_PULLED: {

@@ -871,11 +871,11 @@ export const bufferChunks = dual<
       Effect.map(queue, (queue) => {
         const process: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
           core.fromEffect(Queue.take(queue)),
-          core.flatMap(_take.match(
-            core.unit,
-            core.failCause,
-            (value) => pipe(core.write(value), core.flatMap(() => process))
-          ))
+          core.flatMap(_take.match({
+            onEnd: core.unit,
+            onFailure: core.failCause,
+            onSuccess: (value) => pipe(core.write(value), core.flatMap(() => process))
+          }))
         )
         return process
       })
@@ -934,11 +934,11 @@ const bufferUnbounded = <R, E, A>(self: Stream.Stream<R, E, A>): Stream.Stream<R
       Effect.map(queue, (queue) => {
         const process: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
           core.fromEffect(Queue.take(queue)),
-          core.flatMap(_take.match(
-            core.unit,
-            core.failCause,
-            (value) => core.flatMap(core.write(value), () => process)
-          ))
+          core.flatMap(_take.match({
+            onEnd: core.unit,
+            onFailure: core.failCause,
+            onSuccess: (value) => core.flatMap(core.write(value), () => process)
+          }))
         )
         return process
       })
@@ -995,18 +995,13 @@ const bufferSignal = <R, E, A>(
     const process: Channel.Channel<never, unknown, unknown, unknown, E, Chunk.Chunk<A>, void> = pipe(
       core.fromEffect(Queue.take(queue)),
       core.flatMap(([take, deferred]) =>
-        pipe(
+        channel.zipRight(
           core.fromEffect(Deferred.succeed<never, void>(deferred, void 0)),
-          channel.zipRight(
-            pipe(
-              take,
-              _take.match(
-                core.unit,
-                core.failCause,
-                (value) => pipe(core.write(value), core.flatMap(() => process))
-              )
-            )
-          )
+          _take.match(take, {
+            onEnd: core.unit,
+            onFailure: core.failCause,
+            onSuccess: (value) => pipe(core.write(value), core.flatMap(() => process))
+          })
         )
       )
     )
@@ -3442,21 +3437,21 @@ export const interleaveWith = dual<
                   if (bool && !leftDone) {
                     return pipe(
                       core.fromEffect(Handoff.take(left)),
-                      core.flatMap(_take.match(
-                        () => rightDone ? core.unit() : process(true, rightDone),
-                        core.failCause,
-                        (chunk) => pipe(core.write(chunk), core.flatMap(() => process(leftDone, rightDone)))
-                      ))
+                      core.flatMap(_take.match({
+                        onEnd: () => rightDone ? core.unit() : process(true, rightDone),
+                        onFailure: core.failCause,
+                        onSuccess: (chunk) => pipe(core.write(chunk), core.flatMap(() => process(leftDone, rightDone)))
+                      }))
                     )
                   }
                   if (!bool && !rightDone) {
                     return pipe(
                       core.fromEffect(Handoff.take(right)),
-                      core.flatMap(_take.match(
-                        () => leftDone ? core.unit() : process(leftDone, true),
-                        core.failCause,
-                        (chunk) => pipe(core.write(chunk), core.flatMap(() => process(leftDone, rightDone)))
-                      ))
+                      core.flatMap(_take.match({
+                        onEnd: () => leftDone ? core.unit() : process(leftDone, true),
+                        onFailure: core.failCause,
+                        onSuccess: (chunk) => pipe(core.write(chunk), core.flatMap(() => process(leftDone, rightDone)))
+                      }))
                     )
                   }
                   return process(leftDone, rightDone)

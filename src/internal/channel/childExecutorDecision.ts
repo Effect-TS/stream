@@ -59,21 +59,27 @@ export const isYield = (
 /** @internal */
 export const match = dual<
   <A>(
-    onContinue: () => A,
-    onClose: (value: unknown) => A,
-    onYield: () => A
+    options: {
+      readonly onContinue: () => A
+      readonly onClose: (value: unknown) => A
+      readonly onYield: () => A
+    }
   ) => (self: ChildExecutorDecision.ChildExecutorDecision) => A,
   <A>(
     self: ChildExecutorDecision.ChildExecutorDecision,
-    onContinue: () => A,
-    onClose: (value: unknown) => A,
-    onYield: () => A
+    options: {
+      readonly onContinue: () => A
+      readonly onClose: (value: unknown) => A
+      readonly onYield: () => A
+    }
   ) => A
->(4, <A>(
+>(2, <A>(
   self: ChildExecutorDecision.ChildExecutorDecision,
-  onContinue: () => A,
-  onClose: (value: unknown) => A,
-  onYield: () => A
+  { onClose, onContinue, onYield }: {
+    readonly onContinue: () => A
+    readonly onClose: (value: unknown) => A
+    readonly onYield: () => A
+  }
 ): A => {
   switch (self._tag) {
     case OpCodes.OP_CONTINUE: {

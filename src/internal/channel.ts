@@ -1272,8 +1272,8 @@ export const mergeAllWith = (
                 onRight: (channel) =>
                   pipe(
                     mergeStrategy,
-                    _mergeStrategy.match(
-                      () =>
+                    _mergeStrategy.match({
+                      onBackPressure: () =>
                         Effect.gen(function*($) {
                           const latch = yield* $(Deferred.make<never, void>())
                           const raceEffects: Effect.Effect<Env | Env1, OutErr | OutErr1, void> = pipe(
@@ -1300,7 +1300,7 @@ export const mergeAllWith = (
                           const errored = yield* $(Deferred.isDone(errorSignal))
                           return !errored
                         }),
-                      () =>
+                      onBufferSliding: () =>
                         Effect.gen(function*($) {
                           const canceler = yield* $(Deferred.make<never, void>())
                           const latch = yield* $(Deferred.make<never, void>())
@@ -1336,7 +1336,7 @@ export const mergeAllWith = (
                           const errored = yield* $(Deferred.isDone(errorSignal))
                           return !errored
                         })
-                    )
+                    })
                   )
               })
             }),

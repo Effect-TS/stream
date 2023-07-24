@@ -63,8 +63,8 @@ Folds an `MergeStrategy` into a value of type `A`.
 
 ```ts
 export declare const match: {
-  <A>(onBackPressure: () => A, onBufferSliding: () => A): (self: MergeStrategy) => A
-  <A>(self: MergeStrategy, onBackPressure: () => A, onBufferSliding: () => A): A
+  <A>(options: { readonly onBackPressure: () => A; readonly onBufferSliding: () => A }): (self: MergeStrategy) => A
+  <A>(self: MergeStrategy, options: { readonly onBackPressure: () => A; readonly onBufferSliding: () => A }): A
 }
 ```
 
