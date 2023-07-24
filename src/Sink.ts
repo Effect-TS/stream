@@ -1355,11 +1355,13 @@ export const withDuration: <R, E, In, L, Z>(
  */
 export const zip: {
   <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ): Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]>
 } = internal.zip
 
@@ -1371,11 +1373,13 @@ export const zip: {
  */
 export const zipLeft: {
   <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z>
 } = internal.zipLeft
 
@@ -1387,11 +1391,13 @@ export const zipLeft: {
  */
 export const zipRight: {
   <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z2>
 } = internal.zipRight
 
@@ -1406,79 +1412,13 @@ export const zipRight: {
 export const zipWith: {
   <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
 } = internal.zipWith
-
-/**
- * Runs both sinks in parallel on the input and combines the results in a
- * tuple.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipPar: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]>
-} = internal.zipPar
-
-/**
- * Like `Sink.zipPar` but keeps only the result from this sink.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipParLeft: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): Sink<R | R2, E | E2, In & In2, L | L2, Z>
-} = internal.zipParLeft
-
-/**
- * Like `Sink.zipPar` but keeps only the result from `that` sink.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipParRight: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>
-  ): Sink<R | R2, E | E2, In & In2, L | L2, Z2>
-} = internal.zipParRight
-
-/**
- * Runs both sinks in parallel on the input and combines the results using the
- * provided function.
- *
- * @since 1.0.0
- * @category zipping
- */
-export const zipWithPar: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
-} = internal.zipWithPar

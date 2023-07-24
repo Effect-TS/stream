@@ -133,12 +133,8 @@ Added in v1.0.0
 - [zipping](#zipping)
   - [zip](#zip)
   - [zipLeft](#zipleft)
-  - [zipPar](#zippar)
-  - [zipParLeft](#zipparleft)
-  - [zipParRight](#zipparright)
   - [zipRight](#zipright)
   - [zipWith](#zipwith)
-  - [zipWithPar](#zipwithpar)
 
 ---
 
@@ -1878,16 +1874,15 @@ results into a tuple.
 
 ```ts
 export declare const zip: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    readonly [Z, Z2]
-  >
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
+  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]>
 }
 ```
 
@@ -1901,86 +1896,15 @@ Like `Sink.zip` but keeps only the result from this sink.
 
 ```ts
 export declare const zipLeft: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipPar
-
-Runs both sinks in parallel on the input and combines the results in a
-tuple.
-
-**Signature**
-
-```ts
-export declare const zipPar: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    readonly [Z, Z2]
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipParLeft
-
-Like `Sink.zipPar` but keeps only the result from this sink.
-
-**Signature**
-
-```ts
-export declare const zipParLeft: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z
-  >
-}
-```
-
-Added in v1.0.0
-
-## zipParRight
-
-Like `Sink.zipPar` but keeps only the result from `that` sink.
-
-**Signature**
-
-```ts
-export declare const zipParRight: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z2
-  >
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
+  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink<R | R2, E | E2, In & In2, L | L2, Z>
 }
 ```
 
@@ -1994,16 +1918,15 @@ Like `Sink.zip` but keeps only the result from `that` sink.
 
 ```ts
 export declare const zipRight: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(that: Sink<R2, E2, In2, L2, Z2>): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(self: Sink<R, E, In, L, Z>, that: Sink<R2, E2, In2, L2, Z2>): Sink<
-    R | R2,
-    E | E2,
-    In & In2,
-    L | L2,
-    Z2
-  >
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
+  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
+    self: Sink<R, E, In, L, Z>,
+    that: Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink<R | R2, E | E2, In & In2, L | L2, Z2>
 }
 ```
 
@@ -2019,35 +1942,16 @@ results with `f`.
 
 ```ts
 export declare const zipWith: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(that: Sink<R2, E2, In2, L2, Z2>, f: (z: Z, z1: Z2) => Z3): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
+  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
+    that: Sink<R2, E2, In2, L2, Z2>,
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
+  ): <R, E>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
-}
-```
-
-Added in v1.0.0
-
-## zipWithPar
-
-Runs both sinks in parallel on the input and combines the results using the
-provided function.
-
-**Signature**
-
-```ts
-export declare const zipWithPar: {
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(that: Sink<R2, E2, In2, L2, Z2>, f: (z: Z, z1: Z2) => Z3): <R, E>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ): Sink<R | R2, E | E2, In & In2, L | L2, Z3>
 }
 ```

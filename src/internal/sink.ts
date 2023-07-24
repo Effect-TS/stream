@@ -2001,166 +2001,109 @@ export const withDuration = <R, E, In, L, Z>(
 /** @internal */
 export const zip = dual<
   <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>,
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
 >(
-  2,
+  (args) => isSink(args[1]),
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]> => pipe(self, zipWith(that, (z, z2) => [z, z2]))
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]> => zipWith(self, that, (z, z2) => [z, z2], options)
 )
 
 /** @internal */
 export const zipLeft = dual<
   <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z>,
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
 >(
-  2,
+  (args) => isSink(args[1]),
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z> => pipe(self, zipWith(that, (z, _) => z))
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z> => zipWith(self, that, (z, _) => z, options)
 )
 
 /** @internal */
 export const zipRight = dual<
   <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>,
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
   ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
 >(
-  2,
+  (args) => isSink(args[1]),
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z2> => pipe(self, zipWith(that, (_, z2) => z2))
+    that: Sink.Sink<R2, E2, In2, L2, Z2>,
+    options?: { readonly concurrent?: boolean }
+  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z2> => zipWith(self, that, (_, z2) => z2, options)
 )
 
 /** @internal */
 export const zipWith = dual<
   <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>,
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink.Sink<R, E, In, L, Z>,
     that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
 >(
-  3,
+  (args) => isSink(args[1]),
   <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
     self: Sink.Sink<R, E, In, L, Z>,
     that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z3> => pipe(self, flatMap((z) => pipe(that, map((z2) => f(z, z2)))))
-)
-
-/** @internal */
-export const zipPar = dual<
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, readonly [Z, Z2]>
->(
-  2,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, readonly [Z, Z2]> => pipe(self, zipWithPar(that, (z, z2) => [z, z2]))
-)
-
-/** @internal */
-export const zipParLeft = dual<
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z>,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z>
->(
-  2,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z> => pipe(self, zipWithPar(that, (z, _) => z))
-)
-
-/** @internal */
-export const zipParRight = dual<
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z2>
->(
-  2,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z2> => pipe(self, zipWithPar(that, (_, z2) => z2))
-)
-
-/** @internal */
-export const zipWithPar = dual<
-  <R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ) => <R, E>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
-  ) => Sink.Sink<R2 | R, E2 | E, In & In2, L | L2, Z3>
->(
-  3,
-  <R, E, R2, E2, In, In2 extends In, L, L2, Z, Z2, Z3>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    f: (z: Z, z1: Z2) => Z3
+    f: (z: Z, z1: Z2) => Z3,
+    options?: { readonly concurrent?: boolean }
   ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z3> =>
-    raceWith(self, {
-      other: that,
-      onSelfDone: Exit.match({
-        onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
-        onSuccess: (leftZ) =>
-          mergeDecision.Await<R | R2, E2, Z2, E | E2, Z3>(
-            Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>({
-              onFailure: Effect.failCause,
-              onSuccess: (rightZ) => Effect.succeed(f(leftZ, rightZ))
-            })
-          )
-      }),
-      onOtherDone: Exit.match({
-        onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
-        onSuccess: (rightZ) =>
-          mergeDecision.Await<R | R2, E, Z, E | E2, Z3>(
-            Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>({
-              onFailure: Effect.failCause,
-              onSuccess: (leftZ) => Effect.succeed(f(leftZ, rightZ))
-            })
-          )
-      })
-    })
+    options?.concurrent ?
+      raceWith(self, {
+        other: that,
+        onSelfDone: Exit.match({
+          onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
+          onSuccess: (leftZ) =>
+            mergeDecision.Await<R | R2, E2, Z2, E | E2, Z3>(
+              Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>({
+                onFailure: Effect.failCause,
+                onSuccess: (rightZ) => Effect.succeed(f(leftZ, rightZ))
+              })
+            )
+        }),
+        onOtherDone: Exit.match({
+          onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
+          onSuccess: (rightZ) =>
+            mergeDecision.Await<R | R2, E, Z, E | E2, Z3>(
+              Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>({
+                onFailure: Effect.failCause,
+                onSuccess: (leftZ) => Effect.succeed(f(leftZ, rightZ))
+              })
+            )
+        })
+      }) :
+      flatMap(self, (z) => map(that, (z2) => f(z, z2)))
 )
 
 // Circular with Channel
