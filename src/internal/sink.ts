@@ -55,6 +55,10 @@ export class SinkImpl<R, E, In, L, Z> implements Sink.Sink<R, E, In, L, Z> {
 }
 
 /** @internal */
+export const isSink = (u: unknown): u is Sink.Sink<unknown, unknown, unknown, unknown, unknown> =>
+  typeof u === "object" && u != null && SinkTypeId in u
+
+/** @internal */
 export const as = dual<
   <Z2>(z: Z2) => <R, E, In, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R, E, In, L, Z2>,
   <R, E, In, L, Z, Z2>(self: Sink.Sink<R, E, In, L, Z>, z: Z2) => Sink.Sink<R, E, In, L, Z2>
@@ -1449,11 +1453,10 @@ export const fromEffect = <R, E, Z>(effect: Effect.Effect<R, E, Z>): Sink.Sink<R
   new SinkImpl(core.fromEffect(effect))
 
 /** @internal */
-export const fromHub = <In>(hub: Hub.Hub<In>): Sink.Sink<never, never, In, never, void> => fromQueue(hub)
-
-/** @internal */
-export const fromHubWithShutdown = <In>(hub: Hub.Hub<In>): Sink.Sink<never, never, In, never, void> =>
-  fromQueueWithShutdown(hub)
+export const fromHub = <In>(
+  hub: Hub.Hub<In>,
+  options?: { readonly shutdown?: boolean }
+): Sink.Sink<never, never, In, never, void> => fromQueue(hub, options)
 
 /** @internal */
 export const fromPush = <R, E, In, L, Z>(
@@ -1497,16 +1500,18 @@ const fromPushPull = <R, E, In, L, Z>(
   })
 
 /** @internal */
-export const fromQueue = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
-  forEachChunk((input: Chunk.Chunk<In>) => pipe(Queue.offerAll(queue, input)))
-
-/** @internal */
-export const fromQueueWithShutdown = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
-  pipe(
-    Effect.acquireRelease(Effect.succeed(queue), Queue.shutdown),
-    Effect.map(fromQueue),
-    unwrapScoped
-  )
+export const fromQueue = <In>(
+  queue: Queue.Enqueue<In>,
+  options?: { readonly shutdown?: boolean }
+): Sink.Sink<never, never, In, never, void> =>
+  options?.shutdown ?
+    unwrapScoped(
+      Effect.map(
+        Effect.acquireRelease(Effect.succeed(queue), Queue.shutdown),
+        fromQueue
+      )
+    ) :
+    forEachChunk((input: Chunk.Chunk<In>) => pipe(Queue.offerAll(queue, input)))
 
 /** @internal */
 export const head = <In>(): Sink.Sink<never, never, In, In, Option.Option<In>> =>
@@ -1643,101 +1648,65 @@ export const race = dual<
 /** @internal */
 export const raceBoth = dual<
   <R1, E1, In1, L1, Z1>(
-    that: Sink.Sink<R1, E1, In1, L1, Z1>
-  ) => <R, E, In, L, Z>(
-    self: Sink.Sink<R, E, In, L, Z>
-  ) => Sink.Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>,
-  <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R1, E1, In1, L1, Z1>
-  ) => Sink.Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
->(
-  2,
-  <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R1, E1, In1, L1, Z1>
-  ): Sink.Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>> => raceBothCapacity(self, that, 16)
-)
-
-/** @internal */
-export const raceBothCapacity = dual<
-  <R1, E1, In1, L1, Z1>(
     that: Sink.Sink<R1, E1, In1, L1, Z1>,
-    capacity: number
+    options?: { readonly capacity?: number }
   ) => <R, E, In, L, Z>(
     self: Sink.Sink<R, E, In, L, Z>
   ) => Sink.Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>,
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink.Sink<R, E, In, L, Z>,
     that: Sink.Sink<R1, E1, In1, L1, Z1>,
-    capacity: number
+    options?: { readonly capacity?: number }
   ) => Sink.Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
 >(
-  3,
+  (args) => isSink(args[1]),
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink.Sink<R, E, In, L, Z>,
     that: Sink.Sink<R1, E1, In1, L1, Z1>,
-    capacity: number
-  ): Sink.Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>> => {
-    return raceWithCapacity(
-      self,
-      that,
-      (selfDone) => mergeDecision.Done(pipe(Effect.suspend(() => selfDone), Effect.map(Either.left))),
-      (thatDone) => mergeDecision.Done(pipe(Effect.suspend(() => thatDone), Effect.map(Either.right))),
-      capacity
-    )
-  }
+    options?: { readonly capacity?: number }
+  ): Sink.Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>> =>
+    raceWith(self, {
+      other: that,
+      onSelfDone: (selfDone) => mergeDecision.Done(Effect.map(selfDone, Either.left)),
+      onOtherDone: (thatDone) => mergeDecision.Done(Effect.map(thatDone, Either.right)),
+      capacity: options?.capacity ?? 16
+    })
 )
 
 /** @internal */
 export const raceWith = dual<
   <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+    options: {
+      readonly other: Sink.Sink<R2, E2, In2, L2, Z2>
+      readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+      readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+      readonly capacity?: number
+    }
   ) => <R, In, L>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>,
   <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+    options: {
+      readonly other: Sink.Sink<R2, E2, In2, L2, Z2>
+      readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+      readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+      readonly capacity?: number
+    }
   ) => Sink.Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
 >(
-  4,
+  2,
   <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
     self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E | E2, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E | E2, Z4>
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z3 | Z4> => raceWithCapacity(self, that, leftDone, rightDone, 16)
-)
-
-/** @internal */
-export const raceWithCapacity = dual<
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
-  ) => <R, In, L>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>,
-  <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
-  ) => Sink.Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
->(
-  5,
-  <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    self: Sink.Sink<R, E, In, L, Z>,
-    that: Sink.Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E | E2, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E | E2, Z4>,
-    capacity: number
+    options: {
+      readonly other: Sink.Sink<R2, E2, In2, L2, Z2>
+      readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+      readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+      readonly capacity?: number
+    }
   ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z3 | Z4> => {
     const scoped = Effect.gen(function*($) {
-      const hub = yield* $(Hub.bounded<Either.Either<Exit.Exit<never, unknown>, Chunk.Chunk<In & In2>>>(capacity))
+      const hub = yield* $(
+        Hub.bounded<Either.Either<Exit.Exit<never, unknown>, Chunk.Chunk<In & In2>>>(options?.capacity ?? 16)
+      )
       const channel1 = yield* $(channel.fromHubScoped(hub))
       const channel2 = yield* $(channel.fromHubScoped(hub))
       const reader = channel.toHub(hub)
@@ -1745,9 +1714,9 @@ export const raceWithCapacity = dual<
         channel1,
         core.pipeTo(toChannel(self)),
         channel.mergeWith({
-          other: pipe(channel2, core.pipeTo(toChannel(that))),
-          onSelfDone: leftDone,
-          onOtherDone: rightDone
+          other: pipe(channel2, core.pipeTo(toChannel(options.other))),
+          onSelfDone: options.onSelfDone,
+          onOtherDone: options.onOtherDone
         })
       )
       const racedChannel: Channel.Channel<
@@ -2168,34 +2137,30 @@ export const zipWithPar = dual<
     self: Sink.Sink<R, E, In, L, Z>,
     that: Sink.Sink<R2, E2, In2, L2, Z2>,
     f: (z: Z, z1: Z2) => Z3
-  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z3> => {
-    return pipe(
-      self,
-      raceWith(
-        that,
-        Exit.match({
-          onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
-          onSuccess: (leftZ) =>
-            mergeDecision.Await<R | R2, E2, Z2, E | E2, Z3>(
-              Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>({
-                onFailure: Effect.failCause,
-                onSuccess: (rightZ) => Effect.succeed(f(leftZ, rightZ))
-              })
-            )
-        }),
-        Exit.match({
-          onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
-          onSuccess: (rightZ) =>
-            mergeDecision.Await<R | R2, E, Z, E | E2, Z3>(
-              Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>({
-                onFailure: Effect.failCause,
-                onSuccess: (leftZ) => Effect.succeed(f(leftZ, rightZ))
-              })
-            )
-        })
-      )
-    )
-  }
+  ): Sink.Sink<R | R2, E | E2, In & In2, L | L2, Z3> =>
+    raceWith(self, {
+      other: that,
+      onSelfDone: Exit.match({
+        onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
+        onSuccess: (leftZ) =>
+          mergeDecision.Await<R | R2, E2, Z2, E | E2, Z3>(
+            Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>({
+              onFailure: Effect.failCause,
+              onSuccess: (rightZ) => Effect.succeed(f(leftZ, rightZ))
+            })
+          )
+      }),
+      onOtherDone: Exit.match({
+        onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
+        onSuccess: (rightZ) =>
+          mergeDecision.Await<R | R2, E, Z, E | E2, Z3>(
+            Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>({
+              onFailure: Effect.failCause,
+              onSuccess: (leftZ) => Effect.succeed(f(leftZ, rightZ))
+            })
+          )
+      })
+    })
 )
 
 // Circular with Channel

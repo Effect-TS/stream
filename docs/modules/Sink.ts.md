@@ -62,10 +62,8 @@ Added in v1.0.0
   - [fromChannel](#fromchannel)
   - [fromEffect](#fromeffect)
   - [fromHub](#fromhub)
-  - [fromHubWithShutdown](#fromhubwithshutdown)
   - [fromPush](#frompush)
   - [fromQueue](#fromqueue)
-  - [fromQueueWithShutdown](#fromqueuewithshutdown)
   - [head](#head)
   - [last](#last)
   - [leftover](#leftover)
@@ -128,9 +126,7 @@ Added in v1.0.0
   - [ignoreLeftover](#ignoreleftover)
   - [race](#race)
   - [raceBoth](#raceboth)
-  - [raceBothCapacity](#racebothcapacity)
   - [raceWith](#racewith)
-  - [raceWithCapacity](#racewithcapacity)
   - [splitWhere](#splitwhere)
   - [summarized](#summarized)
   - [withDuration](#withduration)
@@ -880,20 +876,10 @@ Create a sink which publishes each element to the specified hub.
 **Signature**
 
 ```ts
-export declare const fromHub: <In>(hub: Hub.Hub<In>) => Sink<never, never, In, never, void>
-```
-
-Added in v1.0.0
-
-## fromHubWithShutdown
-
-Create a sink which publishes each element to the specified hub. The hub
-will be shutdown once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromHubWithShutdown: <In>(hub: Hub.Hub<In>) => Sink<never, never, In, never, void>
+export declare const fromHub: <In>(
+  hub: Hub.Hub<In>,
+  options?: { readonly shutdown?: boolean }
+) => Sink<never, never, In, never, void>
 ```
 
 Added in v1.0.0
@@ -923,20 +909,10 @@ Create a sink which enqueues each element into the specified queue.
 **Signature**
 
 ```ts
-export declare const fromQueue: <In>(queue: Queue.Enqueue<In>) => Sink<never, never, In, never, void>
-```
-
-Added in v1.0.0
-
-## fromQueueWithShutdown
-
-Create a sink which enqueues each element into the specified queue. The
-queue will be shutdown once the stream is closed.
-
-**Signature**
-
-```ts
-export declare const fromQueueWithShutdown: <In>(queue: Queue.Enqueue<In>) => Sink<never, never, In, never, void>
+export declare const fromQueue: <In>(
+  queue: Queue.Enqueue<In>,
+  options?: { readonly shutdown?: boolean }
+) => Sink<never, never, In, never, void>
 ```
 
 Added in v1.0.0
@@ -1795,36 +1771,13 @@ from the one that finishes first.
 
 ```ts
 export declare const raceBoth: {
-  <R1, E1, In1, L1, Z1>(that: Sink<R1, E1, In1, L1, Z1>): <R, E, In, L, Z>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
-  <R, E, In, L, Z, R1, E1, In1, L1, Z1>(self: Sink<R, E, In, L, Z>, that: Sink<R1, E1, In1, L1, Z1>): Sink<
-    R | R1,
-    E | E1,
-    In & In1,
-    L | L1,
-    Either.Either<Z, Z1>
-  >
-}
-```
-
-Added in v1.0.0
-
-## raceBothCapacity
-
-Like `raceBoth`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const raceBothCapacity: {
-  <R1, E1, In1, L1, Z1>(that: Sink<R1, E1, In1, L1, Z1>, capacity: number): <R, E, In, L, Z>(
+  <R1, E1, In1, L1, Z1>(that: Sink<R1, E1, In1, L1, Z1>, options?: { readonly capacity?: number }): <R, E, In, L, Z>(
     self: Sink<R, E, In, L, Z>
   ) => Sink<R1 | R, E1 | E, In & In1, L1 | L, Either.Either<Z, Z1>>
   <R, E, In, L, Z, R1, E1, In1, L1, Z1>(
     self: Sink<R, E, In, L, Z>,
     that: Sink<R1, E1, In1, L1, Z1>,
-    capacity: number
+    options?: { readonly capacity?: number }
   ): Sink<R | R1, E | E1, In & In1, L | L1, Either.Either<Z, Z1>>
 }
 ```
@@ -1840,42 +1793,20 @@ function as soon as one result or the other has been computed.
 
 ```ts
 export declare const raceWith: {
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
+  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(options: {
+    readonly other: Sink<R2, E2, In2, L2, Z2>
+    readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+    readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+    readonly capacity?: number | undefined
+  }): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
   <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
     self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
-  ): Sink<R | R2, E2 | E, In & In2, L | L2, Z3 | Z4>
-}
-```
-
-Added in v1.0.0
-
-## raceWithCapacity
-
-Like `raceWith`, but with a configurable `capacity` parameter.
-
-**Signature**
-
-```ts
-export declare const raceWithCapacity: {
-  <R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
-  ): <R, In, L>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In & In2, L2 | L, Z3 | Z4>
-  <R, In, L, R2, E2, In2, L2, Z2, E, Z, Z3, Z4>(
-    self: Sink<R, E, In, L, Z>,
-    that: Sink<R2, E2, In2, L2, Z2>,
-    leftDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>,
-    rightDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>,
-    capacity: number
+    options: {
+      readonly other: Sink<R2, E2, In2, L2, Z2>
+      readonly onSelfDone: (exit: Exit.Exit<E, Z>) => MergeDecision.MergeDecision<R2, E2, Z2, E2 | E, Z3>
+      readonly onOtherDone: (exit: Exit.Exit<E2, Z2>) => MergeDecision.MergeDecision<R2, E, Z, E2 | E, Z4>
+      readonly capacity?: number | undefined
+    }
   ): Sink<R | R2, E2 | E, In & In2, L | L2, Z3 | Z4>
 }
 ```
