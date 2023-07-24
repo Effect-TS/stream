@@ -15,12 +15,12 @@ describe.concurrent("Channel", () => {
       const [chunk, value] = yield* $(
         pipe(
           Channel.writeAll(1, 2, 3),
-          Channel.mergeWith(
-            Channel.writeAll(4, 5, 6),
+          Channel.mergeWith({
+            other: Channel.writeAll(4, 5, 6),
             // TODO: remove
-            (leftDone) => MergeDecision.AwaitConst(Effect.suspend(() => leftDone)),
-            (rightDone) => MergeDecision.AwaitConst(Effect.suspend(() => rightDone))
-          ),
+            onSelfDone: (leftDone) => MergeDecision.AwaitConst(Effect.suspend(() => leftDone)),
+            onOtherDone: (rightDone) => MergeDecision.AwaitConst(Effect.suspend(() => rightDone))
+          }),
           Channel.runCollect
         )
       )
@@ -61,12 +61,14 @@ describe.concurrent("Channel", () => {
       const [chunk, value] = yield* $(
         pipe(
           left,
-          Channel.mergeWith(
-            right,
+          Channel.mergeWith({
+            other: right,
             // TODO: remove
-            (leftDone) => MergeDecision.Await((rightDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone))),
-            (rightDone) => MergeDecision.Await((leftDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone)))
-          ),
+            onSelfDone: (leftDone) =>
+              MergeDecision.Await((rightDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone))),
+            onOtherDone: (rightDone) =>
+              MergeDecision.Await((leftDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone)))
+          }),
           Channel.runCollect
         )
       )
@@ -86,9 +88,9 @@ describe.concurrent("Channel", () => {
       )
       const result = yield* $(pipe(
         left,
-        Channel.mergeWith(
-          right,
-          (leftDone) =>
+        Channel.mergeWith({
+          other: right,
+          onSelfDone: (leftDone) =>
             MergeDecision.Await((rightDone) =>
               pipe(
                 // TODO: remove
@@ -99,7 +101,7 @@ describe.concurrent("Channel", () => {
                 Effect.flip
               )
             ),
-          (rightDone) =>
+          onOtherDone: (rightDone) =>
             MergeDecision.Await((leftDone) =>
               pipe(
                 // TODO: remove
@@ -110,7 +112,7 @@ describe.concurrent("Channel", () => {
                 Effect.flip
               )
             )
-        ),
+        }),
         Channel.runDrain,
         Effect.exit
       ))
@@ -121,34 +123,29 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const latch = yield* $(Deferred.make<never, void>())
       const interrupted = yield* $(Ref.make(false))
-      const left = pipe(
+      const left = Channel.zipRight(
         Channel.write(1),
-        Channel.zipRight(
-          pipe(
-            Deferred.succeed<never, void>(latch, void 0),
-            Effect.zipRight(Effect.never),
-            Effect.onInterrupt(() => Ref.set(interrupted, true)),
-            Channel.fromEffect
-          )
+        pipe(
+          Deferred.succeed<never, void>(latch, void 0),
+          Effect.zipRight(Effect.never),
+          Effect.onInterrupt(() => Ref.set(interrupted, true)),
+          Channel.fromEffect
         )
       )
-      const right = pipe(
+      const right = Channel.zipRight(
         Channel.write(2),
-        Channel.zipRight(Channel.fromEffect(Deferred.await(latch)))
+        Channel.fromEffect(Deferred.await(latch))
       )
-      const merged = pipe(
-        left,
-        Channel.mergeWith(
-          right,
-          // TODO: remove
-          (leftDone) => MergeDecision.Done(Effect.suspend(() => leftDone)),
-          (_rightDone) =>
-            MergeDecision.Done(pipe(
-              Ref.get(interrupted),
-              Effect.flatMap((isInterrupted) => isInterrupted ? Effect.unit : Effect.fail(void 0))
-            ))
-        )
-      )
+      const merged = Channel.mergeWith(left, {
+        other: right,
+        // TODO: remove
+        onSelfDone: (leftDone) => MergeDecision.Done(Effect.suspend(() => leftDone)),
+        onOtherDone: (_rightDone) =>
+          MergeDecision.Done(pipe(
+            Ref.get(interrupted),
+            Effect.flatMap((isInterrupted) => isInterrupted ? Effect.unit : Effect.fail(void 0))
+          ))
+      })
       const result = yield* $(Effect.exit(Channel.runDrain(merged)))
       assert.deepStrictEqual(Exit.unannotate(result), Exit.succeed(void 0))
     }))

@@ -71,11 +71,11 @@ export const collectAll = <In>(): Sink.Sink<never, never, In, never, Chunk.Chunk
 const collectAllLoop = <In>(
   acc: Chunk.Chunk<In>
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, never, Chunk.Chunk<In>> =>
-  core.readWithCause(
-    (chunk: Chunk.Chunk<In>) => collectAllLoop(pipe(acc, Chunk.appendAll(chunk))),
-    core.failCause,
-    () => core.succeed(acc)
-  )
+  core.readWithCause({
+    onInput: (chunk: Chunk.Chunk<In>) => collectAllLoop(pipe(acc, Chunk.appendAll(chunk))),
+    onFailure: core.failCause,
+    onDone: () => core.succeed(acc)
+  })
 
 /** @internal */
 export const collectAllN = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk<In>> =>
@@ -86,8 +86,8 @@ const collectAllNLoop = <In>(
   n: number,
   acc: Chunk.Chunk<In>
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, Chunk.Chunk<In>> =>
-  core.readWithCause(
-    (chunk: Chunk.Chunk<In>) => {
+  core.readWithCause({
+    onInput: (chunk: Chunk.Chunk<In>) => {
       const [collected, leftovers] = Chunk.splitAt(chunk, n)
       if (collected.length < n) {
         return collectAllNLoop(n - collected.length, Chunk.appendAll(acc, collected))
@@ -97,9 +97,9 @@ const collectAllNLoop = <In>(
       }
       return core.flatMap(core.write(leftovers), () => core.succeed(Chunk.appendAll(acc, collected)))
     },
-    core.failCause,
-    () => core.succeed(acc)
-  )
+    onFailure: core.failCause,
+    onDone: () => core.succeed(acc)
+  })
 
 /** @internal */
 export const collectAllFrom = <R, E, In, L extends In, Z>(
@@ -196,8 +196,8 @@ const collectAllWhileReader = <In>(
   predicate: Predicate<In>,
   done: Chunk.Chunk<In>
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, Chunk.Chunk<In>> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) => {
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) => {
       const [collected, leftovers] = pipe(Chunk.toReadonlyArray(input), ReadonlyArray.span(predicate))
       if (leftovers.length === 0) {
         return collectAllWhileReader(
@@ -210,9 +210,9 @@ const collectAllWhileReader = <In>(
         channel.zipRight(core.succeed(pipe(done, Chunk.appendAll(Chunk.unsafeFromArray(collected)))))
       )
     },
-    core.fail,
-    () => core.succeed(done)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeed(done)
+  })
 
 /** @internal */
 export const collectAllWhileEffect = <In, R, E>(
@@ -224,8 +224,8 @@ const collectAllWhileEffectReader = <In, R, E>(
   predicate: (input: In) => Effect.Effect<R, E, boolean>,
   done: Chunk.Chunk<In>
 ): Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<In>, Chunk.Chunk<In>> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         core.fromEffect(pipe(input, Effect.takeWhile(predicate), Effect.map(Chunk.unsafeFromArray))),
         core.flatMap((collected) => {
@@ -236,9 +236,9 @@ const collectAllWhileEffectReader = <In, R, E>(
           return pipe(core.write(leftovers), channel.zipRight(core.succeed(pipe(done, Chunk.appendAll(collected)))))
         })
       ),
-    core.fail,
-    () => core.succeed(done)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeed(done)
+  })
 
 /** @internal */
 export const collectAllWhileWith = dual<
@@ -269,11 +269,11 @@ export const collectAllWhileWith = dual<
       core.fromEffect(refs),
       core.flatMap(([leftoversRef, upstreamDoneRef]) => {
         const upstreamMarker: Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, unknown> =
-          core.readWith(
-            (input) => pipe(core.write(input), core.flatMap(() => upstreamMarker)),
-            core.fail,
-            (done) => pipe(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done))
-          )
+          core.readWith({
+            onInput: (input) => pipe(core.write(input), core.flatMap(() => upstreamMarker)),
+            onFailure: core.fail,
+            onDone: (done) => pipe(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done))
+          })
         return pipe(
           upstreamMarker,
           core.pipeTo(channel.bufferChunk(leftoversRef)),
@@ -295,12 +295,11 @@ const collectAllWhileWithLoop = <R, E, In, L extends In, Z, S>(
   f: (s: S, z: Z) => S
 ): Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, S> => {
   return pipe(
-    self,
-    toChannel,
+    toChannel(self),
     channel.doneCollect,
-    channel.foldChannel(
-      core.fail,
-      ([leftovers, doneValue]) =>
+    channel.foldChannel({
+      onFailure: core.fail,
+      onSuccess: ([leftovers, doneValue]) =>
         p(doneValue)
           ? pipe(
             core.fromEffect(
@@ -319,7 +318,7 @@ const collectAllWhileWithLoop = <R, E, In, L extends In, Z, S>(
             )
           )
           : pipe(core.write(Chunk.flatten(leftovers)), channel.as(currentResult))
-    )
+    })
   )
 }
 
@@ -379,11 +378,11 @@ export const contramapChunks = dual<
     self: Sink.Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
   ): Sink.Sink<R, E, In0, L, Z> => {
-    const loop: Channel.Channel<R, never, Chunk.Chunk<In0>, unknown, never, Chunk.Chunk<In>, unknown> = core.readWith(
-      (chunk) => pipe(core.write(f(chunk)), core.flatMap(() => loop)),
-      core.fail,
-      core.succeed
-    )
+    const loop: Channel.Channel<R, never, Chunk.Chunk<In0>, unknown, never, Chunk.Chunk<In>, unknown> = core.readWith({
+      onInput: (chunk) => pipe(core.write(f(chunk)), core.flatMap(() => loop)),
+      onFailure: core.fail,
+      onDone: core.succeed
+    })
     return new SinkImpl(pipe(loop, core.pipeTo(toChannel(self))))
   }
 )
@@ -404,11 +403,11 @@ export const contramapChunksEffect = dual<
     f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
   ): Sink.Sink<R | R2, E | E2, In0, L, Z> => {
     const loop: Channel.Channel<R | R2, never, Chunk.Chunk<In0>, unknown, E2, Chunk.Chunk<In>, unknown> = core
-      .readWith(
-        (chunk) => pipe(core.fromEffect(f(chunk)), core.flatMap(core.write), core.flatMap(() => loop)),
-        core.fail,
-        core.succeed
-      )
+      .readWith({
+        onInput: (chunk) => pipe(core.fromEffect(f(chunk)), core.flatMap(core.write), core.flatMap(() => loop)),
+        onFailure: core.fail,
+        onDone: core.succeed
+      })
     return new SinkImpl(pipe(loop, channel.pipeToOrFail(toChannel(self))))
   }
 )
@@ -520,8 +519,8 @@ export const drop = <In>(n: number): Sink.Sink<never, never, In, In, unknown> =>
 const dropLoop = <In>(
   n: number
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, unknown> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) => {
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) => {
       const dropped = pipe(input, Chunk.drop(n))
       const leftover = Math.max(n - input.length, 0)
       const more = Chunk.isEmpty(input) || leftover > 0
@@ -533,9 +532,9 @@ const dropLoop = <In>(
         channel.zipRight(channel.identityChannel<never, Chunk.Chunk<In>, unknown>())
       )
     },
-    core.fail,
-    core.unit
-  )
+    onFailure: core.fail,
+    onDone: core.unit
+  })
 
 /** @internal */
 export const dropUntil = <In>(predicate: Predicate<In>): Sink.Sink<never, never, In, In, unknown> =>
@@ -552,8 +551,8 @@ export const dropUntilEffect = <In, R, E>(
 const dropUntilEffectReader = <In, R, E>(
   predicate: (input: In) => Effect.Effect<R, E, boolean>
 ): Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<In>, unknown> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         input,
         Effect.dropUntil(predicate),
@@ -568,9 +567,9 @@ const dropUntilEffectReader = <In, R, E>(
         }),
         channel.unwrap
       ),
-    core.fail,
-    core.unit
-  )
+    onFailure: core.fail,
+    onDone: core.unit
+  })
 
 /** @internal */
 export const dropWhile = <In>(predicate: Predicate<In>): Sink.Sink<never, never, In, In, unknown> =>
@@ -580,17 +579,17 @@ export const dropWhile = <In>(predicate: Predicate<In>): Sink.Sink<never, never,
 const dropWhileReader = <In>(
   predicate: Predicate<In>
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, unknown> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) => {
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) => {
       const out = pipe(input, Chunk.dropWhile(predicate))
       if (Chunk.isEmpty(out)) {
         return dropWhileReader(predicate)
       }
       return pipe(core.write(out), channel.zipRight(channel.identityChannel<never, Chunk.Chunk<In>, unknown>()))
     },
-    core.fail,
-    core.succeedNow
-  )
+    onFailure: core.fail,
+    onDone: core.succeedNow
+  })
 
 /** @internal */
 export const dropWhileEffect = <In, R, E>(
@@ -601,8 +600,8 @@ export const dropWhileEffect = <In, R, E>(
 const dropWhileEffectReader = <In, R, E>(
   predicate: (input: In) => Effect.Effect<R, E, boolean>
 ): Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<In>, unknown> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         input,
         Effect.dropWhile(predicate),
@@ -617,9 +616,9 @@ const dropWhileEffectReader = <In, R, E>(
         }),
         channel.unwrap
       ),
-    core.fail,
-    core.unit
-  )
+    onFailure: core.fail,
+    onDone: core.unit
+  })
 
 /** @internal */
 export const ensuring = dual<
@@ -747,41 +746,38 @@ export const findEffect = dual<
       )),
       core.flatMap(([leftoversRef, upstreamDoneRef]) => {
         const upstreamMarker: Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, unknown> =
-          core.readWith(
-            (input) => pipe(core.write(input), core.flatMap(() => upstreamMarker)),
-            core.fail,
-            (done) => pipe(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done))
-          )
+          core.readWith({
+            onInput: (input) => pipe(core.write(input), core.flatMap(() => upstreamMarker)),
+            onFailure: core.fail,
+            onDone: (done) => pipe(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done))
+          })
         const loop: Channel.Channel<R | R2, never, Chunk.Chunk<In>, unknown, E | E2, Chunk.Chunk<L>, Option.Option<Z>> =
-          pipe(
-            core.collectElements(toChannel(self)),
-            channel.foldChannel(
-              core.fail,
-              ([leftovers, doneValue]) =>
-                pipe(
-                  core.fromEffect(f(doneValue)),
-                  core.flatMap((satisfied) =>
-                    pipe(
-                      core.fromEffect(Ref.set(leftoversRef, Chunk.flatten(leftovers))),
-                      channel.zipRight(
-                        pipe(
-                          core.fromEffect(Ref.get(upstreamDoneRef)),
-                          core.flatMap((upstreamDone) => {
-                            if (satisfied) {
-                              return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.some(doneValue)))
-                            }
-                            if (upstreamDone) {
-                              return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.none()))
-                            }
-                            return loop
-                          })
-                        )
+          channel.foldChannel(core.collectElements(toChannel(self)), {
+            onFailure: core.fail,
+            onSuccess: ([leftovers, doneValue]) =>
+              pipe(
+                core.fromEffect(f(doneValue)),
+                core.flatMap((satisfied) =>
+                  pipe(
+                    core.fromEffect(Ref.set(leftoversRef, Chunk.flatten(leftovers))),
+                    channel.zipRight(
+                      pipe(
+                        core.fromEffect(Ref.get(upstreamDoneRef)),
+                        core.flatMap((upstreamDone) => {
+                          if (satisfied) {
+                            return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.some(doneValue)))
+                          }
+                          if (upstreamDone) {
+                            return pipe(core.write(Chunk.flatten(leftovers)), channel.as(Option.none()))
+                          }
+                          return loop
+                        })
                       )
                     )
                   )
                 )
-            )
-          )
+              )
+          })
         return pipe(upstreamMarker, core.pipeTo(channel.bufferChunk(leftoversRef)), core.pipeTo(loop))
       })
     )
@@ -805,17 +801,17 @@ const foldReader = <S, In>(
   if (!contFn(s)) {
     return core.succeedNow(s)
   }
-  return core.readWith(
-    (input: Chunk.Chunk<In>) => {
+  return core.readWith({
+    onInput: (input: Chunk.Chunk<In>) => {
       const [nextS, leftovers] = foldChunkSplit(s, input, contFn, f, 0, input.length)
       if (Chunk.isNonEmpty(leftovers)) {
         return pipe(core.write(leftovers), channel.as(nextS))
       }
       return foldReader(nextS, contFn, f)
     },
-    core.fail,
-    () => core.succeedNow(s)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeedNow(s)
+  })
 }
 
 /** @internal */
@@ -867,9 +863,9 @@ export const foldSink = dual<
       self,
       toChannel,
       core.collectElements,
-      channel.foldChannel(
-        (error) => toChannel(onFailure(error)),
-        ([leftovers, z]) =>
+      channel.foldChannel({
+        onFailure: (error) => toChannel(onFailure(error)),
+        onSuccess: ([leftovers, z]) =>
           core.suspend(() => {
             const leftoversRef = {
               ref: pipe(leftovers, Chunk.filter(Chunk.isNonEmpty)) as Chunk.Chunk<Chunk.Chunk<L1 | L2>>
@@ -903,7 +899,7 @@ export const foldSink = dual<
               )
             )
           })
-      )
+      })
     )
     return new SinkImpl(newChannel)
   }
@@ -925,11 +921,11 @@ const foldChunksReader = <S, In>(
   if (!contFn(s)) {
     return core.succeedNow(s)
   }
-  return core.readWith(
-    (input: Chunk.Chunk<In>) => foldChunksReader(f(s, input), contFn, f),
-    core.fail,
-    () => core.succeedNow(s)
-  )
+  return core.readWith({
+    onInput: (input: Chunk.Chunk<In>) => foldChunksReader(f(s, input), contFn, f),
+    onFailure: core.fail,
+    onDone: () => core.succeedNow(s)
+  })
 }
 
 /** @internal */
@@ -948,15 +944,15 @@ const foldChunksEffectReader = <S, R, E, In>(
   if (!contFn(s)) {
     return core.succeedNow(s)
   }
-  return core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  return core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         core.fromEffect(f(s, input)),
         core.flatMap((s) => foldChunksEffectReader(s, contFn, f))
       ),
-    core.fail,
-    () => core.succeedNow(s)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeedNow(s)
+  })
 }
 
 /** @internal */
@@ -975,8 +971,8 @@ const foldEffectReader = <S, In, R, E>(
   if (!contFn(s)) {
     return core.succeedNow(s)
   }
-  return core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  return core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         core.fromEffect(foldChunkSplitEffect(s, input, contFn, f)),
         core.flatMap(([nextS, leftovers]) =>
@@ -989,9 +985,9 @@ const foldEffectReader = <S, In, R, E>(
           )
         )
       ),
-    core.fail,
-    () => core.succeedNow(s)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeedNow(s)
+  })
 }
 
 /** @internal */
@@ -1101,8 +1097,8 @@ const foldWeightedDecomposeLoop = <S, In>(
   decompose: (input: In) => Chunk.Chunk<In>,
   f: (s: S, input: In) => S
 ): Channel.Channel<never, never, Chunk.Chunk<In>, unknown, never, Chunk.Chunk<In>, S> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) => {
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) => {
       const [nextS, nextCost, nextDirty, leftovers] = foldWeightedDecomposeFold(
         input,
         0,
@@ -1122,9 +1118,9 @@ const foldWeightedDecomposeLoop = <S, In>(
       }
       return foldWeightedDecomposeLoop(nextS, nextCost, nextDirty, max, costFn, decompose, f)
     },
-    core.fail,
-    () => core.succeedNow(s)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeedNow(s)
+  })
 
 /** @internal */
 const foldWeightedDecomposeFold = <In, S>(
@@ -1199,8 +1195,8 @@ const foldWeightedDecomposeEffectLoop = <S, In, R, E, R2, E2, R3, E3>(
   cost: number,
   dirty: boolean
 ): Channel.Channel<R | R2 | R3, E | E2 | E3, Chunk.Chunk<In>, unknown, E | E2 | E3, Chunk.Chunk<In>, S> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         core.fromEffect(foldWeightedDecomposeEffectFold(s, max, costFn, decompose, f, input, dirty, cost, 0)),
         core.flatMap(([nextS, nextCost, nextDirty, leftovers]) => {
@@ -1213,9 +1209,9 @@ const foldWeightedDecomposeEffectLoop = <S, In, R, E, R2, E2, R3, E3>(
           return foldWeightedDecomposeEffectLoop(nextS, max, costFn, decompose, f, nextCost, nextDirty)
         })
       ),
-    core.fail,
-    () => core.succeedNow(s)
-  )
+    onFailure: core.fail,
+    onDone: () => core.succeedNow(s)
+  })
 
 /** @internal */
 const foldWeightedDecomposeEffectFold = <S, In, R, E, R2, E2, R3, E3>(
@@ -1291,12 +1287,12 @@ export const flatMap = dual<
 
 /** @internal */
 export const forEach = <In, R, E, _>(f: (input: In) => Effect.Effect<R, E, _>): Sink.Sink<R, E, In, never, void> => {
-  const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause(
-    (input: Chunk.Chunk<In>) =>
+  const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(core.fromEffect(Effect.forEach(input, f, { discard: true })), core.flatMap(() => process)),
-    core.failCause,
-    core.unit
-  )
+    onFailure: core.failCause,
+    onDone: core.unit
+  })
   return new SinkImpl(process)
 }
 
@@ -1304,11 +1300,11 @@ export const forEach = <In, R, E, _>(f: (input: In) => Effect.Effect<R, E, _>): 
 export const forEachChunk = <In, R, E, _>(
   f: (input: Chunk.Chunk<In>) => Effect.Effect<R, E, _>
 ): Sink.Sink<R, E, In, never, void> => {
-  const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause(
-    (input: Chunk.Chunk<In>) => pipe(core.fromEffect(f(input)), core.flatMap(() => process)),
-    core.failCause,
-    core.unit
-  )
+  const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause({
+    onInput: (input: Chunk.Chunk<In>) => pipe(core.fromEffect(f(input)), core.flatMap(() => process)),
+    onFailure: core.failCause,
+    onDone: core.unit
+  })
   return new SinkImpl(process)
 }
 
@@ -1316,11 +1312,11 @@ export const forEachChunk = <In, R, E, _>(
 export const forEachWhile = <In, R, E>(
   f: (input: In) => Effect.Effect<R, E, boolean>
 ): Sink.Sink<R, E, In, In, void> => {
-  const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<In>, void> = core.readWithCause(
-    (input: Chunk.Chunk<In>) => forEachWhileReader(f, input, 0, input.length, process),
-    core.failCause,
-    core.unit
-  )
+  const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<In>, void> = core.readWithCause({
+    onInput: (input: Chunk.Chunk<In>) => forEachWhileReader(f, input, 0, input.length, process),
+    onFailure: core.failCause,
+    onDone: core.unit
+  })
   return new SinkImpl(process)
 }
 
@@ -1350,15 +1346,15 @@ const forEachWhileReader = <In, R, E>(
 export const forEachChunkWhile = <In, R, E>(
   f: (input: Chunk.Chunk<In>) => Effect.Effect<R, E, boolean>
 ): Sink.Sink<R, E, In, In, void> => {
-  const reader: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWith(
-    (input: Chunk.Chunk<In>) =>
+  const reader: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         core.fromEffect(f(input)),
         core.flatMap((cont) => cont ? reader : core.unit())
       ),
-    core.fail,
-    core.unit
-  )
+    onFailure: core.fail,
+    onDone: core.unit
+  })
   return new SinkImpl(reader)
 }
 
@@ -1392,46 +1388,32 @@ const fromPushPull = <R, E, In, L, Z>(
     option: Option.Option<Chunk.Chunk<In>>
   ) => Effect.Effect<R, readonly [Either.Either<E, Z>, Chunk.Chunk<L>], void>
 ): Channel.Channel<R, never, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<L>, Z> =>
-  core.readWith(
-    (input: Chunk.Chunk<In>) =>
-      pipe(
-        core.fromEffect(push(Option.some(input))),
-        channel.foldChannel(
-          ([either, leftovers]) =>
-            pipe(
-              either,
-              Either.match({
-                onLeft: (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
-                onRight: (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
-              })
-            ),
-          () => fromPushPull(push)
-        )
-      ),
-    core.fail,
-    () =>
-      pipe(
-        core.fromEffect(push(Option.none())),
-        channel.foldChannel(
-          ([either, leftovers]) =>
-            pipe(
-              either,
-              Either.match({
-                onLeft: (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
-                onRight: (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
-              })
-            ),
-          () =>
-            pipe(
-              core.fromEffect(
-                Effect.dieMessage(
-                  "BUG: Sink.fromPush - please report an issue at https://github.com/Effect-TS/stream/issues"
-                )
-              )
+  core.readWith({
+    onInput: (input: Chunk.Chunk<In>) =>
+      channel.foldChannel(core.fromEffect(push(Option.some(input))), {
+        onFailure: ([either, leftovers]) =>
+          Either.match(either, {
+            onLeft: (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
+            onRight: (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
+          }),
+        onSuccess: () => fromPushPull(push)
+      }),
+    onFailure: core.fail,
+    onDone: () =>
+      channel.foldChannel(core.fromEffect(push(Option.none())), {
+        onFailure: ([either, leftovers]) =>
+          Either.match(either, {
+            onLeft: (error) => pipe(core.write(leftovers), channel.zipRight(core.fail(error))),
+            onRight: (z) => pipe(core.write(leftovers), channel.zipRight(core.succeedNow(z)))
+          }),
+        onSuccess: () =>
+          core.fromEffect(
+            Effect.dieMessage(
+              "BUG: Sink.fromPush - please report an issue at https://github.com/Effect-TS/stream/issues"
             )
-        )
-      )
-  )
+          )
+      })
+  })
 
 /** @internal */
 export const fromQueue = <In>(queue: Queue.Enqueue<In>): Sink.Sink<never, never, In, never, void> =>
@@ -1681,11 +1663,11 @@ export const raceWithCapacity = dual<
       const writer = pipe(
         channel1,
         core.pipeTo(toChannel(self)),
-        channel.mergeWith(
-          pipe(channel2, core.pipeTo(toChannel(that))),
-          leftDone,
-          rightDone
-        )
+        channel.mergeWith({
+          other: pipe(channel2, core.pipeTo(toChannel(that))),
+          onSelfDone: leftDone,
+          onOtherDone: rightDone
+        })
       )
       const racedChannel: Channel.Channel<
         R | R2,
@@ -1695,14 +1677,11 @@ export const raceWithCapacity = dual<
         E | E2,
         Chunk.Chunk<L | L2>,
         Z3 | Z4
-      > = pipe(
-        reader,
-        channel.mergeWith(
-          writer,
-          () => mergeDecision.Await((exit) => Effect.suspend(() => exit)),
-          (done) => mergeDecision.Done(Effect.suspend(() => done))
-        )
-      )
+      > = channel.mergeWith(reader, {
+        other: writer,
+        onSelfDone: (_) => mergeDecision.Await((exit) => Effect.suspend(() => exit)),
+        onOtherDone: (done) => mergeDecision.Done(Effect.suspend(() => done))
+      })
       return new SinkImpl(racedChannel)
     })
     return unwrapScoped(scoped)
@@ -1821,29 +1800,38 @@ const splitWhereSplitter = <E, A>(
   leftovers: Ref.Ref<Chunk.Chunk<A>>,
   f: Predicate<A>
 ): Channel.Channel<never, never, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<A>, unknown> =>
-  core.readWithCause(
-    (input) => {
+  core.readWithCause({
+    onInput: (input) => {
       if (Chunk.isEmpty(input)) {
         return splitWhereSplitter<E, A>(written, leftovers, f)
       }
       if (written) {
         const index = indexWhere(input, f)
         if (index === -1) {
-          return pipe(core.write(input), channel.zipRight(splitWhereSplitter<E, A>(true, leftovers, f)))
+          return channel.zipRight(
+            core.write(input),
+            splitWhereSplitter<E, A>(true, leftovers, f)
+          )
         }
-        const [left, right] = pipe(input, Chunk.splitAt(index))
-        return pipe(core.write(left), channel.zipRight(core.fromEffect(Ref.set(leftovers, right))))
+        const [left, right] = Chunk.splitAt(input, index)
+        return channel.zipRight(
+          core.write(left),
+          core.fromEffect(Ref.set(leftovers, right))
+        )
       }
       const index = indexWhere(input, f, 1)
       if (index === -1) {
-        return pipe(core.write(input), channel.zipRight(splitWhereSplitter<E, A>(true, leftovers, f)))
+        return channel.zipRight(
+          core.write(input),
+          splitWhereSplitter<E, A>(true, leftovers, f)
+        )
       }
       const [left, right] = pipe(input, Chunk.splitAt(Math.max(index, 1)))
-      return pipe(core.write(left), channel.zipRight(core.fromEffect(Ref.set(leftovers, right))))
+      return channel.zipRight(core.write(left), core.fromEffect(Ref.set(leftovers, right)))
     },
-    core.failCause,
-    core.succeed
-  )
+    onFailure: core.failCause,
+    onDone: core.succeed
+  })
 
 /** @internal */
 const indexWhere = <A>(self: Chunk.Chunk<A>, predicate: Predicate<A>, from = 0): number => {

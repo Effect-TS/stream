@@ -84,9 +84,6 @@ Added in v1.0.0
   - [mapOutEffect](#mapouteffect)
   - [mapOutEffectPar](#mapouteffectpar)
   - [mergeMap](#mergemap)
-  - [mergeMapBuffer](#mergemapbuffer)
-  - [mergeMapBufferStrategy](#mergemapbufferstrategy)
-  - [mergeMapStrategy](#mergemapstrategy)
 - [models](#models)
   - [Channel (interface)](#channel-interface)
   - [ChannelException (interface)](#channelexception-interface)
@@ -182,11 +179,11 @@ non-empty, the value inside the buffer will be passed along as output.
 **Signature**
 
 ```ts
-export declare const buffer: <InErr, InElem, InDone>(
-  empty: InElem,
-  isEmpty: Predicate<InElem>,
-  ref: Ref.Ref<InElem>
-) => Channel<never, InErr, InElem, InDone, InErr, InElem, InDone>
+export declare const buffer: <InErr, InElem, InDone>(options: {
+  readonly empty: InElem
+  readonly isEmpty: Predicate<InElem>
+  readonly ref: Ref.Ref<InElem>
+}) => Channel<never, InErr, InElem, InDone, InErr, InElem, InDone>
 ```
 
 Added in v1.0.0
@@ -469,11 +466,11 @@ export declare const readWith: <
   OutErr3,
   OutElem3,
   OutDone3
->(
-  input: (input: InElem) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  error: (error: InErr) => Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
-  done: (done: InDone) => Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
-) => Channel<
+>(options: {
+  readonly onInput: (input: InElem) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  readonly onFailure: (error: InErr) => Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
+  readonly onDone: (done: InDone) => Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+}) => Channel<
   Env | Env2 | Env3,
   InErr,
   InElem,
@@ -507,11 +504,11 @@ export declare const readWithCause: <
   OutErr3,
   OutElem3,
   OutDone3
->(
-  input: (input: InElem) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-  halt: (cause: Cause.Cause<InErr>) => Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>,
-  done: (done: InDone) => Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
-) => Channel<
+>(options: {
+  readonly onInput: (input: InElem) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  readonly onFailure: (cause: Cause.Cause<InErr>) => Channel<Env2, InErr, InElem, InDone, OutErr2, OutElem2, OutDone2>
+  readonly onDone: (done: InDone) => Channel<Env3, InErr, InElem, InDone, OutErr3, OutElem3, OutDone3>
+}) => Channel<
   Env | Env2 | Env3,
   InErr,
   InElem,
@@ -1375,94 +1372,22 @@ created. See `Channel.mergeAll`.
 export declare const mergeMap: {
   <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
     f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number
+    options: {
+      readonly concurrency: number | 'unbounded'
+      readonly bufferSize?: number
+      readonly mergeStrategy?: MergeStrategy.MergeStrategy
+    }
   ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
   <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number
-  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
-}
-```
-
-Added in v1.0.0
-
-## mergeMapBuffer
-
-Like `mergeMap`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeMapBuffer: {
-  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number,
-    bufferSize: number
-  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
-  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number,
-    bufferSize: number
-  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
-}
-```
-
-Added in v1.0.0
-
-## mergeMapBufferStrategy
-
-Like `mergeMap`, but with a configurable `bufferSize` and `mergeStrategy` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeMapBufferStrategy: {
-  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number,
-    bufferSize: number,
-    mergeStrategy: MergeStrategy.MergeStrategy
-  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
-  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number,
-    bufferSize: number,
-    mergeStrategy: MergeStrategy.MergeStrategy
-  ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
-}
-```
-
-Added in v1.0.0
-
-## mergeMapStrategy
-
-Like `mergeMap`, but with a configurable `mergeStrategy` parameter.
-
-**Signature**
-
-```ts
-export declare const mergeMapStrategy: {
-  <OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number,
-    mergeStrategy: MergeStrategy.MergeStrategy
-  ): <Env, InErr, InElem, InDone, OutErr, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env1 | Env, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr1 | OutErr, OutElem1, unknown>
-  <Env, InErr, InElem, InDone, OutErr, OutDone, OutElem, Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (outElem: OutElem) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, Z>,
-    n: number,
-    mergeStrategy: MergeStrategy.MergeStrategy
+    options: {
+      readonly concurrency: number | 'unbounded'
+      readonly bufferSize?: number
+      readonly mergeStrategy?: MergeStrategy.MergeStrategy
+    }
   ): Channel<Env | Env1, InErr & InErr1, InElem & InElem1, InDone & InDone1, OutErr | OutErr1, OutElem1, unknown>
 }
 ```
@@ -2170,10 +2095,10 @@ export declare const foldCauseChannel: {
     OutDone,
     OutDone2,
     OutDone3
-  >(
-    onError: (c: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-    onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
-  ): <Env, InErr, InElem, InDone, OutElem>(
+  >(options: {
+    readonly onFailure: (c: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>
+    readonly onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+  }): <Env, InErr, InElem, InDone, OutElem>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
     Env1 | Env2 | Env,
@@ -2208,8 +2133,12 @@ export declare const foldCauseChannel: {
     OutDone3
   >(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    onError: (c: Cause.Cause<OutErr>) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>,
-    onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    options: {
+      readonly onFailure: (
+        c: Cause.Cause<OutErr>
+      ) => Channel<Env1, InErr1, InElem1, InDone1, OutErr2, OutElem1, OutDone2>
+      readonly onSuccess: (o: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr3, OutElem2, OutDone3>
+    }
   ): Channel<
     Env | Env1 | Env2,
     InErr & InErr1 & InErr2,
@@ -2249,10 +2178,10 @@ export declare const foldChannel: {
     OutDone,
     OutDone1,
     OutDone2
-  >(
-    onError: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-    onSuccess: (done: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
-  ): <Env, InErr, InElem, InDone, OutElem>(
+  >(options: {
+    readonly onFailure: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    readonly onSuccess: (done: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
+  }): <Env, InErr, InElem, InDone, OutElem>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
     Env1 | Env2 | Env,
@@ -2287,8 +2216,10 @@ export declare const foldChannel: {
     OutDone2
   >(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    onError: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-    onSuccess: (done: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
+    options: {
+      readonly onFailure: (error: OutErr) => Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+      readonly onSuccess: (done: OutDone) => Channel<Env2, InErr2, InElem2, InDone2, OutErr2, OutElem2, OutDone2>
+    }
   ): Channel<
     Env | Env1 | Env2,
     InErr & InErr1 & InErr2,
@@ -2375,11 +2306,11 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const mergeAll: (
-  n: number,
-  bufferSize?: number,
-  mergeStrategy?: MergeStrategy.MergeStrategy
-) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
+export declare const mergeAll: (options: {
+  readonly concurrency: number | 'unbounded'
+  readonly bufferSize?: number
+  readonly mergeStrategy?: MergeStrategy.MergeStrategy
+}) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem>(
   channels: Channel<
     Env,
     InErr,
@@ -2465,11 +2396,15 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const mergeAllWith: (
-  n: number,
-  bufferSize?: number,
-  mergeStrategy?: MergeStrategy.MergeStrategy
-) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem, OutDone>(
+export declare const mergeAllWith: ({
+  bufferSize,
+  concurrency,
+  mergeStrategy,
+}: {
+  readonly concurrency: number | 'unbounded'
+  readonly bufferSize?: number | undefined
+  readonly mergeStrategy?: MergeStrategy.MergeStrategy | undefined
+}) => <Env, Env1, InErr, InErr1, InElem, InElem1, InDone, InDone1, OutErr, OutErr1, OutElem, OutDone>(
   channels: Channel<
     Env,
     InErr,
@@ -2585,15 +2520,29 @@ decisions.
 
 ```ts
 export declare const mergeWith: {
-  <Env1, InErr1, InElem1, InDone1, OutErr, OutErr1, OutErr2, OutErr3, OutElem1, OutDone, OutDone1, OutDone2, OutDone3>(
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-    leftDone: (
+  <
+    Env1,
+    InErr1,
+    InElem1,
+    InDone1,
+    OutErr,
+    OutErr1,
+    OutErr2,
+    OutErr3,
+    OutElem1,
+    OutDone,
+    OutDone1,
+    OutDone2,
+    OutDone3
+  >(options: {
+    readonly other: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+    readonly onSelfDone: (
       exit: Exit.Exit<OutErr, OutDone>
-    ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>,
-    rightDone: (
+    ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>
+    readonly onOtherDone: (
       ex: Exit.Exit<OutErr1, OutDone1>
     ) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
-  ): <Env, InErr, InElem, InDone, OutElem>(
+  }): <Env, InErr, InElem, InDone, OutElem>(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ) => Channel<
     Env1 | Env,
@@ -2625,13 +2574,15 @@ export declare const mergeWith: {
     OutDone3
   >(
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    that: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>,
-    leftDone: (
-      exit: Exit.Exit<OutErr, OutDone>
-    ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>,
-    rightDone: (
-      ex: Exit.Exit<OutErr1, OutDone1>
-    ) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
+    options: {
+      readonly other: Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem1, OutDone1>
+      readonly onSelfDone: (
+        exit: Exit.Exit<OutErr, OutDone>
+      ) => MergeDecision.MergeDecision<Env1, OutErr1, OutDone1, OutErr2, OutDone2>
+      readonly onOtherDone: (
+        ex: Exit.Exit<OutErr1, OutDone1>
+      ) => MergeDecision.MergeDecision<Env1, OutErr, OutDone, OutErr3, OutDone3>
+    }
   ): Channel<
     Env | Env1,
     InErr & InErr1,
