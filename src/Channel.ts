@@ -1577,7 +1577,7 @@ export const mergeWith: {
  * @since 1.0.0
  * @category constructors
  */
-export const never: () => Channel<never, unknown, unknown, unknown, never, never, never> = channel.never
+export const never: Channel<never, unknown, unknown, unknown, never, never, never> = channel.never
 
 /**
  * Translates channel failure into death of the fiber, making all failures
@@ -2002,7 +2002,7 @@ export const toStream: <Env, OutErr, OutElem, OutDone>(
  * @since 1.0.0
  * @category constructors
  */
-export const unit: () => Channel<never, unknown, unknown, unknown, never, never, void> = core.unit
+export const unit: Channel<never, unknown, unknown, unknown, never, never, void> = core.unit
 
 /**
  * Makes a channel from an effect that returns a channel in case of success.

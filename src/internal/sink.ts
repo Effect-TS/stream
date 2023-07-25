@@ -59,6 +59,10 @@ export const isSink = (u: unknown): u is Sink.Sink<unknown, unknown, unknown, un
   typeof u === "object" && u != null && SinkTypeId in u
 
 /** @internal */
+export const suspend = <R, E, In, L, Z>(evaluate: LazyArg<Sink.Sink<R, E, In, L, Z>>): Sink.Sink<R, E, In, L, Z> =>
+  new SinkImpl(core.suspend(() => toChannel(evaluate())))
+
+/** @internal */
 export const as = dual<
   <Z2>(z: Z2) => <R, E, In, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R, E, In, L, Z2>,
   <R, E, In, L, Z, Z2>(self: Sink.Sink<R, E, In, L, Z>, z: Z2) => Sink.Sink<R, E, In, L, Z2>
@@ -429,10 +433,6 @@ export const contramapChunksEffect = dual<
 )
 
 /** @internal */
-export const count = (): Sink.Sink<never, never, unknown, never, number> =>
-  foldLeftChunks(0, (acc, chunk) => acc + chunk.length)
-
-/** @internal */
 export const die = (defect: unknown): Sink.Sink<never, never, unknown, never, never> => failCause(Cause.die(defect))
 
 /** @internal */
@@ -557,8 +557,9 @@ export const dimapChunksEffect = dual<
 )
 
 /** @internal */
-export const drain = (): Sink.Sink<never, never, unknown, never, void> =>
-  new SinkImpl(channel.drain(channel.identityChannel<never, unknown, unknown>()))
+export const drain: Sink.Sink<never, never, unknown, never, void> = new SinkImpl(
+  channel.drain(channel.identityChannel<never, unknown, unknown>())
+)
 
 /** @internal */
 export const drop = <In>(n: number): Sink.Sink<never, never, In, In, unknown> =>
@@ -582,7 +583,7 @@ const dropLoop = <In>(
       )
     },
     onFailure: core.fail,
-    onDone: core.unit
+    onDone: () => core.unit
   })
 
 /** @internal */
@@ -617,7 +618,7 @@ const dropUntilEffectReader = <In, R, E>(
         channel.unwrap
       ),
     onFailure: core.fail,
-    onDone: core.unit
+    onDone: () => core.unit
   })
 
 /** @internal */
@@ -666,7 +667,7 @@ const dropWhileEffectReader = <In, R, E>(
         channel.unwrap
       ),
     onFailure: core.fail,
-    onDone: core.unit
+    onDone: () => core.unit
   })
 
 /** @internal */
@@ -1376,7 +1377,7 @@ export const forEach = <In, R, E, _>(f: (input: In) => Effect.Effect<R, E, _>): 
     onInput: (input: Chunk.Chunk<In>) =>
       pipe(core.fromEffect(Effect.forEach(input, f, { discard: true })), core.flatMap(() => process)),
     onFailure: core.failCause,
-    onDone: core.unit
+    onDone: () => core.unit
   })
   return new SinkImpl(process)
 }
@@ -1388,7 +1389,7 @@ export const forEachChunk = <In, R, E, _>(
   const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause({
     onInput: (input: Chunk.Chunk<In>) => pipe(core.fromEffect(f(input)), core.flatMap(() => process)),
     onFailure: core.failCause,
-    onDone: core.unit
+    onDone: () => core.unit
   })
   return new SinkImpl(process)
 }
@@ -1400,7 +1401,7 @@ export const forEachWhile = <In, R, E>(
   const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, Chunk.Chunk<In>, void> = core.readWithCause({
     onInput: (input: Chunk.Chunk<In>) => forEachWhileReader(f, input, 0, input.length, process),
     onFailure: core.failCause,
-    onDone: core.unit
+    onDone: () => core.unit
   })
   return new SinkImpl(process)
 }
@@ -1435,10 +1436,10 @@ export const forEachChunkWhile = <In, R, E>(
     onInput: (input: Chunk.Chunk<In>) =>
       pipe(
         core.fromEffect(f(input)),
-        core.flatMap((cont) => cont ? reader : core.unit())
+        core.flatMap((cont) => cont ? reader : core.unit)
       ),
     onFailure: core.fail,
-    onDone: core.unit
+    onDone: () => core.unit
   })
   return new SinkImpl(reader)
 }
@@ -1583,20 +1584,7 @@ export const mapLeftover = dual<
 )
 
 /** @internal */
-export const mkString = (): Sink.Sink<never, never, unknown, never, string> =>
-  suspend(() => {
-    const strings: Array<string> = []
-    return pipe(
-      foldLeftChunks<void, unknown>(void 0, (_, elems) =>
-        Chunk.map(elems, (elem) => {
-          strings.push(String(elem))
-        })),
-      map(() => strings.join(""))
-    )
-  })
-
-/** @internal */
-export const never = (): Sink.Sink<never, never, unknown, never, never> => fromEffect(Effect.never)
+export const never: Sink.Sink<never, never, unknown, never, never> = fromEffect(Effect.never)
 
 /** @internal */
 export const orElse = dual<
@@ -1903,8 +1891,10 @@ const indexWhere = <A>(self: Chunk.Chunk<A>, predicate: Predicate<A>, from = 0):
 export const succeed = <Z>(z: Z): Sink.Sink<never, never, unknown, never, Z> => new SinkImpl(core.succeed(z))
 
 /** @internal */
-export const sum = (): Sink.Sink<never, never, number, never, number> =>
-  foldLeftChunks(0, (acc, chunk) => acc + Chunk.reduce(chunk, 0, (s, a) => s + a))
+export const sum: Sink.Sink<never, never, number, never, number> = foldLeftChunks(
+  0,
+  (acc, chunk) => acc + Chunk.reduce(chunk, 0, (s, a) => s + a)
+)
 
 /** @internal */
 export const summarized = dual<
@@ -1944,10 +1934,6 @@ export const summarized = dual<
 )
 
 /** @internal */
-export const suspend = <R, E, In, L, Z>(evaluate: LazyArg<Sink.Sink<R, E, In, L, Z>>): Sink.Sink<R, E, In, L, Z> =>
-  new SinkImpl(core.suspend(() => toChannel(evaluate())))
-
-/** @internal */
 export const sync = <Z>(evaluate: LazyArg<Z>): Sink.Sink<never, never, unknown, never, Z> =>
   new SinkImpl(core.sync(evaluate))
 
@@ -1964,10 +1950,6 @@ export const take = <In>(n: number): Sink.Sink<never, never, In, In, Chunk.Chunk
       return new SinkImpl(pipe(core.write(leftover), channel.zipRight(core.succeedNow(taken))))
     })
   )
-
-/** @internal */
-export const timed = (): Sink.Sink<never, never, unknown, never, Duration.Duration> =>
-  pipe(withDuration(drain()), map((tuple) => tuple[1]))
 
 /** @internal */
 export const toChannel = <R, E, In, L, Z>(
@@ -2112,3 +2094,29 @@ export const zipWith = dual<
 export const channelToSink = <Env, InErr, InElem, OutErr, OutElem, OutDone>(
   self: Channel.Channel<Env, InErr, Chunk.Chunk<InElem>, unknown, OutErr, Chunk.Chunk<OutElem>, OutDone>
 ): Sink.Sink<Env, OutErr, InElem, OutElem, OutDone> => new SinkImpl(self)
+
+// Constants
+
+/** @internal */
+export const count: Sink.Sink<never, never, unknown, never, number> = foldLeftChunks(
+  0,
+  (acc, chunk) => acc + chunk.length
+)
+
+/** @internal */
+export const mkString: Sink.Sink<never, never, unknown, never, string> = suspend(() => {
+  const strings: Array<string> = []
+  return pipe(
+    foldLeftChunks<void, unknown>(void 0, (_, elems) =>
+      Chunk.map(elems, (elem) => {
+        strings.push(String(elem))
+      })),
+    map(() => strings.join(""))
+  )
+})
+
+/** @internal */
+export const timed: Sink.Sink<never, never, unknown, never, Duration.Duration> = pipe(
+  withDuration(drain),
+  map((tuple) => tuple[1])
+)

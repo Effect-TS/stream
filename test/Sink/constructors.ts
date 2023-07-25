@@ -23,7 +23,7 @@ describe.concurrent("Sink", () => {
         Stream.make(1),
         Stream.mapEffect(() => Effect.fail("boom!"))
       )
-      const result = yield* $(pipe(stream, Stream.run(Sink.drain()), Effect.exit))
+      const result = yield* $(pipe(stream, Stream.run(Sink.drain), Effect.exit))
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom!"))
     }))
 

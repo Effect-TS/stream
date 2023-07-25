@@ -54,7 +54,7 @@ describe.concurrent("Sink", () => {
   it.effect("findEffect - empty stream terminates with none", () =>
     Effect.gen(function*($) {
       const sink = pipe(
-        Sink.sum(),
+        Sink.sum,
         Sink.findEffect((n) => Effect.succeed(n > 0))
       )
       const result = yield* $(

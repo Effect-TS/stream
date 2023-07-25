@@ -476,7 +476,7 @@ describe.concurrent("Stream", () => {
           }
           return pipe(
             Stream.scoped(withPermitsScoped(1)(semaphore)),
-            Stream.flatMap(() => Stream.never())
+            Stream.flatMap(() => Stream.never)
           )
         }, { concurrency: 1, switch: true }),
         Stream.runDrain
@@ -503,7 +503,7 @@ describe.concurrent("Stream", () => {
           }
           return pipe(
             Stream.scoped(withPermitsScoped(1)(semaphore)),
-            Stream.flatMap(() => Stream.never())
+            Stream.flatMap(() => Stream.never)
           )
         }, { concurrency: 4, switch: true }),
         Stream.runDrain
@@ -518,7 +518,7 @@ describe.concurrent("Stream", () => {
   it.effect("flatMapParSwitch - short circuiting", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.make(Stream.never(), Stream.make(1)),
+        Stream.make(Stream.never, Stream.make(1)),
         Stream.flatMap(identity, { concurrency: 2, switch: true }),
         Stream.take(1),
         Stream.runCollect

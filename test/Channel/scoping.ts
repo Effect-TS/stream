@@ -59,7 +59,7 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const exit = yield* $(
         pipe(
-          Channel.unit(),
+          Channel.unit,
           Channel.ensuring(Effect.die("ok")),
           Channel.ensuring(Effect.unit),
           Channel.runDrain,

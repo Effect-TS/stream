@@ -120,7 +120,7 @@ describe.concurrent("Stream", () => {
   it.effect("zipWith - prioritizes failures", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.zipWith(Stream.fail("Ouch"), () => Option.none()),
         Stream.runCollect,
         Effect.either
@@ -179,7 +179,7 @@ describe.concurrent("Stream", () => {
   it.effect("zipAll - prioritizes failures", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.zipAll({
           other: Stream.fail("Ouch"),
           defaultSelf: Option.none(),

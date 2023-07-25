@@ -986,7 +986,7 @@ export const sync = <OutDone>(
 }
 
 /** @internal */
-export const unit = (): Channel.Channel<never, unknown, unknown, unknown, never, never, void> => succeedNow(void 0)
+export const unit: Channel.Channel<never, unknown, unknown, unknown, never, never, void> = succeedNow(void 0)
 
 /** @internal */
 export const write = <OutElem>(

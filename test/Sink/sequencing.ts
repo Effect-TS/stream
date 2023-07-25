@@ -34,7 +34,7 @@ describe.concurrent("Sink", () => {
         Sink.head<number>(),
         Sink.flatMap((head) =>
           pipe(
-            Sink.count(),
+            Sink.count,
             Sink.map((count) => [head, count] as const)
           )
         )

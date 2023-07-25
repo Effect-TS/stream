@@ -224,7 +224,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                   this._emitted = this._currentChannel.out
                   this._currentChannel = (this._activeSubexecutor !== undefined ?
                     undefined :
-                    core.unit()) as core.Primitive | undefined
+                    core.unit) as core.Primitive | undefined
                   result = ChannelState.Emit()
                   break
                 }

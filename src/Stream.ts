@@ -2211,7 +2211,7 @@ export const mkString: <R, E>(self: Stream<R, E, string>) => Effect.Effect<R, E,
  * @since 1.0.0
  * @category constructors
  */
-export const never: () => Stream<never, never, never> = internal.never
+export const never: Stream<never, never, never> = internal.never
 
 /**
  * Runs the specified effect if this stream fails, providing the error to the
@@ -3868,7 +3868,7 @@ export const unfoldEffect: <S, R, E, A>(
  * @since 1.0.0
  * @category constructors
  */
-export const unit: () => Stream<never, never, void> = internal.unit
+export const unit: Stream<never, never, void> = internal.unit
 
 /**
  * Creates a stream produced from an `Effect`.

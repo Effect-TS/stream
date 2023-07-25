@@ -67,7 +67,7 @@ describe.concurrent("Stream", () => {
       const halt = yield* $(Deferred.make<string, never>())
       yield* $(Deferred.fail(halt, "fail"))
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.interruptWhen(Deferred.await(halt)),
         Stream.runDrain,
         Effect.either
@@ -105,7 +105,7 @@ describe.concurrent("Stream", () => {
       const halt = yield* $(Deferred.make<string, never>())
       yield* $(Deferred.fail(halt, "fail"))
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.interruptWhenDeferred(halt),
         Stream.runDrain,
         Effect.either

@@ -88,7 +88,7 @@ describe.concurrent("Sink", () => {
             Chunk.make(8, 9)
           ),
           Stream.run(pipe(
-            Sink.collectAllFrom(Sink.sum()),
+            Sink.collectAllFrom(Sink.sum),
             Sink.map(Chunk.reduce(0, (x, y) => x + y))
           ))
         )

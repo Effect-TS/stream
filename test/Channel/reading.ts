@@ -21,8 +21,8 @@ export const mapper = <A, B>(
         Channel.write(f(a)),
         () => mapper(f)
       ),
-    onFailure: Channel.unit,
-    onDone: Channel.unit
+    onFailure: () => Channel.unit,
+    onDone: () => Channel.unit
   })
 }
 
@@ -35,8 +35,8 @@ export const refWriter = <A>(
         Channel.fromEffect(Effect.asUnit(Ref.update(ref, ReadonlyArray.prepend(a)))),
         () => refWriter(ref)
       ),
-    onFailure: Channel.unit,
-    onDone: Channel.unit
+    onFailure: () => Channel.unit,
+    onDone: () => Channel.unit
   })
 }
 
@@ -53,7 +53,7 @@ export const refReader = <A>(
       })
     ),
     Channel.flatMap(Option.match({
-      onNone: Channel.unit,
+      onNone: () => Channel.unit,
       onSome: (i) => Channel.flatMap(Channel.write(i), () => refReader(ref))
     }))
   )
@@ -112,8 +112,8 @@ describe.concurrent("Channel", () => {
                   Channel.zipRight(Channel.write(input)),
                   Channel.flatMap(inner)
                 ),
-              onFailure: Channel.unit,
-              onDone: Channel.unit
+              onFailure: () => Channel.unit,
+              onDone: () => Channel.unit
             })
           return pipe(
             inner(),
@@ -212,7 +212,7 @@ describe.concurrent("Channel", () => {
       const right = pipe(
         read,
         Channel.zipRight(read),
-        Channel.catchAll(() => Channel.unit())
+        Channel.catchAll(() => Channel.unit)
       )
       const channel = pipe(left, Channel.pipeTo(right))
       const result = yield* $(pipe(Channel.runDrain(channel), Effect.zipRight(Ref.get(ref))))

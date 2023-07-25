@@ -85,7 +85,7 @@ describe.concurrent("Channel", () => {
 
   it.effect("runScoped - in uninterruptible region", () =>
     Effect.gen(function*(_) {
-      const result = yield* _(Effect.uninterruptible(Channel.run(Channel.unit())))
+      const result = yield* _(Effect.uninterruptible(Channel.run(Channel.unit)))
       assert.isUndefined(result)
     }))
 })

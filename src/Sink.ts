@@ -315,7 +315,7 @@ export const contramapChunksEffect: {
  * @since 1.0.0
  * @category constructors
  */
-export const count: () => Sink<never, never, unknown, never, number> = internal.count
+export const count: Sink<never, never, unknown, never, number> = internal.count
 
 /**
  * Creates a sink halting with the specified defect.
@@ -428,7 +428,7 @@ export const dimapChunksEffect: {
  * @since 1.0.0
  * @category constructors
  */
-export const drain: () => Sink<never, never, unknown, never, void> = internal.drain
+export const drain: Sink<never, never, unknown, never, void> = internal.drain
 
 /**
  * Creates a sink that drops `n` elements.
@@ -1108,7 +1108,7 @@ export const mapLeftover: {
  * @since 1.0.0
  * @category constructors
  */
-export const mkString: () => Sink<never, never, unknown, never, string> = internal.mkString
+export const mkString: Sink<never, never, unknown, never, string> = internal.mkString
 
 /**
  * Creates a sink which never terminates.
@@ -1116,7 +1116,7 @@ export const mkString: () => Sink<never, never, unknown, never, string> = intern
  * @since 1.0.0
  * @category constructors
  */
-export const never: () => Sink<never, never, unknown, never, never> = internal.never
+export const never: Sink<never, never, unknown, never, never> = internal.never
 
 /**
  * Switch to another sink in case of failure
@@ -1262,7 +1262,7 @@ export const succeed: <Z>(z: Z) => Sink<never, never, unknown, never, Z> = inter
  * @since 1.0.0
  * @category constructors
  */
-export const sum: () => Sink<never, never, number, never, number> = internal.sum
+export const sum: Sink<never, never, number, never, number> = internal.sum
 
 /**
  * Summarize a sink by running an effect when the sink starts and again when
@@ -1313,7 +1313,7 @@ export const take: <In>(n: number) => Sink<never, never, In, In, Chunk.Chunk<In>
  * @since 1.0.0
  * @category constructors
  */
-export const timed: () => Sink<never, never, unknown, never, Duration.Duration> = internal.timed
+export const timed: Sink<never, never, unknown, never, Duration.Duration> = internal.timed
 
 /**
  * Creates a sink produced from an effect.
