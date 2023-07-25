@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.31.0
+
+### Minor Changes
+
+- [#137](https://github.com/Effect-TS/stream/pull/137) [`fdf26f2`](https://github.com/Effect-TS/stream/commit/fdf26f29147fd3a99526bfdcf508b24fde1c1a43) Thanks [@tim-smart](https://github.com/tim-smart)! - convert some apis to constants
+
 ## 0.30.1
 
 ### Patch Changes
