@@ -34,7 +34,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("take - taking 0 short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(Stream.never(), Stream.take(0), Stream.runCollect))
+      const result = yield* $(pipe(Stream.never, Stream.take(0), Stream.runCollect))
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
@@ -42,7 +42,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1),
-        Stream.concat(Stream.never()),
+        Stream.concat(Stream.never),
         Stream.take(1),
         Stream.runCollect
       ))

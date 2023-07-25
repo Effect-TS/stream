@@ -231,7 +231,7 @@ describe.concurrent("Sink", () => {
           Stream.fromChunk(Chunk.range(1, 10)),
           Stream.rechunk(chunkSize),
           Stream.run(pipe(
-            Sink.sum(),
+            Sink.sum,
             Sink.collectAllWhileWith({
               initial: -1,
               while: (n) => n === n,

@@ -1896,8 +1896,9 @@ export const mergeWith = dual<
   ))
 
 /** @internal */
-export const never = (): Channel.Channel<never, unknown, unknown, unknown, never, never, never> =>
-  core.fromEffect(Effect.never)
+export const never: Channel.Channel<never, unknown, unknown, unknown, never, never, never> = core.fromEffect(
+  Effect.never
+)
 
 /** @internal */
 export const orDie = dual<
@@ -2331,7 +2332,7 @@ const writeChunkWriter = <OutElem>(
   chunk: Chunk.Chunk<OutElem>
 ): Channel.Channel<never, unknown, unknown, unknown, never, OutElem, void> => {
   return idx === len
-    ? core.unit()
+    ? core.unit
     : pipe(
       core.write(pipe(chunk, Chunk.unsafeGet(idx))),
       core.flatMap(() => writeChunkWriter(idx + 1, len, chunk))

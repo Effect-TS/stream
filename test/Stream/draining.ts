@@ -74,7 +74,7 @@ describe.concurrent("Stream", () => {
   it.effect("drainFork - fails the foreground stream if the background fails with a typed error", () =>
     Effect.gen(function*($) {
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.drainFork(Stream.fail("boom")),
         Stream.runDrain,
         Effect.exit
@@ -86,7 +86,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.drainFork(Stream.die(error)),
         Stream.runDrain,
         Effect.exit

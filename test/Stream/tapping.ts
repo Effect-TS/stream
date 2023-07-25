@@ -87,7 +87,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const sink = Sink.fail("error")
       const result = yield* $(pipe(
-        Stream.never(),
+        Stream.never,
         Stream.tapSink(sink),
         Stream.runCollect,
         Effect.flip

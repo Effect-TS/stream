@@ -159,7 +159,7 @@ describe.concurrent("Channel", () => {
   it.effect("ensuring - finalizer failure is propagated", () =>
     Effect.gen(function*(_) {
       const result = yield* _(
-        Channel.unit(),
+        Channel.unit,
         Channel.ensuring(Effect.dieMessage("die")),
         Channel.ensuring(Effect.unit),
         Channel.runDrain,

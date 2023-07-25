@@ -18,7 +18,7 @@ describe.concurrent("Sink", () => {
         resource,
         Effect.map((n) =>
           pipe(
-            Sink.count(),
+            Sink.count,
             Sink.mapEffect((count) =>
               pipe(
                 Ref.get(ref),
