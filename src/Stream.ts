@@ -2414,35 +2414,38 @@ export const paginateEffect: <S, R, E, A>(
  */
 export const partition: {
   <A>(
-    predicate: Predicate<A>
+    predicate: Predicate<A>,
+    options?: { bufferSize?: number }
   ): <R, E>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
   <R, E, A>(
     self: Stream<R, E, A>,
-    predicate: Predicate<A>
+    predicate: Predicate<A>,
+    options?: { bufferSize?: number }
   ): Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
 } = internal.partition
 
 /**
- * Like `partition`, but with a configurable `bufferSize` parameter.
+ * Split a stream by an effectful predicate. The faster stream may advance by
+ * up to buffer elements further than the slower one.
  *
  * @since 1.0.0
  * @category utils
  */
-export const partitionBuffer: {
-  <A>(
-    predicate: Predicate<A>,
-    bufferSize: number
+export const partitionEither: {
+  <A, R2, E2, A2, A3>(
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
   ): <R, E>(
     self: Stream<R, E, A>
-  ) => Effect.Effect<R | Scope.Scope, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
-  <R, E, A>(
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
+  <R, E, A, R2, E2, A2, A3>(
     self: Stream<R, E, A>,
-    predicate: Predicate<A>,
-    bufferSize: number
-  ): Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
-} = internal.partitionBuffer
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
+  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
+} = internal.partitionEither
 
 /**
  * Peels off enough material from the stream to construct a `Z` using the

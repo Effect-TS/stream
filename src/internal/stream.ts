@@ -4362,69 +4362,98 @@ export const peel = dual<
 /** @internal */
 export const partition = dual<
   <A>(
-    predicate: Predicate<A>
+    predicate: Predicate<A>,
+    options?: { bufferSize?: number }
   ) => <R, E>(
     self: Stream.Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]>,
   <R, E, A>(
     self: Stream.Stream<R, E, A>,
-    predicate: Predicate<A>
+    predicate: Predicate<A>,
+    options?: { bufferSize?: number }
   ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]>
->(2, <R, E, A>(self: Stream.Stream<R, E, A>, predicate: Predicate<A>): Effect.Effect<
-  R | Scope.Scope,
-  E,
-  readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]
-> => partitionBuffer(self, predicate, 16))
+>(
+  (args) => typeof args[1] === "function",
+  <R, E, A>(
+    self: Stream.Stream<R, E, A>,
+    predicate: Predicate<A>,
+    options?: { readonly bufferSize?: number }
+  ): Effect.Effect<
+    R | Scope.Scope,
+    E,
+    readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]
+  > =>
+    partitionEither(
+      self,
+      (a) => Effect.succeed(predicate(a) ? Either.left(a) : Either.right(a)),
+      options
+    )
+)
 
 /** @internal */
-export const partitionBuffer = dual<
-  <A>(
-    predicate: Predicate<A>,
-    bufferSize: number
+export const partitionEither = dual<
+  <A, R2, E2, A2, A3>(
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
   ) => <R, E>(
     self: Stream.Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]>,
-  <R, E, A>(
+  ) => Effect.Effect<
+    Scope.Scope | R2 | R,
+    E2 | E,
+    readonly [Stream.Stream<never, E2 | E, A2>, Stream.Stream<never, E2 | E, A3>]
+  >,
+  <R, E, A, R2, E2, A2, A3>(
     self: Stream.Stream<R, E, A>,
-    predicate: Predicate<A>,
-    bufferSize: number
-  ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]>
->(3, <R, E, A>(self: Stream.Stream<R, E, A>, predicate: Predicate<A>, bufferSize: number): Effect.Effect<
-  R | Scope.Scope,
-  E,
-  readonly [Stream.Stream<never, E, A>, Stream.Stream<never, E, A>]
-> =>
-  pipe(
-    map(self, (a): Either.Either<A, A> => predicate(a) ? Either.left(a) : Either.right(a)),
-    distributedWith({
-      size: 2,
-      maximumLag: bufferSize,
-      decide: Either.match({
-        onLeft: () => Effect.succeed((n) => n === 0),
-        onRight: () => Effect.succeed((n) => n === 1)
-      })
-    }),
-    Effect.flatMap(([queue1, queue2]) =>
-      Effect.succeed([
-        filterMap(
-          flattenExitOption(fromQueue(queue1, { shutdown: true })),
-          (_) =>
-            Either.match(_, {
-              onLeft: Option.some,
-              onRight: Option.none
-            })
-        ),
-        filterMap(
-          flattenExitOption(fromQueue(queue2, { shutdown: true })),
-          (_) =>
-            Either.match(_, {
-              onLeft: Option.none,
-              onRight: Option.some
-            })
-        )
-      ])
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
+  ) => Effect.Effect<
+    Scope.Scope | R2 | R,
+    E2 | E,
+    readonly [Stream.Stream<never, E2 | E, A2>, Stream.Stream<never, E2 | E, A3>]
+  >
+>(
+  (args) => typeof args[1] === "function",
+  <R, E, A, R2, E2, A2, A3>(
+    self: Stream.Stream<R, E, A>,
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
+  ): Effect.Effect<
+    R | R2 | Scope.Scope,
+    E | E2,
+    readonly [Stream.Stream<never, E | E2, A2>, Stream.Stream<never, E | E2, A3>]
+  > =>
+    pipe(
+      mapEffectSequential(self, predicate),
+      distributedWith({
+        size: 2,
+        maximumLag: options?.bufferSize ?? 16,
+        decide: Either.match({
+          onLeft: () => Effect.succeed((n) => n === 0),
+          onRight: () => Effect.succeed((n) => n === 1)
+        })
+      }),
+      Effect.flatMap(([queue1, queue2]) =>
+        Effect.succeed([
+          filterMap(
+            flattenExitOption(fromQueue(queue1, { shutdown: true })),
+            (_) =>
+              Either.match(_, {
+                onLeft: Option.some,
+                onRight: Option.none
+              })
+          ),
+          filterMap(
+            flattenExitOption(fromQueue(queue2, { shutdown: true })),
+            (_) =>
+              Either.match(_, {
+                onLeft: Option.none,
+                onRight: Option.some
+              })
+          )
+        ])
+      )
     )
-  ))
+)
 
 /** @internal */
 export const pipeThrough = dual<
