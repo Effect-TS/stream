@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.31.1
+
+### Patch Changes
+
+- [#139](https://github.com/Effect-TS/stream/pull/139) [`a67bcc4`](https://github.com/Effect-TS/stream/commit/a67bcc45e691aa5c43114e6534e3fec31d0d459a) Thanks [@tim-smart](https://github.com/tim-smart)! - reintroduce paritionEither api
+
 ## 0.31.0
 
 ### Minor Changes
