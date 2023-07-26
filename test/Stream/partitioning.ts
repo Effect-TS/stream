@@ -10,6 +10,22 @@ import * as it from "@effect/stream/test/utils/extend"
 import { assert, describe } from "vitest"
 
 describe.concurrent("Stream", () => {
+  it.effect("partitionEither - allows repeated runs without hanging", () =>
+    Effect.gen(function*($) {
+      const stream = pipe(
+        Stream.fromIterable(Chunk.empty<number>()),
+        Stream.partitionEither((n) => Effect.succeed(n % 2 === 0 ? Either.left(n) : Either.right(n))),
+        Effect.map(([evens, odds]) => pipe(evens, Stream.mergeEither(odds))),
+        Effect.flatMap(Stream.runCollect),
+        Effect.scoped
+      )
+      const result = yield* $(pipe(
+        Effect.all(Array.from({ length: 100 }, () => stream)),
+        Effect.as(0)
+      ))
+      assert.strictEqual(result, 0)
+    }))
+
   it.effect("partition - values", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(pipe(
@@ -49,7 +65,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const { result1, result2, result3 } = yield* $(pipe(
         Stream.range(0, 6),
-        Stream.partitionBuffer((n) => (n % 2 === 0), 1),
+        Stream.partition((n) => (n % 2 === 0), { bufferSize: 1 }),
         Effect.flatMap(([evens, odds]) =>
           Effect.gen(function*($) {
             const ref = yield* $(Ref.make(Chunk.empty<number>()))
