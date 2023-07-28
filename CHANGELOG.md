@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.32.1
+
+### Patch Changes
+
+- [#143](https://github.com/Effect-TS/stream/pull/143) [`9151acf`](https://github.com/Effect-TS/stream/commit/9151acfdc83e374b2938378145c74ec3685d3297) Thanks [@tim-smart](https://github.com/tim-smart)! - fix for non-spec-compliant async iterators
+
 ## 0.32.0
 
 ### Minor Changes
