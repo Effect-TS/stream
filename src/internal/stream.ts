@@ -2835,12 +2835,12 @@ export const fromAsyncIterable = <E, A>(
   pipe(
     Effect.acquireRelease(
       Effect.sync(() => iterable[Symbol.asyncIterator]()),
-      (iterator) => iterator.return ? Effect.promise(() => iterator.return!()) : Effect.unit
+      (iterator) => iterator.return ? Effect.promise(async () => iterator.return!()) : Effect.unit
     ),
     Effect.map((iterator) =>
       repeatEffectOption(pipe(
         Effect.tryPromise({
-          try: () => iterator.next(),
+          try: async () => iterator.next(),
           catch: (reason) => Option.some(onError(reason))
         }),
         Effect.flatMap((result) => result.done ? Effect.fail(Option.none()) : Effect.succeed(result.value))
