@@ -259,7 +259,7 @@ Added in v1.0.0
   - [onDone](#ondone)
   - [onError](#onerror)
   - [partition](#partition)
-  - [partitionBuffer](#partitionbuffer)
+  - [partitionEither](#partitioneither)
   - [peel](#peel)
   - [pipeThrough](#pipethrough)
   - [pipeThroughChannel](#pipethroughchannel)
@@ -886,7 +886,7 @@ The stream that never produces any value or fails with any error.
 **Signature**
 
 ```ts
-export declare const never: () => Stream<never, never, never>
+export declare const never: Stream<never, never, never>
 ```
 
 Added in v1.0.0
@@ -1031,9 +1031,9 @@ repeated using the specified schedule.
 **Signature**
 
 ```ts
-export declare const repeatEffectWithSchedule: <R, E, A, R2, _>(
+export declare const repeatEffectWithSchedule: <R, E, A, A0 extends A, R2, _>(
   effect: Effect.Effect<R, E, A>,
-  schedule: Schedule.Schedule<R2, A, _>
+  schedule: Schedule.Schedule<R2, A0, _>
 ) => Stream<R | R2, E, A>
 ```
 
@@ -1193,7 +1193,7 @@ A stream that contains a single `Unit` value.
 **Signature**
 
 ```ts
-export declare const unit: () => Stream<never, never, void>
+export declare const unit: Stream<never, never, void>
 ```
 
 Added in v1.0.0
@@ -3193,16 +3193,14 @@ Like `aggregateWithinEither`, but only returns the `Right` results.
 
 ```ts
 export declare const aggregateWithin: {
-  <R2, E2, A, A2, B, R3, C>(options: {
-    readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-    readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
+  <R2, E2, A, A2, B, R3, C>(
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream<R | R2 | R3, E | E2, B>
 }
 ```
@@ -3226,16 +3224,14 @@ between pulls.
 
 ```ts
 export declare const aggregateWithinEither: {
-  <R2, E2, A, A2, B, R3, C>(options: {
-    readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-    readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-  }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
+  <R2, E2, A, A2, B, R3, C>(
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream<R | R2 | R3, E | E2, Either.Either<C, B>>
 }
 ```
@@ -4493,10 +4489,10 @@ further than the slower one.
 
 ```ts
 export declare const partition: {
-  <A>(predicate: Predicate<A>): <R, E>(
+  <A>(predicate: Predicate<A>, options?: { bufferSize?: number }): <R, E>(
     self: Stream<R, E, A>
   ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
-  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>): Effect.Effect<
+  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>, options?: { bufferSize?: number }): Effect.Effect<
     Scope.Scope | R,
     E,
     readonly [Stream<never, E, A>, Stream<never, E, A>]
@@ -4506,22 +4502,26 @@ export declare const partition: {
 
 Added in v1.0.0
 
-## partitionBuffer
+## partitionEither
 
-Like `partition`, but with a configurable `bufferSize` parameter.
+Split a stream by an effectful predicate. The faster stream may advance by
+up to buffer elements further than the slower one.
 
 **Signature**
 
 ```ts
-export declare const partitionBuffer: {
-  <A>(predicate: Predicate<A>, bufferSize: number): <R, E>(
+export declare const partitionEither: {
+  <A, R2, E2, A2, A3>(
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
+  ): <R, E>(
     self: Stream<R, E, A>
-  ) => Effect.Effect<Scope.Scope | R, E, readonly [Stream<never, E, A>, Stream<never, E, A>]>
-  <R, E, A>(self: Stream<R, E, A>, predicate: Predicate<A>, bufferSize: number): Effect.Effect<
-    Scope.Scope | R,
-    E,
-    readonly [Stream<never, E, A>, Stream<never, E, A>]
-  >
+  ) => Effect.Effect<Scope.Scope | R2 | R, E2 | E, readonly [Stream<never, E2 | E, A2>, Stream<never, E2 | E, A3>]>
+  <R, E, A, R2, E2, A2, A3>(
+    self: Stream<R, E, A>,
+    predicate: (a: A) => Effect.Effect<R2, E2, Either.Either<A2, A3>>,
+    options?: { readonly bufferSize?: number }
+  ): Effect.Effect<Scope.Scope | R | R2, E | E2, readonly [Stream<never, E | E2, A2>, Stream<never, E | E2, A3>]>
 }
 ```
 
@@ -4765,8 +4765,10 @@ stream again.
 
 ```ts
 export declare const retry: {
-  <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
-  <R, A, R2, E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream<R | R2, E, A>
+  <R2, E, E0 extends E, _>(schedule: Schedule.Schedule<R2, E0, _>): <R, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, A>
+  <R, A, R2, E, E0 extends E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E0, _>): Stream<R | R2, E, A>
 }
 ```
 
@@ -4853,8 +4855,10 @@ Schedules the output of the stream using the provided `schedule`.
 
 ```ts
 export declare const schedule: {
-  <R2, A>(schedule: Schedule.Schedule<R2, A, unknown>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
-  <R, E, R2, A>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, unknown>): Stream<R | R2, E, A>
+  <R2, A, A0 extends A, _>(schedule: Schedule.Schedule<R2, A0, _>): <R, E>(
+    self: Stream<R, E, A>
+  ) => Stream<R2 | R, E, A>
+  <R, E, R2, A, A0 extends A, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A0, _>): Stream<R | R2, E, A>
 }
 ```
 
@@ -4870,13 +4874,13 @@ to align the stream and schedule outputs on the same type.
 
 ```ts
 export declare const scheduleWith: {
-  <R2, A, B, C>(
-    schedule: Schedule.Schedule<R2, A, B>,
+  <R2, A, A0 extends A, B, C>(
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
-  <R, E, R2, A, B, C>(
+  <R, E, R2, A, A0 extends A, B, C>(
     self: Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, B>,
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): Stream<R | R2, E, C>
 }

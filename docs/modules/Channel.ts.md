@@ -417,7 +417,7 @@ Returns a channel that never completes
 **Signature**
 
 ```ts
-export declare const never: () => Channel<never, unknown, unknown, unknown, never, never, never>
+export declare const never: Channel<never, unknown, unknown, unknown, never, never, never>
 ```
 
 Added in v1.0.0
@@ -563,7 +563,7 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const unit: () => Channel<never, unknown, unknown, unknown, never, never, void>
+export declare const unit: Channel<never, unknown, unknown, unknown, never, never, void>
 ```
 
 Added in v1.0.0
