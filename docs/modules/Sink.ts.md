@@ -338,7 +338,7 @@ A sink that counts the number of elements fed to it.
 **Signature**
 
 ```ts
-export declare const count: () => Sink<never, never, unknown, never, number>
+export declare const count: Sink<never, never, unknown, never, number>
 ```
 
 Added in v1.0.0
@@ -387,7 +387,7 @@ A sink that ignores its inputs.
 **Signature**
 
 ```ts
-export declare const drain: () => Sink<never, never, unknown, never, void>
+export declare const drain: Sink<never, never, unknown, never, void>
 ```
 
 Added in v1.0.0
@@ -957,7 +957,7 @@ Creates a sink which transforms it's inputs into a string.
 **Signature**
 
 ```ts
-export declare const mkString: () => Sink<never, never, unknown, never, string>
+export declare const mkString: Sink<never, never, unknown, never, string>
 ```
 
 Added in v1.0.0
@@ -969,7 +969,7 @@ Creates a sink which never terminates.
 **Signature**
 
 ```ts
-export declare const never: () => Sink<never, never, unknown, never, never>
+export declare const never: Sink<never, never, unknown, never, never>
 ```
 
 Added in v1.0.0
@@ -1005,7 +1005,7 @@ A sink that sums incoming numeric values.
 **Signature**
 
 ```ts
-export declare const sum: () => Sink<never, never, number, never, number>
+export declare const sum: Sink<never, never, number, never, number>
 ```
 
 Added in v1.0.0
@@ -1052,7 +1052,7 @@ Added in v1.0.0
 **Signature**
 
 ```ts
-export declare const timed: () => Sink<never, never, unknown, never, Duration.Duration>
+export declare const timed: Sink<never, never, unknown, never, Duration.Duration>
 ```
 
 Added in v1.0.0
