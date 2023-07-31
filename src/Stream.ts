@@ -186,17 +186,13 @@ export const aggregate: {
  */
 export const aggregateWithin: {
   <R2, E2, A, A2, B, R3, C>(
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, B>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream<R | R2 | R3, E | E2, B>
 } = internal.aggregateWithin
 
@@ -219,17 +215,13 @@ export const aggregateWithin: {
  */
 export const aggregateWithinEither: {
   <R2, E2, A, A2, B, R3, C>(
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream<R | R2 | R3, E | E2, Either.Either<C, B>>
 } = internal.aggregateWithinEither
 
@@ -2735,9 +2727,9 @@ export const repeatEffectOption: <R, E, A>(effect: Effect.Effect<R, Option.Optio
  * @since 1.0.0
  * @category constructors
  */
-export const repeatEffectWithSchedule: <R, E, A, R2, _>(
+export const repeatEffectWithSchedule: <R, E, A, A0 extends A, R2, _>(
   effect: Effect.Effect<R, E, A>,
-  schedule: Schedule.Schedule<R2, A, _>
+  schedule: Schedule.Schedule<R2, A0, _>
 ) => Stream<R | R2, E, A> = internal.repeatEffectWithSchedule
 
 /**
@@ -2843,8 +2835,10 @@ export const repeatWith: {
  * @category utils
  */
 export const retry: {
-  <R2, E, _>(schedule: Schedule.Schedule<R2, E, _>): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
-  <R, A, R2, E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream<R | R2, E, A>
+  <R2, E, E0 extends E, _>(
+    schedule: Schedule.Schedule<R2, E0, _>
+  ): <R, A>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, A, R2, E, E0 extends E, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, E0, _>): Stream<R | R2, E, A>
 } = internal.retry
 
 /**
@@ -3296,8 +3290,10 @@ export const scanReduceEffect: <A2, A, R2, E2>(
  * @category utils
  */
 export const schedule: {
-  <R2, A>(schedule: Schedule.Schedule<R2, A, unknown>): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
-  <R, E, R2, A>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A, unknown>): Stream<R | R2, E, A>
+  <R2, A, A0 extends A, _>(
+    schedule: Schedule.Schedule<R2, A0, _>
+  ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, A>
+  <R, E, R2, A, A0 extends A, _>(self: Stream<R, E, A>, schedule: Schedule.Schedule<R2, A0, _>): Stream<R | R2, E, A>
 } = internal.schedule
 
 /**
@@ -3309,13 +3305,13 @@ export const schedule: {
  * @category utils
  */
 export const scheduleWith: {
-  <R2, A, B, C>(
-    schedule: Schedule.Schedule<R2, A, B>,
+  <R2, A, A0 extends A, B, C>(
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E, C>
-  <R, E, R2, A, B, C>(
+  <R, E, R2, A, A0 extends A, B, C>(
     self: Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, B>,
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: { readonly onElement: (a: A) => C; readonly onSchedule: (b: B) => C }
   ): Stream<R | R2, E, C>
 } = internal.scheduleWith

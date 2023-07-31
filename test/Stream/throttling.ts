@@ -257,7 +257,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const fiber = yield* $(pipe(
         Stream.make(1, 2, 3),
-        Stream.schedule<never, number>(Schedule.fixed(Duration.millis(500))),
+        Stream.schedule(Schedule.fixed(Duration.millis(500))),
         Stream.debounce(Duration.seconds(1)),
         Stream.runCollect,
         Effect.fork
