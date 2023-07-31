@@ -102,35 +102,29 @@ export const aggregate = dual<
   <R, E, R2, E2, A, A2, B>(
     self: Stream.Stream<R, E, A>,
     sink: Sink.Sink<R2, E2, A | A2, A2, B>
-  ): Stream.Stream<R | R2, E | E2, B> => aggregateWithin(self, { sink, schedule: Schedule.forever })
+  ): Stream.Stream<R | R2, E | E2, B> => aggregateWithin(self, sink, Schedule.forever)
 )
 
 /** @internal */
 export const aggregateWithin = dual<
   <R2, E2, A, A2, B, R3, C>(
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R3 | R, E2 | E, B>,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ) => Stream.Stream<R2 | R3 | R, E2 | E, B>
 >(
-  2,
+  3,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream.Stream<R | R2 | R3, E | E2, B> =>
     filterMap(
-      aggregateWithinEither(self, options),
+      aggregateWithinEither(self, sink, schedule),
       (_) =>
         Either.match(_, {
           onLeft: Option.none,
@@ -142,26 +136,20 @@ export const aggregateWithin = dual<
 /** @internal */
 export const aggregateWithinEither = dual<
   <R2, E2, A, A2, B, R3, C>(
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    options: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ) => Stream.Stream<R2 | R3 | R, E2 | E, Either.Either<C, B>>
 >(
-  2,
+  3,
   <R, E, R2, E2, A, A2, B, R3, C>(
     self: Stream.Stream<R, E, A>,
-    { schedule, sink }: {
-      readonly sink: Sink.Sink<R2, E2, A | A2, A2, B>
-      readonly schedule: Schedule.Schedule<R3, Option.Option<B>, C>
-    }
+    sink: Sink.Sink<R2, E2, A | A2, A2, B>,
+    schedule: Schedule.Schedule<R3, Option.Option<B>, C>
   ): Stream.Stream<R | R2 | R3, E | E2, Either.Either<C, B>> => {
     const layer = Effect.all([
       Handoff.make<HandoffSignal.HandoffSignal<E | E2, A>>(),
@@ -3256,10 +3244,7 @@ export const groupedWithin = dual<
     chunkSize: number,
     duration: Duration.Duration
   ): Stream.Stream<R, E, Chunk.Chunk<A>> =>
-    aggregateWithin(self, {
-      sink: _sink.collectAllN(chunkSize),
-      schedule: Schedule.spaced(duration)
-    })
+    aggregateWithin(self, _sink.collectAllN(chunkSize), Schedule.spaced(duration))
 )
 
 /** @internal */
@@ -5045,9 +5030,9 @@ export const repeatWithSchedule = <R, A, _>(
 ): Stream.Stream<R, never, A> => repeatEffectWithSchedule(Effect.succeed(value), schedule)
 
 /** @internal */
-export const repeatEffectWithSchedule = <R, E, A, R2, _>(
+export const repeatEffectWithSchedule = <R, E, A, A0 extends A, R2, _>(
   effect: Effect.Effect<R, E, A>,
-  schedule: Schedule.Schedule<R2, A, _>
+  schedule: Schedule.Schedule<R2, A0, _>
 ): Stream.Stream<R | R2, E, A> =>
   flatMap(
     fromEffect(Effect.zip(effect, Schedule.driver(schedule))),
@@ -5055,7 +5040,7 @@ export const repeatEffectWithSchedule = <R, E, A, R2, _>(
       concat(
         succeed(a),
         unfoldEffect(a, (s) =>
-          Effect.matchEffect(driver.next(s), {
+          Effect.matchEffect(driver.next(s as A0), {
             onFailure: Effect.succeed,
             onSuccess: () => Effect.map(effect, (nextA) => Option.some([nextA, nextA] as const))
           }))
@@ -5064,18 +5049,24 @@ export const repeatEffectWithSchedule = <R, E, A, R2, _>(
 
 /** @internal */
 export const retry = dual<
-  <R2, E, _>(
-    schedule: Schedule.Schedule<R2, E, _>
+  <R2, E, E0 extends E, _>(
+    schedule: Schedule.Schedule<R2, E0, _>
   ) => <R, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, A>,
-  <R, A, R2, E, _>(self: Stream.Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>) => Stream.Stream<R2 | R, E, A>
+  <R, A, R2, E, E0 extends E, _>(
+    self: Stream.Stream<R, E, A>,
+    schedule: Schedule.Schedule<R2, E0, _>
+  ) => Stream.Stream<R2 | R, E, A>
 >(
   2,
-  <R, A, R2, E, _>(self: Stream.Stream<R, E, A>, schedule: Schedule.Schedule<R2, E, _>): Stream.Stream<R | R2, E, A> =>
+  <R, A, R2, E, E0 extends E, _>(
+    self: Stream.Stream<R, E, A>,
+    schedule: Schedule.Schedule<R2, E0, _>
+  ): Stream.Stream<R | R2, E, A> =>
     unwrap(
       Effect.map(Schedule.driver(schedule), (driver) => {
         const loop: Stream.Stream<R | R2, E, A> = catchAll(self, (error) =>
           unwrap(
-            Effect.matchEffect(driver.next(error), {
+            Effect.matchEffect(driver.next(error as E0), {
               onFailure: () => Effect.fail(error),
               onSuccess: () => Effect.succeed(pipe(loop, tap(() => driver.reset())))
             })
@@ -5502,18 +5493,18 @@ export const scanReduceEffect = dual<
 
 /** @internal */
 export const schedule = dual<
-  <R2, A>(
-    schedule: Schedule.Schedule<R2, A, unknown>
+  <R2, A, A0 extends A, _>(
+    schedule: Schedule.Schedule<R2, A0, _>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, A>,
-  <R, E, R2, A>(
+  <R, E, R2, A, A0 extends A, _>(
     self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, unknown>
+    schedule: Schedule.Schedule<R2, A0, _>
   ) => Stream.Stream<R2 | R, E, A>
 >(
   2,
-  <R, E, R2, A>(
+  <R, E, R2, A, A0 extends A, _>(
     self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, unknown>
+    schedule: Schedule.Schedule<R2, A0, _>
   ): Stream.Stream<R | R2, E, A> =>
     filterMap(
       scheduleWith(self, schedule, { onElement: Option.some, onSchedule: Option.none }),
@@ -5523,16 +5514,16 @@ export const schedule = dual<
 
 /** @internal */
 export const scheduleWith = dual<
-  <R2, A, B, C>(
-    schedule: Schedule.Schedule<R2, A, B>,
+  <R2, A, A0 extends A, B, C>(
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: {
       readonly onElement: (a: A) => C
       readonly onSchedule: (b: B) => C
     }
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E, C>,
-  <R, E, R2, A, B, C>(
+  <R, E, R2, A, A0 extends A, B, C>(
     self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, B>,
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: {
       readonly onElement: (a: A) => C
       readonly onSchedule: (b: B) => C
@@ -5540,16 +5531,16 @@ export const scheduleWith = dual<
   ) => Stream.Stream<R2 | R, E, C>
 >(
   3,
-  <R, E, R2, A, B, C>(
+  <R, E, R2, A, A0 extends A, B, C>(
     self: Stream.Stream<R, E, A>,
-    schedule: Schedule.Schedule<R2, A, B>,
+    schedule: Schedule.Schedule<R2, A0, B>,
     options: {
       readonly onElement: (a: A) => C
       readonly onSchedule: (b: B) => C
     }
   ): Stream.Stream<R | R2, E, C> => {
     const loop = (
-      driver: Schedule.ScheduleDriver<R2, A, B>,
+      driver: Schedule.ScheduleDriver<R2, A0, B>,
       iterator: Iterator<A>
     ): Channel.Channel<R2, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<C>, unknown> => {
       const next = iterator.next()
@@ -5561,7 +5552,7 @@ export const scheduleWith = dual<
         })
       }
       return channel.unwrap(
-        Effect.matchEffect(driver.next(next.value), {
+        Effect.matchEffect(driver.next(next.value as A0), {
           onFailure: () =>
             pipe(
               driver.last(),

@@ -189,10 +189,10 @@ describe.concurrent("Stream", () => {
           Stream.map(Take.make),
           Stream.tap(() => coordination.proceed),
           Stream.flattenTake,
-          Stream.aggregateWithin({
-            sink: Sink.last<number>(),
-            schedule: Schedule.fixed(Duration.millis(200))
-          }),
+          Stream.aggregateWithin(
+            Sink.last<number>(),
+            Schedule.fixed(Duration.millis(200))
+          ),
           Stream.interruptWhen(Effect.never),
           Stream.take(2),
           Stream.runCollect,
@@ -215,8 +215,8 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(pipe(
         Stream.make(1, 1, 1, 1, 2, 2),
-        Stream.aggregateWithinEither({
-          sink: pipe(
+        Stream.aggregateWithinEither(
+          pipe(
             Sink.fold(
               [[] as Array<number>, true] as readonly [Array<number>, boolean],
               (tuple) => tuple[1],
@@ -229,8 +229,8 @@ describe.concurrent("Stream", () => {
             ),
             Sink.map((tuple) => tuple[0])
           ),
-          schedule: Schedule.spaced(Duration.minutes(30))
-        }),
+          Schedule.spaced(Duration.minutes(30))
+        ),
         Stream.runCollect
       ))
       assert.deepStrictEqual(
@@ -252,10 +252,10 @@ describe.concurrent("Stream", () => {
               Effect.zipRight(pipe(Queue.offer(queue, n)))
             )
           ),
-          Stream.aggregateWithinEither({
-            sink: Sink.foldUntil(void 0, 5, constVoid),
-            schedule: Schedule.forever
-          }),
+          Stream.aggregateWithinEither(
+            Sink.foldUntil(void 0, 5, constVoid),
+            Schedule.forever
+          ),
           Stream.runDrain,
           Effect.catchAll(() => Effect.succeed(void 0))
         )
@@ -271,10 +271,10 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         pipe(
           Stream.make(1, 1, 1, 1),
-          Stream.aggregateWithinEither({
-            sink: Sink.die(error),
-            schedule: Schedule.spaced(Duration.minutes(30))
-          }),
+          Stream.aggregateWithinEither(
+            Sink.die(error),
+            Schedule.spaced(Duration.minutes(30))
+          ),
           Stream.runCollect,
           Effect.exit
         )
@@ -288,10 +288,10 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         pipe(
           Stream.make(1, 1),
-          Stream.aggregateWithinEither({
-            sink: Sink.foldEffect(Chunk.empty<number>(), constTrue, () => Effect.die(error)),
-            schedule: Schedule.spaced(Duration.minutes(30))
-          }),
+          Stream.aggregateWithinEither(
+            Sink.foldEffect(Chunk.empty<number>(), constTrue, () => Effect.die(error)),
+            Schedule.spaced(Duration.minutes(30))
+          ),
           Stream.runCollect,
           Effect.exit
         )
@@ -316,7 +316,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(
         pipe(
           Stream.make(1, 1, 2),
-          Stream.aggregateWithinEither({ sink, schedule: Schedule.spaced(Duration.minutes(30)) }),
+          Stream.aggregateWithinEither(sink, Schedule.spaced(Duration.minutes(30))),
           Stream.runCollect,
           Effect.fork
         )
@@ -339,7 +339,7 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(
         pipe(
           Stream.make(1, 1, 2),
-          Stream.aggregateWithinEither({ sink, schedule: Schedule.spaced(Duration.minutes(30)) }),
+          Stream.aggregateWithinEither(sink, Schedule.spaced(Duration.minutes(30))),
           Stream.runCollect,
           Effect.fork
         )
@@ -356,15 +356,15 @@ describe.concurrent("Stream", () => {
       const fiber = yield* $(
         pipe(
           Stream.fromIterable(input),
-          Stream.aggregateWithinEither({
-            sink: Sink.foldWeighted({
+          Stream.aggregateWithinEither(
+            Sink.foldWeighted({
               initial: Chunk.empty<number>(),
               maxCost: 4,
               cost: (_, n) => n,
               body: (acc, curr) => Chunk.append(acc, curr)
             }),
-            schedule: Schedule.spaced(Duration.millis(100))
-          }),
+            Schedule.spaced(Duration.millis(100))
+          ),
           Stream.filterMap((either) =>
             Either.isRight(either) ?
               Option.some(either.right) :
