@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.33.0
+
+### Minor Changes
+
+- [#147](https://github.com/Effect-TS/stream/pull/147) [`9390806`](https://github.com/Effect-TS/stream/commit/939080631c06797206b599ac815550d5edfe1245) Thanks [@tim-smart](https://github.com/tim-smart)! - update /data and /io
+
+### Patch Changes
+
+- [#146](https://github.com/Effect-TS/stream/pull/146) [`d5dc5e7`](https://github.com/Effect-TS/stream/commit/d5dc5e76ad3d26224613c65a8113d960ae695b2f) Thanks [@tim-smart](https://github.com/tim-smart)! - ensure Schedule types don't widen Stream types
+
 ## 0.32.1
 
 ### Patch Changes
