@@ -3991,7 +3991,8 @@ export const mergeWith = dual<
     }
   ): Stream.Stream<R | R2, E | E2, A3 | A4> => {
     const strategy = options.haltStrategy ? haltStrategy.fromInput(options.haltStrategy) : HaltStrategy.Both
-    const handler = (terminate: boolean) =>
+    const handler =
+      (terminate: boolean) =>
       (exit: Exit.Exit<E | E2, unknown>): MergeDecision.MergeDecision<R | R2, E | E2, unknown, E | E2, unknown> =>
         terminate || !Exit.isSuccess(exit) ?
           // TODO: remove

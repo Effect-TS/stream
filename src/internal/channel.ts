@@ -1144,233 +1144,232 @@ export const mergeAllWith = (
     readonly mergeStrategy?: MergeStrategy.MergeStrategy
   }
 ) =>
-  <
+<
+  Env,
+  Env1,
+  InErr,
+  InErr1,
+  InElem,
+  InElem1,
+  InDone,
+  InDone1,
+  OutErr,
+  OutErr1,
+  OutElem,
+  OutDone
+>(
+  channels: Channel.Channel<
     Env,
-    Env1,
     InErr,
-    InErr1,
     InElem,
-    InElem1,
     InDone,
-    InDone1,
     OutErr,
-    OutErr1,
-    OutElem,
+    Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem, OutDone>,
     OutDone
-  >(
-    channels: Channel.Channel<
-      Env,
-      InErr,
-      InElem,
-      InDone,
-      OutErr,
-      Channel.Channel<Env1, InErr1, InElem1, InDone1, OutErr1, OutElem, OutDone>,
-      OutDone
-    >,
-    f: (o1: OutDone, o2: OutDone) => OutDone
-  ): Channel.Channel<
-    Env | Env1,
-    InErr & InErr1,
-    InElem & InElem1,
-    InDone & InDone1,
-    OutErr | OutErr1,
-    OutElem,
-    OutDone
-  > =>
-    pipe(
-      Effect.gen(function*($) {
-        const input = yield* $(singleProducerAsyncInput.make<
-          InErr & InErr1,
-          InElem & InElem1,
-          InDone & InDone1
-        >())
-        const queueReader = fromInput(input)
-        const queue = yield* $(
-          Effect.acquireRelease(
-            Queue.bounded<Effect.Effect<Env, OutErr | OutErr1, Either.Either<OutDone, OutElem>>>(bufferSize),
-            (queue) => Queue.shutdown(queue)
+  >,
+  f: (o1: OutDone, o2: OutDone) => OutDone
+): Channel.Channel<
+  Env | Env1,
+  InErr & InErr1,
+  InElem & InElem1,
+  InDone & InDone1,
+  OutErr | OutErr1,
+  OutElem,
+  OutDone
+> =>
+  pipe(
+    Effect.gen(function*($) {
+      const input = yield* $(singleProducerAsyncInput.make<
+        InErr & InErr1,
+        InElem & InElem1,
+        InDone & InDone1
+      >())
+      const queueReader = fromInput(input)
+      const queue = yield* $(
+        Effect.acquireRelease(
+          Queue.bounded<Effect.Effect<Env, OutErr | OutErr1, Either.Either<OutDone, OutElem>>>(bufferSize),
+          (queue) => Queue.shutdown(queue)
+        )
+      )
+      const cancelers = yield* $(
+        Effect.acquireRelease(
+          Queue.unbounded<Deferred.Deferred<never, void>>(),
+          (queue) => Queue.shutdown(queue)
+        )
+      )
+      const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none()))
+      const errorSignal = yield* $(Deferred.make<never, void>())
+      const withPermits = concurrency === "unbounded" ?
+        ((_: number) => identity) :
+        (yield* $(Effect.makeSemaphore(concurrency))).withPermits
+      const pull = yield* $(toPull(channels))
+      const evaluatePull = (
+        pull: Effect.Effect<Env | Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem>>
+      ) =>
+        pipe(
+          Effect.flatMap(
+            pull,
+            Either.match({
+              onLeft: (done) => Effect.succeed(Option.some(done)),
+              onRight: (outElem) =>
+                Effect.as(
+                  Queue.offer(queue, Effect.succeed(Either.right(outElem))),
+                  Option.none()
+                )
+            })
+          ),
+          Effect.repeatUntil(Option.isSome),
+          Effect.flatMap(Option.match({
+            onNone: () => Effect.unit,
+            onSome: (outDone) =>
+              Ref.update(
+                lastDone,
+                Option.match({
+                  onNone: () => Option.some(outDone),
+                  onSome: (lastDone) => Option.some(f(lastDone, outDone))
+                })
+              )
+          })),
+          Effect.catchAllCause((cause) =>
+            Cause.isInterrupted(cause) ?
+              Effect.failCause(cause) :
+              pipe(
+                Queue.offer(queue, Effect.failCause(cause)),
+                Effect.zipRight(Deferred.succeed<never, void>(errorSignal, void 0)),
+                Effect.asUnit
+              )
           )
         )
-        const cancelers = yield* $(
-          Effect.acquireRelease(
-            Queue.unbounded<Deferred.Deferred<never, void>>(),
-            (queue) => Queue.shutdown(queue)
-          )
-        )
-        const lastDone = yield* $(Ref.make<Option.Option<OutDone>>(Option.none()))
-        const errorSignal = yield* $(Deferred.make<never, void>())
-        const withPermits = concurrency === "unbounded" ?
-          ((_: number) => identity) :
-          (yield* $(Effect.makeSemaphore(concurrency))).withPermits
-        const pull = yield* $(toPull(channels))
-        const evaluatePull = (
-          pull: Effect.Effect<Env | Env1, OutErr | OutErr1, Either.Either<OutDone, OutElem>>
-        ) =>
-          pipe(
-            Effect.flatMap(
-              pull,
-              Either.match({
-                onLeft: (done) => Effect.succeed(Option.some(done)),
-                onRight: (outElem) =>
-                  Effect.as(
-                    Queue.offer(queue, Effect.succeed(Either.right(outElem))),
-                    Option.none()
-                  )
-              })
-            ),
-            Effect.repeatUntil(Option.isSome),
-            Effect.flatMap(Option.match({
-              onNone: () => Effect.unit,
-              onSome: (outDone) =>
-                Ref.update(
-                  lastDone,
-                  Option.match({
-                    onNone: () => Option.some(outDone),
-                    onSome: (lastDone) => Option.some(f(lastDone, outDone))
-                  })
-                )
-            })),
-            Effect.catchAllCause((cause) =>
-              Cause.isInterrupted(cause) ?
-                Effect.failCause(cause) :
-                pipe(
-                  Queue.offer(queue, Effect.failCause(cause)),
-                  Effect.zipRight(Deferred.succeed<never, void>(errorSignal, void 0)),
-                  Effect.asUnit
-                )
-            )
-          )
-        yield* $(
-          pipe(
-            Effect.matchCauseEffect(pull, {
-              onFailure: (cause) =>
-                pipe(
-                  Queue.offer(queue, Effect.failCause(cause)),
-                  Effect.zipRight(Effect.succeed(false))
-                ),
-              onSuccess: Either.match({
-                onLeft: (outDone) =>
-                  Effect.raceWith(Deferred.await(errorSignal), {
-                    other: withPermits(concurrency as number)(Effect.unit),
-                    onSelfDone: (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
-                    onOtherDone: (_, failureAwait) =>
-                      pipe(
-                        Fiber.interrupt(failureAwait),
-                        Effect.zipRight(
-                          pipe(
-                            Ref.get(lastDone),
-                            Effect.flatMap(Option.match({
-                              onNone: () => Queue.offer(queue, Effect.succeed(Either.left(outDone))),
-                              onSome: (lastDone) =>
-                                Queue.offer(queue, Effect.succeed(Either.left(f(lastDone, outDone))))
-                            })),
-                            Effect.as(false)
-                          )
+      yield* $(
+        pipe(
+          Effect.matchCauseEffect(pull, {
+            onFailure: (cause) =>
+              pipe(
+                Queue.offer(queue, Effect.failCause(cause)),
+                Effect.zipRight(Effect.succeed(false))
+              ),
+            onSuccess: Either.match({
+              onLeft: (outDone) =>
+                Effect.raceWith(Deferred.await(errorSignal), {
+                  other: withPermits(concurrency as number)(Effect.unit),
+                  onSelfDone: (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
+                  onOtherDone: (_, failureAwait) =>
+                    pipe(
+                      Fiber.interrupt(failureAwait),
+                      Effect.zipRight(
+                        pipe(
+                          Ref.get(lastDone),
+                          Effect.flatMap(Option.match({
+                            onNone: () => Queue.offer(queue, Effect.succeed(Either.left(outDone))),
+                            onSome: (lastDone) => Queue.offer(queue, Effect.succeed(Either.left(f(lastDone, outDone))))
+                          })),
+                          Effect.as(false)
                         )
                       )
-                  }),
-                onRight: (channel) =>
-                  pipe(
-                    mergeStrategy,
-                    _mergeStrategy.match({
-                      onBackPressure: () =>
-                        Effect.gen(function*($) {
-                          const latch = yield* $(Deferred.make<never, void>())
-                          const raceEffects: Effect.Effect<Env | Env1, OutErr | OutErr1, void> = pipe(
-                            queueReader,
-                            core.pipeTo(channel),
-                            toPull,
-                            Effect.flatMap((pull) =>
-                              pipe(
-                                evaluatePull(pull),
-                                Effect.raceAwait(Deferred.await(errorSignal))
-                              )
-                            ),
-                            Effect.scoped
-                          )
-                          yield* $(
+                    )
+                }),
+              onRight: (channel) =>
+                pipe(
+                  mergeStrategy,
+                  _mergeStrategy.match({
+                    onBackPressure: () =>
+                      Effect.gen(function*($) {
+                        const latch = yield* $(Deferred.make<never, void>())
+                        const raceEffects: Effect.Effect<Env | Env1, OutErr | OutErr1, void> = pipe(
+                          queueReader,
+                          core.pipeTo(channel),
+                          toPull,
+                          Effect.flatMap((pull) =>
                             pipe(
-                              Deferred.succeed<never, void>(latch, void 0),
-                              Effect.zipRight(raceEffects),
-                              withPermits(1),
-                              Effect.forkScoped
+                              evaluatePull(pull),
+                              Effect.raceAwait(Deferred.await(errorSignal))
                             )
-                          )
-                          yield* $(Deferred.await(latch))
-                          const errored = yield* $(Deferred.isDone(errorSignal))
-                          return !errored
-                        }),
-                      onBufferSliding: () =>
-                        Effect.gen(function*($) {
-                          const canceler = yield* $(Deferred.make<never, void>())
-                          const latch = yield* $(Deferred.make<never, void>())
-                          const size = yield* $(Queue.size(cancelers))
-                          yield* $(
-                            pipe(
-                              Queue.take(cancelers),
-                              Effect.flatMap((_) => Deferred.succeed<never, void>(_, void 0)),
-                              Effect.when(() => concurrency === "unbounded" ? false : size >= concurrency)
-                            )
-                          )
-                          yield* $(Queue.offer(cancelers, canceler))
-                          const raceEffects: Effect.Effect<Env | Env1, OutErr | OutErr1, void> = pipe(
-                            queueReader,
-                            core.pipeTo(channel),
-                            toPull,
-                            Effect.flatMap((pull) =>
-                              pipe(
-                                evaluatePull(pull),
-                                Effect.raceAwait(Deferred.await(errorSignal)),
-                                Effect.raceAwait(Deferred.await(canceler))
-                              )
-                            ),
-                            Effect.scoped
-                          )
-                          yield* $(pipe(
+                          ),
+                          Effect.scoped
+                        )
+                        yield* $(
+                          pipe(
                             Deferred.succeed<never, void>(latch, void 0),
                             Effect.zipRight(raceEffects),
                             withPermits(1),
                             Effect.forkScoped
-                          ))
-                          yield* $(Deferred.await(latch))
-                          const errored = yield* $(Deferred.isDone(errorSignal))
-                          return !errored
-                        })
-                    })
-                  )
-              })
-            }),
-            Effect.repeatWhile(identity),
-            Effect.forkScoped
-          )
-        )
-        return [queue, input] as const
-      }),
-      Effect.map(([queue, input]) => {
-        const consumer: Channel.Channel<
-          Env | Env1,
-          unknown,
-          unknown,
-          unknown,
-          OutErr | OutErr1,
-          OutElem,
-          OutDone
-        > = pipe(
-          Queue.take(queue),
-          Effect.flatten,
-          Effect.matchCause({
-            onFailure: core.failCause,
-            onSuccess: Either.match({
-              onLeft: core.succeedNow,
-              onRight: (outElem) => core.flatMap(core.write(outElem), () => consumer)
+                          )
+                        )
+                        yield* $(Deferred.await(latch))
+                        const errored = yield* $(Deferred.isDone(errorSignal))
+                        return !errored
+                      }),
+                    onBufferSliding: () =>
+                      Effect.gen(function*($) {
+                        const canceler = yield* $(Deferred.make<never, void>())
+                        const latch = yield* $(Deferred.make<never, void>())
+                        const size = yield* $(Queue.size(cancelers))
+                        yield* $(
+                          pipe(
+                            Queue.take(cancelers),
+                            Effect.flatMap((_) => Deferred.succeed<never, void>(_, void 0)),
+                            Effect.when(() => concurrency === "unbounded" ? false : size >= concurrency)
+                          )
+                        )
+                        yield* $(Queue.offer(cancelers, canceler))
+                        const raceEffects: Effect.Effect<Env | Env1, OutErr | OutErr1, void> = pipe(
+                          queueReader,
+                          core.pipeTo(channel),
+                          toPull,
+                          Effect.flatMap((pull) =>
+                            pipe(
+                              evaluatePull(pull),
+                              Effect.raceAwait(Deferred.await(errorSignal)),
+                              Effect.raceAwait(Deferred.await(canceler))
+                            )
+                          ),
+                          Effect.scoped
+                        )
+                        yield* $(pipe(
+                          Deferred.succeed<never, void>(latch, void 0),
+                          Effect.zipRight(raceEffects),
+                          withPermits(1),
+                          Effect.forkScoped
+                        ))
+                        yield* $(Deferred.await(latch))
+                        const errored = yield* $(Deferred.isDone(errorSignal))
+                        return !errored
+                      })
+                  })
+                )
             })
           }),
-          unwrap
+          Effect.repeatWhile(identity),
+          Effect.forkScoped
         )
-        return core.embedInput(consumer, input)
-      }),
-      unwrapScoped
-    )
+      )
+      return [queue, input] as const
+    }),
+    Effect.map(([queue, input]) => {
+      const consumer: Channel.Channel<
+        Env | Env1,
+        unknown,
+        unknown,
+        unknown,
+        OutErr | OutErr1,
+        OutElem,
+        OutDone
+      > = pipe(
+        Queue.take(queue),
+        Effect.flatten,
+        Effect.matchCause({
+          onFailure: core.failCause,
+          onSuccess: Either.match({
+            onLeft: core.succeedNow,
+            onRight: (outElem) => core.flatMap(core.write(outElem), () => consumer)
+          })
+        }),
+        unwrap
+      )
+      return core.embedInput(consumer, input)
+    }),
+    unwrapScoped
+  )
 
 /** @internal */
 export const mergeMap = dual<
@@ -1690,27 +1689,48 @@ export const mergeWith = dual<
               fiber: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>,
               pull: Effect.Effect<Env | Env1, Err, Either.Either<Done, OutElem | OutElem1>>
             ) =>
-              (
-                done: (
-                  ex: Exit.Exit<Err, Done>
-                ) => MergeDecision.MergeDecision<
+            (
+              done: (
+                ex: Exit.Exit<Err, Done>
+              ) => MergeDecision.MergeDecision<
+                Env | Env1,
+                Err2,
+                Done2,
+                OutErr2 | OutErr3,
+                OutDone2 | OutDone3
+              >,
+              both: (
+                f1: Fiber.Fiber<Err, Either.Either<Done, OutElem | OutElem1>>,
+                f2: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>
+              ) => State,
+              single: (
+                f: (
+                  ex: Exit.Exit<Err2, Done2>
+                ) => Effect.Effect<Env | Env1, OutErr2 | OutErr3, OutDone2 | OutDone3>
+              ) => State
+            ): Effect.Effect<
+              Env | Env1,
+              never,
+              Channel.Channel<
+                Env | Env1,
+                unknown,
+                unknown,
+                unknown,
+                OutErr2 | OutErr3,
+                OutElem | OutElem1,
+                OutDone2 | OutDone3
+              >
+            > => {
+              const onDecision = (
+                decision: MergeDecision.MergeDecision<
                   Env | Env1,
                   Err2,
                   Done2,
                   OutErr2 | OutErr3,
                   OutDone2 | OutDone3
-                >,
-                both: (
-                  f1: Fiber.Fiber<Err, Either.Either<Done, OutElem | OutElem1>>,
-                  f2: Fiber.Fiber<Err2, Either.Either<Done2, OutElem | OutElem1>>
-                ) => State,
-                single: (
-                  f: (
-                    ex: Exit.Exit<Err2, Done2>
-                  ) => Effect.Effect<Env | Env1, OutErr2 | OutErr3, OutDone2 | OutDone3>
-                ) => State
+                >
               ): Effect.Effect<
-                Env | Env1,
+                never,
                 never,
                 Channel.Channel<
                   Env | Env1,
@@ -1722,65 +1742,44 @@ export const mergeWith = dual<
                   OutDone2 | OutDone3
                 >
               > => {
-                const onDecision = (
-                  decision: MergeDecision.MergeDecision<
-                    Env | Env1,
-                    Err2,
-                    Done2,
-                    OutErr2 | OutErr3,
-                    OutDone2 | OutDone3
-                  >
-                ): Effect.Effect<
-                  never,
-                  never,
-                  Channel.Channel<
-                    Env | Env1,
-                    unknown,
-                    unknown,
-                    unknown,
-                    OutErr2 | OutErr3,
-                    OutElem | OutElem1,
-                    OutDone2 | OutDone3
-                  >
-                > => {
-                  const op = decision as mergeDecision.Primitive
-                  if (op._tag === MergeDecisionOpCodes.OP_DONE) {
-                    return Effect.succeed(
-                      core.fromEffect(
-                        Effect.zipRight(
-                          Fiber.interrupt(fiber),
-                          op.effect
-                        )
+                const op = decision as mergeDecision.Primitive
+                if (op._tag === MergeDecisionOpCodes.OP_DONE) {
+                  return Effect.succeed(
+                    core.fromEffect(
+                      Effect.zipRight(
+                        Fiber.interrupt(fiber),
+                        op.effect
                       )
                     )
-                  }
-                  return Effect.map(
-                    Fiber.await(fiber),
-                    Exit.match({
-                      onFailure: (cause) => core.fromEffect(op.f(Exit.failCause(cause))),
-                      onSuccess: Either.match({
-                        onLeft: (done) => core.fromEffect(op.f(Exit.succeed(done))),
-                        onRight: (elem) => zipRight(core.write(elem), go(single(op.f)))
-                      })
-                    })
                   )
                 }
-
-                return Exit.match(exit, {
-                  onFailure: (cause) => onDecision(done(Exit.failCause(cause))),
-                  onSuccess: Either.match({
-                    onLeft: (z) => onDecision(done(Exit.succeed(z))),
-                    onRight: (elem) =>
-                      Effect.succeed(
-                        core.flatMap(core.write(elem), () =>
-                          core.flatMap(
-                            core.fromEffect(Effect.forkDaemon(pull)),
-                            (leftFiber) => go(both(leftFiber, fiber))
-                          ))
-                      )
+                return Effect.map(
+                  Fiber.await(fiber),
+                  Exit.match({
+                    onFailure: (cause) => core.fromEffect(op.f(Exit.failCause(cause))),
+                    onSuccess: Either.match({
+                      onLeft: (done) => core.fromEffect(op.f(Exit.succeed(done))),
+                      onRight: (elem) => zipRight(core.write(elem), go(single(op.f)))
+                    })
                   })
-                })
+                )
               }
+
+              return Exit.match(exit, {
+                onFailure: (cause) => onDecision(done(Exit.failCause(cause))),
+                onSuccess: Either.match({
+                  onLeft: (z) => onDecision(done(Exit.succeed(z))),
+                  onRight: (elem) =>
+                    Effect.succeed(
+                      core.flatMap(core.write(elem), () =>
+                        core.flatMap(
+                          core.fromEffect(Effect.forkDaemon(pull)),
+                          (leftFiber) => go(both(leftFiber, fiber))
+                        ))
+                    )
+                })
+              })
+            }
 
             const go = (
               state: State
@@ -2162,13 +2161,13 @@ export const service = <T extends Context.Tag<any, any>>(
 
 /** @internal */
 export const serviceWith = <T extends Context.Tag<any, any>>(tag: T) =>
-  <OutDone>(
-    f: (resource: Context.Tag.Service<T>) => OutDone
-  ): Channel.Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, OutDone> =>
-    map(service(tag), f)
+<OutDone>(
+  f: (resource: Context.Tag.Service<T>) => OutDone
+): Channel.Channel<Context.Tag.Identifier<T>, unknown, unknown, unknown, never, never, OutDone> => map(service(tag), f)
 
 /** @internal */
-export const serviceWithChannel = <T extends Context.Tag<any, any>>(tag: T) =>
+export const serviceWithChannel =
+  <T extends Context.Tag<any, any>>(tag: T) =>
   <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
     f: (resource: Context.Tag.Service<T>) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
   ): Channel.Channel<Env | Context.Tag.Identifier<T>, InErr, InElem, InDone, OutErr, OutElem, OutDone> =>
@@ -2176,10 +2175,10 @@ export const serviceWithChannel = <T extends Context.Tag<any, any>>(tag: T) =>
 
 /** @internal */
 export const serviceWithEffect = <T extends Context.Tag<any, any>>(tag: T) =>
-  <Env, OutErr, OutDone>(
-    f: (resource: Context.Tag.Service<T>) => Effect.Effect<Env, OutErr, OutDone>
-  ): Channel.Channel<Env | Context.Tag.Identifier<T>, unknown, unknown, unknown, OutErr, never, OutDone> =>
-    mapEffect(service(tag), f)
+<Env, OutErr, OutDone>(
+  f: (resource: Context.Tag.Service<T>) => Effect.Effect<Env, OutErr, OutDone>
+): Channel.Channel<Env | Context.Tag.Identifier<T>, unknown, unknown, unknown, OutErr, never, OutDone> =>
+  mapEffect(service(tag), f)
 
 /** @internal */
 export const toHub = <Err, Done, Elem>(
