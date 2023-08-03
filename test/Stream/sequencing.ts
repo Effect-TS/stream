@@ -14,12 +14,11 @@ import * as Take from "@effect/stream/Take"
 import * as it from "@effect/stream/test/utils/extend"
 import { assert, describe } from "vitest"
 
-const withPermitsScoped = (permits: number) =>
-  (semaphore: Effect.Semaphore) =>
-    Effect.acquireRelease(
-      semaphore.take(permits),
-      (n) => semaphore.release(n)
-    )
+const withPermitsScoped = (permits: number) => (semaphore: Effect.Semaphore) =>
+  Effect.acquireRelease(
+    semaphore.take(permits),
+    (n) => semaphore.release(n)
+  )
 
 describe.concurrent("Stream", () => {
   it.effect("branchAfter - switches streams", () =>
