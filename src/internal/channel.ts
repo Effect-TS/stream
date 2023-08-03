@@ -1250,8 +1250,7 @@ export const mergeAllWith = (
               ),
             onSuccess: Either.match({
               onLeft: (outDone) =>
-                Effect.raceWith(Deferred.await(errorSignal), {
-                  other: withPermits(concurrency as number)(Effect.unit),
+                Effect.raceWith(Deferred.await(errorSignal), withPermits(concurrency as number)(Effect.unit), {
                   onSelfDone: (_, permitAcquisition) => pipe(Fiber.interrupt(permitAcquisition), Effect.as(false)),
                   onOtherDone: (_, failureAwait) =>
                     pipe(
@@ -1282,7 +1281,7 @@ export const mergeAllWith = (
                           Effect.flatMap((pull) =>
                             pipe(
                               evaluatePull(pull),
-                              Effect.raceAwait(Deferred.await(errorSignal))
+                              Effect.race(Deferred.await(errorSignal))
                             )
                           ),
                           Effect.scoped
@@ -1319,8 +1318,8 @@ export const mergeAllWith = (
                           Effect.flatMap((pull) =>
                             pipe(
                               evaluatePull(pull),
-                              Effect.raceAwait(Deferred.await(errorSignal)),
-                              Effect.raceAwait(Deferred.await(canceler))
+                              Effect.race(Deferred.await(errorSignal)),
+                              Effect.race(Deferred.await(canceler))
                             )
                           ),
                           Effect.scoped
@@ -1797,8 +1796,7 @@ export const mergeWith = dual<
                   const leftJoin = Effect.interruptible(Fiber.join(state.left))
                   const rightJoin = Effect.interruptible(Fiber.join(state.right))
                   return unwrap(
-                    Effect.raceWith(leftJoin, {
-                      other: rightJoin,
+                    Effect.raceWith(leftJoin, rightJoin, {
                       onSelfDone: (leftExit, rf) =>
                         Effect.zipRight(
                           Fiber.interrupt(rf),

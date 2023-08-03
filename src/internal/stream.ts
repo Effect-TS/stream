@@ -327,8 +327,7 @@ export const aggregateWithinEither = dual<
               channel.unwrap
             )
           return channel.unwrap(
-            Effect.raceWith(Fiber.join(sinkFiber), {
-              other: Fiber.join(scheduleFiber),
+            Effect.raceWith(Fiber.join(sinkFiber), Fiber.join(scheduleFiber), {
               onSelfDone: (sinkExit, _) =>
                 pipe(
                   Fiber.interrupt(scheduleFiber),
@@ -1691,8 +1690,7 @@ export const debounce = dual<
                 }
                 case DebounceState.OP_PREVIOUS: {
                   return channel.unwrap(
-                    Effect.raceWith(Fiber.join(state.fiber), {
-                      other: Handoff.take(handoff),
+                    Effect.raceWith(Fiber.join(state.fiber), Handoff.take(handoff), {
                       onSelfDone: (leftExit, current) =>
                         Exit.match(leftExit, {
                           onFailure: (cause) => pipe(Fiber.interrupt(current), Effect.as(core.failCause(cause))),
@@ -7571,8 +7569,7 @@ export const zipLatestWith = dual<
       Effect.flatMap(([left, right]) =>
         pipe(
           fromEffectOption<R | R2, E | E2, readonly [Chunk.Chunk<A>, Chunk.Chunk<A2>, boolean]>(
-            Effect.raceWith(left, {
-              other: right,
+            Effect.raceWith(left, right, {
               onSelfDone: (leftDone, rightFiber) =>
                 pipe(
                   Effect.suspend(() => leftDone),
