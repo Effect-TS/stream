@@ -1,5 +1,17 @@
 # @effect/stream
 
+## 0.34.0
+
+### Minor Changes
+
+- [#154](https://github.com/Effect-TS/stream/pull/154) [`65d061d`](https://github.com/Effect-TS/stream/commit/65d061d8fc0ce0980954d5f070b7de07e0506a37) Thanks [@tim-smart](https://github.com/tim-smart)! - update dependencies
+
+### Patch Changes
+
+- [#152](https://github.com/Effect-TS/stream/pull/152) [`6a99bc1`](https://github.com/Effect-TS/stream/commit/6a99bc1e51e3bed75c0f97b8c1b81c76b0057944) Thanks [@tim-smart](https://github.com/tim-smart)! - use peer deps for /data and /io
+
+- [#151](https://github.com/Effect-TS/stream/pull/151) [`57f0a12`](https://github.com/Effect-TS/stream/commit/57f0a12a640880aaa57c283fd04e0fccc9c6bd82) Thanks [@tim-smart](https://github.com/tim-smart)! - update build tools
+
 ## 0.33.0
 
 ### Minor Changes
