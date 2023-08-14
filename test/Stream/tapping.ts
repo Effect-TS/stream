@@ -37,6 +37,25 @@ describe.concurrent("Stream", () => {
       ])
     }))
 
+  it.effect("tapBoth", () =>
+    Effect.gen(function*($) {
+      const ref = yield* $(Ref.make<Array<string>>([]))
+      const result = yield* $(pipe(
+        Stream.make("hello", "world"),
+        Stream.concat(Stream.fail("boom")),
+        Stream.tapBoth({
+          onSuccess: (v) => Ref.update(ref, (s) => [...s, `s:${v}`]),
+          onFailure: (e) => Ref.update(ref, (s) => [...s, `f:${e}`])
+        }),
+        Stream.runCollect,
+        Effect.either
+      ))
+
+      assert.deepStrictEqual(result, Either.left("boom"))
+      const sequence = yield* $(Ref.get(ref))
+      assert.deepStrictEqual(sequence, ["s:hello", "s:world", "f:boom"])
+    }))
+
   it.effect("tapError", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(""))

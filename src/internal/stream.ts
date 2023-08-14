@@ -6087,6 +6087,31 @@ export const tap = dual<
 )
 
 /** @internal */
+export const tapBoth = dual<
+  <E, XE extends E, A, XA extends A, R2, E2, X, R3, E3, X1>(
+    options: {
+      readonly onFailure: (e: XE) => Effect.Effect<R2, E2, X>
+      readonly onSuccess: (a: XA) => Effect.Effect<R3, E3, X1>
+    }
+  ) => <R>(self: Stream.Stream<R, E, A>) => Stream.Stream<R | R2 | R3, E | E2 | E3, A>,
+  <R, E, A, XE extends E, XA extends A, R2, E2, X, R3, E3, X1>(
+    self: Stream.Stream<R, E, A>,
+    options: {
+      readonly onFailure: (e: XE) => Effect.Effect<R2, E2, X>
+      readonly onSuccess: (a: XA) => Effect.Effect<R3, E3, X1>
+    }
+  ) => Stream.Stream<R | R2 | R3, E | E2 | E3, A>
+>(
+  2,
+  (self, { onFailure, onSuccess }) =>
+    pipe(
+      self,
+      mapEffectSequential((a) => Effect.as(onSuccess(a as any), a)),
+      catchAll((error) => fromEffect(Effect.zipRight(onFailure(error as any), Effect.fail(error))))
+    )
+)
+
+/** @internal */
 export const tapError = dual<
   <E, X extends E, R2, E2, _>(
     f: (error: X) => Effect.Effect<R2, E2, _>
