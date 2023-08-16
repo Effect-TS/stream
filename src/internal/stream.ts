@@ -6106,8 +6106,8 @@ export const tapBoth = dual<
   (self, { onFailure, onSuccess }) =>
     pipe(
       self,
-      mapEffectSequential((a) => Effect.as(onSuccess(a as any), a)),
-      catchAll((error) => fromEffect(Effect.zipRight(onFailure(error as any), Effect.fail(error))))
+      catchAll((error) => fromEffect(Effect.zipRight(onFailure(error as any), Effect.fail(error)))),
+      mapEffectSequential((a) => Effect.as(onSuccess(a as any), a))
     )
 )
 

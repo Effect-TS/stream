@@ -56,14 +56,14 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(sequence, ["s:hello", "s:world", "f:boom"])
     }))
 
-  it.effect("tapBoth - fail in success handler", () =>
+  it.effect("tapBoth - fail in success handler is not piped through fail handler", () =>
     Effect.gen(function*($) {
-      const ref = yield* $(Ref.make(false))
+      const ref = yield* $(Ref.make(true))
       const result = yield* $(pipe(
         Stream.make(1, 2, 3),
         Stream.tapBoth({
           onSuccess: (n) => pipe(Effect.fail("error"), Effect.when(() => n === 3)),
-          onFailure: () => Ref.update(ref, () => true)
+          onFailure: () => Ref.update(ref, () => false)
         }),
         Stream.either,
         Stream.runCollect
