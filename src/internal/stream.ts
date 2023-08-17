@@ -6087,6 +6087,26 @@ export const tap = dual<
 )
 
 /** @internal */
+export const tapBoth = dual<
+  <E, XE extends E, A, XA extends A, R2, E2, X, R3, E3, X1>(
+    options: {
+      readonly onFailure: (e: XE) => Effect.Effect<R2, E2, X>
+      readonly onSuccess: (a: XA) => Effect.Effect<R3, E3, X1>
+    }
+  ) => <R>(self: Stream.Stream<R, E, A>) => Stream.Stream<R | R2 | R3, E | E2 | E3, A>,
+  <R, E, A, XE extends E, XA extends A, R2, E2, X, R3, E3, X1>(
+    self: Stream.Stream<R, E, A>,
+    options: {
+      readonly onFailure: (e: XE) => Effect.Effect<R2, E2, X>
+      readonly onSuccess: (a: XA) => Effect.Effect<R3, E3, X1>
+    }
+  ) => Stream.Stream<R | R2 | R3, E | E2 | E3, A>
+>(
+  2,
+  (self, { onFailure, onSuccess }) => pipe(self, tapError(onFailure), tap(onSuccess))
+)
+
+/** @internal */
 export const tapError = dual<
   <E, X extends E, R2, E2, _>(
     f: (error: X) => Effect.Effect<R2, E2, _>
@@ -6118,11 +6138,16 @@ export const tapErrorCause = dual<
   <R, A, E, R2, E2, _>(
     self: Stream.Stream<R, E, A>,
     f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>
-  ): Stream.Stream<R | R2, E | E2, A> =>
-    catchAllCause(
-      self,
-      (cause) => fromEffect(Effect.zipRight(f(cause), Effect.failCause(cause)))
-    )
+  ): Stream.Stream<R | R2, E | E2, A> => {
+    const loop: Channel.Channel<R | R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, unknown> = core
+      .readWithCause({
+        onInput: (chunk) => core.flatMap(core.write(chunk), () => loop),
+        onFailure: (cause) => core.fromEffect(Effect.zipRight(f(cause), Effect.failCause(cause))),
+        onDone: core.succeedNow
+      })
+
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop)))
+  }
 )
 
 /** @internal */

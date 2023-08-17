@@ -37,6 +37,80 @@ describe.concurrent("Stream", () => {
       ])
     }))
 
+  it.effect("tapBoth - just tap values", () =>
+    Effect.gen(function*($) {
+      const ref = yield* $(Ref.make(0))
+      const values = Chunk.make(1, 1)
+      const result = yield* $(
+        Stream.fromChunk(values),
+        Stream.tapBoth({
+          onSuccess: (v) => Ref.update(ref, (_) => _ + v),
+          onFailure: (e) => Effect.die(`Unexpected attempt to tap an error ${e}`)
+        }),
+        Stream.runCollect
+      )
+
+      assert.deepStrictEqual(Array.from(result), Array.from(values))
+      assert.strictEqual(yield* $(Ref.get(ref)), 2)
+    }))
+
+  it.effect("tapBoth - just tap an error", () =>
+    Effect.gen(function*($) {
+      const ref = yield* $(Ref.make(""))
+      const result = yield* $(
+        Stream.fail("Ouch"),
+        Stream.tapBoth({
+          onSuccess: (v) => Effect.die(`Unexpected attempt to tap a value ${v}`),
+          onFailure: (e) => Ref.update(ref, (_) => _ + e)
+        }),
+        Stream.runCollect,
+        Effect.either
+      )
+
+      assert.deepStrictEqual(result, Either.left("Ouch"))
+      assert.strictEqual(yield* $(Ref.get(ref)), "Ouch")
+    }))
+
+  it.effect("tapBoth - tap values and then error", () =>
+    Effect.gen(function*($) {
+      const error = yield* $(Ref.make(""))
+      const sum = yield* $(Ref.make(0))
+      const values = Chunk.make(1, 1)
+      const result = yield* $(
+        Stream.fromChunk(values),
+        Stream.concat(Stream.fail("Ouch")),
+        Stream.tapBoth({
+          onSuccess: (v) => Ref.update(sum, (_) => _ + v),
+          onFailure: (e) => Ref.update(error, (_) => _ + e)
+        }),
+        Stream.runCollect,
+        Effect.either
+      )
+
+      assert.deepStrictEqual(result, Either.left("Ouch"))
+      assert.strictEqual(yield* $(Ref.get(error)), "Ouch")
+      assert.strictEqual(yield* $(Ref.get(sum)), 2)
+    }))
+
+  it.effect("tapBoth - tap chunks lazily", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(
+        Stream.make(1, 2, 3),
+        Stream.tapBoth({
+          onSuccess: (n) => pipe(Effect.fail("error"), Effect.when(() => n === 3)),
+          onFailure: () => Effect.unit
+        }),
+        Stream.either,
+        Stream.runCollect
+      )
+
+      assert.deepStrictEqual(Array.from(result), [
+        Either.right(1),
+        Either.right(2),
+        Either.left("error")
+      ])
+    }))
+
   it.effect("tapError", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(""))
