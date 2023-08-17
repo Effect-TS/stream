@@ -6103,12 +6103,7 @@ export const tapBoth = dual<
   ) => Stream.Stream<R | R2 | R3, E | E2 | E3, A>
 >(
   2,
-  (self, { onFailure, onSuccess }) =>
-    pipe(
-      self,
-      catchAll((error) => fromEffect(Effect.zipRight(onFailure(error as any), Effect.fail(error)))),
-      mapEffectSequential((a) => Effect.as(onSuccess(a as any), a))
-    )
+  (self, { onFailure, onSuccess }) => pipe(self, tapError(onFailure), tap(onSuccess))
 )
 
 /** @internal */
@@ -6143,11 +6138,16 @@ export const tapErrorCause = dual<
   <R, A, E, R2, E2, _>(
     self: Stream.Stream<R, E, A>,
     f: (cause: Cause.Cause<E>) => Effect.Effect<R2, E2, _>
-  ): Stream.Stream<R | R2, E | E2, A> =>
-    catchAllCause(
-      self,
-      (cause) => fromEffect(Effect.zipRight(f(cause), Effect.failCause(cause)))
-    )
+  ): Stream.Stream<R | R2, E | E2, A> => {
+    const loop: Channel.Channel<R | R2, E, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, unknown> = core
+      .readWithCause({
+        onInput: (chunk) => core.flatMap(core.write(chunk), () => loop),
+        onFailure: (cause) => core.fromEffect(Effect.zipRight(f(cause), Effect.failCause(cause))),
+        onDone: core.succeedNow
+      })
+
+    return new StreamImpl(pipe(toChannel(self), core.pipeTo(loop)))
+  }
 )
 
 /** @internal */
