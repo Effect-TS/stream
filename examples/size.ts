@@ -10,7 +10,7 @@ const program = Effect.gen(function*($) {
     Chunk.flatten,
     Chunk.map((n) => String(n))
   )
-  const result = yield* $(pipe(
+  const result = yield* $(
     Stream.fromIterable(words),
     Stream.groupByKey(identity, { bufferSize: 8192 }),
     GroupBy.evaluate((key, stream) =>
@@ -21,7 +21,7 @@ const program = Effect.gen(function*($) {
       )
     ),
     Stream.runCollect
-  ))
+  )
   console.log(
     Array.from(result),
     Array.from({ length: 100 }, (_, i) => i).map((n) => [String(n), 100] as const)

@@ -12,11 +12,11 @@ describe.concurrent("Stream", () => {
   it.effect("tap", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 1),
         Stream.tap((i) => Ref.update(ref, (n) => i + n)),
         Stream.runCollect
-      ))
+      )
       const sum = yield* $(Ref.get(ref))
       assert.strictEqual(sum, 2)
       assert.deepStrictEqual(Array.from(result), [1, 1])
@@ -24,12 +24,12 @@ describe.concurrent("Stream", () => {
 
   it.effect("tap - laziness on chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.tap((n) => pipe(Effect.fail("error"), Effect.when(() => n === 3))),
         Stream.either,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         Either.right(1),
         Either.right(2),
@@ -114,13 +114,13 @@ describe.concurrent("Stream", () => {
   it.effect("tapError", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(""))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 1),
         Stream.concat(Stream.fail("Ouch")),
         Stream.tapError((e) => Ref.update(ref, (s) => s + e)),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -128,11 +128,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
       const sink = Sink.forEach((i: number) => Ref.update(ref, (n) => i + n))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 1, 2, 3, 5, 8),
         Stream.tapSink(sink),
         Stream.runCollect
-      ))
+      )
       const sum = yield* $(Ref.get(ref))
       assert.strictEqual(sum, 20)
       assert.deepStrictEqual(Array.from(result), [1, 1, 2, 3, 5, 8])
@@ -146,12 +146,12 @@ describe.concurrent("Stream", () => {
         Sink.map(Chunk.reduce(0, (x, y) => x + y)),
         Sink.mapEffect((i) => Ref.update(ref, (n) => n + i))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 1, 2, 3, 5, 8),
         Stream.rechunk(1),
         Stream.tapSink(sink),
         Stream.runCollect
-      ))
+      )
       const sum = yield* $(Ref.get(ref))
       assert.strictEqual(sum, 4)
       assert.deepStrictEqual(Array.from(result), [1, 1, 2, 3, 5, 8])
@@ -160,12 +160,12 @@ describe.concurrent("Stream", () => {
   it.effect("tapSink - sink that fails before stream", () =>
     Effect.gen(function*($) {
       const sink = Sink.fail("error")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.never,
         Stream.tapSink(sink),
         Stream.runCollect,
         Effect.flip
-      ))
+      )
       assert.strictEqual(result, "error")
     }))
 
@@ -173,14 +173,14 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
       const sink = Sink.forEach((i: number) => Ref.update(ref, (n) => i + n))
-      yield* $(pipe(
+      yield* $(
         Stream.make(1, 2, 3, 4, 5),
         Stream.rechunk(1),
         Stream.forever,
         Stream.tapSink(sink),
         Stream.take(3),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.strictEqual(result, 6)
     }))

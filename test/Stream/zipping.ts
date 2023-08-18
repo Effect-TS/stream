@@ -86,7 +86,7 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom"))
       )
       const right = Stream.fromChunks(Chunk.make("a", "b"), Chunk.of("c"))
-      const result = yield* $(pipe(left, Stream.zip(right), Stream.runCollect))
+      const result = yield* $(left, Stream.zip(right), Stream.runCollect)
       assert.deepStrictEqual(Array.from(result), [[1, "a"], [2, "b"], [3, "c"]])
     }))
 
@@ -119,18 +119,18 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWith - prioritizes failures", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.never,
         Stream.zipWith(Stream.fail("Ouch"), () => Option.none()),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
   it.effect("zipWith - dies if one of the streams throws an exception", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.flatMap(() =>
           Stream.sync(() => {
@@ -140,7 +140,7 @@ describe.concurrent("Stream", () => {
         Stream.zip(Stream.make(1)),
         Stream.runCollect,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(
         Exit.unannotate(result),
         Exit.failCause(Cause.parallel(Cause.empty, Cause.die(Cause.RuntimeException("Ouch"))))
@@ -178,7 +178,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipAll - prioritizes failures", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.never,
         Stream.zipAll({
           other: Stream.fail("Ouch"),
@@ -187,7 +187,7 @@ describe.concurrent("Stream", () => {
         }),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -206,29 +206,29 @@ describe.concurrent("Stream", () => {
       const left = yield* $(Queue.unbounded<Chunk.Chunk<number>>())
       const right = yield* $(Queue.unbounded<Chunk.Chunk<number>>())
       const output = yield* $(Queue.bounded<Take.Take<never, readonly [number, number]>>(1))
-      yield* $(pipe(
+      yield* $(
         Stream.fromChunkQueue(left),
         Stream.zipLatest(Stream.fromChunkQueue(right)),
         Stream.runIntoQueue(output),
         Effect.fork
-      ))
+      )
       yield* $(Queue.offer(left, Chunk.make(0)))
       yield* $(Queue.offerAll(right, [Chunk.make(0), Chunk.make(1)]))
-      const chunk1 = yield* $(pipe(
+      const chunk1 = yield* $(
         Queue.take(output),
         Effect.flatMap(Take.done),
         Effect.replicateEffect(2),
         Effect.map(Chunk.unsafeFromArray),
         Effect.map(Chunk.flatten)
-      ))
+      )
       yield* $(Queue.offerAll(left, [Chunk.make(1), Chunk.make(2)]))
-      const chunk2 = yield* $(pipe(
+      const chunk2 = yield* $(
         Queue.take(output),
         Effect.flatMap(Take.done),
         Effect.replicateEffect(2),
         Effect.map(Chunk.unsafeFromArray),
         Effect.map(Chunk.flatten)
-      ))
+      )
       assert.deepStrictEqual(Array.from(chunk1), [[0, 0], [0, 1]])
       assert.deepStrictEqual(Array.from(chunk2), [[1, 1], [2, 1]])
     }))
@@ -243,7 +243,7 @@ describe.concurrent("Stream", () => {
       const stream1 = Stream.fromChunks(Chunk.make(1), Chunk.make(1))
       const deferred = yield* $(Deferred.make<never, number>())
       const latch = yield* $(Deferred.make<never, void>())
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         stream0,
         Stream.concat(Stream.fromEffect(Deferred.await(deferred))),
         Stream.concat(Stream.make(2)),
@@ -258,7 +258,7 @@ describe.concurrent("Stream", () => {
         Stream.take(3),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.await(latch))
       yield* $(Deferred.succeed(deferred, 2))
       const result = yield* $(Fiber.join(fiber))
@@ -267,7 +267,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipLatestWith - handles empty pulls properly (JVM Only - LOL)", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.unfold(0, (n) =>
           Option.some(
             [
@@ -280,7 +280,7 @@ describe.concurrent("Stream", () => {
         Stream.zipLatestWith(Stream.forever(Stream.make(1)), (_, n) => n),
         Stream.take(3),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 1, 1])
     }))
 
@@ -308,11 +308,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithNext", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.zipWithNext,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         [1, Option.some(2)],
         [2, Option.some(3)],
@@ -322,11 +322,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithNext - should work with multiple chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(Chunk.of(1), Chunk.of(2), Chunk.of(3)),
         Stream.zipWithNext,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         [1, Option.some(2)],
         [2, Option.some(3)],
@@ -336,11 +336,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithNext - should work with an empty stream", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.zipWithNext,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
@@ -366,11 +366,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithPrevious - should zip with previous element for a single chunk", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.zipWithPrevious,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         [Option.none(), 1],
         [Option.some(1), 2],
@@ -380,11 +380,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithPrevious - should work with multiple chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(Chunk.of(1), Chunk.of(2), Chunk.of(3)),
         Stream.zipWithPrevious,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         [Option.none(), 1],
         [Option.some(1), 2],
@@ -394,11 +394,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithPrevious - should work with an empty stream", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.zipWithPrevious,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
@@ -423,11 +423,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("zipWithPreviousAndNext", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.zipWithPreviousAndNext,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         [Option.none(), 1, Option.some(2)],
         [Option.some(1), 2, Option.some(3)],

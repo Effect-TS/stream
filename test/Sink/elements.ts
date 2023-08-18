@@ -13,10 +13,8 @@ describe.concurrent("Sink", () => {
       const chunk = Chunk.make(1, 2, 3, 4, 5)
       const predicate = (n: number) => n < 6
       const result = yield* $(
-        pipe(
-          Stream.fromChunk(chunk),
-          Stream.run(Sink.every(predicate))
-        )
+        Stream.fromChunk(chunk),
+        Stream.run(Sink.every(predicate))
       )
       assert.isTrue(result)
     }))
@@ -24,10 +22,8 @@ describe.concurrent("Sink", () => {
   it.effect("head", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromChunks(Chunk.range(1, 10), Chunk.range(1, 3), Chunk.range(2, 5)),
-          Stream.run(Sink.head())
-        )
+        Stream.fromChunks(Chunk.range(1, 10), Chunk.range(1, 3), Chunk.range(2, 5)),
+        Stream.run(Sink.head())
       )
       assert.deepStrictEqual(result, Option.some(1))
     }))
@@ -35,10 +31,8 @@ describe.concurrent("Sink", () => {
   it.effect("last", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromChunks(Chunk.range(1, 10), Chunk.range(1, 3), Chunk.range(2, 5)),
-          Stream.run(Sink.last())
-        )
+        Stream.fromChunks(Chunk.range(1, 10), Chunk.range(1, 3), Chunk.range(2, 5)),
+        Stream.run(Sink.last())
       )
       assert.deepStrictEqual(result, Option.some(5))
     }))
@@ -46,16 +40,14 @@ describe.concurrent("Sink", () => {
   it.effect("take - repeats until the source is exhausted", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromChunks(
-            Chunk.make(1, 2),
-            Chunk.make(3, 4, 5),
-            Chunk.empty<number>(),
-            Chunk.make(6, 7),
-            Chunk.make(8, 9)
-          ),
-          Stream.run(Sink.collectAllFrom(Sink.take<number>(3)))
-        )
+        Stream.fromChunks(
+          Chunk.make(1, 2),
+          Chunk.make(3, 4, 5),
+          Chunk.empty<number>(),
+          Chunk.make(6, 7),
+          Chunk.make(8, 9)
+        ),
+        Stream.run(Sink.collectAllFrom(Sink.take<number>(3)))
       )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
@@ -68,10 +60,8 @@ describe.concurrent("Sink", () => {
       const chunk = Chunk.make(1, 2, 3, 4, 5)
       const predicate = (n: number) => n === 3
       const result = yield* $(
-        pipe(
-          Stream.fromChunk(chunk),
-          Stream.run(Sink.some(predicate))
-        )
+        Stream.fromChunk(chunk),
+        Stream.run(Sink.some(predicate))
       )
       assert.isTrue(result)
     }))
@@ -79,19 +69,17 @@ describe.concurrent("Sink", () => {
   it.effect("sum", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromChunks(
-            Chunk.make(1, 2),
-            Chunk.make(3, 4, 5),
-            Chunk.empty<number>(),
-            Chunk.make(6, 7),
-            Chunk.make(8, 9)
-          ),
-          Stream.run(pipe(
-            Sink.collectAllFrom(Sink.sum),
-            Sink.map(Chunk.reduce(0, (x, y) => x + y))
-          ))
-        )
+        Stream.fromChunks(
+          Chunk.make(1, 2),
+          Chunk.make(3, 4, 5),
+          Chunk.empty<number>(),
+          Chunk.make(6, 7),
+          Chunk.make(8, 9)
+        ),
+        Stream.run(pipe(
+          Sink.collectAllFrom(Sink.sum),
+          Sink.map(Chunk.reduce(0, (x, y) => x + y))
+        ))
       )
       assert.strictEqual(result, 45)
     }))
@@ -107,17 +95,15 @@ describe.concurrent("Sink", () => {
         Chunk.make(8, 9)
       )
       const [chunk, leftover] = yield* $(
-        pipe(
-          Stream.fromChunks(...chunks),
-          Stream.peel(Sink.take<number>(n)),
-          Effect.flatMap(([chunk, stream]) =>
-            pipe(
-              Stream.runCollect(stream),
-              Effect.map((leftover) => [chunk, leftover] as const)
-            )
-          ),
-          Effect.scoped
-        )
+        Stream.fromChunks(...chunks),
+        Stream.peel(Sink.take<number>(n)),
+        Effect.flatMap(([chunk, stream]) =>
+          pipe(
+            Stream.runCollect(stream),
+            Effect.map((leftover) => [chunk, leftover] as const)
+          )
+        ),
+        Effect.scoped
       )
       assert.deepStrictEqual(
         Array.from(chunk),

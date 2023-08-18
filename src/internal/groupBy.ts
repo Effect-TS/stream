@@ -162,13 +162,11 @@ export const groupBy = dual<
           ))
           const ref = yield* $(Ref.make<Map<K, number>>(new Map()))
           const add = yield* $(
-            pipe(
-              stream.mapEffectSequential(self, f),
-              stream.distributedWithDynamicCallback(
-                options?.bufferSize ?? 16,
-                ([key, value]) => Effect.flatMap(Deferred.await(decider), (f) => f(key, value)),
-                (exit) => Queue.offer(output, exit)
-              )
+            stream.mapEffectSequential(self, f),
+            stream.distributedWithDynamicCallback(
+              options?.bufferSize ?? 16,
+              ([key, value]) => Effect.flatMap(Deferred.await(decider), (f) => f(key, value)),
+              (exit) => Queue.offer(output, exit)
             )
           )
           yield* $(

@@ -13,16 +13,14 @@ describe.concurrent("Channel", () => {
   it.effect("mergeWith - simple merge", () =>
     Effect.gen(function*($) {
       const [chunk, value] = yield* $(
-        pipe(
-          Channel.writeAll(1, 2, 3),
-          Channel.mergeWith({
-            other: Channel.writeAll(4, 5, 6),
-            // TODO: remove
-            onSelfDone: (leftDone) => MergeDecision.AwaitConst(Effect.suspend(() => leftDone)),
-            onOtherDone: (rightDone) => MergeDecision.AwaitConst(Effect.suspend(() => rightDone))
-          }),
-          Channel.runCollect
-        )
+        Channel.writeAll(1, 2, 3),
+        Channel.mergeWith({
+          other: Channel.writeAll(4, 5, 6),
+          // TODO: remove
+          onSelfDone: (leftDone) => MergeDecision.AwaitConst(Effect.suspend(() => leftDone)),
+          onOtherDone: (rightDone) => MergeDecision.AwaitConst(Effect.suspend(() => rightDone))
+        }),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(chunk), [1, 2, 3, 4, 5, 6])
       assert.isUndefined(value)
@@ -59,18 +57,16 @@ describe.concurrent("Channel", () => {
         )
       )
       const [chunk, value] = yield* $(
-        pipe(
-          left,
-          Channel.mergeWith({
-            other: right,
-            // TODO: remove
-            onSelfDone: (leftDone) =>
-              MergeDecision.Await((rightDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone))),
-            onOtherDone: (rightDone) =>
-              MergeDecision.Await((leftDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone)))
-          }),
-          Channel.runCollect
-        )
+        left,
+        Channel.mergeWith({
+          other: right,
+          // TODO: remove
+          onSelfDone: (leftDone) =>
+            MergeDecision.Await((rightDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone))),
+          onOtherDone: (rightDone) =>
+            MergeDecision.Await((leftDone) => Effect.suspend(() => Exit.zip(leftDone, rightDone)))
+        }),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(chunk), [1, 2])
       assert.deepStrictEqual(value, ["whatever", true])
@@ -86,7 +82,7 @@ describe.concurrent("Channel", () => {
         Channel.write(2),
         Channel.zipRight(pipe(Channel.fail(true), Channel.as(true)))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         left,
         Channel.mergeWith({
           other: right,
@@ -115,7 +111,7 @@ describe.concurrent("Channel", () => {
         }),
         Channel.runDrain,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail<[string, boolean]>(["boom", true]))
     }))
 

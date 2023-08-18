@@ -36,7 +36,7 @@ describe.concurrent("Channel", () => {
           )
         )
       )
-      const result = yield* $(pipe(Channel.runDrain(channel), Effect.zipRight(Ref.get(ref))))
+      const result = yield* $(Channel.runDrain(channel), Effect.zipRight(Ref.get(ref)))
       assert.deepStrictEqual(result, [
         "Acquire1",
         "Release11",
@@ -64,12 +64,12 @@ describe.concurrent("Channel", () => {
         ),
         Channel.ensuring(event("ReleaseOuter"))
       )
-      const [eventsInScope, eventsOutsideScope] = yield* $(pipe(
+      const [eventsInScope, eventsOutsideScope] = yield* $(
         Channel.toPull(channel),
         Effect.flatMap((pull) => pipe(Effect.exit(pull), Effect.zipRight(Ref.get(ref)))),
         Effect.scoped,
         Effect.zip(Ref.get(ref))
-      ))
+      )
       assert.deepStrictEqual(eventsInScope, [
         "Acquire1",
         "Release11",
@@ -109,10 +109,8 @@ describe.concurrent("Channel", () => {
         Channel.ensuring(event("Second concatMap"))
       )
       const [[elements], events] = yield* $(
-        pipe(
-          Channel.runCollect(channel),
-          Effect.zip(Ref.get(ref))
-        )
+        Channel.runCollect(channel),
+        Effect.zip(Ref.get(ref))
       )
       assert.deepStrictEqual(events, [
         "Second write",

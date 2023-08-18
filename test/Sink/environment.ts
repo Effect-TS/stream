@@ -14,7 +14,7 @@ describe.concurrent("Sink", () => {
         Sink.contextWithSink((env: Context.Context<string>) => Sink.succeed(pipe(env, Context.get(tag)))),
         Sink.provideContext(pipe(Context.empty(), Context.add(tag, "use this")))
       )
-      const result = yield* $(pipe(Stream.make("ignore this"), Stream.run(sink)))
+      const result = yield* $(Stream.make("ignore this"), Stream.run(sink))
       assert.strictEqual(result, "use this")
     }))
 })

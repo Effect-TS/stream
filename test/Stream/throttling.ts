@@ -18,21 +18,21 @@ import { assert, describe } from "vitest"
 describe.concurrent("Stream", () => {
   it.effect("throttleEnforce - free elements", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4),
         Stream.throttle({ cost: () => 0, units: 0, duration: Duration.infinity, strategy: "enforce" }),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
 
   it.effect("throttleEnforce - no bandwidth", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4),
         Stream.throttle({ cost: () => 1, units: 0, duration: Duration.infinity, strategy: "enforce" }),
         Stream.runCollect
-      ))
+      )
       assert.isTrue(Chunk.isEmpty(result))
     }))
 
@@ -53,7 +53,7 @@ describe.concurrent("Stream", () => {
   it.effect("throttleShape", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.bounded<number>(10))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(queue),
         Stream.throttle({
           strategy: "shape",
@@ -64,19 +64,19 @@ describe.concurrent("Stream", () => {
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
-            yield* $(pipe(Queue.offer(queue, 1)))
+            yield* $(Queue.offer(queue, 1))
             const result1 = yield* $(pull)
-            yield* $(pipe(Queue.offer(queue, 2)))
+            yield* $(Queue.offer(queue, 2))
             const result2 = yield* $(pull)
             yield* $(Effect.sleep(Duration.seconds(4)))
-            yield* $(pipe(Queue.offer(queue, 3)))
+            yield* $(Queue.offer(queue, 3))
             const result3 = yield* $(pull)
             return [Array.from(result1), Array.from(result2), Array.from(result3)] as const
           })
         ),
         Effect.scoped,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(8)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(result, [[1], [2], [3]])
@@ -85,7 +85,7 @@ describe.concurrent("Stream", () => {
   it.effect("throttleShape - infinite bandwidth", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.bounded<number>(10))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromQueue(queue),
         Stream.throttle({
           strategy: "shape",
@@ -96,23 +96,23 @@ describe.concurrent("Stream", () => {
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
-            yield* $(pipe(Queue.offer(queue, 1)))
+            yield* $(Queue.offer(queue, 1))
             const result1 = yield* $(pull)
-            yield* $(pipe(Queue.offer(queue, 2)))
+            yield* $(Queue.offer(queue, 2))
             const result2 = yield* $(pull)
             const elapsed = yield* $(Clock.currentTimeMillis)
             return [Array.from(result1), Array.from(result2), elapsed] as const
           })
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(result, [[1], [2], 0])
     }))
 
   it.effect("throttleShape - with burst", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.bounded<number>(10))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(queue),
         Stream.throttle({
           strategy: "shape",
@@ -124,27 +124,27 @@ describe.concurrent("Stream", () => {
         Stream.toPull,
         Effect.flatMap((pull) =>
           Effect.gen(function*($) {
-            yield* $(pipe(Queue.offer(queue, 1)))
+            yield* $(Queue.offer(queue, 1))
             const result1 = yield* $(pull)
             yield* $(TestClock.adjust(Duration.seconds(2)))
-            yield* $(pipe(Queue.offer(queue, 2)))
+            yield* $(Queue.offer(queue, 2))
             const result2 = yield* $(pull)
             yield* $(TestClock.adjust(Duration.seconds(4)))
-            yield* $(pipe(Queue.offer(queue, 3)))
+            yield* $(Queue.offer(queue, 3))
             const result3 = yield* $(pull)
             return [Array.from(result1), Array.from(result2), Array.from(result3)] as const
           })
         ),
         Effect.scoped,
         Effect.fork
-      ))
+      )
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(result, [[1], [2], [3]])
     }))
 
   it.effect("throttleShape - free elements", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4),
         Stream.throttle({
           strategy: "shape",
@@ -153,7 +153,7 @@ describe.concurrent("Stream", () => {
           duration: Duration.infinity
         }),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
 
@@ -174,23 +174,23 @@ describe.concurrent("Stream", () => {
         Stream.debounce(Duration.seconds(1)),
         Stream.tap(() => coordination.proceed)
       )
-      const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
+      const fiber = yield* $(stream, Stream.runCollect, Effect.fork)
       yield* $(Effect.fork(coordination.offer))
-      yield* $(pipe(
+      yield* $(
         Effect.sleep(Duration.millis(500)),
         Effect.zipRight(coordination.offer),
         Effect.fork
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         Effect.sleep(Duration.seconds(2)),
         Effect.zipRight(coordination.offer),
         Effect.fork
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         Effect.sleep(Duration.millis(2500)),
         Effect.zipRight(coordination.offer),
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.millis(3500)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(
@@ -212,12 +212,12 @@ describe.concurrent("Stream", () => {
         Stream.debounce(Duration.seconds(1)),
         Stream.tap(() => coordination.proceed)
       )
-      const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
-      yield* $(pipe(
+      const fiber = yield* $(stream, Stream.runCollect, Effect.fork)
+      yield* $(
         coordination.offer,
         Effect.zipRight(coordination.offer),
         Effect.zipRight(coordination.offer)
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(1)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(
@@ -239,7 +239,7 @@ describe.concurrent("Stream", () => {
         Stream.debounce(Duration.seconds(1)),
         Stream.tap(() => coordination.proceed)
       )
-      const fiber = yield* $(pipe(stream, Stream.runCollect, Effect.fork))
+      const fiber = yield* $(stream, Stream.runCollect, Effect.fork)
       yield* $(Effect.all([
         coordination.offer,
         coordination.offer,
@@ -255,13 +255,13 @@ describe.concurrent("Stream", () => {
 
   it.effect("debounce - should handle empty chunks properly", () =>
     Effect.gen(function*($) {
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(1, 2, 3),
         Stream.schedule(Schedule.fixed(Duration.millis(500))),
         Stream.debounce(Duration.seconds(1)),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(3)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [3])
@@ -269,33 +269,33 @@ describe.concurrent("Stream", () => {
 
   it.effect("debounce - should fail immediately", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromEffect(Effect.fail(Option.none())),
         Stream.debounce(Duration.infinity),
         Stream.runCollect,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(Option.none()))
     }))
 
   it.effect("debounce - should work with empty streams", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.debounce(Duration.seconds(5)),
         Stream.runCollect
-      ))
+      )
       assert.isTrue(Chunk.isEmpty(result))
     }))
 
   it.effect("debounce - should pick last element from every chunk", () =>
     Effect.gen(function*($) {
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(1, 2, 3),
         Stream.debounce(Duration.seconds(1)),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(1)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [3])
@@ -308,7 +308,7 @@ describe.concurrent("Stream", () => {
         Chunk.of(2),
         Chunk.of(3)
       ]))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(coordination.queue),
         Stream.tap(() => coordination.proceed),
         // TODO: remove
@@ -319,13 +319,13 @@ describe.concurrent("Stream", () => {
         Stream.take(1),
         Stream.runCollect,
         Effect.fork
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.millis(100))),
         Effect.zipRight(coordination.awaitNext),
         Effect.repeatN(3)
-      ))
+      )
       yield* $(TestClock.adjust(Duration.millis(100)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [3])
@@ -334,7 +334,7 @@ describe.concurrent("Stream", () => {
   it.effect("debounce - should interrupt children fiber on stream interruption", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromEffect(Effect.unit),
         Stream.concat(Stream.fromEffect(pipe(
           Effect.never,
@@ -343,7 +343,7 @@ describe.concurrent("Stream", () => {
         Stream.debounce(Duration.millis(800)),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.minutes(1)))
       yield* $(Fiber.interrupt(fiber))
       const result = yield* $(Ref.get(ref))

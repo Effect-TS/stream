@@ -15,13 +15,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const chunk = Chunk.range(1, 10)
       const result = yield* $(
-        pipe(
-          chunk,
-          Chunk.map(Either.right),
-          Stream.fromIterable,
-          Stream.mapEffect(identity),
-          Stream.runCollect
-        )
+        chunk,
+        Chunk.map(Either.right),
+        Stream.fromIterable,
+        Stream.mapEffect(identity),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), Array.from(chunk))
     }))
@@ -29,13 +27,11 @@ describe.concurrent("Stream", () => {
   it.effect("absolve - failure", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromIterable(pipe(Chunk.range(1, 10), Chunk.map(Either.right))),
-          Stream.concat(Stream.succeed(Either.left("Ouch"))),
-          Stream.mapEffect(identity),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.fromIterable(pipe(Chunk.range(1, 10), Chunk.map(Either.right))),
+        Stream.concat(Stream.succeed(Either.left("Ouch"))),
+        Stream.mapEffect(identity),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("Ouch"))
     }))
@@ -70,11 +66,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream1 = pipe(Stream.make(1, 2), Stream.concat(Stream.fail("boom")))
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchAllCause(() => stream2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
 
@@ -82,11 +78,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream1 = pipe(Stream.make(1, 2), Stream.concat(Stream.dieMessage("boom")))
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchAllCause(() => stream2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
 
@@ -94,11 +90,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream1 = Stream.make(1, 2)
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchAllCause(() => stream2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
@@ -115,12 +111,12 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom")),
         Stream.ensuring(Ref.update(ref, Chunk.append("s2")))
       )
-      yield* $(pipe(
+      yield* $(
         stream1,
         Stream.catchAllCause(() => stream2),
         Stream.runCollect,
         Effect.exit
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), ["s1", "s2"])
     }))
@@ -134,18 +130,18 @@ describe.concurrent("Stream", () => {
         Stream.crossRight(Stream.finalizer(Ref.update(ref, Chunk.append(3)))),
         Stream.crossRight(Stream.fail("boom"))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.drain(stream),
         Stream.catchAllCause(() => Stream.fromEffect(Ref.get(ref))),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(Chunk.flatten(result)), [3, 2, 1])
     }))
 
   it.effect("catchAllCause - propagates the right Exit value to the failing stream (ZIO #3609)", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make<Exit.Exit<unknown, unknown>>(Exit.unit))
-      yield* $(pipe(
+      yield* $(
         Stream.acquireRelease(
           Effect.unit,
           (_, exit) => Ref.set(ref, exit)
@@ -154,7 +150,7 @@ describe.concurrent("Stream", () => {
         Stream.either,
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
     }))
@@ -166,11 +162,11 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom"))
       )
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchSome((error) => error === "boom" ? Option.some(stream2) : Option.none()),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
 
@@ -181,12 +177,12 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom"))
       )
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchSome((error) => error === "boomer" ? Option.some(stream2) : Option.none()),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("boom"))
     }))
 
@@ -197,7 +193,7 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.failCause(Cause.fail("boom")))
       )
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchSomeCause((annotatedCause) => {
           const cause = Cause.unannotate(annotatedCause)
@@ -206,7 +202,7 @@ describe.concurrent("Stream", () => {
             Option.none()
         }),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
 
@@ -217,7 +213,7 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom"))
       )
       const stream2 = Stream.make(3, 4)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.catchSomeCause((cause) =>
           Cause.isEmpty(cause) ?
@@ -226,7 +222,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("boom"))
     }))
 
@@ -260,12 +256,12 @@ describe.concurrent("Stream", () => {
   it.effect("onError", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      const exit = yield* $(pipe(
+      const exit = yield* $(
         Stream.fail("boom"),
         Stream.onError(() => Ref.set(ref, true)),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       const called = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Exit.unannotate(exit), Exit.fail("boom"))
       assert.isTrue(called)
@@ -278,11 +274,11 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom"))
       )
       const stream2 = Stream.make(4, 5, 6)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.orElse(() => stream2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5, 6])
     }))
 
@@ -293,75 +289,75 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("boom"))
       )
       const stream2 = Stream.make(2)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.orElseEither(() => stream2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [Either.left(1), Either.right(2)])
     }))
 
   it.effect("orElseFail", () =>
     Effect.gen(function*($) {
       const stream = pipe(Stream.succeed(1), Stream.concat(Stream.fail("boom")))
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.orElseFail(() => "boomer"),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("boomer"))
     }))
 
   it.effect("orElseIfEmpty - produce default value if stream is empty", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.orElseIfEmpty(() => 0),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0])
     }))
 
   it.effect("orElseIfEmpty - ignores default value when stream is not empty", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.orElseIfEmpty(() => 0),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1])
     }))
 
   it.effect("orElseIfEmptyStream - consume default stream if stream is empty", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.orElseIfEmptyStream(() => Stream.range(0, 5)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3, 4])
     }))
 
   it.effect("orElseIfEmptyStream - should throw the correct error from the default stream", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.orElseIfEmptyStream(() => Stream.fail("Ouch")),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
   it.effect("orElseSucceed", () =>
     Effect.gen(function*($) {
       const stream = pipe(Stream.succeed(1), Stream.concat(Stream.fail("boom")))
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.orElseSucceed(() => 2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 })

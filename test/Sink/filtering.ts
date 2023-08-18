@@ -9,10 +9,8 @@ describe.concurrent("Sink", () => {
   it.effect("filterInput", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(Sink.collectAll<number>(), Sink.filterInput((n) => n % 2 === 0)))
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(Sink.collectAll<number>(), Sink.filterInput((n) => n % 2 === 0)))
       )
       assert.deepStrictEqual(Array.from(result), [2, 4, 6, 8])
     }))
@@ -20,13 +18,11 @@ describe.concurrent("Sink", () => {
   it.effect("filterInputEffect - happy path", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(
-            Sink.collectAll<number>(),
-            Sink.filterInputEffect((n) => Effect.succeed(n % 2 === 0))
-          ))
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(
+          Sink.collectAll<number>(),
+          Sink.filterInputEffect((n) => Effect.succeed(n % 2 === 0))
+        ))
       )
       assert.deepStrictEqual(Array.from(result), [2, 4, 6, 8])
     }))
@@ -34,14 +30,12 @@ describe.concurrent("Sink", () => {
   it.effect("filterInputEffect - error", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(
-            Sink.collectAll<number>(),
-            Sink.filterInputEffect(() => Effect.fail("fail"))
-          )),
-          Effect.flip
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(
+          Sink.collectAll<number>(),
+          Sink.filterInputEffect(() => Effect.fail("fail"))
+        )),
+        Effect.flip
       )
       assert.strictEqual(result, "fail")
     }))

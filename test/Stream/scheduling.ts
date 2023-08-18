@@ -13,7 +13,7 @@ describe.concurrent("Stream", () => {
   it.effect("schedule", () =>
     Effect.gen(function*($) {
       const start = yield* $(Clock.currentTimeMillis)
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.range(1, 9),
         Stream.schedule(Schedule.fixed(Duration.millis(100))),
         Stream.mapEffect((n) =>
@@ -24,7 +24,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.millis(800)))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [
@@ -45,11 +45,11 @@ describe.concurrent("Stream", () => {
         Schedule.recurs(2),
         Schedule.zipRight(Schedule.fromFunction<string, string>(() => "Done"))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make("A", "B", "C", "A", "B", "C"),
         Stream.scheduleWith(schedule, { onElement: (s) => s.toLowerCase(), onSchedule: identity }),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), ["a", "b", "c", "Done", "a", "b", "c", "Done"])
     }))
 })

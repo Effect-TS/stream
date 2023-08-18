@@ -1,7 +1,6 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Duration from "@effect/data/Duration"
 import * as Either from "@effect/data/Either"
-import { pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Deferred from "@effect/io/Deferred"
 import * as Effect from "@effect/io/Effect"
@@ -21,14 +20,14 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
       const halt = yield* $(Deferred.make<never, void>())
-      yield* $(pipe(
+      yield* $(
         Deferred.await(latch),
         Effect.onInterrupt(() => Ref.set(ref, true)),
         Stream.fromEffect,
         Stream.haltWhen(Deferred.await(halt)),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.succeed<never, void>(halt, void 0))
       yield* $(Deferred.succeed<never, void>(latch, void 0))
       const result = yield* $(Ref.get(ref))
@@ -39,13 +38,13 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const halt = yield* $(Deferred.make<string, void>())
       yield* $(Deferred.fail(halt, "fail"))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(0),
         Stream.forever,
         Stream.haltWhen(Deferred.await(halt)),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
 
@@ -54,14 +53,14 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
       const halt = yield* $(Deferred.make<never, void>())
-      yield* $(pipe(
+      yield* $(
         Deferred.await(latch),
         Effect.onInterrupt(() => Ref.set(ref, true)),
         Stream.fromEffect,
         Stream.haltWhenDeferred(halt),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.succeed<never, void>(halt, void 0))
       yield* $(Deferred.succeed<never, void>(latch, void 0))
       const result = yield* $(Ref.get(ref))
@@ -72,12 +71,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const halt = yield* $(Deferred.make<string, void>())
       yield* $(Deferred.fail(halt, "fail"))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.haltWhenDeferred(halt),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
 
@@ -89,7 +88,7 @@ describe.concurrent("Stream", () => {
         Chunk.of(3),
         Chunk.of(4)
       ]))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(coordination.queue),
         Stream.filterMapWhile(Exit.match({
           onFailure: Option.none,
@@ -99,22 +98,22 @@ describe.concurrent("Stream", () => {
         Stream.tap(() => coordination.proceed),
         Stream.runCollect,
         Effect.fork
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(3))),
         Effect.zipRight(coordination.awaitNext)
-      ))
+      )
       yield* $(coordination.offer)
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(
@@ -126,14 +125,14 @@ describe.concurrent("Stream", () => {
   it.effect("haltAfter - will process first chunk", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(queue),
         Stream.haltAfter(Duration.seconds(5)),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(6)))
-      yield* $(pipe(Queue.offer(queue, 1)))
+      yield* $(Queue.offer(queue, 1))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1])
     }))

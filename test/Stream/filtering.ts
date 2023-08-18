@@ -31,7 +31,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("filterEffect - laziness on chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.filterEffect((n) =>
           n === 3 ?
@@ -40,7 +40,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.either,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         [Either.right(1), Either.right(2), Either.left("boom")]

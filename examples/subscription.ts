@@ -20,11 +20,11 @@ const program = Effect.gen(function*($) {
       Effect.tap(() => Effect.log("STOPPED"))
     )
   const subscriptionRef = yield* $(SubscriptionRef.make(0))
-  const fiber = yield* $(pipe(
+  const fiber = yield* $(
     SubscriptionRef.update(subscriptionRef, (n) => n + 1),
     Effect.forever,
     Effect.fork
-  ))
+  )
   const result = yield* $(Effect.all(
     Array.from({ length: 2 }, () => subscriber(subscriptionRef)),
     { concurrency: 2 }

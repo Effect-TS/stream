@@ -32,11 +32,11 @@ describe.concurrent("Stream", () => {
   it.effect("concat - finalizer ordering", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      yield* $(pipe(
+      yield* $(
         Stream.finalizer(Ref.update(ref, Chunk.append("Second"))),
         Stream.concat(Stream.finalizer(Ref.update(ref, Chunk.append("First")))),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), ["Second", "First"])
     }))

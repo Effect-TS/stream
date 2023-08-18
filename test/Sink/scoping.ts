@@ -29,7 +29,7 @@ describe.concurrent("Sink", () => {
         ),
         Sink.unwrapScoped
       )
-      const [result, state] = yield* $(pipe(Stream.make(1, 2, 3), Stream.run(sink)))
+      const [result, state] = yield* $(Stream.make(1, 2, 3), Stream.run(sink))
       const finalState = yield* $(Ref.get(ref))
       assert.strictEqual(result, 103)
       assert.isFalse(state)
@@ -44,7 +44,7 @@ describe.concurrent("Sink", () => {
         () => Ref.set(ref, true)
       )
       const sink = pipe(resource, Effect.as(Sink.succeed("ok")), Sink.unwrapScoped)
-      const result = yield* $(pipe(Stream.fail("fail"), Stream.run(sink)))
+      const result = yield* $(Stream.fail("fail"), Stream.run(sink))
       const finalState = yield* $(Ref.get(ref))
       assert.strictEqual(result, "ok")
       assert.isTrue(finalState)

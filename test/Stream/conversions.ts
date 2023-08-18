@@ -17,7 +17,7 @@ describe.concurrent("Stream", () => {
         Stream.fromChunk(chunk),
         Stream.flatMap(Stream.succeed)
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.toQueue({ capacity: 1_000 }),
         Effect.flatMap((queue) =>
@@ -28,7 +28,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Effect.scoped
-      ))
+      )
       const expected = pipe(
         chunk,
         Chunk.map(Take.of),
@@ -44,7 +44,7 @@ describe.concurrent("Stream", () => {
         Stream.fromChunk(chunk),
         Stream.flatMap(Stream.succeed)
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.toQueue(stream, { strategy: "unbounded" }),
         Effect.flatMap((queue) =>
           pipe(
@@ -54,7 +54,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Effect.scoped
-      ))
+      )
       const expected = pipe(
         chunk,
         Chunk.map(Take.of),
@@ -65,12 +65,12 @@ describe.concurrent("Stream", () => {
 
   it.effect("toQueueOfElements - propagates defects", () =>
     Effect.gen(function*($) {
-      const queue = yield* $(pipe(
+      const queue = yield* $(
         Stream.dieMessage("die"),
         Stream.toQueueOfElements({ capacity: 1 }),
         Effect.flatMap(Queue.take),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(queue), Exit.die(Cause.RuntimeException("die")))
     }))
 })

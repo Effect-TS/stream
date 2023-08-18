@@ -34,18 +34,18 @@ describe.concurrent("Stream", () => {
 
   it.effect("take - taking 0 short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(Stream.never, Stream.take(0), Stream.runCollect))
+      const result = yield* $(Stream.never, Stream.take(0), Stream.runCollect)
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
   it.effect("take - taking 1 short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.concat(Stream.never),
         Stream.take(1),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1])
     }))
 
@@ -111,7 +111,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("takeUntilEffect - laziness on chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.takeUntilEffect((n) =>
           n === 2 ?
@@ -120,7 +120,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.either,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [Either.right(1), Either.left("boom")])
     }))
 
@@ -137,7 +137,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("takeWhile - does not stop when hitting an empty chunk (ZIO #4272)", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(Chunk.of(1), Chunk.of(2), Chunk.of(3)),
         Stream.mapChunks(Chunk.flatMap((n) =>
           n === 2 ?
@@ -146,18 +146,18 @@ describe.concurrent("Stream", () => {
         )),
         Stream.takeWhile((n) => n !== 4),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 3])
     }))
 
   it.effect("takeWhile - short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.concat(Stream.fail("Ouch")),
         Stream.takeWhile(constFalse),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 })

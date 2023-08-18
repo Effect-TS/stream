@@ -10,7 +10,7 @@ import { assert, describe } from "vitest"
 describe.concurrent("Stream", () => {
   it.effect("distributedWithDynamic - ensures no race between subscription and stream end", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.distributedWithDynamic({
           maximumLag: 1,
@@ -45,7 +45,7 @@ describe.concurrent("Stream", () => {
           )
         }),
         Effect.scoped
-      ))
+      )
       assert.isUndefined(result)
     }))
 })

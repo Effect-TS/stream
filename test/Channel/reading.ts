@@ -178,7 +178,7 @@ describe.concurrent("Channel", () => {
           )
         )
       )
-      const result = yield* $(pipe(Channel.run(channel), Effect.zipRight(Ref.get(ref))))
+      const result = yield* $(Channel.run(channel), Effect.zipRight(Ref.get(ref)))
       assert.deepStrictEqual(result, [3, 7])
     }))
 
@@ -215,7 +215,7 @@ describe.concurrent("Channel", () => {
         Channel.catchAll(() => Channel.unit)
       )
       const channel = pipe(left, Channel.pipeTo(right))
-      const result = yield* $(pipe(Channel.runDrain(channel), Effect.zipRight(Ref.get(ref))))
+      const result = yield* $(Channel.runDrain(channel), Effect.zipRight(Ref.get(ref)))
       assert.deepStrictEqual(Array.from(result), [
         "Acquire outer",
         "Acquire 1",
@@ -243,23 +243,21 @@ describe.concurrent("Channel", () => {
         })
       )
       const [missing, surplus] = yield* $(
-        pipe(
-          refReader(source),
-          Channel.pipeTo(twoWriters),
-          Channel.mapEffect(() => Ref.get(destination)),
-          Channel.run,
-          Effect.map((result) => {
-            let missing = HashSet.fromIterable(elements)
-            let surplus = HashSet.fromIterable(result)
-            for (const value of result) {
-              missing = pipe(missing, HashSet.remove(value))
-            }
-            for (const value of elements) {
-              surplus = pipe(surplus, HashSet.remove(value))
-            }
-            return [missing, surplus] as const
-          })
-        )
+        refReader(source),
+        Channel.pipeTo(twoWriters),
+        Channel.mapEffect(() => Ref.get(destination)),
+        Channel.run,
+        Effect.map((result) => {
+          let missing = HashSet.fromIterable(elements)
+          let surplus = HashSet.fromIterable(result)
+          for (const value of result) {
+            missing = pipe(missing, HashSet.remove(value))
+          }
+          for (const value of elements) {
+            surplus = pipe(surplus, HashSet.remove(value))
+          }
+          return [missing, surplus] as const
+        })
       )
 
       assert.strictEqual(HashSet.size(missing), 0)
@@ -283,24 +281,22 @@ describe.concurrent("Channel", () => {
         })
       )
       const [missing, surplus] = yield* $(
-        pipe(
-          refReader(source),
-          Channel.pipeTo(twoWriters),
-          Channel.mapEffect(() => Ref.get(destination)),
-          Channel.run,
-          Effect.map((result) => {
-            const expected = HashSet.fromIterable(elements.map(f))
-            let missing = HashSet.fromIterable(expected)
-            let surplus = HashSet.fromIterable(result)
-            for (const value of result) {
-              missing = pipe(missing, HashSet.remove(value))
-            }
-            for (const value of expected) {
-              surplus = pipe(surplus, HashSet.remove(value))
-            }
-            return [missing, surplus] as const
-          })
-        )
+        refReader(source),
+        Channel.pipeTo(twoWriters),
+        Channel.mapEffect(() => Ref.get(destination)),
+        Channel.run,
+        Effect.map((result) => {
+          const expected = HashSet.fromIterable(elements.map(f))
+          let missing = HashSet.fromIterable(expected)
+          let surplus = HashSet.fromIterable(result)
+          for (const value of result) {
+            missing = pipe(missing, HashSet.remove(value))
+          }
+          for (const value of expected) {
+            surplus = pipe(surplus, HashSet.remove(value))
+          }
+          return [missing, surplus] as const
+        })
       )
       assert.strictEqual(HashSet.size(missing), 0)
       assert.strictEqual(HashSet.size(surplus), 0)

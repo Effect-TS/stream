@@ -20,18 +20,18 @@ describe.concurrent("Stream", () => {
         Context.empty(),
         Context.add(StringService, { string: "test" })
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.context<StringService>(),
         Stream.map(Context.get(StringService)),
         Stream.provideContext(context),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [{ string: "test" }])
     }))
 
   it.effect("contextWith", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         StringService,
         Stream.provideContext(
           pipe(
@@ -41,13 +41,13 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runHead,
         Effect.some
-      ))
+      )
       assert.deepStrictEqual(result, { string: "test" })
     }))
 
   it.effect("contextWithEffect - success", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.contextWithEffect((context: Context.Context<StringService>) =>
           Effect.succeed(pipe(context, Context.get(StringService)))
         ),
@@ -59,13 +59,13 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runHead,
         Effect.some
-      ))
+      )
       assert.deepStrictEqual(result, { string: "test" })
     }))
 
   it.effect("contextWithEffect - fails", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.contextWithEffect((_: Context.Context<StringService>) => Effect.fail("boom")),
         Stream.provideContext(
           pipe(
@@ -75,13 +75,13 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runHead,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
     }))
 
   it.effect("contextWithStream - success", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.contextWithStream((context: Context.Context<StringService>) =>
           Stream.succeed(pipe(context, Context.get(StringService)))
         ),
@@ -93,13 +93,13 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runHead,
         Effect.some
-      ))
+      )
       assert.deepStrictEqual(result, { string: "test" })
     }))
 
   it.effect("contextWithStream - fails", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.contextWithStream((_: Context.Context<StringService>) => Stream.fail("boom")),
         Stream.provideContext(
           pipe(
@@ -109,7 +109,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runHead,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
     }))
 
@@ -117,12 +117,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = StringService
       const layer = Layer.succeed(StringService, { string: "test" })
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.provideLayer(layer),
         Stream.map((s) => s.string),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
 
@@ -130,42 +130,42 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream = StringService
       const service = Stream.succeed<StringService>({ string: "test" })
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.provideServiceStream(StringService, service),
         Stream.map((s) => s.string),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
 
   it.effect("serviceWith", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.map(StringService, (service) => service.string),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
 
   it.effect("serviceWithEffect", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.mapEffect(StringService, (service) => Effect.succeed(service.string)),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))
 
   it.effect("serviceWithStream", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.flatMap(StringService, (service) => Stream.succeed(service.string)),
         Stream.provideLayer(Layer.succeed(StringService, { string: "test" })),
         Stream.runCollect
-      ))
+      )
       console.log("serviceWithStream")
       assert.deepStrictEqual(Array.from(result), ["test"])
     }))

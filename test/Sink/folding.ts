@@ -12,11 +12,9 @@ describe.concurrent("Sink", () => {
   it.effect("fold - empty", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.empty,
-          Stream.transduce(Sink.fold<number, number>(0, constTrue, (x, y) => x + y)),
-          Stream.runCollect
-        )
+        Stream.empty,
+        Stream.transduce(Sink.fold<number, number>(0, constTrue, (x, y) => x + y)),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [0])
     }))
@@ -24,10 +22,8 @@ describe.concurrent("Sink", () => {
   it.effect("fold - termination in the middle", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(Sink.fold<number, number>(0, (n) => n <= 5, (x, y) => x + y))
-        )
+        Stream.range(1, 10),
+        Stream.run(Sink.fold<number, number>(0, (n) => n <= 5, (x, y) => x + y))
       )
       assert.strictEqual(result, 6)
     }))
@@ -35,10 +31,8 @@ describe.concurrent("Sink", () => {
   it.effect("fold - immediate termination", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(Sink.fold<number, number>(0, (n) => n <= -1, (x, y) => x + y))
-        )
+        Stream.range(1, 10),
+        Stream.run(Sink.fold<number, number>(0, (n) => n <= -1, (x, y) => x + y))
       )
       assert.strictEqual(result, 0)
     }))
@@ -46,10 +40,8 @@ describe.concurrent("Sink", () => {
   it.effect("fold - no termination", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(Sink.fold<number, number>(0, (n) => n <= 500, (x, y) => x + y))
-        )
+        Stream.range(1, 10),
+        Stream.run(Sink.fold<number, number>(0, (n) => n <= 500, (x, y) => x + y))
       )
       assert.strictEqual(result, 45)
     }))
@@ -57,15 +49,15 @@ describe.concurrent("Sink", () => {
   it.effect("foldLeft equivalence with Chunk.reduce", () =>
     Effect.gen(function*($) {
       const stream = Stream.range(1, 10)
-      const result1 = yield* $(pipe(stream, Stream.run(Sink.foldLeft("", (s, n) => s + `${n}`))))
-      const result2 = yield* $(pipe(stream, Stream.runCollect, Effect.map(Chunk.reduce("", (s, n) => s + `${n}`))))
+      const result1 = yield* $(stream, Stream.run(Sink.foldLeft("", (s, n) => s + `${n}`)))
+      const result2 = yield* $(stream, Stream.runCollect, Effect.map(Chunk.reduce("", (s, n) => s + `${n}`)))
       assert.strictEqual(result1, result2)
     }))
 
   it.effect("foldEffect - empty", () =>
     Effect.gen(function*($) {
       const sink = Sink.foldEffect(0, constTrue, (x, y: number) => Effect.succeed(x + y))
-      const result = yield* $(pipe(Stream.empty, Stream.transduce(sink), Stream.runCollect))
+      const result = yield* $(Stream.empty, Stream.transduce(sink), Stream.runCollect)
       assert.deepStrictEqual(Array.from(result), [0])
     }))
 
@@ -110,11 +102,9 @@ describe.concurrent("Sink", () => {
   it.effect("foldUntil", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1, 1, 1, 1, 1),
-          Stream.transduce(Sink.foldUntil(0, 3, (x, y) => x + y)),
-          Stream.runCollect
-        )
+        Stream.make(1, 1, 1, 1, 1, 1),
+        Stream.transduce(Sink.foldUntil(0, 3, (x, y) => x + y)),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [3, 3, 0])
     }))
@@ -122,11 +112,9 @@ describe.concurrent("Sink", () => {
   it.effect("foldUntilEffect", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1, 1, 1, 1, 1),
-          Stream.transduce(Sink.foldUntilEffect(0, 3, (x, y) => Effect.succeed(x + y))),
-          Stream.runCollect
-        )
+        Stream.make(1, 1, 1, 1, 1, 1),
+        Stream.transduce(Sink.foldUntilEffect(0, 3, (x, y) => Effect.succeed(x + y))),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [3, 3, 0])
     }))
@@ -134,16 +122,14 @@ describe.concurrent("Sink", () => {
   it.effect("foldWeighted", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 5, 2, 3),
-          Stream.transduce(Sink.foldWeighted({
-            initial: Chunk.empty<number>(),
-            maxCost: 12,
-            cost: (_, n) => n * 2,
-            body: (acc, curr) => pipe(acc, Chunk.append(curr))
-          })),
-          Stream.runCollect
-        )
+        Stream.make(1, 5, 2, 3),
+        Stream.transduce(Sink.foldWeighted({
+          initial: Chunk.empty<number>(),
+          maxCost: 12,
+          cost: (_, n) => n * 2,
+          body: (acc, curr) => pipe(acc, Chunk.append(curr))
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
@@ -154,17 +140,15 @@ describe.concurrent("Sink", () => {
   it.effect("foldWeightedDecompose - empty", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.empty,
-          Stream.transduce(Sink.foldWeightedDecompose({
-            initial: 0,
-            maxCost: 1_000,
-            cost: (_, n) => n,
-            decompose: Chunk.of,
-            body: (acc, curr) => acc + curr
-          })),
-          Stream.runCollect
-        )
+        Stream.empty,
+        Stream.transduce(Sink.foldWeightedDecompose({
+          initial: 0,
+          maxCost: 1_000,
+          cost: (_, n) => n,
+          decompose: Chunk.of,
+          body: (acc, curr) => acc + curr
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [0])
     }))
@@ -172,17 +156,15 @@ describe.concurrent("Sink", () => {
   it.effect("foldWeightedDecompose - simple", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 5, 1),
-          Stream.transduce(Sink.foldWeightedDecompose({
-            initial: Chunk.empty<number>(),
-            maxCost: 4,
-            cost: (_, n) => n,
-            decompose: (n) => n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n),
-            body: (acc, curr) => pipe(acc, Chunk.append(curr))
-          })),
-          Stream.runCollect
-        )
+        Stream.make(1, 5, 1),
+        Stream.transduce(Sink.foldWeightedDecompose({
+          initial: Chunk.empty<number>(),
+          maxCost: 4,
+          cost: (_, n) => n,
+          decompose: (n) => n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n),
+          body: (acc, curr) => pipe(acc, Chunk.append(curr))
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
@@ -193,16 +175,14 @@ describe.concurrent("Sink", () => {
   it.effect("foldWeightedEffect", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 5, 2, 3),
-          Stream.transduce(Sink.foldWeightedEffect({
-            initial: Chunk.empty<number>(),
-            maxCost: 12,
-            cost: (_, n) => Effect.succeed(n * 2),
-            body: (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
-          })),
-          Stream.runCollect
-        )
+        Stream.make(1, 5, 2, 3),
+        Stream.transduce(Sink.foldWeightedEffect({
+          initial: Chunk.empty<number>(),
+          maxCost: 12,
+          cost: (_, n) => Effect.succeed(n * 2),
+          body: (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
@@ -213,17 +193,15 @@ describe.concurrent("Sink", () => {
   it.effect("foldWeightedDecomposeEffect - empty", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.empty,
-          Stream.transduce(Sink.foldWeightedDecomposeEffect({
-            initial: 0,
-            maxCost: 1_000,
-            cost: (_, n) => Effect.succeed(n),
-            decompose: (input) => Effect.succeed(Chunk.of(input)),
-            body: (acc, curr) => Effect.succeed(acc + curr)
-          })),
-          Stream.runCollect
-        )
+        Stream.empty,
+        Stream.transduce(Sink.foldWeightedDecomposeEffect({
+          initial: 0,
+          maxCost: 1_000,
+          cost: (_, n) => Effect.succeed(n),
+          decompose: (input) => Effect.succeed(Chunk.of(input)),
+          body: (acc, curr) => Effect.succeed(acc + curr)
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [0])
     }))
@@ -231,17 +209,15 @@ describe.concurrent("Sink", () => {
   it.effect("foldWeightedDecomposeEffect - simple", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 5, 1),
-          Stream.transduce(Sink.foldWeightedDecomposeEffect({
-            initial: Chunk.empty<number>(),
-            maxCost: 4,
-            cost: (_, n) => Effect.succeed(n),
-            decompose: (n) => Effect.succeed(n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n)),
-            body: (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
-          })),
-          Stream.runCollect
-        )
+        Stream.make(1, 5, 1),
+        Stream.transduce(Sink.foldWeightedDecomposeEffect({
+          initial: Chunk.empty<number>(),
+          maxCost: 4,
+          cost: (_, n) => Effect.succeed(n),
+          decompose: (n) => Effect.succeed(n > 1 ? Chunk.make(n - 1, 1) : Chunk.of(n)),
+          body: (acc, curr) => Effect.succeed(pipe(acc, Chunk.append(curr)))
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
@@ -263,10 +239,8 @@ describe.concurrent("Sink", () => {
         })
       )
       const result = yield* $(
-        pipe(
-          Stream.make(1, 2, 3),
-          Stream.run(sink)
-        )
+        Stream.make(1, 2, 3),
+        Stream.run(sink)
       )
       assert.deepStrictEqual(result, [[1, 2, 3], "boom"])
     }))

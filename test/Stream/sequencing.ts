@@ -24,16 +24,14 @@ describe.concurrent("Stream", () => {
   it.effect("branchAfter - switches streams", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromChunk(Chunk.range(0, 5)),
-          Stream.branchAfter(1, (values) => {
-            if (Equal.equals(values, Chunk.make(0))) {
-              return Stream.identity<never, never, number>()
-            }
-            throw new Error("should have branched after 0")
-          }),
-          Stream.runCollect
-        )
+        Stream.fromChunk(Chunk.range(0, 5)),
+        Stream.branchAfter(1, (values) => {
+          if (Equal.equals(values, Chunk.make(0))) {
+            return Stream.identity<never, never, number>()
+          }
+          throw new Error("should have branched after 0")
+        }),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5])
     }))
@@ -41,11 +39,9 @@ describe.concurrent("Stream", () => {
   it.effect("branchAfter - emits data if less than n elements are collected", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromChunk(Chunk.range(1, 5)),
-          Stream.branchAfter(6, Stream.prepend),
-          Stream.runCollect
-        )
+        Stream.fromChunk(Chunk.range(1, 5)),
+        Stream.branchAfter(6, Stream.prepend),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5])
     }))
@@ -53,12 +49,10 @@ describe.concurrent("Stream", () => {
   it.effect("branchAfter - applies the new stream once on remaining upstream", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.fromIterable(Chunk.range(1, 5)),
-          Stream.rechunk(2),
-          Stream.branchAfter(1, Stream.prepend),
-          Stream.runCollect
-        )
+        Stream.fromIterable(Chunk.range(1, 5)),
+        Stream.rechunk(2),
+        Stream.branchAfter(1, Stream.prepend),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5])
     }))
@@ -125,7 +119,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const push = (n: number) => Ref.update(ref, Chunk.append(n))
       const latch = yield* $(Deferred.make<never, void>())
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(
           Stream.acquireRelease(push(1), () => push(1)),
           Stream.fromEffect(push(2)),
@@ -140,7 +134,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(identity),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
       const result = yield* $(Ref.get(ref))
@@ -152,7 +146,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const chunks = Chunk.make(Chunk.of(void 0), Chunk.of(void 0))
-      yield* $(pipe(
+      yield* $(
         Stream.acquireRelease(push("open 1"), () => push("close 1")),
         Stream.flatMap(() =>
           pipe(
@@ -174,7 +168,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [
         "open 1",
@@ -200,12 +194,12 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const chunks = Chunk.make(Chunk.of(1), Chunk.of(2))
-      yield* $(pipe(
+      yield* $(
         Stream.fromChunks(...chunks),
         Stream.tap(() => push("use 1")),
         Stream.flatMap(() => Stream.acquireRelease(push("open 2"), () => push("close 2"))),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [
         "use 1",
@@ -228,12 +222,12 @@ describe.concurrent("Stream", () => {
           })),
         Stream.flatMap(() => Stream.fail("Ouch"))
       )
-      yield* $(pipe(
+      yield* $(
         Stream.succeed(void 0),
         Stream.flatMap(() => inner),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.isTrue(result)
     }))
@@ -242,13 +236,13 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const push = (n: number) => Ref.update(ref, Chunk.prepend(n))
-      yield* $(pipe(
+      yield* $(
         Stream.finalizer(push(1)),
         Stream.flatMap(() => Stream.finalizer(push(2))),
         Stream.toPull,
         Effect.flatten,
         Effect.scoped
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
@@ -261,7 +255,7 @@ describe.concurrent("Stream", () => {
         Stream.finalizer(push(1)),
         Stream.flatMap(() => Stream.finalizer(push(2)))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Scope.make(),
         Effect.flatMap((scope) =>
           pipe(
@@ -275,7 +269,7 @@ describe.concurrent("Stream", () => {
             )
           )
         )
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
@@ -311,7 +305,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(void 0),
         Stream.flatMap(() =>
           pipe(
@@ -322,7 +316,7 @@ describe.concurrent("Stream", () => {
           ), { concurrency: 2 }),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
       const result = yield* $(Ref.get(ref))
@@ -333,7 +327,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(
           Stream.fromEffect(
             pipe(
@@ -352,7 +346,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(identity, { concurrency: 2 }),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(result, Either.left("Ouch"))
@@ -362,7 +356,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(void 0),
         Stream.concat(Stream.fromEffect(pipe(
           Deferred.await(latch),
@@ -377,7 +371,7 @@ describe.concurrent("Stream", () => {
           ), { concurrency: 2 }),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(result, Either.left("Ouch"))
@@ -388,7 +382,7 @@ describe.concurrent("Stream", () => {
       const defect = Cause.RuntimeException("Ouch")
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(
           Stream.fromEffect(pipe(
             Deferred.succeed<never, void>(latch, void 0),
@@ -403,7 +397,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(identity, { concurrency: 2 }),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(defect))
@@ -414,7 +408,7 @@ describe.concurrent("Stream", () => {
       const defect = Cause.RuntimeException("Ouch")
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(void 0),
         Stream.concat(Stream.fromEffect(pipe(
           Deferred.await(latch),
@@ -429,7 +423,7 @@ describe.concurrent("Stream", () => {
           ), { concurrency: 2 }),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(defect))
@@ -440,7 +434,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const inner = Stream.acquireRelease(push("Inner Acquire"), () => push("Inner Release"))
-      yield* $(pipe(
+      yield* $(
         Stream.acquireRelease(
           pipe(
             push("Outer Acquire"),
@@ -450,7 +444,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.flatMap(identity, { concurrency: 2 }),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [
         "Outer Acquire",
@@ -464,7 +458,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const semaphore = yield* $(Effect.makeSemaphore(1))
-      yield* $(pipe(
+      yield* $(
         Stream.make(1, 2, 3, 4),
         Stream.flatMap((n) => {
           if (n > 3) {
@@ -479,7 +473,7 @@ describe.concurrent("Stream", () => {
           )
         }, { concurrency: 1, switch: true }),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(semaphore.withPermits(1)(Ref.get(ref)))
       assert.isTrue(result)
     }))
@@ -488,7 +482,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(0))
       const semaphore = yield* $(Effect.makeSemaphore(4))
-      yield* $(pipe(
+      yield* $(
         Stream.range(1, 13),
         Stream.flatMap((n) => {
           if (n > 8) {
@@ -506,22 +500,22 @@ describe.concurrent("Stream", () => {
           )
         }, { concurrency: 4, switch: true }),
         Stream.runDrain
-      ))
-      const result = yield* $(pipe(
+      )
+      const result = yield* $(
         Ref.get(ref),
         semaphore.withPermits(4)
-      ))
+      )
       assert.strictEqual(result, 4)
     }))
 
   it.effect("flatMapParSwitch - short circuiting", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Stream.never, Stream.make(1)),
         Stream.flatMap(identity, { concurrency: 2, switch: true }),
         Stream.take(1),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1])
     }))
 
@@ -529,7 +523,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(void 0),
         Stream.flatMap(() =>
           pipe(
@@ -540,7 +534,7 @@ describe.concurrent("Stream", () => {
           ), { switch: true }),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
       const result = yield* $(Ref.get(ref))
@@ -551,7 +545,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(
           Stream.fromEffect(
             pipe(
@@ -570,7 +564,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(identity, { concurrency: 2, switch: true }),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(result, Either.left("Ouch"))
@@ -580,7 +574,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(void 0),
         Stream.concat(Stream.fromEffect(pipe(
           Deferred.await(latch),
@@ -595,7 +589,7 @@ describe.concurrent("Stream", () => {
           ), { concurrency: 2, switch: true }),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(result, Either.left("Ouch"))
@@ -606,7 +600,7 @@ describe.concurrent("Stream", () => {
       const error = Cause.RuntimeException("Ouch")
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(
           Stream.fromEffect(
             pipe(
@@ -625,7 +619,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(identity, { concurrency: 2, switch: true }),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
@@ -636,7 +630,7 @@ describe.concurrent("Stream", () => {
       const error = Cause.RuntimeException("Ouch")
       const ref = yield* $(Ref.make(false))
       const latch = yield* $(Deferred.make<never, void>())
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(void 0),
         Stream.concat(Stream.fromEffect(pipe(
           Deferred.await(latch),
@@ -651,7 +645,7 @@ describe.concurrent("Stream", () => {
           ), { concurrency: 2, switch: true }),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
@@ -662,7 +656,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
       const push = (message: string) => Ref.update(ref, Chunk.append(message))
       const inner = Stream.acquireRelease(push("Inner Acquire"), () => push("Inner Release"))
-      yield* $(pipe(
+      yield* $(
         Stream.acquireRelease(
           pipe(
             push("Outer Acquire"),
@@ -672,7 +666,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.flatMap(identity, { concurrency: 2, switch: true }),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), [
         "Outer Acquire",
@@ -685,12 +679,12 @@ describe.concurrent("Stream", () => {
   it.effect("flattenChunks", () =>
     Effect.gen(function*($) {
       const chunks = Chunk.make(Chunk.make(1, 2), Chunk.make(3, 4), Chunk.make(5, 6))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(chunks),
         Stream.flattenChunks,
         Stream.chunks,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         Array.from(chunks).map((chunk) => Array.from(chunk))
@@ -699,7 +693,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("flattenExitOption - happy path", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.range(0, 10),
         Stream.toQueue({ capacity: 1 }),
         Effect.flatMap((queue) =>
@@ -711,7 +705,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(Chunk.flatten(result)),
         Array.from(Chunk.range(0, 9))
@@ -721,7 +715,7 @@ describe.concurrent("Stream", () => {
   it.effect("flattenExitOption - failure", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.range(0, 10),
         Stream.concat(Stream.fail(error)),
         Stream.toQueue({ capacity: 1 }),
@@ -735,36 +729,36 @@ describe.concurrent("Stream", () => {
         ),
         Effect.scoped,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
 
   it.effect("flattenIterables", () =>
     Effect.gen(function*($) {
       const iterables = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable(iterables),
         Stream.flattenIterables,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), iterables.flatMap(identity))
     }))
 
   it.effect("flattenTake - happy path", () =>
     Effect.gen(function*($) {
       const chunks = Chunk.make(Chunk.range(0, 3), Chunk.range(4, 8))
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(...chunks),
         Stream.mapChunks((chunk) => Chunk.of(Take.chunk(chunk))),
         Stream.flattenTake,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.flatten(chunks)))
     }))
 
   it.effect("flattenTake - stop collecting on Exit.Failure", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(
           Take.chunk(Chunk.make(1, 2)),
           Take.of(3),
@@ -772,30 +766,30 @@ describe.concurrent("Stream", () => {
         ),
         Stream.flattenTake,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
   it.effect("flattenTake - works with empty chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(
           Take.chunk(Chunk.empty<number>()),
           Take.chunk(Chunk.empty<number>())
         ),
         Stream.flattenTake,
         Stream.runCollect
-      ))
+      )
       assert.isTrue(Chunk.isEmpty(result))
     }))
 
   it.effect("flattenTake - works with empty streams", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable<Take.Take<never, never>>([]),
         Stream.flattenTake,
         Stream.runCollect
-      ))
+      )
       assert.isTrue(Chunk.isEmpty(result))
     }))
 })

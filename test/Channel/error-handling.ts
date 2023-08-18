@@ -34,14 +34,12 @@ describe.concurrent("Channel", () => {
         Effect.zipRight(Effect.never)
       )
       yield* $(
-        pipe(
-          Channel.fromEffect(effect),
-          Channel.runDrain,
-          Effect.onExit((exit) => Ref.set(ref, exit as Exit.Exit<never, void>)),
-          Effect.ensuring(Deferred.succeed(finished, void 0)),
-          Effect.race(Deferred.await(deferred)),
-          Effect.either
-        )
+        Channel.fromEffect(effect),
+        Channel.runDrain,
+        Effect.onExit((exit) => Ref.set(ref, exit as Exit.Exit<never, void>)),
+        Effect.ensuring(Deferred.succeed(finished, void 0)),
+        Effect.race(Deferred.await(deferred)),
+        Effect.either
       )
       yield* $(Deferred.await(finished)) // Note: interruption in race is now done in the background
       const result = yield* $(Ref.get(ref))
@@ -51,7 +49,7 @@ describe.concurrent("Channel", () => {
   it.effect("scoped failures", () =>
     Effect.gen(function*($) {
       const channel = Channel.scoped(Effect.fail("error"))
-      const result = yield* $(pipe(Channel.runCollect(channel), Effect.exit))
+      const result = yield* $(Channel.runCollect(channel), Effect.exit)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
     }))
 })

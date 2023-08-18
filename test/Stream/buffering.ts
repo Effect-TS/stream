@@ -18,11 +18,9 @@ describe.concurrent("Stream", () => {
         Chunk.range(3, 7)
       )
       const result = yield* $(
-        pipe(
-          Stream.fromChunks(...chunks),
-          Stream.buffer({ capacity: 2 }),
-          Stream.runCollect
-        )
+        Stream.fromChunks(...chunks),
+        Stream.buffer({ capacity: 2 }),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.flatten(chunks)))
     }))
@@ -31,13 +29,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(0, 10),
-          Stream.concat(Stream.fail(error)),
-          Stream.buffer({ capacity: 2 }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(0, 10),
+        Stream.concat(Stream.fail(error)),
+        Stream.buffer({ capacity: 2 }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -59,7 +55,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.buffer({ capacity: 2 })
       )
-      const result1 = yield* $(pipe(stream, Stream.take(2), Stream.runCollect))
+      const result1 = yield* $(stream, Stream.take(2), Stream.runCollect)
       yield* $(Deferred.await(latch))
       const result2 = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result1), [1, 2])
@@ -74,11 +70,9 @@ describe.concurrent("Stream", () => {
         Chunk.range(3, 7)
       )
       const result = yield* $(
-        pipe(
-          Stream.fromChunks(...chunks),
-          Stream.bufferChunks({ capacity: 2 }),
-          Stream.runCollect
-        )
+        Stream.fromChunks(...chunks),
+        Stream.bufferChunks({ capacity: 2 }),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.flatten(chunks)))
     }))
@@ -87,13 +81,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(0, 10),
-          Stream.concat(Stream.fail(error)),
-          Stream.bufferChunks({ capacity: 2 }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(0, 10),
+        Stream.concat(Stream.fail(error)),
+        Stream.bufferChunks({ capacity: 2 }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -115,7 +107,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.bufferChunks({ capacity: 2 })
       )
-      const result1 = yield* $(pipe(stream, Stream.take(2), Stream.runCollect))
+      const result1 = yield* $(stream, Stream.take(2), Stream.runCollect)
       yield* $(Deferred.await(latch))
       const result2 = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result1), [1, 2])
@@ -126,14 +118,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(1, 1_000),
-          Stream.concat(Stream.fail(error)),
-          Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.bufferChunks({ capacity: 2, strategy: "dropping" }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(1, 1_000),
+        Stream.concat(Stream.fail(error)),
+        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.bufferChunks({ capacity: 2, strategy: "dropping" }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -178,36 +168,34 @@ describe.concurrent("Stream", () => {
         Stream.bufferChunks({ capacity: 8, strategy: "dropping" })
       )
       const { result1, result2, result3 } = yield* $(
-        pipe(
-          Stream.toPull(stream),
-          Effect.flatMap((pull) =>
-            Effect.gen(function*($) {
-              const result1 = yield* $(pull)
-              yield* $(Deferred.succeed<never, void>(latch1, void 0))
-              yield* $(Deferred.await(latch2))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    Ref.update(ref, Chunk.appendAll(chunk))
-                  )
-                ),
-                Effect.repeatN(7)
-              ))
-              const result2 = yield* $(Ref.get(ref))
-              yield* $(Deferred.succeed<never, void>(latch3, void 0))
-              yield* $(Deferred.await(latch4))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
-                Effect.repeatN(7)
-              ))
-              const result3 = yield* $(Ref.get(ref))
-              return { result1, result2, result3 }
-            })
-          ),
-          Effect.scoped
-        )
+        Stream.toPull(stream),
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            const result1 = yield* $(pull)
+            yield* $(Deferred.succeed<never, void>(latch1, void 0))
+            yield* $(Deferred.await(latch2))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) =>
+                pipe(
+                  Ref.update(ref, Chunk.appendAll(chunk))
+                )
+              ),
+              Effect.repeatN(7)
+            )
+            const result2 = yield* $(Ref.get(ref))
+            yield* $(Deferred.succeed<never, void>(latch3, void 0))
+            yield* $(Deferred.await(latch4))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
+              Effect.repeatN(7)
+            )
+            const result3 = yield* $(Ref.get(ref))
+            return { result1, result2, result3 }
+          })
+        ),
+        Effect.scoped
       )
       const expected1 = [0]
       const expected2 = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -221,14 +209,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(1, 1_000),
-          Stream.concat(Stream.fail(error)),
-          Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.bufferChunks({ capacity: 2, strategy: "sliding" }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(1, 1_000),
+        Stream.concat(Stream.fail(error)),
+        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.bufferChunks({ capacity: 2, strategy: "sliding" }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -277,32 +263,30 @@ describe.concurrent("Stream", () => {
         Stream.bufferChunks({ capacity: 8, strategy: "sliding" })
       )
       const { result1, result2, result3 } = yield* $(
-        pipe(
-          Stream.toPull(stream),
-          Effect.flatMap((pull) =>
-            Effect.gen(function*($) {
-              const result1 = yield* $(pull)
-              yield* $(Deferred.succeed<never, void>(latch1, void 0))
-              yield* $(Deferred.await(latch2))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
-                Effect.repeatN(7)
-              ))
-              const result2 = yield* $(Ref.get(ref))
-              yield* $(Deferred.succeed<never, void>(latch3, void 0))
-              yield* $(Deferred.await(latch4))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
-                Effect.repeatN(7)
-              ))
-              const result3 = yield* $(Ref.get(ref))
-              return { result1, result2, result3 }
-            })
-          ),
-          Effect.scoped
-        )
+        Stream.toPull(stream),
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            const result1 = yield* $(pull)
+            yield* $(Deferred.succeed<never, void>(latch1, void 0))
+            yield* $(Deferred.await(latch2))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
+              Effect.repeatN(7)
+            )
+            const result2 = yield* $(Ref.get(ref))
+            yield* $(Deferred.succeed<never, void>(latch3, void 0))
+            yield* $(Deferred.await(latch4))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
+              Effect.repeatN(7)
+            )
+            const result3 = yield* $(Ref.get(ref))
+            return { result1, result2, result3 }
+          })
+        ),
+        Effect.scoped
       )
       const expected1 = [0]
       const expected2 = [9, 10, 11, 12, 13, 14, 15, 16]
@@ -316,14 +300,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(1, 1_000),
-          Stream.concat(Stream.fail(error)),
-          Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.buffer({ capacity: 2, strategy: "dropping" }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(1, 1_000),
+        Stream.concat(Stream.fail(error)),
+        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.buffer({ capacity: 2, strategy: "dropping" }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -368,36 +350,34 @@ describe.concurrent("Stream", () => {
         Stream.buffer({ capacity: 8, strategy: "dropping" })
       )
       const { result1, result2, result3 } = yield* $(
-        pipe(
-          Stream.toPull(stream),
-          Effect.flatMap((pull) =>
-            Effect.gen(function*($) {
-              const result1 = yield* $(pull)
-              yield* $(Deferred.succeed<never, void>(latch1, void 0))
-              yield* $(Deferred.await(latch2))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) =>
-                  pipe(
-                    Ref.update(ref, Chunk.appendAll(chunk))
-                  )
-                ),
-                Effect.repeatN(7)
-              ))
-              const result2 = yield* $(Ref.get(ref))
-              yield* $(Deferred.succeed<never, void>(latch3, void 0))
-              yield* $(Deferred.await(latch4))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
-                Effect.repeatN(7)
-              ))
-              const result3 = yield* $(Ref.get(ref))
-              return { result1, result2, result3 }
-            })
-          ),
-          Effect.scoped
-        )
+        Stream.toPull(stream),
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            const result1 = yield* $(pull)
+            yield* $(Deferred.succeed<never, void>(latch1, void 0))
+            yield* $(Deferred.await(latch2))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) =>
+                pipe(
+                  Ref.update(ref, Chunk.appendAll(chunk))
+                )
+              ),
+              Effect.repeatN(7)
+            )
+            const result2 = yield* $(Ref.get(ref))
+            yield* $(Deferred.succeed<never, void>(latch3, void 0))
+            yield* $(Deferred.await(latch4))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
+              Effect.repeatN(7)
+            )
+            const result3 = yield* $(Ref.get(ref))
+            return { result1, result2, result3 }
+          })
+        ),
+        Effect.scoped
       )
       const expected1 = [0]
       const expected2 = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -411,14 +391,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(1, 1_000),
-          Stream.concat(Stream.fail(error)),
-          Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.buffer({ capacity: 2, strategy: "sliding" }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(1, 1_000),
+        Stream.concat(Stream.fail(error)),
+        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.buffer({ capacity: 2, strategy: "sliding" }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -463,32 +441,30 @@ describe.concurrent("Stream", () => {
         Stream.buffer({ capacity: 8, strategy: "sliding" })
       )
       const { result1, result2, result3 } = yield* $(
-        pipe(
-          Stream.toPull(stream),
-          Effect.flatMap((pull) =>
-            Effect.gen(function*($) {
-              const result1 = yield* $(pull)
-              yield* $(Deferred.succeed<never, void>(latch1, void 0))
-              yield* $(Deferred.await(latch2))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
-                Effect.repeatN(7)
-              ))
-              const result2 = yield* $(Ref.get(ref))
-              yield* $(Deferred.succeed<never, void>(latch3, void 0))
-              yield* $(Deferred.await(latch4))
-              yield* $(pipe(
-                pull,
-                Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
-                Effect.repeatN(7)
-              ))
-              const result3 = yield* $(Ref.get(ref))
-              return { result1, result2, result3 }
-            })
-          ),
-          Effect.scoped
-        )
+        Stream.toPull(stream),
+        Effect.flatMap((pull) =>
+          Effect.gen(function*($) {
+            const result1 = yield* $(pull)
+            yield* $(Deferred.succeed<never, void>(latch1, void 0))
+            yield* $(Deferred.await(latch2))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
+              Effect.repeatN(7)
+            )
+            const result2 = yield* $(Ref.get(ref))
+            yield* $(Deferred.succeed<never, void>(latch3, void 0))
+            yield* $(Deferred.await(latch4))
+            yield* $(
+              pull,
+              Effect.flatMap((chunk) => Ref.update(ref, Chunk.appendAll(chunk))),
+              Effect.repeatN(7)
+            )
+            const result3 = yield* $(Ref.get(ref))
+            return { result1, result2, result3 }
+          })
+        ),
+        Effect.scoped
       )
       const expected1 = [0]
       const expected2 = [9, 10, 11, 12, 13, 14, 15, 16]
@@ -500,12 +476,12 @@ describe.concurrent("Stream", () => {
 
   it.effect("bufferSliding - propagates defects", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromEffect(Effect.dieMessage("boom")),
         Stream.buffer({ capacity: 1, strategy: "sliding" }),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(Cause.RuntimeException("boom")))
     }))
 
@@ -513,11 +489,9 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const chunk = Chunk.range(0, 10)
       const result = yield* $(
-        pipe(
-          Stream.fromIterable(chunk),
-          Stream.buffer({ capacity: "unbounded" }),
-          Stream.runCollect
-        )
+        Stream.fromIterable(chunk),
+        Stream.buffer({ capacity: "unbounded" }),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), Array.from(chunk))
     }))
@@ -526,13 +500,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        pipe(
-          Stream.range(0, 10),
-          Stream.concat(Stream.fail(error)),
-          Stream.buffer({ capacity: "unbounded" }),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.range(0, 10),
+        Stream.concat(Stream.fail(error)),
+        Stream.buffer({ capacity: "unbounded" }),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
@@ -552,7 +524,7 @@ describe.concurrent("Stream", () => {
         Stream.rechunk(1_000),
         Stream.buffer({ capacity: "unbounded" })
       )
-      const result1 = yield* $(pipe(stream, Stream.take(2), Stream.runCollect))
+      const result1 = yield* $(stream, Stream.take(2), Stream.runCollect)
       yield* $(Deferred.await(latch))
       const result2 = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result1), [1, 2])

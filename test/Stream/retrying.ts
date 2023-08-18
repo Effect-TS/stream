@@ -20,12 +20,12 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Ref.getAndUpdate(ref, (n) => n + 1)),
         Stream.concat(Stream.fail(Option.none()))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.retry(Schedule.forever),
         Stream.take(2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1])
     }))
 
@@ -42,12 +42,12 @@ describe.concurrent("Stream", () => {
         ),
         Stream.unwrapScoped
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.retry(Schedule.forever),
         Stream.take(2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1])
     }))
 
@@ -63,17 +63,17 @@ describe.concurrent("Stream", () => {
         ),
         Stream.flatMap(() => Stream.fail(Option.none()))
       )
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         stream,
         Stream.retry(Schedule.exponential(Duration.seconds(1))),
         Stream.take(3),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(1)))
       yield* $(TestClock.adjust(Duration.seconds(2)))
       yield* $(Fiber.interrupt(fiber))
-      const result = yield* $(pipe(Ref.get(ref), Effect.map(Chunk.map((n) => new Date(n).getSeconds()))))
+      const result = yield* $(Ref.get(ref), Effect.map(Chunk.map((n) => new Date(n).getSeconds())))
       assert.deepStrictEqual(Array.from(result), [3, 1, 0])
     }))
 
@@ -99,13 +99,13 @@ describe.concurrent("Stream", () => {
         ),
         Stream.forever
       )
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         stream,
         Stream.retry(Schedule.exponential(Duration.seconds(1))),
         Stream.take(2),
         Stream.runDrain,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(1)))
       yield* $(TestClock.adjust(Duration.seconds(2)))
       yield* $(TestClock.adjust(Duration.seconds(1)))
