@@ -579,9 +579,7 @@ export const asyncOption = <R, E, A>(
 
 /** @internal */
 export const asyncScoped = <R, E, A>(
-  register: (
-    cb: (effect: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>) => void
-  ) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R | Scope.Scope, E, unknown>,
   outputBuffer = 16
 ): Stream.Stream<R, E, A> =>
   pipe(
