@@ -302,9 +302,7 @@ export const asyncOption: <R, E, A>(
  * @category constructors
  */
 export const asyncScoped: <R, E, A>(
-  register: (
-    cb: (effect: Effect.Effect<R, Option.Option<E>, Chunk.Chunk<A>>) => void
-  ) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R | Scope.Scope, E, unknown>,
   outputBuffer?: number
 ) => Stream<R, E, A> = internal.asyncScoped
 
