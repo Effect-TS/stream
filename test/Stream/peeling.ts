@@ -11,7 +11,7 @@ describe.concurrent("Stream", () => {
   it.effect("peel", () =>
     Effect.gen(function*($) {
       const sink = Sink.take<number>(3)
-      const [peeled, rest] = yield* $(pipe(
+      const [peeled, rest] = yield* $(
         Stream.fromChunks(Chunk.range(1, 3), Chunk.range(4, 6)),
         Stream.peel(sink),
         Effect.flatMap(([peeled, rest]) =>
@@ -21,7 +21,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(Array.from(peeled), [1, 2, 3])
       assert.deepStrictEqual(Array.from(rest), [4, 5, 6])
     }))
@@ -34,12 +34,12 @@ describe.concurrent("Stream", () => {
         constTrue,
         Chunk.append
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.peel(sink),
         Effect.exit,
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("fail"))
     }))
 })

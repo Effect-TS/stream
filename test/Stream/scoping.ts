@@ -64,12 +64,10 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
       yield* $(
-        pipe(
-          Stream.acquireRelease(Effect.unit, () => Ref.set(ref, true)),
-          Stream.flatMap(() => Stream.fromEffect(Effect.dieMessage("boom"))),
-          Stream.runDrain,
-          Effect.exit
-        )
+        Stream.acquireRelease(Effect.unit, () => Ref.set(ref, true)),
+        Stream.flatMap(() => Stream.fromEffect(Effect.dieMessage("boom"))),
+        Stream.runDrain,
+        Effect.exit
       )
       const result = yield* $(Ref.get(ref))
       assert.isTrue(result)
@@ -78,28 +76,22 @@ describe.concurrent("Stream", () => {
   it.effect("acquireRelease - flatMap associativity does not effect lifetime", () =>
     Effect.gen(function*($) {
       const leftAssoc = yield* $(
-        pipe(
-          Stream.acquireRelease(Ref.make(true), (ref) => Ref.set(ref, false)),
-          Stream.flatMap(Stream.succeed),
-          Stream.flatMap((ref) => Stream.fromEffect(Ref.get(ref))),
-          Stream.runCollect,
-          Effect.map(Chunk.head)
-        )
+        Stream.acquireRelease(Ref.make(true), (ref) => Ref.set(ref, false)),
+        Stream.flatMap(Stream.succeed),
+        Stream.flatMap((ref) => Stream.fromEffect(Ref.get(ref))),
+        Stream.runCollect,
+        Effect.map(Chunk.head)
       )
       const rightAssoc = yield* $(
-        pipe(
+        Stream.acquireRelease(Ref.make(true), (ref) => Ref.set(ref, false)),
+        Stream.flatMap((ref) =>
           pipe(
-            Stream.acquireRelease(Ref.make(true), (ref) => Ref.set(ref, false)),
-            Stream.flatMap((ref) =>
-              pipe(
-                Stream.succeed(ref),
-                Stream.flatMap((ref) => Stream.fromEffect(Ref.get(ref)))
-              )
-            ),
-            Stream.runCollect,
-            Effect.map(Chunk.head)
+            Stream.succeed(ref),
+            Stream.flatMap((ref) => Stream.fromEffect(Ref.get(ref)))
           )
-        )
+        ),
+        Stream.runCollect,
+        Effect.map(Chunk.head)
       )
       assert.deepStrictEqual(leftAssoc, Option.some(true))
       assert.deepStrictEqual(rightAssoc, Option.some(true))
@@ -108,11 +100,9 @@ describe.concurrent("Stream", () => {
   it.effect("acquireRelease - propagates errors", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.acquireRelease(Effect.unit, () => Effect.dieMessage("die")),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.acquireRelease(Effect.unit, () => Effect.dieMessage("die")),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(Cause.RuntimeException("die")))
     }))
@@ -120,7 +110,7 @@ describe.concurrent("Stream", () => {
   it.effect("ensuring", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      yield* $(pipe(
+      yield* $(
         Stream.acquireRelease(
           Ref.update(ref, Chunk.append("Acquire")),
           () => Ref.update(ref, Chunk.append("Release"))
@@ -128,31 +118,31 @@ describe.concurrent("Stream", () => {
         Stream.crossRight(Stream.fromEffect(Ref.update(ref, Chunk.append("Use")))),
         Stream.ensuring(Ref.update(ref, Chunk.append("Ensuring"))),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), ["Acquire", "Use", "Release", "Ensuring"])
     }))
 
   it.effect("scoped - preserves the failure of an effect", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.scoped(Effect.fail("fail")),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("fail"))
     }))
 
   it.effect("scoped - preserves the interruptibility of an effect", () =>
     Effect.gen(function*($) {
-      const isInterruptible1 = yield* $(pipe(
+      const isInterruptible1 = yield* $(
         Stream.scoped(Effect.checkInterruptible(Effect.succeed)),
         Stream.runHead
-      ))
-      const isInterruptible2 = yield* $(pipe(
+      )
+      const isInterruptible2 = yield* $(
         Stream.scoped(Effect.uninterruptible(Effect.checkInterruptible(Effect.succeed))),
         Stream.runHead
-      ))
+      )
       assert.deepStrictEqual(isInterruptible1, Option.some(true))
       assert.deepStrictEqual(isInterruptible2, Option.some(false))
     }))
@@ -173,7 +163,7 @@ describe.concurrent("Stream", () => {
         )
       const ref = yield* $(Ref.make<ReadonlyArray<string>>([]))
       const deferred = yield* $(Deferred.make<never, void>())
-      const fiber = yield* $(pipe(stream(deferred, ref), Stream.runDrain, Effect.fork))
+      const fiber = yield* $(stream(deferred, ref), Stream.runDrain, Effect.fork)
       yield* $(Deferred.await(deferred))
       yield* $(Fiber.interrupt(fiber))
       return yield* $(Ref.get(ref))

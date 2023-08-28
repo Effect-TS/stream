@@ -12,10 +12,8 @@ describe.concurrent("Sink", () => {
   it.effect("as", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(Sink.succeed(1), Sink.as("as")))
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(Sink.succeed(1), Sink.as("as")))
       )
       assert.strictEqual(result, "as")
     }))
@@ -26,7 +24,7 @@ describe.concurrent("Sink", () => {
         Sink.collectAll<number>(),
         Sink.contramap((input: string) => Number.parseInt(input))
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink)))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
@@ -36,7 +34,7 @@ describe.concurrent("Sink", () => {
         Sink.fail("Ouch"),
         Sink.contramap((input: string) => Number.parseInt(input))
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -46,7 +44,7 @@ describe.concurrent("Sink", () => {
         Sink.collectAll<number>(),
         Sink.contramapChunks<string, number>(Chunk.map((_) => Number.parseInt(_)))
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink)))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
@@ -56,7 +54,7 @@ describe.concurrent("Sink", () => {
         Sink.fail("Ouch"),
         Sink.contramapChunks<string, number>(Chunk.map(Number.parseInt))
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -66,7 +64,7 @@ describe.concurrent("Sink", () => {
         Sink.collectAll<number>(),
         Sink.contramapEffect((s: string) => Effect.try(() => Number.parseInt(s)))
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink)))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
@@ -76,7 +74,7 @@ describe.concurrent("Sink", () => {
         Sink.fail("Ouch"),
         Sink.contramapEffect((s: string) => Effect.try(() => Number.parseInt(s)))
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -94,7 +92,7 @@ describe.concurrent("Sink", () => {
           })
         )
       )
-      const result = yield* $(pipe(Stream.make("1", "a"), Stream.run(sink), Effect.either))
+      const result = yield* $(Stream.make("1", "a"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left(Cause.RuntimeException("Cannot parse \"a\" to an integer")))
     }))
 
@@ -110,7 +108,7 @@ describe.concurrent("Sink", () => {
           )
         )
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink)))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
@@ -126,7 +124,7 @@ describe.concurrent("Sink", () => {
           )
         )
       )
-      const result = yield* $(pipe(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either))
+      const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -150,17 +148,15 @@ describe.concurrent("Sink", () => {
           )
         )
       )
-      const result = yield* $(pipe(Stream.make("1", "a"), Stream.run(sink), Effect.either))
+      const result = yield* $(Stream.make("1", "a"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left(Cause.RuntimeException("Cannot parse \"a\" to an integer")))
     }))
 
   it.effect("map", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(Sink.succeed(1), Sink.map((n) => `${n}`)))
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(Sink.succeed(1), Sink.map((n) => `${n}`)))
       )
       assert.strictEqual(result, "1")
     }))
@@ -168,10 +164,8 @@ describe.concurrent("Sink", () => {
   it.effect("mapEffect - happy path", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(Sink.succeed(1), Sink.mapEffect((n) => Effect.succeed(n + 1))))
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(Sink.succeed(1), Sink.mapEffect((n) => Effect.succeed(n + 1))))
       )
       assert.strictEqual(result, 2)
     }))
@@ -179,11 +173,9 @@ describe.concurrent("Sink", () => {
   it.effect("mapEffect - error", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(Sink.succeed(1), Sink.mapEffect(() => Effect.fail("fail")))),
-          Effect.flip
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(Sink.succeed(1), Sink.mapEffect(() => Effect.fail("fail")))),
+        Effect.flip
       )
       assert.strictEqual(result, "fail")
     }))
@@ -191,11 +183,9 @@ describe.concurrent("Sink", () => {
   it.effect("mapError", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.run(pipe(Sink.fail("fail"), Sink.mapError((s) => s + "!"))),
-          Effect.either
-        )
+        Stream.range(1, 10),
+        Stream.run(pipe(Sink.fail("fail"), Sink.mapError((s) => s + "!"))),
+        Effect.either
       )
       assert.deepStrictEqual(result, Either.left("fail!"))
     }))

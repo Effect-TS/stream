@@ -28,11 +28,11 @@ describe.concurrent("Stream", () => {
   it.effect("scanReduce", () =>
     Effect.gen(function*($) {
       const stream = Stream.make(1, 2, 3, 4, 5)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.scanReduce<number, number>((acc, curr) => acc + curr),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 3, 6, 10, 15])
     }))
 })

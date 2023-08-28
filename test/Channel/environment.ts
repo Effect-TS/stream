@@ -45,11 +45,9 @@ describe.concurrent("Channel", () => {
   it.effect("provide - simple", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          NumberService,
-          Channel.provideService(NumberService, new NumberServiceImpl(100)),
-          Channel.run
-        )
+        NumberService,
+        Channel.provideService(NumberService, new NumberServiceImpl(100)),
+        Channel.run
       )
       assert.deepStrictEqual(result, new NumberServiceImpl(100))
     }))
@@ -57,24 +55,22 @@ describe.concurrent("Channel", () => {
   it.effect("provide -> zip -> provide", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          NumberService,
-          Channel.provideService(NumberService, new NumberServiceImpl(100)),
-          Channel.zip(
-            pipe(
-              NumberService,
-              Channel.provideService(NumberService, new NumberServiceImpl(200))
-            )
-          ),
-          Channel.run
-        )
+        NumberService,
+        Channel.provideService(NumberService, new NumberServiceImpl(100)),
+        Channel.zip(
+          pipe(
+            NumberService,
+            Channel.provideService(NumberService, new NumberServiceImpl(200))
+          )
+        ),
+        Channel.run
       )
       assert.deepStrictEqual(result, [new NumberServiceImpl(100), new NumberServiceImpl(200)])
     }))
 
   it.effect("concatMap(provide).provide", () =>
     Effect.gen(function*($) {
-      const [chunk, value] = yield* $(pipe(
+      const [chunk, value] = yield* $(
         Channel.fromEffect(NumberService),
         Channel.emitCollect,
         Channel.mapOut((tuple) => tuple[1]),
@@ -88,7 +84,7 @@ describe.concurrent("Channel", () => {
         ),
         Channel.provideService(NumberService, new NumberServiceImpl(100)),
         Channel.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(chunk), [[new NumberServiceImpl(100), new NumberServiceImpl(200)] as const])
       assert.isUndefined(value)
     }))
@@ -102,13 +98,13 @@ describe.concurrent("Channel", () => {
         Channel.fromEffect
       )
       const channel3 = Channel.fromEffect(NumberService)
-      const [[result1, result2], result3] = yield* $(pipe(
+      const [[result1, result2], result3] = yield* $(
         channel1,
         Channel.zip(channel2),
         Channel.zip(channel3),
         Channel.runDrain,
         Effect.provideService(NumberService, new NumberServiceImpl(4))
-      ))
+      )
       assert.deepStrictEqual(result1, new NumberServiceImpl(4))
       assert.deepStrictEqual(result2, new NumberServiceImpl(2))
       assert.deepStrictEqual(result3, new NumberServiceImpl(4))

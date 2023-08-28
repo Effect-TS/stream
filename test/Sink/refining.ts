@@ -21,7 +21,7 @@ describe.concurrent("Sink", () => {
             Option.none()
         )
       )
-      const result = yield* $(pipe(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit))
+      const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(refinedTo))
     }))
 
@@ -36,7 +36,7 @@ describe.concurrent("Sink", () => {
             Option.some(refinedTo) :
             Option.none(), (error) => error.message)
       )
-      const result = yield* $(pipe(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit))
+      const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(refinedTo))
     }))
 
@@ -51,7 +51,7 @@ describe.concurrent("Sink", () => {
             Option.some(refinedTo) :
             Option.none(), (error) => error.message)
       )
-      const result = yield* $(pipe(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit))
+      const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(void 0))
     }))
 })

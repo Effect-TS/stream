@@ -24,7 +24,7 @@ describe.concurrent("Stream", () => {
         Chunk.flatten,
         Chunk.map((n) => String(n))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable(words),
         Stream.groupByKey(identity, { bufferSize: 8192 }),
         GroupBy.evaluate((key, stream) =>
@@ -35,7 +35,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         Array.from({ length: 100 }, (_, i) => i).map((n) => [String(n), 100] as const)
@@ -49,7 +49,7 @@ describe.concurrent("Stream", () => {
         Chunk.flatten,
         Chunk.map((n) => String(n))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable(words),
         Stream.groupByKey(identity, { bufferSize: 1050 }),
         GroupBy.first(2),
@@ -61,14 +61,14 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [["0", 1_000], ["1", 1_000]])
     }))
 
   it.effect("groupBy - filter", () =>
     Effect.gen(function*($) {
       const words = Array.from({ length: 100 }, () => Array.from({ length: 100 }, (_, i) => i)).flat()
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable(words),
         Stream.groupByKey(identity, { bufferSize: 1050 }),
         GroupBy.filter((n) => n <= 5),
@@ -80,7 +80,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         [0, 100],
         [1, 100],
@@ -94,24 +94,24 @@ describe.concurrent("Stream", () => {
   it.effect("groupBy - outer errors", () =>
     Effect.gen(function*($) {
       const words = ["abc", "test", "test", "foo"]
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable(words),
         Stream.concat(Stream.fail("boom")),
         Stream.groupByKey(identity),
         GroupBy.evaluate((_, stream) => Stream.drain(stream)),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("boom"))
     }))
 
   it.effect("grouped - sanity check", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4, 5),
         Stream.grouped(2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2], [3, 4], [5]]
@@ -120,12 +120,12 @@ describe.concurrent("Stream", () => {
 
   it.effect("grouped - group size is correct", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.range(0, 100),
         Stream.grouped(10),
         Stream.map(Chunk.size),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         Array.from({ length: 10 }, () => 10)
@@ -134,11 +134,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("grouped - does not emit empty chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromIterable(Chunk.empty<number>()),
         Stream.grouped(5),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
@@ -151,12 +151,12 @@ describe.concurrent("Stream", () => {
         Stream.concat(Stream.fail("Ouch")),
         Stream.grouped(3)
       )
-      const either = yield* $(pipe(
+      const either = yield* $(
         stream,
         Stream.mapEffect((chunk) => Ref.update(ref, Chunk.append(Array.from(chunk)))),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(either, Either.left("Ouch"))
       assert.deepStrictEqual(Array.from(result), [[1, 2, 3], [4, 5, 6], [7, 8]])
@@ -180,16 +180,16 @@ describe.concurrent("Stream", () => {
         Stream.tap(() => coordination.proceed)
       )
       const fiber = yield* $(Effect.fork(Stream.runCollect(stream)))
-      yield* $(pipe(
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(2))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(2))),
         Effect.zipRight(coordination.awaitNext)
-      ))
+      )
       yield* $(coordination.offer)
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(
@@ -200,14 +200,14 @@ describe.concurrent("Stream", () => {
 
   it.effect("groupedWithin - group based on time passed (ZIO Issue #5013)", () =>
     Effect.gen(function*($) {
-      const coordination = yield* $(pipe(
+      const coordination = yield* $(
         Chunk.range(1, 29),
         Chunk.map(Chunk.of),
         chunkCoordination
-      ))
+      )
       const latch = yield* $(Handoff.make<void>())
       const ref = yield* $(Ref.make(0))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(coordination.queue),
         Stream.filterMapWhile(Exit.match({
           onSuccess: Option.some,
@@ -224,67 +224,67 @@ describe.concurrent("Stream", () => {
         ),
         Stream.run(Sink.take(5)),
         Effect.fork
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      const result1 = yield* $(pipe(
+      )
+      const result1 = yield* $(
         Handoff.take(latch),
         Effect.zipRight(Ref.get(ref))
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      const result2 = yield* $(pipe(
+      )
+      const result2 = yield* $(
         Handoff.take(latch),
         Effect.zipRight(Ref.get(ref))
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(TestClock.adjust(Duration.seconds(1))),
         Effect.zipRight(coordination.awaitNext)
-      ))
-      const result3 = yield* $(pipe(
+      )
+      const result3 = yield* $(
         Handoff.take(latch),
         Effect.zipRight(Ref.get(ref))
-      ))
+      )
       // This part is to make sure schedule clock is being restarted when the
       // specified amount of elements has been reached.
-      yield* $(pipe(
+      yield* $(
         TestClock.adjust(Duration.seconds(2)),
         Effect.zipRight(
           pipe(
@@ -293,12 +293,12 @@ describe.concurrent("Stream", () => {
             Effect.repeatN(9)
           )
         )
-      ))
-      const result4 = yield* $(pipe(
+      )
+      const result4 = yield* $(
         Handoff.take(latch),
         Effect.zipRight(Ref.get(ref))
-      ))
-      yield* $(pipe(
+      )
+      yield* $(
         coordination.offer,
         Effect.zipRight(coordination.awaitNext),
         Effect.zipRight(TestClock.adjust(Duration.seconds(2))),
@@ -309,11 +309,11 @@ describe.concurrent("Stream", () => {
             Effect.repeatN(8)
           )
         )
-      ))
-      const result5 = yield* $(pipe(
+      )
+      const result5 = yield* $(
         Handoff.take(latch),
         Effect.zipRight(Ref.get(ref))
-      ))
+      )
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
@@ -334,11 +334,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("groupedWithin - group immediately when chunk size is reached", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4),
         Stream.groupedWithin(2, Duration.seconds(10)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2], [3, 4]]

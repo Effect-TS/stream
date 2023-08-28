@@ -1,6 +1,6 @@
 import * as Chunk from "@effect/data/Chunk"
 import * as Either from "@effect/data/Either"
-import { identity, pipe } from "@effect/data/Function"
+import { identity } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
 import * as Stream from "@effect/stream/Stream"
@@ -10,7 +10,7 @@ import { assert, describe } from "vitest"
 describe.concurrent("Stream", () => {
   it.effect("collect", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Either.left(1), Either.right(2), Either.left(3)),
         Stream.filterMap((either) =>
           Either.isRight(either) ?
@@ -18,13 +18,13 @@ describe.concurrent("Stream", () => {
             Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [2])
     }))
 
   it.effect("collectEffect - simple example", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Either.left(1), Either.right(2), Either.left(3)),
         Stream.filterMapEffect((either) =>
           Either.isRight(either) ?
@@ -32,7 +32,7 @@ describe.concurrent("Stream", () => {
             Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [4])
     }))
 
@@ -42,7 +42,7 @@ describe.concurrent("Stream", () => {
         Chunk.make(Either.left(1), Either.right(2)),
         Chunk.make(Either.right(3), Either.left(4))
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(...chunks),
         Stream.filterMapEffect((either) =>
           Either.isRight(either) ?
@@ -50,24 +50,24 @@ describe.concurrent("Stream", () => {
             Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [20, 30])
     }))
 
   it.effect("collectEffect - handles failures", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Either.left(1), Either.right(2), Either.left(3)),
         Stream.filterMapEffect(() => Option.some(Effect.fail("Ouch"))),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
   it.effect("collectEffect - laziness on chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.filterMapEffect((n) =>
           n === 3 ?
@@ -76,7 +76,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.either,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         [Either.right(1), Either.right(2), Either.left("boom")]
@@ -85,29 +85,29 @@ describe.concurrent("Stream", () => {
 
   it.effect("collectWhile - simple example", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(4)),
         Stream.filterMapWhile(identity),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
   it.effect("collectWhile - short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Option.some(1)),
         Stream.concat(Stream.fail("Ouch")),
         Stream.filterMapWhile((option) => Option.isNone(option) ? Option.some(1) : Option.none()),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.right(void 0))
     }))
 
   it.effect("collectWhileEffect - simple example", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(4)),
         Stream.filterMapWhileEffect((option) =>
           Option.isSome(option) ?
@@ -115,13 +115,13 @@ describe.concurrent("Stream", () => {
             Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [2, 4])
     }))
 
   it.effect("collectWhileEffect - short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Option.some(1)),
         Stream.concat(Stream.fail("Ouch")),
         Stream.filterMapWhileEffect((option) =>
@@ -131,24 +131,24 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.right(void 0))
     }))
 
   it.effect("collectWhileEffect - fails", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(Option.some(1), Option.some(2), Option.none(), Option.some(3)),
         Stream.filterMapWhileEffect(() => Option.some(Effect.fail("Ouch"))),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
   it.effect("collectWhileEffect - laziness on chunks", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4),
         Stream.filterMapWhileEffect((n) =>
           n === 3 ?
@@ -157,7 +157,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.either,
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         [Either.right(1), Either.right(2), Either.left("boom")]

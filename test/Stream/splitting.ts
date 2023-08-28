@@ -82,11 +82,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("split - should output empty chunk when stream is empty", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.empty,
         Stream.split((n: number) => n % 11 === 0),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
@@ -99,12 +99,12 @@ describe.concurrent("Stream", () => {
         Chunk.make(1, 2)
       )
       const splitSequence = Chunk.make(1, 2)
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.flattenChunks(input),
         Stream.splitOnChunk(splitSequence),
         Stream.map(Chunk.size),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 0, 0, 1, 0])
     }))
 
@@ -112,23 +112,23 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const splitSequence = Chunk.make(0, 1)
       const stream = Stream.make(1, 1, 1, 1, 1, 1)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream,
         Stream.splitOnChunk(splitSequence),
         Stream.runCollect,
         Effect.map(Chunk.flatten)
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 1, 1, 1, 1, 1])
     }))
 
   it.effect("splitOnChunk - handles leftovers", () =>
     Effect.gen(function*($) {
       const splitSequence = Chunk.make(0, 1)
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(Chunk.make(1, 0, 2, 0, 1, 2), Chunk.of(2)),
         Stream.splitOnChunk(splitSequence),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 0, 2], [2, 2]]
@@ -138,11 +138,11 @@ describe.concurrent("Stream", () => {
   it.effect("splitOnChunk - works", () =>
     Effect.gen(function*($) {
       const splitSequence = Chunk.make(0, 1)
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 0, 1, 3, 4, 0, 1, 5, 6, 5, 6),
         Stream.splitOnChunk(splitSequence),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2], [3, 4], [5, 6, 5, 6]]
@@ -152,7 +152,7 @@ describe.concurrent("Stream", () => {
   it.effect("splitOnChunk - works from Chunks", () =>
     Effect.gen(function*($) {
       const splitSequence = Chunk.make(0, 1)
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(
           Chunk.make(1, 2),
           splitSequence,
@@ -163,7 +163,7 @@ describe.concurrent("Stream", () => {
         ),
         Stream.splitOnChunk(splitSequence),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2], [3, 4], [5, 6, 5, 6]]
@@ -172,11 +172,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("splitOnChunk - single delimiter edge case", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(0),
         Stream.splitOnChunk(Chunk.make(0)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[]]
@@ -185,11 +185,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("splitOnChunk - no delimiter in data", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(Chunk.make(1, 2), Chunk.make(1, 2), Chunk.make(1, 2)),
         Stream.splitOnChunk(Chunk.make(1, 1)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2, 1, 2, 1, 2]]
@@ -198,11 +198,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("splitOnChunk - delimiter on the boundary", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(Chunk.make(1, 2), Chunk.make(1, 2)),
         Stream.splitOnChunk(Chunk.make(2, 1)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1], [2]]

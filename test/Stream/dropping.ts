@@ -20,13 +20,13 @@ describe.concurrent("Stream", () => {
 
   it.effect("drop - does not swallow errors", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fail("Ouch"),
         Stream.concat(Stream.make(1)),
         Stream.drop(1),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -43,13 +43,13 @@ describe.concurrent("Stream", () => {
 
   it.effect("dropRight - does not swallow errors", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.concat(Stream.fail("Ouch")),
         Stream.dropRight(1),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
@@ -80,14 +80,14 @@ describe.concurrent("Stream", () => {
 
   it.effect("dropWhile - short circuits", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1),
         Stream.concat(Stream.fail("Ouch")),
         Stream.take(1),
         Stream.dropWhile(constTrue),
         Stream.runDrain,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.right(void 0))
     }))
 })

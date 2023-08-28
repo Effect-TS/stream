@@ -46,25 +46,25 @@ const zipParLaw = <A, B, C, E>(
 describe.concurrent("Sink", () => {
   it.effect("zipParLeft", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.run(pipe(
           Sink.head(),
           Sink.zipLeft(Sink.succeed("hello"), { concurrent: true })
         ))
-      ))
+      )
       assert.deepStrictEqual(result, Option.some(1))
     }))
 
   it.effect("zipParRight", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.run(pipe(
           Sink.head(),
           Sink.zipRight(Sink.succeed("hello"), { concurrent: true })
         ))
-      ))
+      )
       assert.strictEqual(result, "hello")
     }))
 

@@ -1,5 +1,4 @@
 import * as Chunk from "@effect/data/Chunk"
-import { pipe } from "@effect/data/Function"
 import * as Option from "@effect/data/Option"
 import * as Effect from "@effect/io/Effect"
 import * as Stream from "@effect/stream/Stream"
@@ -10,20 +9,20 @@ describe.concurrent("Stream", () => {
   it.effect("paginate", () =>
     Effect.gen(function*($) {
       const s: readonly [number, Array<number>] = [0, [1, 2, 3]]
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.paginate(s, ([n, nums]) =>
           nums.length === 0 ?
             [n, Option.none()] as const :
             [n, Option.some([nums[0], nums.slice(1)] as const)] as const),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3])
     }))
 
   it.effect("paginateEffect", () =>
     Effect.gen(function*($) {
       const s: readonly [number, Array<number>] = [0, [1, 2, 3]]
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.paginateEffect(
           s,
           (
@@ -34,7 +33,7 @@ describe.concurrent("Stream", () => {
               Effect.succeed([n, Option.some([nums[0], nums.slice(1)])])
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3])
     }))
 
@@ -42,7 +41,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const s: readonly [Chunk.Chunk<number>, Array<number>] = [Chunk.of(0), [1, 2, 3, 4, 5]]
       const pageSize = 2
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.paginateChunk(s, ([chunk, nums]) =>
           nums.length === 0 ?
             [chunk, Option.none()] as const :
@@ -56,7 +55,7 @@ describe.concurrent("Stream", () => {
               )
             ] as const),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3, 4, 5])
     }))
 
@@ -64,7 +63,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const s: readonly [Chunk.Chunk<number>, Array<number>] = [Chunk.of(0), [1, 2, 3, 4, 5]]
       const pageSize = 2
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.paginateChunkEffect(s, ([chunk, nums]) =>
           nums.length === 0 ?
             Effect.succeed([chunk, Option.none<readonly [Chunk.Chunk<number>, Array<number>]>()] as const) :
@@ -80,7 +79,7 @@ describe.concurrent("Stream", () => {
               ] as const
             )),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3, 4, 5])
     }))
 })

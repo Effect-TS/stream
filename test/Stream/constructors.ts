@@ -45,7 +45,7 @@ describe.concurrent("Stream", () => {
   it.effect("finalizer - happy path", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<string>()))
-      yield* $(pipe(
+      yield* $(
         Stream.acquireRelease(
           Ref.update(ref, Chunk.append("Acquire")),
           () => Ref.update(ref, Chunk.append("Release"))
@@ -53,7 +53,7 @@ describe.concurrent("Stream", () => {
         Stream.flatMap(() => Stream.finalizer(Ref.update(ref, Chunk.append("Use")))),
         Stream.ensuring(Ref.update(ref, Chunk.append("Ensuring"))),
         Stream.runDrain
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.deepStrictEqual(Array.from(result), ["Acquire", "Use", "Release", "Ensuring"])
     }))
@@ -61,11 +61,11 @@ describe.concurrent("Stream", () => {
   it.effect("finalizer - finalizer is not run if stream is not pulled", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(false))
-      yield* $(pipe(
+      yield* $(
         Stream.finalizer(Ref.set(ref, true)),
         Stream.toPull,
         Effect.scoped
-      ))
+      )
       const result = yield* $(Ref.get(ref))
       assert.isFalse(result)
     }))
@@ -90,7 +90,7 @@ describe.concurrent("Stream", () => {
   it.effect("fromChunks - discards empty chunks", () =>
     Effect.gen(function*($) {
       const chunks = [Chunk.of(1), Chunk.empty<number>(), Chunk.of(1)]
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromChunks(...chunks),
         Stream.toPull,
         Effect.flatMap((pull) =>
@@ -100,7 +100,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [
         Either.right([1]),
         Either.right([1]),
@@ -110,39 +110,39 @@ describe.concurrent("Stream", () => {
 
   it.effect("fromEffect - failure", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromEffect(Effect.fail("error")),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left("error"))
     }))
 
   it.effect("fromEffectOption - emit one element with success", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromEffectOption(Effect.succeed(5)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [5])
     }))
 
   it.effect("fromEffectOption - emit one element with failure", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromEffectOption(Effect.fail(Option.some(5))),
         Stream.runCollect,
         Effect.either
-      ))
+      )
       assert.deepStrictEqual(result, Either.left(5))
     }))
 
   it.effect("fromEffectOption - do not emit any element", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.fromEffectOption(Effect.fail(Option.none())),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
@@ -152,11 +152,11 @@ describe.concurrent("Stream", () => {
         Schedule.exponential(Duration.seconds(1)),
         Schedule.zipLeft(Schedule.recurs(5))
       )
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromSchedule(schedule),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(TestClock.adjust(Duration.seconds(62)))
       const result = yield* $(Fiber.join(fiber))
       const expected = [
@@ -172,7 +172,7 @@ describe.concurrent("Stream", () => {
   it.effect("fromQueue - emits queued elements", () =>
     Effect.gen(function*($) {
       const coordination = yield* $(chunkCoordination([Chunk.make(1, 2)]))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(coordination.queue),
         Stream.filterMapWhile(Exit.match({
           onFailure: Option.none,
@@ -182,7 +182,7 @@ describe.concurrent("Stream", () => {
         Stream.tap(() => coordination.proceed),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(coordination.offer)
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2])
@@ -191,13 +191,13 @@ describe.concurrent("Stream", () => {
   it.effect("fromQueue - chunks up to the max chunk size", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
-      yield* $(pipe(Queue.offerAll(queue, [1, 2, 3, 4, 5, 6, 7])))
-      const result = yield* $(pipe(
+      yield* $(Queue.offerAll(queue, [1, 2, 3, 4, 5, 6, 7]))
+      const result = yield* $(
         Stream.fromQueue(queue, { maxChunkSize: 2 }),
         Stream.mapChunks((chunk) => Chunk.of(Array.from(chunk))),
         Stream.take(3),
         Stream.runCollect
-      ))
+      )
       assert.isTrue(Array.from(result).every((array) => array.length <= 2))
     }))
 
@@ -242,11 +242,11 @@ describe.concurrent("Stream", () => {
 
   it.effect("iterate", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.iterate(1, (n) => n + 1),
         Stream.take(10),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 10)))
     }))
 
@@ -259,11 +259,9 @@ describe.concurrent("Stream", () => {
   it.effect("range - two large ranges can be concatenated", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 1_000),
-          Stream.concat(Stream.range(1_000, 2_000)),
-          Stream.runCollect
-        )
+        Stream.range(1, 1_000),
+        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 1_999)))
     }))
@@ -271,32 +269,30 @@ describe.concurrent("Stream", () => {
   it.effect("range - two small ranges can be concatenated", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.concat(Stream.range(10, 20)),
-          Stream.runCollect
-        )
+        Stream.range(1, 10),
+        Stream.concat(Stream.range(10, 20)),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 19)))
     }))
 
   it.effect("range - emits no values when start >= end", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.range(1, 1),
         Stream.concat(Stream.range(2, 1)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
   it.effect("range - emits values in chunks of chunkSize", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.range(1, 10, 2),
         Stream.mapChunks((chunk) => Chunk.make(pipe(chunk, Chunk.reduce(0, (x, y) => x + y)))),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         [1 + 2, 3 + 4, 5 + 6, 7 + 8, 9]
@@ -322,49 +318,49 @@ describe.concurrent("Stream", () => {
 
   it.effect("unfold", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.unfold(0, (n) =>
           n < 10 ?
             Option.some([n, n + 1] as const) :
             Option.none()),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
     }))
 
   it.effect("unfoldChunk", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.unfoldChunk(0, (n) =>
           n < 10 ?
             Option.some([Chunk.make(n, n + 1), n + 2] as const) :
             Option.none()),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
     }))
 
   it.effect("unfoldChunkEffect", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.unfoldChunkEffect(0, (n) =>
           n < 10 ?
             Effect.succeed(Option.some([Chunk.make(n, n + 1), n + 2] as const)) :
             Effect.succeed(Option.none())),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
     }))
 
   it.effect("unfoldEffect", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.unfoldEffect(0, (n) =>
           n < 10 ?
             Effect.succeed(Option.some([n, n + 1] as const)) :
             Effect.succeed(Option.none())),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(0, 9)))
     }))
 })

@@ -11,14 +11,14 @@ describe.concurrent("Sink", () => {
   it.effect("flatMap - empty input", () =>
     Effect.gen(function*($) {
       const sink = pipe(Sink.head<number>(), Sink.flatMap(Sink.succeed))
-      const result = yield* $(pipe(Stream.empty, Stream.run(sink)))
+      const result = yield* $(Stream.empty, Stream.run(sink))
       assert.deepStrictEqual(result, Option.none())
     }))
 
   it.effect("flatMap - non-empty input", () =>
     Effect.gen(function*($) {
       const sink = pipe(Sink.head<number>(), Sink.flatMap(Sink.succeed))
-      const result = yield* $(pipe(Stream.make(1, 2, 3), Stream.run(sink)))
+      const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink))
       assert.deepStrictEqual(result, Option.some(1))
     }))
 
@@ -39,7 +39,7 @@ describe.concurrent("Sink", () => {
           )
         )
       )
-      const [option, count] = yield* $(pipe(Stream.fromChunks(...chunks), Stream.run(sink)))
+      const [option, count] = yield* $(Stream.fromChunks(...chunks), Stream.run(sink))
       assert.deepStrictEqual(option, Chunk.head(Chunk.flatten(chunks)))
       assert.strictEqual(
         count + Option.match(option, {

@@ -23,29 +23,29 @@ describe.concurrent("Sink", () => {
         Stream.make(1),
         Stream.mapEffect(() => Effect.fail("boom!"))
       )
-      const result = yield* $(pipe(stream, Stream.run(Sink.drain), Effect.exit))
+      const result = yield* $(stream, Stream.run(Sink.drain), Effect.exit)
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom!"))
     }))
 
   it.effect("fromEffect", () =>
     Effect.gen(function*($) {
       const sink = Sink.fromEffect(Effect.succeed("ok"))
-      const result = yield* $(pipe(Stream.make(1, 2, 3), Stream.run(sink)))
+      const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink))
       assert.deepStrictEqual(result, "ok")
     }))
 
   it.effect("fromQueue - should enqueue all elements", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
-      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromQueue(queue))))
+      yield* $(Stream.make(1, 2, 3), Stream.run(Sink.fromQueue(queue)))
       const result = yield* $(Queue.takeAll(queue))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
   it.effect("fromQueueWithShutdown - should enqueue all elements and shutdown the queue", () =>
     Effect.gen(function*($) {
-      const queue = yield* $(pipe(Queue.unbounded<number>(), Effect.map(createQueueSpy)))
-      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromQueue(queue, { shutdown: true }))))
+      const queue = yield* $(Queue.unbounded<number>(), Effect.map(createQueueSpy))
+      yield* $(Stream.make(1, 2, 3), Stream.run(Sink.fromQueue(queue, { shutdown: true })))
       const enqueuedValues = yield* $(Queue.takeAll(queue))
       const isShutdown = yield* $(Queue.isShutdown(queue))
       assert.deepStrictEqual(Array.from(enqueuedValues), [1, 2, 3])
@@ -58,21 +58,19 @@ describe.concurrent("Sink", () => {
       const deferred2 = yield* $(Deferred.make<never, void>())
       const hub = yield* $(Hub.unbounded<number>())
       const fiber = yield* $(
-        pipe(
-          Hub.subscribe(hub),
-          Effect.flatMap((subscription) =>
-            pipe(
-              Deferred.succeed<never, void>(deferred1, void 0),
-              Effect.zipRight(Deferred.await(deferred2)),
-              Effect.zipRight(Queue.takeAll(subscription))
-            )
-          ),
-          Effect.scoped,
-          Effect.fork
-        )
+        Hub.subscribe(hub),
+        Effect.flatMap((subscription) =>
+          pipe(
+            Deferred.succeed<never, void>(deferred1, void 0),
+            Effect.zipRight(Deferred.await(deferred2)),
+            Effect.zipRight(Queue.takeAll(subscription))
+          )
+        ),
+        Effect.scoped,
+        Effect.fork
       )
       yield* $(Deferred.await(deferred1))
-      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromHub(hub))))
+      yield* $(Stream.make(1, 2, 3), Stream.run(Sink.fromHub(hub)))
       yield* $(Deferred.succeed<never, void>(deferred2, void 0))
       const result = yield* $(Fiber.join(fiber))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
@@ -81,7 +79,7 @@ describe.concurrent("Sink", () => {
   it.effect("fromHubWithShutdown - should shutdown the hub", () =>
     Effect.gen(function*($) {
       const hub = yield* $(Hub.unbounded<number>())
-      yield* $(pipe(Stream.make(1, 2, 3), Stream.run(Sink.fromHub(hub, { shutdown: true }))))
+      yield* $(Stream.make(1, 2, 3), Stream.run(Sink.fromHub(hub, { shutdown: true })))
       const isShutdown = yield* $(Hub.isShutdown(hub))
       assert.isTrue(isShutdown)
     }))

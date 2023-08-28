@@ -26,13 +26,11 @@ describe.concurrent("Stream", () => {
   it.effect("aggregate - simple example", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1, 1, 1),
-          Stream.aggregate(
-            Sink.foldUntil(Chunk.empty<number>(), 3, Chunk.prepend)
-          ),
-          Stream.runCollect
-        )
+        Stream.make(1, 1, 1, 1),
+        Stream.aggregate(
+          Sink.foldUntil(Chunk.empty<number>(), 3, Chunk.prepend)
+        ),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(Chunk.flatten(result)), [1, 1, 1, 1])
       assert.isTrue(Array.from(result).every((chunk) => chunk.length <= 3))
@@ -42,12 +40,10 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("Boom")
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1, 1, 1),
-          Stream.aggregate(Sink.die(error)),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.make(1, 1, 1, 1),
+        Stream.aggregate(Sink.die(error)),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
@@ -56,14 +52,12 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("Boom")
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1),
-          Stream.aggregate(
-            Sink.foldLeftEffect(Chunk.empty(), () => Effect.die(error))
-          ),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.make(1, 1),
+        Stream.aggregate(
+          Sink.foldLeftEffect(Chunk.empty(), () => Effect.die(error))
+        ),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
@@ -82,12 +76,12 @@ describe.concurrent("Stream", () => {
           Effect.onInterrupt(() => Ref.set(ref, true))
         )
       })
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(1, 1, 2),
         Stream.aggregate(sink),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
       const result = yield* $(Ref.get(ref))
@@ -103,12 +97,12 @@ describe.concurrent("Stream", () => {
         Effect.zipRight(Effect.never),
         Effect.onInterrupt(() => Ref.set(ref, true))
       ))
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.make(1, 1, 2),
         Stream.aggregate(sink),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
       const result = yield* $(Ref.get(ref))
@@ -119,27 +113,25 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const input = [1, 2, 2, 3, 2, 3]
       const result = yield* $(
-        pipe(
-          Stream.fromIterable(input),
-          Stream.aggregate(Sink.foldWeighted({
-            initial: Chunk.empty<number>(),
-            maxCost: 4,
-            cost: (_, n) => n,
-            body: (acc, curr) => Chunk.append(acc, curr)
-          })),
-          Stream.runCollect
-        )
+        Stream.fromIterable(input),
+        Stream.aggregate(Sink.foldWeighted({
+          initial: Chunk.empty<number>(),
+          maxCost: 4,
+          cost: (_, n) => n,
+          body: (acc, curr) => Chunk.append(acc, curr)
+        })),
+        Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(Chunk.flatten(result)), input)
     }))
 
   it.effect("aggregate - ZIO issue 6395", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.aggregate(Sink.collectAllN(2)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2], [3]]
@@ -150,7 +142,7 @@ describe.concurrent("Stream", () => {
   it.effect("issue from zio-kafka", () =>
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<Take.Take<never, number>>())
-      const fiber = yield* $(pipe(
+      const fiber = yield* $(
         Stream.fromQueue(queue),
         Stream.flattenTake,
         Stream.aggregate(
@@ -158,18 +150,18 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runCollect,
         Effect.fork
-      ))
+      )
       yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
-      yield* $(pipe(Queue.offer(queue, Take.chunk(Chunk.make(1, 2, 3, 4, 5)))))
+      yield* $(Queue.offer(queue, Take.chunk(Chunk.make(1, 2, 3, 4, 5))))
       yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
-      yield* $(pipe(Queue.offer(queue, Take.chunk(Chunk.make(6, 7, 8, 9, 10)))))
+      yield* $(Queue.offer(queue, Take.chunk(Chunk.make(6, 7, 8, 9, 10))))
       yield* $(TestServices.provideLive(Effect.sleep(Duration.seconds(1))))
-      yield* $(pipe(Queue.offer(queue, Take.chunk(Chunk.make(11, 12, 13, 14, 15)))))
-      yield* $(pipe(Queue.offer(queue, Take.end)))
-      const result = yield* $(pipe(
+      yield* $(Queue.offer(queue, Take.chunk(Chunk.make(11, 12, 13, 14, 15))))
+      yield* $(Queue.offer(queue, Take.end))
+      const result = yield* $(
         Fiber.join(fiber),
         Effect.map(Chunk.filter(Chunk.isNonEmpty))
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result).map((chunk) => Array.from(chunk)),
         [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
@@ -184,36 +176,32 @@ describe.concurrent("Stream", () => {
         Chunk.of(3)
       ]))
       const fiber = yield* $(
-        pipe(
-          Stream.fromQueue(coordination.queue),
-          Stream.map(Take.make),
-          Stream.tap(() => coordination.proceed),
-          Stream.flattenTake,
-          Stream.aggregateWithin(
-            Sink.last<number>(),
-            Schedule.fixed(Duration.millis(200))
-          ),
-          Stream.interruptWhen(Effect.never),
-          Stream.take(2),
-          Stream.runCollect,
-          Effect.fork
-        )
+        Stream.fromQueue(coordination.queue),
+        Stream.map(Take.make),
+        Stream.tap(() => coordination.proceed),
+        Stream.flattenTake,
+        Stream.aggregateWithin(
+          Sink.last<number>(),
+          Schedule.fixed(Duration.millis(200))
+        ),
+        Stream.interruptWhen(Effect.never),
+        Stream.take(2),
+        Stream.runCollect,
+        Effect.fork
       )
       yield* $(
-        pipe(
-          coordination.offer,
-          Effect.zipRight(TestClock.adjust(Duration.millis(100))),
-          Effect.zipRight(coordination.awaitNext),
-          Effect.repeatN(3)
-        )
+        coordination.offer,
+        Effect.zipRight(TestClock.adjust(Duration.millis(100))),
+        Effect.zipRight(coordination.awaitNext),
+        Effect.repeatN(3)
       )
-      const results = yield* $(pipe(Fiber.join(fiber), Effect.map(Chunk.compact)))
+      const results = yield* $(Fiber.join(fiber), Effect.map(Chunk.compact))
       assert.deepStrictEqual(Array.from(results), [2, 3])
     }))
 
   it.effect("aggregateWithinEither - simple example", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 1, 1, 1, 2, 2),
         Stream.aggregateWithinEither(
           pipe(
@@ -232,7 +220,7 @@ describe.concurrent("Stream", () => {
           Schedule.spaced(Duration.minutes(30))
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(
         Array.from(result),
         [Either.right([2, 1, 1, 1, 1]), Either.right([2])]
@@ -243,22 +231,20 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
       yield* $(
-        pipe(
-          Stream.range(1, 10),
-          Stream.tap((n) =>
-            pipe(
-              Effect.fail("Boom"),
-              Effect.when(() => n === 6),
-              Effect.zipRight(pipe(Queue.offer(queue, n)))
-            )
-          ),
-          Stream.aggregateWithinEither(
-            Sink.foldUntil(void 0, 5, constVoid),
-            Schedule.forever
-          ),
-          Stream.runDrain,
-          Effect.catchAll(() => Effect.succeed(void 0))
-        )
+        Stream.range(1, 10),
+        Stream.tap((n) =>
+          pipe(
+            Effect.fail("Boom"),
+            Effect.when(() => n === 6),
+            Effect.zipRight(pipe(Queue.offer(queue, n)))
+          )
+        ),
+        Stream.aggregateWithinEither(
+          Sink.foldUntil(void 0, 5, constVoid),
+          Schedule.forever
+        ),
+        Stream.runDrain,
+        Effect.catchAll(() => Effect.succeed(void 0))
       )
       const result = yield* $(Queue.takeAll(queue))
       yield* $(Queue.shutdown(queue))
@@ -269,15 +255,13 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("Boom")
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1, 1, 1),
-          Stream.aggregateWithinEither(
-            Sink.die(error),
-            Schedule.spaced(Duration.minutes(30))
-          ),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.make(1, 1, 1, 1),
+        Stream.aggregateWithinEither(
+          Sink.die(error),
+          Schedule.spaced(Duration.minutes(30))
+        ),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
@@ -286,15 +270,13 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("Boom")
       const result = yield* $(
-        pipe(
-          Stream.make(1, 1),
-          Stream.aggregateWithinEither(
-            Sink.foldEffect(Chunk.empty<number>(), constTrue, () => Effect.die(error)),
-            Schedule.spaced(Duration.minutes(30))
-          ),
-          Stream.runCollect,
-          Effect.exit
-        )
+        Stream.make(1, 1),
+        Stream.aggregateWithinEither(
+          Sink.foldEffect(Chunk.empty<number>(), constTrue, () => Effect.die(error)),
+          Schedule.spaced(Duration.minutes(30))
+        ),
+        Stream.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
@@ -314,12 +296,10 @@ describe.concurrent("Stream", () => {
         )
       })
       const fiber = yield* $(
-        pipe(
-          Stream.make(1, 1, 2),
-          Stream.aggregateWithinEither(sink, Schedule.spaced(Duration.minutes(30))),
-          Stream.runCollect,
-          Effect.fork
-        )
+        Stream.make(1, 1, 2),
+        Stream.aggregateWithinEither(sink, Schedule.spaced(Duration.minutes(30))),
+        Stream.runCollect,
+        Effect.fork
       )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
@@ -337,12 +317,10 @@ describe.concurrent("Stream", () => {
         Effect.onInterrupt(() => Ref.set(ref, true))
       ))
       const fiber = yield* $(
-        pipe(
-          Stream.make(1, 1, 2),
-          Stream.aggregateWithinEither(sink, Schedule.spaced(Duration.minutes(30))),
-          Stream.runCollect,
-          Effect.fork
-        )
+        Stream.make(1, 1, 2),
+        Stream.aggregateWithinEither(sink, Schedule.spaced(Duration.minutes(30))),
+        Stream.runCollect,
+        Effect.fork
       )
       yield* $(Deferred.await(latch))
       yield* $(Fiber.interrupt(fiber))
@@ -354,26 +332,24 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const input = [1, 2, 2, 3, 2, 3]
       const fiber = yield* $(
-        pipe(
-          Stream.fromIterable(input),
-          Stream.aggregateWithinEither(
-            Sink.foldWeighted({
-              initial: Chunk.empty<number>(),
-              maxCost: 4,
-              cost: (_, n) => n,
-              body: (acc, curr) => Chunk.append(acc, curr)
-            }),
-            Schedule.spaced(Duration.millis(100))
-          ),
-          Stream.filterMap((either) =>
-            Either.isRight(either) ?
-              Option.some(either.right) :
-              Option.none()
-          ),
-          Stream.runCollect,
-          Effect.map(Chunk.flatten),
-          Effect.fork
-        )
+        Stream.fromIterable(input),
+        Stream.aggregateWithinEither(
+          Sink.foldWeighted({
+            initial: Chunk.empty<number>(),
+            maxCost: 4,
+            cost: (_, n) => n,
+            body: (acc, curr) => Chunk.append(acc, curr)
+          }),
+          Schedule.spaced(Duration.millis(100))
+        ),
+        Stream.filterMap((either) =>
+          Either.isRight(either) ?
+            Option.some(either.right) :
+            Option.none()
+        ),
+        Stream.runCollect,
+        Effect.map(Chunk.flatten),
+        Effect.fork
       )
       yield* $(TestClock.adjust(Duration.minutes(31)))
       const result = yield* $(Fiber.join(fiber))

@@ -19,16 +19,16 @@ describe.concurrent("Stream", () => {
         Effect.flatMap(Stream.runCollect),
         Effect.scoped
       )
-      const result = yield* $(pipe(
+      const result = yield* $(
         Effect.all(Array.from({ length: 100 }, () => stream)),
         Effect.as(0)
-      ))
+      )
       assert.strictEqual(result, 0)
     }))
 
   it.effect("partition - values", () =>
     Effect.gen(function*($) {
-      const { result1, result2 } = yield* $(pipe(
+      const { result1, result2 } = yield* $(
         Stream.range(0, 6),
         Stream.partition((n) => n % 2 === 0),
         Effect.flatMap(([evens, odds]) =>
@@ -38,14 +38,14 @@ describe.concurrent("Stream", () => {
           })
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(Array.from(result1), [0, 2, 4])
       assert.deepStrictEqual(Array.from(result2), [1, 3, 5])
     }))
 
   it.effect("partition - errors", () =>
     Effect.gen(function*($) {
-      const { result1, result2 } = yield* $(pipe(
+      const { result1, result2 } = yield* $(
         Stream.range(0, 1),
         Stream.concat(Stream.fail("boom")),
         Stream.partition((n) => n % 2 === 0),
@@ -56,21 +56,21 @@ describe.concurrent("Stream", () => {
           })
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(result1, Either.left("boom"))
       assert.deepStrictEqual(result2, Either.left("boom"))
     }))
 
   it.effect("partition - backpressure", () =>
     Effect.gen(function*($) {
-      const { result1, result2, result3 } = yield* $(pipe(
+      const { result1, result2, result3 } = yield* $(
         Stream.range(0, 6),
         Stream.partition((n) => (n % 2 === 0), { bufferSize: 1 }),
         Effect.flatMap(([evens, odds]) =>
           Effect.gen(function*($) {
             const ref = yield* $(Ref.make(Chunk.empty<number>()))
             const latch = yield* $(Deferred.make<never, void>())
-            const fiber = yield* $(pipe(
+            const fiber = yield* $(
               evens,
               Stream.tap((n) =>
                 pipe(
@@ -85,7 +85,7 @@ describe.concurrent("Stream", () => {
               ),
               Stream.runDrain,
               Effect.fork
-            ))
+            )
             yield* $(Deferred.await(latch))
             const result1 = yield* $(Ref.get(ref))
             const result2 = yield* $(Stream.runCollect(odds))
@@ -95,7 +95,7 @@ describe.concurrent("Stream", () => {
           })
         ),
         Effect.scoped
-      ))
+      )
       assert.deepStrictEqual(Array.from(result1), [2, 0])
       assert.deepStrictEqual(Array.from(result2), [1, 3, 5])
       assert.deepStrictEqual(Array.from(result3), [4, 2, 0])

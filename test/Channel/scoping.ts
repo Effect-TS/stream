@@ -18,14 +18,12 @@ describe.concurrent("Channel", () => {
       const acquire = Effect.zipRight(Ref.update(ref, (n) => n + 1), Effect.yieldNow())
       const release = Ref.update(ref, (n) => n - 1)
       yield* $(
-        pipe(
-          Channel.acquireReleaseOut(acquire, () => release),
-          Channel.as(Channel.fromEffect(Deferred.await(latch))),
-          Channel.runDrain,
-          Effect.fork,
-          Effect.flatMap((fiber) => pipe(Effect.yieldNow(), Effect.zipRight(Fiber.interrupt(fiber)))),
-          Effect.repeatN(1_000)
-        )
+        Channel.acquireReleaseOut(acquire, () => release),
+        Channel.as(Channel.fromEffect(Deferred.await(latch))),
+        Channel.runDrain,
+        Effect.fork,
+        Effect.flatMap((fiber) => pipe(Effect.yieldNow(), Effect.zipRight(Fiber.interrupt(fiber)))),
+        Effect.repeatN(1_000)
       )
       return yield* $(Ref.get(ref))
     })
@@ -41,13 +39,13 @@ describe.concurrent("Channel", () => {
       const acquire = Effect.zipRight(Ref.update(ref, (n) => n + 1), Effect.yieldNow())
       const release = () => Ref.update(ref, (n) => n - 1)
       const scoped = Effect.acquireRelease(acquire, release)
-      yield* $(pipe(
+      yield* $(
         Channel.unwrapScoped(pipe(scoped, Effect.as(Channel.fromEffect(Deferred.await(latch))))),
         Channel.runDrain,
         Effect.fork,
         Effect.flatMap((fiber) => pipe(Effect.yieldNow(), Effect.zipRight(Fiber.interrupt(fiber)))),
         Effect.repeatN(1_000)
-      ))
+      )
       return yield* $(Ref.get(ref))
     })
     const result = await Effect.runPromise(program)
@@ -58,15 +56,13 @@ describe.concurrent("Channel", () => {
   it.effect("finalizer failure is propagated", () =>
     Effect.gen(function*($) {
       const exit = yield* $(
-        pipe(
-          Channel.unit,
-          Channel.ensuring(Effect.die("ok")),
-          Channel.ensuring(Effect.unit),
-          Channel.runDrain,
-          Effect.sandbox,
-          Effect.either,
-          Effect.map(Either.mapLeft(Cause.unannotate))
-        )
+        Channel.unit,
+        Channel.ensuring(Effect.die("ok")),
+        Channel.ensuring(Effect.unit),
+        Channel.runDrain,
+        Effect.sandbox,
+        Effect.either,
+        Effect.map(Either.mapLeft(Cause.unannotate))
       )
 
       assert.deepEqual(exit, Either.left(Cause.die("ok")))

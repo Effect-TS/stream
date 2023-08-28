@@ -30,11 +30,9 @@ describe.concurrent("Channel", () => {
   it.effect("map", () =>
     Effect.gen(function*($) {
       const [chunk, value] = yield* $(
-        pipe(
-          Channel.succeed(1),
-          Channel.map((n) => n + 1),
-          Channel.runCollect
-        )
+        Channel.succeed(1),
+        Channel.map((n) => n + 1),
+        Channel.runCollect
       )
       assert.isTrue(Chunk.isEmpty(chunk))
       assert.strictEqual(value, 2)
@@ -43,12 +41,10 @@ describe.concurrent("Channel", () => {
   it.effect("mapError - structure confusion", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.fail("error"),
-          Channel.mapError(() => 1),
-          Channel.runCollect,
-          Effect.exit
-        )
+        Channel.fail("error"),
+        Channel.mapError(() => 1),
+        Channel.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(1))
     }))
@@ -56,11 +52,9 @@ describe.concurrent("Channel", () => {
   it.effect("mapOut - simple", () =>
     Effect.gen(function*($) {
       const [chunk, value] = yield* $(
-        pipe(
-          Channel.writeAll(1, 2, 3),
-          Channel.mapOut((n) => n + 1),
-          Channel.runCollect
-        )
+        Channel.writeAll(1, 2, 3),
+        Channel.mapOut((n) => n + 1),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(chunk), [2, 3, 4])
       assert.isUndefined(value)
@@ -69,12 +63,10 @@ describe.concurrent("Channel", () => {
   it.effect("mapOut - mixed with flatMap", () =>
     Effect.gen(function*($) {
       const [chunk, value] = yield* $(
-        pipe(
-          Channel.write(1),
-          Channel.mapOut((n) => `${n}`),
-          Channel.flatMap(() => Channel.write("x")),
-          Channel.runCollect
-        )
+        Channel.write(1),
+        Channel.mapOut((n) => `${n}`),
+        Channel.flatMap(() => Channel.write("x")),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(chunk), ["1", "x"])
       assert.isUndefined(value)
@@ -83,11 +75,9 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - plain", () =>
     Effect.gen(function*($) {
       const [result] = yield* $(
-        pipe(
-          Channel.writeAll(1, 2, 3),
-          Channel.concatMap((i) => Channel.writeAll(i, i)),
-          Channel.runCollect
-        )
+        Channel.writeAll(1, 2, 3),
+        Channel.concatMap((i) => Channel.writeAll(i, i)),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 1, 2, 2, 3, 3])
     }))
@@ -95,14 +85,12 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - complex", () =>
     Effect.gen(function*($) {
       const [result] = yield* $(
-        pipe(
-          Channel.writeAll(1, 2),
-          Channel.concatMap((i) => Channel.writeAll(i, i)),
-          Channel.mapOut(First),
-          Channel.concatMap((i) => Channel.writeAll(i, i)),
-          Channel.mapOut(Second),
-          Channel.runCollect
-        )
+        Channel.writeAll(1, 2),
+        Channel.concatMap((i) => Channel.writeAll(i, i)),
+        Channel.mapOut(First),
+        Channel.concatMap((i) => Channel.writeAll(i, i)),
+        Channel.mapOut(Second),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [
         Second(First(1)),
@@ -128,11 +116,9 @@ describe.concurrent("Channel", () => {
         Channel.concatMap(() => pipe(reader, Channel.flatMap(() => reader)))
       )
       const [result] = yield* $(
-        pipe(
-          source,
-          Channel.pipeTo(readers),
-          Channel.runCollect
-        )
+        source,
+        Channel.pipeTo(readers),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
     }))
@@ -140,12 +126,10 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - downstream failure", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.write(0),
-          Channel.concatMap(() => Channel.fail("error")),
-          Channel.runCollect,
-          Effect.exit
-        )
+        Channel.write(0),
+        Channel.concatMap(() => Channel.fail("error")),
+        Channel.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
     }))
@@ -160,7 +144,7 @@ describe.concurrent("Channel", () => {
         Channel.runDrain,
         Effect.exit
       )
-      const [exit, events] = yield* $(pipe(effect, Effect.zip(Ref.get(ref))))
+      const [exit, events] = yield* $(effect, Effect.zip(Ref.get(ref)))
       assert.deepStrictEqual(Exit.unannotate(exit), Exit.fail("error"))
       assert.deepStrictEqual(events, ["Acquired", "Released"])
     }))
@@ -168,13 +152,11 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - multiple concatMaps with failure in first", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.write(void 0),
-          Channel.concatMap(() => Channel.write(Channel.fail("error"))),
-          Channel.concatMap((e) => e),
-          Channel.runCollect,
-          Effect.exit
-        )
+        Channel.write(void 0),
+        Channel.concatMap(() => Channel.write(Channel.fail("error"))),
+        Channel.concatMap((e) => e),
+        Channel.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
     }))
@@ -182,13 +164,11 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - with failure then flatMap", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.write(void 0),
-          Channel.concatMap(() => Channel.fail("error")),
-          Channel.flatMap(() => Channel.write(void 0)),
-          Channel.runCollect,
-          Effect.exit
-        )
+        Channel.write(void 0),
+        Channel.concatMap(() => Channel.fail("error")),
+        Channel.flatMap(() => Channel.write(void 0)),
+        Channel.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
     }))
@@ -196,13 +176,11 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - multiple concatMaps with failure in first and catchAll in second", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.write(void 0),
-          Channel.concatMap(() => Channel.write(Channel.fail("error"))),
-          Channel.concatMap(Channel.catchAllCause(() => Channel.fail("error2"))),
-          Channel.runCollect,
-          Effect.exit
-        )
+        Channel.write(void 0),
+        Channel.concatMap(() => Channel.write(Channel.fail("error"))),
+        Channel.concatMap(Channel.catchAllCause(() => Channel.fail("error2"))),
+        Channel.runCollect,
+        Effect.exit
       )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error2"))
     }))
@@ -210,16 +188,14 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - done value combination", () =>
     Effect.gen(function*($) {
       const [chunk, [array1, array2]] = yield* $(
-        pipe(
-          Channel.writeAll(1, 2, 3),
-          Channel.as(["Outer-0"]),
-          Channel.concatMapWith(
-            (i) => pipe(Channel.write(i), Channel.as([`Inner-${i}`])),
-            (a: Array<string>, b) => [...a, ...b],
-            (a, b) => [a, b] as const
-          ),
-          Channel.runCollect
-        )
+        Channel.writeAll(1, 2, 3),
+        Channel.as(["Outer-0"]),
+        Channel.concatMapWith(
+          (i) => pipe(Channel.write(i), Channel.as([`Inner-${i}`])),
+          (a: Array<string>, b) => [...a, ...b],
+          (a, b) => [a, b] as const
+        ),
+        Channel.runCollect
       )
       assert.deepStrictEqual(Array.from(chunk), [1, 2, 3])
       assert.deepStrictEqual(array1, ["Inner-1", "Inner-2", "Inner-3"])
@@ -229,33 +205,31 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - custom 1", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.writeAll(1, 2, 3, 4),
-          Channel.concatMapWithCustom(
-            (x) =>
-              Channel.writeAll(
-                Option.some([x, 1]) as Option.Option<readonly [number, number]>,
-                Option.none() as Option.Option<readonly [number, number]>,
-                Option.some([x, 2]) as Option.Option<readonly [number, number]>,
-                Option.none() as Option.Option<readonly [number, number]>,
-                Option.some([x, 3]) as Option.Option<readonly [number, number]>,
-                Option.none() as Option.Option<readonly [number, number]>,
-                Option.some([x, 4]) as Option.Option<readonly [number, number]>
-              ),
-            constVoid,
-            constVoid,
-            UpstreamPullRequest.match({
-              onPulled: () => UpstreamPullStrategy.PullAfterNext(Option.none()),
-              onNoUpstream: () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
-            }),
-            Option.match({
-              onNone: () => ChildExecutorDecision.Yield(),
-              onSome: () => ChildExecutorDecision.Continue()
-            })
-          ),
-          Channel.runCollect,
-          Effect.map(([chunk]) => pipe(Array.from(chunk), ReadonlyArray.compact))
-        )
+        Channel.writeAll(1, 2, 3, 4),
+        Channel.concatMapWithCustom(
+          (x) =>
+            Channel.writeAll(
+              Option.some([x, 1]) as Option.Option<readonly [number, number]>,
+              Option.none() as Option.Option<readonly [number, number]>,
+              Option.some([x, 2]) as Option.Option<readonly [number, number]>,
+              Option.none() as Option.Option<readonly [number, number]>,
+              Option.some([x, 3]) as Option.Option<readonly [number, number]>,
+              Option.none() as Option.Option<readonly [number, number]>,
+              Option.some([x, 4]) as Option.Option<readonly [number, number]>
+            ),
+          constVoid,
+          constVoid,
+          UpstreamPullRequest.match({
+            onPulled: () => UpstreamPullStrategy.PullAfterNext(Option.none()),
+            onNoUpstream: () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none())
+          }),
+          Option.match({
+            onNone: () => ChildExecutorDecision.Yield(),
+            onSome: () => ChildExecutorDecision.Continue()
+          })
+        ),
+        Channel.runCollect,
+        Effect.map(([chunk]) => pipe(Array.from(chunk), ReadonlyArray.compact))
       )
       assert.deepStrictEqual(result, [
         [1, 1] as const,
@@ -280,30 +254,28 @@ describe.concurrent("Channel", () => {
   it.effect("concatMap - custom 2", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        pipe(
-          Channel.writeAll(1, 2, 3, 4),
-          Channel.concatMapWithCustom(
-            (x) =>
-              Channel.writeAll(
-                Option.some([x, 1]) as Option.Option<readonly [number, number]>,
-                Option.none() as Option.Option<readonly [number, number]>,
-                Option.some([x, 2]) as Option.Option<readonly [number, number]>,
-                Option.none() as Option.Option<readonly [number, number]>,
-                Option.some([x, 3]) as Option.Option<readonly [number, number]>,
-                Option.none() as Option.Option<readonly [number, number]>,
-                Option.some([x, 4]) as Option.Option<readonly [number, number]>
-              ),
-            constVoid,
-            constVoid,
-            () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none()),
-            Option.match({
-              onNone: () => ChildExecutorDecision.Yield(),
-              onSome: () => ChildExecutorDecision.Continue()
-            })
-          ),
-          Channel.runCollect,
-          Effect.map(([chunk]) => pipe(Array.from(chunk), ReadonlyArray.compact))
-        )
+        Channel.writeAll(1, 2, 3, 4),
+        Channel.concatMapWithCustom(
+          (x) =>
+            Channel.writeAll(
+              Option.some([x, 1]) as Option.Option<readonly [number, number]>,
+              Option.none() as Option.Option<readonly [number, number]>,
+              Option.some([x, 2]) as Option.Option<readonly [number, number]>,
+              Option.none() as Option.Option<readonly [number, number]>,
+              Option.some([x, 3]) as Option.Option<readonly [number, number]>,
+              Option.none() as Option.Option<readonly [number, number]>,
+              Option.some([x, 4]) as Option.Option<readonly [number, number]>
+            ),
+          constVoid,
+          constVoid,
+          () => UpstreamPullStrategy.PullAfterAllEnqueued(Option.none()),
+          Option.match({
+            onNone: () => ChildExecutorDecision.Yield(),
+            onSome: () => ChildExecutorDecision.Continue()
+          })
+        ),
+        Channel.runCollect,
+        Effect.map(([chunk]) => pipe(Array.from(chunk), ReadonlyArray.compact))
       )
       assert.deepStrictEqual(result, [
         [1, 1] as const,

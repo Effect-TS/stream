@@ -23,31 +23,31 @@ describe.concurrent("Stream", () => {
 
   it.effect("when - returns an empty stream if the condition is not satisfied", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4, 5),
         Stream.when(constFalse),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
   it.effect("when - dies if the condition throws an exception", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.when(() => {
           throw error
         }),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
 
   it.effect("whenCase - returns the resulting stream if the given partial function is defined for the given value", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.whenCase(
           () => Option.some(1),
           (option) =>
@@ -56,13 +56,13 @@ describe.concurrent("Stream", () => {
               Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1])
     }))
 
   it.effect("whenCase - returns an empty stream if the given partial function is not defined for the given value", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.whenCase(
           () => Option.none(),
           (option) =>
@@ -71,14 +71,14 @@ describe.concurrent("Stream", () => {
               Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
   it.effect("whenCase - dies if evaluating the given value throws an exception", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.whenCase(
           () => {
             throw error
@@ -87,14 +87,14 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
 
   it.effect("whenCase - dies if the partial function throws an exception", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.whenCase(
           constVoid,
           (): Option.Option<Stream.Stream<never, never, void>> => {
@@ -103,13 +103,13 @@ describe.concurrent("Stream", () => {
         ),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
 
   it.effect("whenCaseEffect - returns the resulting stream if the given partial function is defined for the given effectful value", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Effect.succeed(Option.some(1)),
         Stream.whenCaseEffect(
           (option) =>
@@ -118,13 +118,13 @@ describe.concurrent("Stream", () => {
               Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1])
     }))
 
   it.effect("whenCaseEffect - returns an empty stream if the given partial function is not defined for the given effectful value", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Effect.succeed<Option.Option<number>>(Option.none()),
         Stream.whenCaseEffect(
           (option) =>
@@ -133,65 +133,65 @@ describe.concurrent("Stream", () => {
               Option.none()
         ),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
   it.effect("whenCaseEffect - fails if the effectful value is a failure", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Effect.fail(error),
         Stream.whenCaseEffect(() => Option.some(Stream.empty)),
         Stream.runCollect,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
 
   it.effect("whenCaseEffect - dies if the given partial function throws an exception", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Effect.unit,
         Stream.whenCaseEffect((): Option.Option<Stream.Stream<never, never, void>> => {
           throw error
         }),
         Stream.runCollect,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
     }))
 
   it.effect("whenEffect - returns the stream if the effectful condition is satisfied", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4, 5),
         Stream.whenEffect(Effect.succeed(true)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5])
     }))
 
   it.effect("whenEffect - returns an empty stream if the effectful condition is not satisfied", () =>
     Effect.gen(function*($) {
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3, 4, 5),
         Stream.whenEffect(Effect.succeed(false)),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
   it.effect("whenEffect - fails if the effectful condition fails", () =>
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
-      const result = yield* $(pipe(
+      const result = yield* $(
         Stream.make(1, 2, 3),
         Stream.whenEffect(Effect.fail(error)),
         Stream.runDrain,
         Effect.exit
-      ))
+      )
       assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
     }))
 })

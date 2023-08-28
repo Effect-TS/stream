@@ -11,11 +11,11 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const stream1 = Stream.make(2, 3)
       const stream2 = Stream.make(5, 6, 7)
-      const result = yield* $(pipe(
+      const result = yield* $(
         stream1,
         Stream.interleave(stream2),
         Stream.runCollect
-      ))
+      )
       assert.deepStrictEqual(Array.from(result), [2, 5, 3, 6, 7])
     }))
 
@@ -61,11 +61,11 @@ describe.concurrent("Stream", () => {
       const boolStream = Stream.make(true, true, false, true, false)
       const stream1 = Stream.make(1, 2, 3, 4, 5)
       const stream2 = Stream.make(4, 5, 6, 7, 8)
-      const interleavedStream = yield* $(pipe(
+      const interleavedStream = yield* $(
         stream1,
         Stream.interleaveWith(stream2, boolStream),
         Stream.runCollect
-      ))
+      )
       const bools = yield* $(Stream.runCollect(boolStream))
       const numbers1 = yield* $(Stream.runCollect(stream1))
       const numbers2 = yield* $(Stream.runCollect(stream2))

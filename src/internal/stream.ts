@@ -1365,22 +1365,18 @@ export const combine = dual<
         const latchL = yield* $(Handoff.make<void>())
         const latchR = yield* $(Handoff.make<void>())
         yield* $(
-          pipe(
-            toChannel(self),
-            channel.concatMap(channel.writeChunk),
-            core.pipeTo(producer(left, latchL)),
-            channelExecutor.runScoped,
-            Effect.forkScoped
-          )
+          toChannel(self),
+          channel.concatMap(channel.writeChunk),
+          core.pipeTo(producer(left, latchL)),
+          channelExecutor.runScoped,
+          Effect.forkScoped
         )
         yield* $(
-          pipe(
-            toChannel(that),
-            channel.concatMap(channel.writeChunk),
-            core.pipeTo(producer(right, latchR)),
-            channelExecutor.runScoped,
-            Effect.forkScoped
-          )
+          toChannel(that),
+          channel.concatMap(channel.writeChunk),
+          core.pipeTo(producer(right, latchR)),
+          channelExecutor.runScoped,
+          Effect.forkScoped
         )
         const pullLeft = pipe(
           latchL,
@@ -2046,7 +2042,7 @@ export const distributedWithDynamicCallback = dual<
               Effect.asUnit
             )
           )
-        yield* $(pipe(
+        yield* $(
           self,
           runForEachScoped(offer),
           Effect.matchCauseEffect({
@@ -2054,7 +2050,7 @@ export const distributedWithDynamicCallback = dual<
             onSuccess: () => finalize(Exit.fail(Option.none()))
           }),
           Effect.forkScoped
-        ))
+        )
         return queuesLock.withPermits(1)(
           Effect.flatten(Ref.get(newQueue))
         )

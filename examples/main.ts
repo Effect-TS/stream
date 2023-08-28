@@ -27,7 +27,7 @@ const program = Effect.gen(function*($) {
     Stream.map(Option.some),
     Stream.concat(Stream.make(Option.none))
   )
-  const { result1, result2 } = yield* $(pipe(
+  const { result1, result2 } = yield* $(
     Effect.all({
       result1: pipe(
         stream,
@@ -41,7 +41,7 @@ const program = Effect.gen(function*($) {
         Stream.runCollect
       )
     })
-  ))
+  )
   const equal = Equal.equals(result2)(result1)
   return { equal, result1: Array.from(result1), result2: Array.from(result2) }
 })
