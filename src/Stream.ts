@@ -21,6 +21,7 @@ import type * as Layer from "@effect/io/Layer"
 import type * as Queue from "@effect/io/Queue"
 import type * as Schedule from "@effect/io/Schedule"
 import type * as Scope from "@effect/io/Scope"
+import type * as Tracer from "@effect/io/Tracer"
 import type * as Channel from "@effect/stream/Channel"
 import type * as GroupBy from "@effect/stream/GroupBy"
 import * as _groupBy from "@effect/stream/internal/groupBy"
@@ -3974,6 +3975,36 @@ export const whenEffect: {
   <R2, E2>(effect: Effect.Effect<R2, E2, boolean>): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
   <R, E, A, R2, E2>(self: Stream<R, E, A>, effect: Effect.Effect<R2, E2, boolean>): Stream<R | R2, E | E2, A>
 } = internal.whenEffect
+
+/**
+ * Wraps the stream with a new span for tracing.
+ *
+ * @since 1.0.0
+ * @category tracing
+ */
+export const withSpan: {
+  (
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): Stream<R, E, A>
+} = internal.withSpan
 
 /**
  * Zips this stream with another point-wise and emits tuples of elements from
