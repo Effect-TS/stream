@@ -134,6 +134,9 @@ Added in v1.0.0
 - [elements](#elements)
   - [find](#find)
   - [findEffect](#findeffect)
+- [encoding](#encoding)
+  - [decodeText](#decodetext)
+  - [encodeText](#encodetext)
 - [error handling](#error-handling)
   - [catchAll](#catchall)
   - [catchAllCause](#catchallcause)
@@ -2175,6 +2178,35 @@ export declare const findEffect: {
     A
   >
 }
+```
+
+Added in v1.0.0
+
+# encoding
+
+## decodeText
+
+Decode Uint8Array chunks into a stream of strings using the specified encoding.
+
+**Signature**
+
+```ts
+export declare const decodeText: {
+  (encoding?: string): <R, E>(self: Stream<R, E, Uint8Array>) => Stream<R, E, string>
+  <R, E>(self: Stream<R, E, Uint8Array>, encoding?: string): Stream<R, E, string>
+}
+```
+
+Added in v1.0.0
+
+## encodeText
+
+Encode a stream of strings into a stream of Uint8Array chunks using the specified encoding.
+
+**Signature**
+
+```ts
+export declare const encodeText: <R, E>(self: Stream<R, E, string>) => Stream<R, E, Uint8Array>
 ```
 
 Added in v1.0.0

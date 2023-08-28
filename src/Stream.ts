@@ -4501,3 +4501,26 @@ export {
    */
   let_ as let
 }
+
+// -------------------------------------------------------------------------------------
+// encoding
+// -------------------------------------------------------------------------------------
+
+/**
+ * Decode Uint8Array chunks into a stream of strings using the specified encoding.
+ *
+ * @since 1.0.0
+ * @category encoding
+ */
+export const decodeText: {
+  (encoding?: string): <R, E>(self: Stream<R, E, Uint8Array>) => Stream<R, E, string>
+  <R, E>(self: Stream<R, E, Uint8Array>, encoding?: string): Stream<R, E, string>
+} = internal.decodeText
+
+/**
+ * Encode a stream of strings into a stream of Uint8Array chunks using the specified encoding.
+ *
+ * @since 1.0.0
+ * @category encoding
+ */
+export const encodeText: <R, E>(self: Stream<R, E, string>) => Stream<R, E, Uint8Array> = internal.encodeText
