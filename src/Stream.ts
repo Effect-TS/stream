@@ -1540,7 +1540,7 @@ export const fromIteratorSucceed: <A>(iterator: IterableIterator<A>, maxChunkSiz
  */
 export const fromPull: <R, R2, E, A>(
   effect: Effect.Effect<Scope.Scope | R, never, Effect.Effect<R2, Option.Option<E>, Chunk.Chunk<A>>>
-) => Stream<R | R2, E, A> = internal.fromPull
+) => Stream<Exclude<R, Scope.Scope> | R2, E, A> = internal.fromPull
 
 /**
  * Creates a stream from a queue of values

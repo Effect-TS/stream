@@ -3007,7 +3007,7 @@ export const fromIteratorSucceed = <A>(
 /** @internal */
 export const fromPull = <R, R2, E, A>(
   effect: Effect.Effect<R | Scope.Scope, never, Effect.Effect<R2, Option.Option<E>, Chunk.Chunk<A>>>
-): Stream.Stream<R | R2, E, A> => pipe(effect, Effect.map(repeatEffectChunkOption), unwrapScoped)
+): Stream.Stream<Exclude<R, Scope.Scope> | R2, E, A> => pipe(effect, Effect.map(repeatEffectChunkOption), unwrapScoped)
 
 /** @internal */
 export const fromQueue = <A>(
