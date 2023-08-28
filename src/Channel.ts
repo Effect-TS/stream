@@ -18,6 +18,7 @@ import type * as Layer from "@effect/io/Layer"
 import type * as Queue from "@effect/io/Queue"
 import type * as Ref from "@effect/io/Ref"
 import type * as Scope from "@effect/io/Scope"
+import type * as Tracer from "@effect/io/Tracer"
 import type * as ChildExecutorDecision from "@effect/stream/Channel/ChildExecutorDecision"
 import type * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import type * as MergeStrategy from "@effect/stream/Channel/MergeStrategy"
@@ -2043,6 +2044,38 @@ export const updateService: {
     f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
   ): Channel<R | T, InErr, unknown, InDone, OutErr, OutElem, OutDone>
 } = channel.updateService
+
+/**
+ * Wraps the channel with a new span for tracing.
+ *
+ * @since 1.0.0
+ * @category tracing
+ */
+export const withSpan: {
+  (
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+} = channel.withSpan
 
 /**
  * Writes a single value to the channel.

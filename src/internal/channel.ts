@@ -16,6 +16,7 @@ import * as Layer from "@effect/io/Layer"
 import * as Queue from "@effect/io/Queue"
 import * as Ref from "@effect/io/Ref"
 import * as Scope from "@effect/io/Scope"
+import type * as Tracer from "@effect/io/Tracer"
 import type * as Channel from "@effect/stream/Channel"
 import type * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import type * as MergeState from "@effect/stream/Channel/MergeState"
@@ -2311,6 +2312,33 @@ export const updateService = dual<
       context,
       Context.make(tag, f(Context.unsafeGet(context, tag)))
     )))
+
+/** @internal */
+export const withSpan = dual<
+  (
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ) => <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ) => Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+>(3, (self, name, options) => unwrapScoped(Effect.as(Effect.withSpanScoped(name, options), self)))
 
 /** @internal */
 export const writeAll = <OutElem>(

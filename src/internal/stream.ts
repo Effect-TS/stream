@@ -22,6 +22,7 @@ import * as Ref from "@effect/io/Ref"
 import * as Runtime from "@effect/io/Runtime"
 import * as Schedule from "@effect/io/Schedule"
 import * as Scope from "@effect/io/Scope"
+import type * as Tracer from "@effect/io/Tracer"
 import type * as Channel from "@effect/stream/Channel"
 import * as MergeDecision from "@effect/stream/Channel/MergeDecision"
 import * as channel from "@effect/stream/internal/channel"
@@ -6841,6 +6842,31 @@ export const whenEffect = dual<
     effect: Effect.Effect<R2, E2, boolean>
   ): Stream.Stream<R | R2, E | E2, A> => pipe(fromEffect(effect), flatMap((bool) => bool ? self : empty))
 )
+
+/** @internal */
+export const withSpan = dual<
+  (
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(
+    self: Stream.Stream<R, E, A>,
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ) => Stream.Stream<R, E, A>
+>(3, (self, name, options) => unwrapScoped(Effect.as(Effect.withSpanScoped(name, options), self)))
 
 /** @internal */
 export const zip = dual<

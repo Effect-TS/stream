@@ -1,8 +1,10 @@
 import * as Context from "@effect/data/Context"
 import { pipe } from "@effect/data/Function"
+import * as ReadonlyArray from "@effect/data/ReadonlyArray"
 import * as Effect from "@effect/io/Effect"
 import * as Exit from "@effect/io/Exit"
 import * as Layer from "@effect/io/Layer"
+import type * as Tracer from "@effect/io/Tracer"
 import * as Stream from "@effect/stream/Stream"
 import * as it from "@effect/stream/test/utils/extend"
 import { assert, describe } from "vitest"
@@ -188,5 +190,29 @@ describe.concurrent("Stream", () => {
       )
       yield* $(Stream.runDrain(stream))
       assert.deepStrictEqual(messages, ["test1", "test1", "test2", "test2"])
+    }))
+
+  it.effect("withSpan", () =>
+    Effect.gen(function*(_) {
+      const spans = yield* _(
+        Stream.make(1, 2, 3),
+        Stream.mapEffect((i) =>
+          Effect.withSpan(
+            Effect.currentSpan,
+            `span.${i}`
+          )
+        ),
+        Stream.withSpan("span"),
+        Stream.runCollect,
+        Effect.map(ReadonlyArray.compact)
+      )
+      expect(spans.length).toEqual(3)
+      expect(pipe(
+        ReadonlyArray.map(spans, (s) => s.parent),
+        ReadonlyArray.compact,
+        ReadonlyArray.filter((s): s is Tracer.Span => s._tag === "Span"),
+        ReadonlyArray.map((s) => s.name)
+      )).toEqual(["span", "span", "span"])
+      expect(ReadonlyArray.map(spans, (s) => s.name)).toEqual(["span.1", "span.2", "span.3"])
     }))
 })
