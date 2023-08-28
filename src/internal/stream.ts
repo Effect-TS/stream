@@ -8045,3 +8045,24 @@ export const channelToStream = <Env, OutErr, OutElem, OutDone>(
 ): Stream.Stream<Env, OutErr, OutElem> => {
   return new StreamImpl(self)
 }
+
+// =============================================================================
+// encoding
+// =============================================================================
+
+/** @internal */
+export const decodeText = dual<
+  (encoding?: string) => <R, E>(self: Stream.Stream<R, E, Uint8Array>) => Stream.Stream<R, E, string>,
+  <R, E>(self: Stream.Stream<R, E, Uint8Array>, encoding?: string) => Stream.Stream<R, E, string>
+>((args) => isStream(args[0]), (self, encoding = "utf-8") =>
+  suspend(() => {
+    const decoder = new TextDecoder(encoding)
+    return map(self, (s) => decoder.decode(s))
+  }))
+
+/** @internal */
+export const encodeText = <R, E>(self: Stream.Stream<R, E, string>): Stream.Stream<R, E, Uint8Array> =>
+  suspend(() => {
+    const encoder = new TextEncoder()
+    return map(self, (s) => encoder.encode(s))
+  })
