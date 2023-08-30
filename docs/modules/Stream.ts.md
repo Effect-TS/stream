@@ -195,9 +195,15 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [StreamTypeId](#streamtypeid)
   - [StreamTypeId (type alias)](#streamtypeid-type-alias)
+- [tracing](#tracing)
+  - [withSpan](#withspan)
 - [type lambdas](#type-lambdas)
   - [StreamTypeLambda (interface)](#streamtypelambda-interface)
 - [utils](#utils)
+  - [Stream (namespace)](#stream-namespace)
+    - [Variance (interface)](#variance-interface)
+    - [DynamicTuple (type alias)](#dynamictuple-type-alias)
+    - [DynamicTupleOf (type alias)](#dynamictupleof-type-alias)
   - [aggregate](#aggregate)
   - [aggregateWithin](#aggregatewithin)
   - [aggregateWithinEither](#aggregatewithineither)
@@ -787,7 +793,7 @@ See `Stream.toPull` for reference.
 ```ts
 export declare const fromPull: <R, R2, E, A>(
   effect: Effect.Effect<Scope.Scope | R, never, Effect.Effect<R2, Option.Option<E>, Chunk.Chunk<A>>>
-) => Stream<R | R2, E, A>
+) => Stream<R2 | Exclude<R, Scope.Scope>, E, A>
 ```
 
 Added in v1.0.0
@@ -3200,6 +3206,42 @@ export type StreamTypeId = typeof StreamTypeId
 
 Added in v1.0.0
 
+# tracing
+
+## withSpan
+
+Wraps the stream with a new span for tracing.
+
+**Signature**
+
+```ts
+export declare const withSpan: {
+  (
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(
+    self: Stream<R, E, A>,
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): Stream<R, E, A>
+}
+```
+
+Added in v1.0.0
+
 # type lambdas
 
 ## StreamTypeLambda (interface)
@@ -3215,6 +3257,52 @@ export interface StreamTypeLambda extends TypeLambda {
 Added in v1.0.0
 
 # utils
+
+## Stream (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<R, E, A> {
+  readonly [StreamTypeId]: {
+    _R: (_: never) => R
+    _E: (_: never) => E
+    _A: (_: never) => A
+  }
+}
+```
+
+Added in v1.0.0
+
+### DynamicTuple (type alias)
+
+**Signature**
+
+```ts
+export type DynamicTuple<T, N extends number> = N extends N
+  ? number extends N
+    ? Array<T>
+    : DynamicTupleOf<T, N, []>
+  : never
+```
+
+Added in v1.0.0
+
+### DynamicTupleOf (type alias)
+
+**Signature**
+
+```ts
+export type DynamicTupleOf<T, N extends number, R extends Array<unknown>> = R['length'] extends N
+  ? R
+  : DynamicTupleOf<T, N, [T, ...R]>
+```
+
+Added in v1.0.0
 
 ## aggregate
 

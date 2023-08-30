@@ -99,7 +99,11 @@ Added in v1.0.0
   - [ChannelExceptionTypeId (type alias)](#channelexceptiontypeid-type-alias)
   - [ChannelTypeId](#channeltypeid)
   - [ChannelTypeId (type alias)](#channeltypeid-type-alias)
+- [tracing](#tracing)
+  - [withSpan](#withspan)
 - [utils](#utils)
+  - [Channel (namespace)](#channel-namespace)
+    - [Variance (interface)](#variance-interface)
   - [collect](#collect)
   - [concatMap](#concatmap)
   - [concatMapWith](#concatmapwith)
@@ -1623,7 +1627,69 @@ export type ChannelTypeId = typeof ChannelTypeId
 
 Added in v1.0.0
 
+# tracing
+
+## withSpan
+
+Wraps the channel with a new span for tracing.
+
+**Signature**
+
+```ts
+export declare const withSpan: {
+  (
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    name: string,
+    options?: {
+      readonly attributes?: Record<string, Tracer.AttributeValue>
+      readonly links?: ReadonlyArray<Tracer.SpanLink>
+      readonly parent?: Tracer.ParentSpan
+      readonly root?: boolean
+      readonly context?: Context.Context<never>
+    }
+  ): Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
 # utils
+
+## Channel (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone> {
+  readonly [ChannelTypeId]: {
+    _Env: (_: never) => Env
+    _InErr: (_: InErr) => void
+    _InElem: (_: InElem) => void
+    _InDone: (_: InDone) => void
+    _OutErr: (_: never) => OutErr
+    _OutElem: (_: never) => OutElem
+    _OutDone: (_: never) => OutDone
+  }
+}
+```
+
+Added in v1.0.0
 
 ## collect
 

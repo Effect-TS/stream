@@ -41,6 +41,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [TakeTypeId](#taketypeid)
   - [TakeTypeId (type alias)](#taketypeid-type-alias)
+- [utils](#utils)
+  - [Take (namespace)](#take-namespace)
+    - [Variance (interface)](#variance-interface)
 
 ---
 
@@ -369,6 +372,27 @@ Added in v1.0.0
 
 ```ts
 export type TakeTypeId = typeof TakeTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## Take (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<E, A> {
+  readonly [TakeTypeId]: {
+    readonly _E: (_: never) => E
+    readonly _A: (_: never) => A
+  }
+}
 ```
 
 Added in v1.0.0

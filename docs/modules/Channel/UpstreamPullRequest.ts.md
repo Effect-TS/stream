@@ -28,6 +28,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [UpstreamPullRequestTypeId](#upstreampullrequesttypeid)
   - [UpstreamPullRequestTypeId (type alias)](#upstreampullrequesttypeid-type-alias)
+- [utils](#utils)
+  - [UpstreamPullRequest (namespace)](#upstreampullrequest-namespace)
+    - [Variance (interface)](#variance-interface)
 
 ---
 
@@ -173,6 +176,26 @@ Added in v1.0.0
 
 ```ts
 export type UpstreamPullRequestTypeId = typeof UpstreamPullRequestTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## UpstreamPullRequest (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<A> {
+  readonly [UpstreamPullRequestTypeId]: {
+    readonly _A: (_: never) => A
+  }
+}
 ```
 
 Added in v1.0.0

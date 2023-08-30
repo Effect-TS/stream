@@ -31,6 +31,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [ChildExecutorDecisionTypeId](#childexecutordecisiontypeid)
   - [ChildExecutorDecisionTypeId (type alias)](#childexecutordecisiontypeid-type-alias)
+- [utils](#utils)
+  - [ChildExecutorDecision (namespace)](#childexecutordecision-namespace)
+    - [Proto (interface)](#proto-interface)
 
 ---
 
@@ -217,6 +220,24 @@ Added in v1.0.0
 
 ```ts
 export type ChildExecutorDecisionTypeId = typeof ChildExecutorDecisionTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## ChildExecutorDecision (namespace)
+
+Added in v1.0.0
+
+### Proto (interface)
+
+**Signature**
+
+```ts
+export interface Proto {
+  readonly [ChildExecutorDecisionTypeId]: ChildExecutorDecisionTypeId
+}
 ```
 
 Added in v1.0.0

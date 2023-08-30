@@ -28,6 +28,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [MergeStrategyTypeId](#mergestrategytypeid)
   - [MergeStrategyTypeId (type alias)](#mergestrategytypeid-type-alias)
+- [utils](#utils)
+  - [MergeStrategy (namespace)](#mergestrategy-namespace)
+    - [Proto (interface)](#proto-interface)
 
 ---
 
@@ -165,6 +168,24 @@ Added in v1.0.0
 
 ```ts
 export type MergeStrategyTypeId = typeof MergeStrategyTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## MergeStrategy (namespace)
+
+Added in v1.0.0
+
+### Proto (interface)
+
+**Signature**
+
+```ts
+export interface Proto {
+  readonly [MergeStrategyTypeId]: MergeStrategyTypeId
+}
 ```
 
 Added in v1.0.0
