@@ -120,6 +120,8 @@ Added in v1.0.0
   - [SinkTypeId](#sinktypeid)
   - [SinkTypeId (type alias)](#sinktypeid-type-alias)
 - [utils](#utils)
+  - [Sink (namespace)](#sink-namespace)
+    - [Variance (interface)](#variance-interface)
   - [collectAllFrom](#collectallfrom)
   - [collectAllWhileWith](#collectallwhilewith)
   - [collectLeftover](#collectleftover)
@@ -1666,6 +1668,28 @@ export type SinkTypeId = typeof SinkTypeId
 Added in v1.0.0
 
 # utils
+
+## Sink (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<R, E, In, L, Z> {
+  readonly [SinkTypeId]: {
+    _R: (_: never) => R
+    _E: (_: never) => E
+    _In: (_: In) => void
+    _L: (_: never) => L
+    _Z: (_: never) => Z
+  }
+}
+```
+
+Added in v1.0.0
 
 ## collectAllFrom
 

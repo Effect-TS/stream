@@ -28,6 +28,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [UpstreamPullStrategyTypeId](#upstreampullstrategytypeid)
   - [UpstreamPullStrategyTypeId (type alias)](#upstreampullstrategytypeid-type-alias)
+- [utils](#utils)
+  - [UpstreamPullStrategy (namespace)](#upstreampullstrategy-namespace)
+    - [Variance (interface)](#variance-interface)
 
 ---
 
@@ -176,6 +179,26 @@ Added in v1.0.0
 
 ```ts
 export type UpstreamPullStrategyTypeId = typeof UpstreamPullStrategyTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## UpstreamPullStrategy (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<A> {
+  readonly [UpstreamPullStrategyTypeId]: {
+    readonly _A: (_: never) => A
+  }
+}
 ```
 
 Added in v1.0.0

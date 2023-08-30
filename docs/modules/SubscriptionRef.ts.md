@@ -22,6 +22,8 @@ Added in v1.0.0
   - [SubscriptionRefTypeId](#subscriptionreftypeid)
   - [SubscriptionRefTypeId (type alias)](#subscriptionreftypeid-type-alias)
 - [utils](#utils)
+  - [SubscriptionRef (namespace)](#subscriptionref-namespace)
+    - [Variance (interface)](#variance-interface)
   - [getAndSet](#getandset)
   - [getAndUpdate](#getandupdate)
   - [getAndUpdateEffect](#getandupdateeffect)
@@ -120,6 +122,24 @@ export type SubscriptionRefTypeId = typeof SubscriptionRefTypeId
 Added in v1.0.0
 
 # utils
+
+## SubscriptionRef (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<A> {
+  readonly [SubscriptionRefTypeId]: {
+    readonly _A: (_: never) => A
+  }
+}
+```
+
+Added in v1.0.0
 
 ## getAndSet
 

@@ -23,6 +23,8 @@ Added in v1.0.0
   - [GroupByTypeId](#groupbytypeid)
   - [GroupByTypeId (type alias)](#groupbytypeid-type-alias)
 - [utils](#utils)
+  - [GroupBy (namespace)](#groupby-namespace)
+    - [Variance (interface)](#variance-interface)
   - [filter](#filter)
   - [first](#first)
 
@@ -130,6 +132,27 @@ export type GroupByTypeId = typeof GroupByTypeId
 Added in v1.0.0
 
 # utils
+
+## GroupBy (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<R, E, K, V> {
+  readonly [GroupByTypeId]: {
+    readonly _R: (_: never) => R
+    readonly _E: (_: never) => E
+    readonly _K: (_: never) => K
+    readonly _V: (_: never) => V
+  }
+}
+```
+
+Added in v1.0.0
 
 ## filter
 

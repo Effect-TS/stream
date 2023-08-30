@@ -25,6 +25,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [MergeDecisionTypeId](#mergedecisiontypeid)
   - [MergeDecisionTypeId (type alias)](#mergedecisiontypeid-type-alias)
+- [utils](#utils)
+  - [MergeDecision (namespace)](#mergedecision-namespace)
+    - [Variance (interface)](#variance-interface)
 
 ---
 
@@ -131,6 +134,30 @@ Added in v1.0.0
 
 ```ts
 export type MergeDecisionTypeId = typeof MergeDecisionTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## MergeDecision (namespace)
+
+Added in v1.0.0
+
+### Variance (interface)
+
+**Signature**
+
+```ts
+export interface Variance<R, E0, Z0, E, Z> {
+  readonly [MergeDecisionTypeId]: {
+    _R: (_: never) => R
+    _E0: (_: E0) => void
+    _Z0: (_: Z0) => void
+    _E: (_: never) => E
+    _Z: (_: never) => Z
+  }
+}
 ```
 
 Added in v1.0.0

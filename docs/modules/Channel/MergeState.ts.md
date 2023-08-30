@@ -31,6 +31,9 @@ Added in v1.0.0
 - [symbols](#symbols)
   - [MergeStateTypeId](#mergestatetypeid)
   - [MergeStateTypeId (type alias)](#mergestatetypeid-type-alias)
+- [utils](#utils)
+  - [MergeState (namespace)](#mergestate-namespace)
+    - [Proto (interface)](#proto-interface)
 
 ---
 
@@ -239,6 +242,24 @@ Added in v1.0.0
 
 ```ts
 export type MergeStateTypeId = typeof MergeStateTypeId
+```
+
+Added in v1.0.0
+
+# utils
+
+## MergeState (namespace)
+
+Added in v1.0.0
+
+### Proto (interface)
+
+**Signature**
+
+```ts
+export interface Proto {
+  readonly [MergeStateTypeId]: MergeStateTypeId
+}
 ```
 
 Added in v1.0.0
