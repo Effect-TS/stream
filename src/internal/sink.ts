@@ -377,7 +377,7 @@ export const contramapEffect = dual<
       self,
       (chunk) =>
         Effect.map(
-          Effect.forEach(chunk, f),
+          Effect.forEach(chunk, (v) => f(v)),
           Chunk.unsafeFromArray
         )
     )
@@ -1375,7 +1375,7 @@ export const flatMap = dual<
 export const forEach = <In, R, E, _>(f: (input: In) => Effect.Effect<R, E, _>): Sink.Sink<R, E, In, never, void> => {
   const process: Channel.Channel<R, E, Chunk.Chunk<In>, unknown, E, never, void> = core.readWithCause({
     onInput: (input: Chunk.Chunk<In>) =>
-      pipe(core.fromEffect(Effect.forEach(input, f, { discard: true })), core.flatMap(() => process)),
+      pipe(core.fromEffect(Effect.forEach(input, (v) => f(v), { discard: true })), core.flatMap(() => process)),
     onFailure: core.failCause,
     onDone: () => core.unit
   })
