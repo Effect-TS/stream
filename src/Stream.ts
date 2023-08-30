@@ -1435,6 +1435,7 @@ export const fromChunk: <A>(chunk: Chunk.Chunk<A>) => Stream<never, never, A> = 
 /**
  * Creates a stream from a subscription to a `Hub`.
  *
+ * @param shutdown If `true`, the hub will be shutdown after the stream is evaluated (defaults to `false`)
  * @since 1.0.0
  * @category constructors
  */
@@ -1452,6 +1453,7 @@ export const fromChunkHub: {
 /**
  * Creates a stream from a `Queue` of values.
  *
+ * @param shutdown If `true`, the queue will be shutdown after the stream is evaluated (defaults to `false`)
  * @since 1.0.0
  * @category constructors
  */
@@ -1490,6 +1492,7 @@ export const fromEffectOption: <R, E, A>(effect: Effect.Effect<R, Option.Option<
 /**
  * Creates a stream from a subscription to a `Hub`.
  *
+ * @param shutdown If `true`, the hub will be shutdown after the stream is evaluated (defaults to `false`)
  * @since 1.0.0
  * @category constructors
  */
@@ -1546,6 +1549,7 @@ export const fromPull: <R, R2, E, A>(
  * Creates a stream from a queue of values
  *
  * @param maxChunkSize The maximum number of queued elements to put in one chunk in the stream
+ * @param shutdown If `true`, the queue will be shutdown after the stream is evaluated (defaults to `false`)
  * @since 1.0.0
  * @category constructors
  */
