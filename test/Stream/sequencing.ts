@@ -40,7 +40,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         Stream.fromChunk(Chunk.range(1, 5)),
-        Stream.branchAfter(6, Stream.prepend),
+        Stream.branchAfter(6, (chunk) => Stream.prepend(Stream.identity<never, never, number>(), chunk)),
         Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5])
@@ -51,7 +51,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         Stream.fromIterable(Chunk.range(1, 5)),
         Stream.rechunk(2),
-        Stream.branchAfter(1, Stream.prepend),
+        Stream.branchAfter(1, (chunk) => Stream.prepend(Stream.identity<never, never, number>(), chunk)),
         Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4, 5])

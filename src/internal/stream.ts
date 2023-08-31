@@ -656,7 +656,7 @@ export const branchAfter = dual<
     f: (input: Chunk.Chunk<A>) => Stream.Stream<R2, E2, A2>
   ) =>
     suspend(() => {
-      const bufferring = (
+      const buffering = (
         acc: Chunk.Chunk<A>
       ): Channel.Channel<R | R2, never, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown> =>
         core.readWith({
@@ -666,7 +666,7 @@ export const branchAfter = dual<
               const [b1, b2] = pipe(input, Chunk.splitAt(n - acc.length))
               return running(pipe(acc, Chunk.appendAll(b1)), b2)
             }
-            return bufferring(pipe(acc, Chunk.appendAll(input)))
+            return buffering(pipe(acc, Chunk.appendAll(input)))
           },
           onFailure: core.fail,
           onDone: () => running(acc, Chunk.empty())
@@ -675,12 +675,14 @@ export const branchAfter = dual<
         prefix: Chunk.Chunk<A>,
         leftover: Chunk.Chunk<A>
       ): Channel.Channel<R | R2, never, Chunk.Chunk<A>, unknown, E2, Chunk.Chunk<A2>, unknown> =>
-        pipe(
-          prepend(leftover),
-          toChannel,
-          core.pipeTo(toChannel(f(prefix)))
+        core.pipeTo(
+          channel.zipRight(
+            core.write(leftover),
+            channel.identityChannel()
+          ),
+          toChannel(f(prefix))
         )
-      return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(bufferring(Chunk.empty<A>()))))
+      return new StreamImpl(pipe(toChannel(self), channel.pipeToOrFail(buffering(Chunk.empty<A>()))))
     })
 )
 
@@ -4494,11 +4496,14 @@ export const pipeThroughChannelOrFail = dual<
 )
 
 /** @internal */
-export const prepend = <A>(values: Chunk.Chunk<A>): Stream.Stream<never, never, A> =>
-  new StreamImpl(pipe(
-    core.write(values),
+export const prepend = dual<
+  <B>(values: Chunk.Chunk<B>) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A | B>,
+  <R, E, A, B>(self: Stream.Stream<R, E, A>, values: Chunk.Chunk<B>) => Stream.Stream<R, E, A | B>
+>(2, (self, values) =>
+  new StreamImpl(
     channel.zipRight(
-      channel.identityChannel() as Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<A>, unknown>
+      core.write(values as Chunk.Chunk<any>),
+      toChannel(self)
     )
   ))
 

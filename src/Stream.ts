@@ -2514,7 +2514,10 @@ export const pipeThroughChannelOrFail: {
  * @since 1.0.0
  * @category utils
  */
-export const prepend: <A>(values: Chunk.Chunk<A>) => Stream<never, never, A> = internal.prepend
+export const prepend: {
+  <B>(values: Chunk.Chunk<B>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, B | A>
+  <R, E, A, B>(self: Stream<R, E, A>, values: Chunk.Chunk<B>): Stream<R, E, A | B>
+} = internal.prepend
 
 /**
  * Provides the stream with its required context, which eliminates its

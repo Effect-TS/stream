@@ -4765,7 +4765,10 @@ Emits the provided chunk before emitting any other value.
 **Signature**
 
 ```ts
-export declare const prepend: <A>(values: Chunk.Chunk<A>) => Stream<never, never, A>
+export declare const prepend: {
+  <B>(values: Chunk.Chunk<B>): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, B | A>
+  <R, E, A, B>(self: Stream<R, E, A>, values: Chunk.Chunk<B>): Stream<R, E, A | B>
+}
 ```
 
 Added in v1.0.0
