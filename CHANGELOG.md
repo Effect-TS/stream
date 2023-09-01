@@ -1,5 +1,27 @@
 # @effect/stream
 
+## 0.35.0
+
+### Minor Changes
+
+- [#167](https://github.com/Effect-TS/stream/pull/167) [`2293e38`](https://github.com/Effect-TS/stream/commit/2293e3839259acb7af294539b1919fdc8cba8a70) Thanks [@tim-smart](https://github.com/tim-smart)! - make Stream.prepend a pipeline operator
+
+- [#156](https://github.com/Effect-TS/stream/pull/156) [`b61ab02`](https://github.com/Effect-TS/stream/commit/b61ab027e1f43b7d5139169328a1011f8a89be41) Thanks [@fubhy](https://github.com/fubhy)! - Aligned `Stream.mapBoth` signature with `Effect.mapBoth`
+
+- [#168](https://github.com/Effect-TS/stream/pull/168) [`b5f64a0`](https://github.com/Effect-TS/stream/commit/b5f64a0da188b397a486e393c18cf2ca9adaddc8) Thanks [@tim-smart](https://github.com/tim-smart)! - update dependencies
+
+### Patch Changes
+
+- [#163](https://github.com/Effect-TS/stream/pull/163) [`3a52300`](https://github.com/Effect-TS/stream/commit/3a523002ede46ea13d0662d9a341148e461ee0c0) Thanks [@TylorS](https://github.com/TylorS)! - Fix return-type signature of fromPull
+
+- [#160](https://github.com/Effect-TS/stream/pull/160) [`5f713c3`](https://github.com/Effect-TS/stream/commit/5f713c3199a6f3829334c85fe01915e6307c9a56) Thanks [@tim-smart](https://github.com/tim-smart)! - add Emit to asyncScoped signature
+
+- [#162](https://github.com/Effect-TS/stream/pull/162) [`307a35e`](https://github.com/Effect-TS/stream/commit/307a35e90377ca7dd157f79be847a97da98ac6e1) Thanks [@tim-smart](https://github.com/tim-smart)! - add decodeText & encodeText
+
+- [#157](https://github.com/Effect-TS/stream/pull/157) [`49a7d23`](https://github.com/Effect-TS/stream/commit/49a7d237f7dfe4c715b167a09b11b918a479e8bb) Thanks [@fubhy](https://github.com/fubhy)! - Added `tapBoth`
+
+- [#161](https://github.com/Effect-TS/stream/pull/161) [`39248bd`](https://github.com/Effect-TS/stream/commit/39248bd03d28934559419feda8139e53e030fd54) Thanks [@tim-smart](https://github.com/tim-smart)! - add Channel/Stream.withSpan
+
 ## 0.34.0
 
 ### Minor Changes
