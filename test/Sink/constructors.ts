@@ -91,7 +91,7 @@ class QueueSpy<A> implements Queue.Queue<A> {
   readonly [Queue.DequeueTypeId] = internalQueue.dequeueVariance
   readonly [Queue.EnqueueTypeId] = internalQueue.enqueueVariance
   private isShutdownInternal = false
-  readonly queue: MutableQueue.MutableQueue<A>
+  readonly queue: Queue.BackingQueue<A>
   readonly shutdownFlag: MutableRef.MutableRef<boolean>
   readonly shutdownHook: Deferred.Deferred<never, void>
   readonly strategy: Queue.Strategy<A>
@@ -127,6 +127,10 @@ class QueueSpy<A> implements Queue.Queue<A> {
 
   size(): Effect.Effect<never, never, number> {
     return Queue.size(this.backingQueue)
+  }
+
+  unsafeSize(): Option.Option<number> {
+    return this.backingQueue.unsafeSize()
   }
 
   awaitShutdown(): Effect.Effect<never, never, void> {

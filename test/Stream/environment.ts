@@ -42,7 +42,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runHead,
-        Effect.some
+        Effect.flatten
       )
       assert.deepStrictEqual(result, { string: "test" })
     }))
@@ -60,7 +60,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runHead,
-        Effect.some
+        Effect.flatten
       )
       assert.deepStrictEqual(result, { string: "test" })
     }))
@@ -94,7 +94,7 @@ describe.concurrent("Stream", () => {
           )
         ),
         Stream.runHead,
-        Effect.some
+        Effect.flatten
       )
       assert.deepStrictEqual(result, { string: "test" })
     }))

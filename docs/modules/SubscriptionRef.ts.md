@@ -82,7 +82,7 @@ receive the current value as well as all changes to the value.
 **Signature**
 
 ```ts
-export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.Synchronized<A>, Pipeable {
+export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.SynchronizedRef<A>, Pipeable {
   /** @internal */
   readonly ref: Ref.Ref<A>
   /** @internal */
@@ -173,8 +173,8 @@ Added in v1.0.0
 
 ```ts
 export declare const getAndUpdateEffect: {
-  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, A>
-  <A, R, E>(self: Synchronized.Synchronized<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
+  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
+  <A, R, E>(self: SubscriptionRef<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
 }
 ```
 
@@ -199,14 +199,8 @@ Added in v1.0.0
 
 ```ts
 export declare const getAndUpdateSomeEffect: {
-  <A, R, E>(pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): (
-    self: Synchronized.Synchronized<A>
-  ) => Effect.Effect<R, E, A>
-  <A, R, E>(self: Synchronized.Synchronized<A>, pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): Effect.Effect<
-    R,
-    E,
-    A
-  >
+  <A, R, E>(pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
+  <A, R, E>(self: SubscriptionRef<A>, pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): Effect.Effect<R, E, A>
 }
 ```
 
@@ -264,10 +258,10 @@ Added in v1.0.0
 ```ts
 export declare const modifySomeEffect: {
   <A, B, R, E>(fallback: B, pf: (a: A) => Option.Option<Effect.Effect<R, E, readonly [B, A]>>): (
-    self: Synchronized.Synchronized<A>
+    self: SubscriptionRef<A>
   ) => Effect.Effect<R, E, B>
   <A, B, R, E>(
-    self: Synchronized.Synchronized<A>,
+    self: SubscriptionRef<A>,
     fallback: B,
     pf: (a: A) => Option.Option<Effect.Effect<R, E, readonly [B, A]>>
   ): Effect.Effect<R, E, B>
@@ -334,8 +328,8 @@ Added in v1.0.0
 
 ```ts
 export declare const updateAndGetEffect: {
-  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, A>
-  <A, R, E>(self: Synchronized.Synchronized<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
+  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
+  <A, R, E>(self: SubscriptionRef<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
 }
 ```
 
@@ -347,8 +341,8 @@ Added in v1.0.0
 
 ```ts
 export declare const updateEffect: {
-  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, void>
-  <A, R, E>(self: Synchronized.Synchronized<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, void>
+  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, void>
+  <A, R, E>(self: SubscriptionRef<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, void>
 }
 ```
 
@@ -386,14 +380,8 @@ Added in v1.0.0
 
 ```ts
 export declare const updateSomeAndGetEffect: {
-  <A, R, E>(pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): (
-    self: Synchronized.Synchronized<A>
-  ) => Effect.Effect<R, E, A>
-  <A, R, E>(self: Synchronized.Synchronized<A>, pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): Effect.Effect<
-    R,
-    E,
-    A
-  >
+  <A, R, E>(pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
+  <A, R, E>(self: SubscriptionRef<A>, pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): Effect.Effect<R, E, A>
 }
 ```
 
@@ -408,11 +396,7 @@ export declare const updateSomeEffect: {
   <A, R, E>(pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): (
     self: SubscriptionRef<A>
   ) => Effect.Effect<R, E, void>
-  <A, R, E>(self: Synchronized.Synchronized<A>, pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): Effect.Effect<
-    R,
-    E,
-    void
-  >
+  <A, R, E>(self: SubscriptionRef<A>, pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>): Effect.Effect<R, E, void>
 }
 ```
 
