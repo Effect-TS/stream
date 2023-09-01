@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.35.1
+
+### Patch Changes
+
+- [#169](https://github.com/Effect-TS/stream/pull/169) [`50d45dd`](https://github.com/Effect-TS/stream/commit/50d45dda481d2f30b1d967b4ebc21ceb3f6e8d98) Thanks [@tim-smart](https://github.com/tim-smart)! - bump peer deps
+
 ## 0.35.0
 
 ### Minor Changes
