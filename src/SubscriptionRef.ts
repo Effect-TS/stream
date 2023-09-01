@@ -6,7 +6,7 @@ import type { Pipeable } from "@effect/data/Pipeable"
 import type * as Effect from "@effect/io/Effect"
 import type * as Hub from "@effect/io/Hub"
 import * as Ref from "@effect/io/Ref"
-import * as Synchronized from "@effect/io/Ref/Synchronized"
+import * as Synchronized from "@effect/io/SynchronizedRef"
 import * as internal from "@effect/stream/internal/subscriptionRef"
 import type * as Stream from "@effect/stream/Stream"
 
@@ -29,7 +29,7 @@ export type SubscriptionRefTypeId = typeof SubscriptionRefTypeId
  * @since 1.0.0
  * @category models
  */
-export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.Synchronized<A>, Pipeable {
+export interface SubscriptionRef<A> extends SubscriptionRef.Variance<A>, Synchronized.SynchronizedRef<A>, Pipeable {
   /** @internal */
   readonly ref: Ref.Ref<A>
   /** @internal */
@@ -87,8 +87,8 @@ export const getAndUpdate: {
  * @category utils
  */
 export const getAndUpdateEffect: {
-  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, A>
-  <A, R, E>(self: Synchronized.Synchronized<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
+  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
+  <A, R, E>(self: SubscriptionRef<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
 } = Synchronized.getAndUpdateEffect
 
 /**
@@ -107,9 +107,9 @@ export const getAndUpdateSome: {
 export const getAndUpdateSomeEffect: {
   <A, R, E>(
     pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
-  ): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, A>
+  ): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
   <A, R, E>(
-    self: Synchronized.Synchronized<A>,
+    self: SubscriptionRef<A>,
     pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
   ): Effect.Effect<R, E, A>
 } = Synchronized.getAndUpdateSomeEffect
@@ -164,9 +164,9 @@ export const modifySomeEffect: {
   <A, B, R, E>(
     fallback: B,
     pf: (a: A) => Option.Option<Effect.Effect<R, E, readonly [B, A]>>
-  ): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, B>
+  ): (self: SubscriptionRef<A>) => Effect.Effect<R, E, B>
   <A, B, R, E>(
-    self: Synchronized.Synchronized<A>,
+    self: SubscriptionRef<A>,
     fallback: B,
     pf: (a: A) => Option.Option<Effect.Effect<R, E, readonly [B, A]>>
   ): Effect.Effect<R, E, B>
@@ -204,8 +204,8 @@ export const update: {
  * @category utils
  */
 export const updateEffect: {
-  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, void>
-  <A, R, E>(self: Synchronized.Synchronized<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, void>
+  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, void>
+  <A, R, E>(self: SubscriptionRef<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, void>
 } = Synchronized.updateEffect
 
 /**
@@ -222,8 +222,8 @@ export const updateAndGet: {
  * @category utils
  */
 export const updateAndGetEffect: {
-  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, A>
-  <A, R, E>(self: Synchronized.Synchronized<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
+  <A, R, E>(f: (a: A) => Effect.Effect<R, E, A>): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
+  <A, R, E>(self: SubscriptionRef<A>, f: (a: A) => Effect.Effect<R, E, A>): Effect.Effect<R, E, A>
 } = Synchronized.updateAndGetEffect
 
 /**
@@ -244,7 +244,7 @@ export const updateSomeEffect: {
     pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
   ): (self: SubscriptionRef<A>) => Effect.Effect<R, E, void>
   <A, R, E>(
-    self: Synchronized.Synchronized<A>,
+    self: SubscriptionRef<A>,
     pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
   ): Effect.Effect<R, E, void>
 } = Synchronized.updateSomeEffect
@@ -265,9 +265,9 @@ export const updateSomeAndGet: {
 export const updateSomeAndGetEffect: {
   <A, R, E>(
     pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
-  ): (self: Synchronized.Synchronized<A>) => Effect.Effect<R, E, A>
+  ): (self: SubscriptionRef<A>) => Effect.Effect<R, E, A>
   <A, R, E>(
-    self: Synchronized.Synchronized<A>,
+    self: SubscriptionRef<A>,
     pf: (a: A) => Option.Option<Effect.Effect<R, E, A>>
   ): Effect.Effect<R, E, A>
 } = Synchronized.updateSomeAndGetEffect

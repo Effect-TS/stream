@@ -5,7 +5,7 @@ import * as Hub from "@effect/io/Hub"
 import * as _circular from "@effect/io/internal/effect/circular"
 import * as _ref from "@effect/io/internal/ref"
 import * as Ref from "@effect/io/Ref"
-import * as Synchronized from "@effect/io/Ref/Synchronized"
+import * as Synchronized from "@effect/io/SynchronizedRef"
 import * as stream from "@effect/stream/internal/stream"
 import type { Stream } from "@effect/stream/Stream"
 import type * as SubscriptionRef from "@effect/stream/SubscriptionRef"
@@ -28,7 +28,7 @@ class SubscriptionRefImpl<A> implements SubscriptionRef.SubscriptionRef<A> {
   // @ts-ignore
   readonly [Ref.RefTypeId] = _ref.refVariance
   // @ts-ignore
-  readonly [Synchronized.SynchronizedTypeId] = _circular.synchronizedVariance
+  readonly [Synchronized.SynchronizedRefTypeId] = _circular.synchronizedVariance
   readonly [SubscriptionRefTypeId] = subscriptionRefVariance
   constructor(
     readonly ref: Ref.Ref<A>,

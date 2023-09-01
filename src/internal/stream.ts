@@ -1294,6 +1294,12 @@ export const chunksWith = dual<
   ): Stream.Stream<R | R2, E | E2, A2> => flattenChunks(f(chunks(self)))
 )
 
+const unsome = <R, E, A>(effect: Effect.Effect<R, Option.Option<E>, A>): Effect.Effect<R, E, Option.Option<A>> =>
+  Effect.catchAll(
+    Effect.asSome(effect),
+    (o) => o._tag === "None" ? Effect.succeedNone : Effect.fail(o.value)
+  )
+
 /** @internal */
 export const combine = dual<
   <R2, E2, A2, S, R3, E, A, R4, R5, A3>(
@@ -1392,12 +1398,7 @@ export const combine = dual<
           // TODO: remove
           Effect.zipRight(pipe(Handoff.take(right), Effect.flatMap((exit) => Effect.suspend(() => exit))))
         )
-        return toChannel(unfoldEffect(s, (s) =>
-          pipe(
-            f(s, pullLeft, pullRight),
-            // TODO: remove
-            Effect.flatMap((exit) => Effect.unsome(Effect.suspend(() => exit)))
-          )))
+        return toChannel(unfoldEffect(s, (s) => Effect.flatMap(f(s, pullLeft, pullRight), unsome)))
       })
     )
   )
@@ -1505,12 +1506,7 @@ export const combineChunks = dual<
             )
           )
         )
-        return toChannel(unfoldChunkEffect(s, (s) =>
-          pipe(
-            f(s, pullLeft, pullRight),
-            // TODO: remove
-            Effect.flatMap((exit) => Effect.unsome(Effect.suspend(() => exit)))
-          )))
+        return toChannel(unfoldChunkEffect(s, (s) => Effect.flatMap(f(s, pullLeft, pullRight), unsome)))
       }),
       channel.unwrapScoped
     )
@@ -7186,8 +7182,8 @@ export const zipAllSortedByKeyWith = dual<
         }
         case ZipAllState.OP_PULL_BOTH: {
           return pipe(
-            Effect.unsome(pullLeft),
-            Effect.zip(Effect.unsome(pullRight), { concurrent: true }),
+            unsome(pullLeft),
+            Effect.zip(unsome(pullRight), { concurrent: true }),
             Effect.matchEffect({
               onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
               onSuccess: ([leftOption, rightOption]) => {
@@ -7449,8 +7445,8 @@ export const zipAllWith = dual<
         }
         case ZipAllState.OP_PULL_BOTH: {
           return pipe(
-            Effect.unsome(pullLeft),
-            Effect.zip(Effect.unsome(pullRight), { concurrent: true }),
+            unsome(pullLeft),
+            Effect.zip(unsome(pullRight), { concurrent: true }),
             Effect.matchEffect({
               onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
               onSuccess: ([leftOption, rightOption]) => {
@@ -7810,8 +7806,8 @@ export const zipWithChunks = dual<
     switch (state._tag) {
       case ZipChunksState.OP_PULL_BOTH: {
         return pipe(
-          Effect.unsome(pullLeft),
-          Effect.zip(Effect.unsome(pullRight), { concurrent: true }),
+          unsome(pullLeft),
+          Effect.zip(unsome(pullRight), { concurrent: true }),
           Effect.matchEffect({
             onFailure: (error) => Effect.succeed(Exit.fail(Option.some(error))),
             onSuccess: ([leftOption, rightOption]) => {

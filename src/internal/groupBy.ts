@@ -335,6 +335,10 @@ class MapDequeue<A, B> implements Queue.Dequeue<B> {
     return Queue.size(this.dequeue)
   }
 
+  unsafeSize(): Option.Option<number> {
+    return this.dequeue.unsafeSize()
+  }
+
   awaitShutdown(): Effect.Effect<never, never, void> {
     return Queue.awaitShutdown(this.dequeue)
   }
