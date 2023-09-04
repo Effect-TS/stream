@@ -2127,8 +2127,8 @@ export const runDrain = <Env, InErr, InDone, OutElem, OutErr, OutDone>(
 
 /** @internal */
 export const scoped = <R, E, A>(
-  effect: Effect.Effect<R | Scope.Scope, E, A>
-): Channel.Channel<Exclude<R | Scope.Scope, Scope.Scope>, unknown, unknown, unknown, E, A, unknown> =>
+  effect: Effect.Effect<R, E, A>
+): Channel.Channel<Exclude<R, Scope.Scope>, unknown, unknown, unknown, E, A, unknown> =>
   unwrap(
     Effect.uninterruptibleMask((restore) =>
       Effect.map(Scope.make(), (scope) =>
@@ -2259,13 +2259,9 @@ export const unwrapScoped = <
   OutElem,
   OutDone
 >(
-  self: Effect.Effect<
-    R | Scope.Scope,
-    E,
-    Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  >
+  self: Effect.Effect<R, E, Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
 ): Channel.Channel<
-  Exclude<R | Scope.Scope, Scope.Scope> | Env,
+  Exclude<R, Scope.Scope> | Env,
   InErr,
   InElem,
   InDone,

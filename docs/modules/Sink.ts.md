@@ -891,11 +891,11 @@ Creates a sink from a chunk processing function.
 ```ts
 export declare const fromPush: <R, E, In, L, Z>(
   push: Effect.Effect<
-    Scope.Scope | R,
+    R,
     never,
     (_: Option.Option<Chunk.Chunk<In>>) => Effect.Effect<R, readonly [Either.Either<E, Z>, Chunk.Chunk<L>], void>
   >
-) => Sink<R, E, In, L, Z>
+) => Sink<Exclude<R, Scope.Scope>, E, In, L, Z>
 ```
 
 Added in v1.0.0
@@ -1095,8 +1095,8 @@ Creates a sink produced from a scoped effect.
 
 ```ts
 export declare const unwrapScoped: <R, E, In, L, Z>(
-  effect: Effect.Effect<Scope.Scope | R, E, Sink<R, E, In, L, Z>>
-) => Sink<R, E, In, L, Z>
+  effect: Effect.Effect<R, E, Sink<R, E, In, L, Z>>
+) => Sink<Exclude<R, Scope.Scope>, E, In, L, Z>
 ```
 
 Added in v1.0.0

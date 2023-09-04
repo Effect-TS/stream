@@ -1462,11 +1462,12 @@ export const fromHub = <In>(
 /** @internal */
 export const fromPush = <R, E, In, L, Z>(
   push: Effect.Effect<
-    R | Scope.Scope,
+    R,
     never,
     (_: Option.Option<Chunk.Chunk<In>>) => Effect.Effect<R, readonly [Either.Either<E, Z>, Chunk.Chunk<L>], void>
   >
-): Sink.Sink<R, E, In, L, Z> => new SinkImpl(channel.unwrapScoped(pipe(push, Effect.map(fromPushPull))))
+): Sink.Sink<Exclude<R, Scope.Scope>, E, In, L, Z> =>
+  new SinkImpl(channel.unwrapScoped(pipe(push, Effect.map(fromPushPull))))
 
 const fromPushPull = <R, E, In, L, Z>(
   push: (
@@ -1969,8 +1970,8 @@ export const unwrap = <R, E, R2, E2, In, L, Z>(
 
 /** @internal */
 export const unwrapScoped = <R, E, In, L, Z>(
-  effect: Effect.Effect<R | Scope.Scope, E, Sink.Sink<R, E, In, L, Z>>
-): Sink.Sink<R, E, In, L, Z> => {
+  effect: Effect.Effect<R, E, Sink.Sink<R, E, In, L, Z>>
+): Sink.Sink<Exclude<R, Scope.Scope>, E, In, L, Z> => {
   return new SinkImpl(channel.unwrapScoped(pipe(effect, Effect.map((sink) => toChannel(sink)))))
 }
 

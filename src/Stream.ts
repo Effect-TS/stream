@@ -303,9 +303,9 @@ export const asyncOption: <R, E, A>(
  * @category constructors
  */
 export const asyncScoped: <R, E, A>(
-  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R, E, unknown>,
   outputBuffer?: number
-) => Stream<R, E, A> = internal.asyncScoped
+) => Stream<Exclude<R, Scope.Scope>, E, A> = internal.asyncScoped
 
 /**
  * Returns a `Stream` that first collects `n` elements from the input `Stream`,
@@ -3329,7 +3329,7 @@ export const scheduleWith: {
  * @since 1.0.0
  * @category constructors
  */
-export const scoped: <R, E, A>(effect: Effect.Effect<Scope.Scope | R, E, A>) => Stream<Exclude<R, Scope.Scope>, E, A> =
+export const scoped: <R, E, A>(effect: Effect.Effect<R, E, A>) => Stream<Exclude<R, Scope.Scope>, E, A> =
   internal.scoped
 
 /**
@@ -3915,8 +3915,8 @@ export const unwrap: <R, E, R2, E2, A>(effect: Effect.Effect<R, E, Stream<R2, E2
  * @category constructors
  */
 export const unwrapScoped: <R, E, R2, E2, A>(
-  effect: Effect.Effect<Scope.Scope | R, E, Stream<R2, E2, A>>
-) => Stream<Exclude<R | Scope.Scope, Scope.Scope> | R2, E | E2, A> = internal.unwrapScoped
+  effect: Effect.Effect<R, E, Stream<R2, E2, A>>
+) => Stream<R2 | Exclude<R, Scope.Scope>, E | E2, A> = internal.unwrapScoped
 
 /**
  * Updates the specified service within the context of the `Stream`.
