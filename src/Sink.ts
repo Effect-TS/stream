@@ -1002,11 +1002,11 @@ export const fromHub: <In>(
  */
 export const fromPush: <R, E, In, L, Z>(
   push: Effect.Effect<
-    Scope.Scope | R,
+    R,
     never,
     (_: Option.Option<Chunk.Chunk<In>>) => Effect.Effect<R, readonly [Either.Either<E, Z>, Chunk.Chunk<L>], void>
   >
-) => Sink<R, E, In, L, Z> = internal.fromPush
+) => Sink<Exclude<R, Scope.Scope>, E, In, L, Z> = internal.fromPush
 
 /**
  * Create a sink which enqueues each element into the specified queue.
@@ -1332,8 +1332,8 @@ export const unwrap: <R, E, R2, E2, In, L, Z>(
  * @category constructors
  */
 export const unwrapScoped: <R, E, In, L, Z>(
-  effect: Effect.Effect<R | Scope.Scope, E, Sink<R, E, In, L, Z>>
-) => Sink<R, E, In, L, Z> = internal.unwrapScoped
+  effect: Effect.Effect<R, E, Sink<R, E, In, L, Z>>
+) => Sink<Exclude<R, Scope.Scope>, E, In, L, Z> = internal.unwrapScoped
 
 /**
  * Returns the sink that executes this one and times its execution.

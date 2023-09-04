@@ -465,9 +465,9 @@ end of the stream, by setting it to `None`.
 
 ```ts
 export declare const asyncScoped: <R, E, A>(
-  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R, E, unknown>,
   outputBuffer?: number
-) => Stream<R, E, A>
+) => Stream<Exclude<R, Scope.Scope>, E, A>
 ```
 
 Added in v1.0.0
@@ -1066,9 +1066,7 @@ Creates a single-valued stream from a scoped resource.
 **Signature**
 
 ```ts
-export declare const scoped: <R, E, A>(
-  effect: Effect.Effect<Scope.Scope | R, E, A>
-) => Stream<Exclude<R, Scope.Scope>, E, A>
+export declare const scoped: <R, E, A>(effect: Effect.Effect<R, E, A>) => Stream<Exclude<R, Scope.Scope>, E, A>
 ```
 
 Added in v1.0.0
@@ -1228,7 +1226,7 @@ Creates a stream produced from a scoped `Effect`.
 
 ```ts
 export declare const unwrapScoped: <R, E, R2, E2, A>(
-  effect: Effect.Effect<Scope.Scope | R, E, Stream<R2, E2, A>>
+  effect: Effect.Effect<R, E, Stream<R2, E2, A>>
 ) => Stream<R2 | Exclude<R, Scope.Scope>, E | E2, A>
 ```
 

@@ -1925,7 +1925,7 @@ export const runDrain: <Env, InErr, InDone, OutElem, OutErr, OutDone>(
  * @category constructors
  */
 export const scoped: <R, E, A>(
-  effect: Effect.Effect<R | Scope.Scope, E, A>
+  effect: Effect.Effect<R, E, A>
 ) => Channel<Exclude<R, Scope.Scope>, unknown, unknown, unknown, E, A, unknown> = channel.scoped
 
 /**
@@ -2022,7 +2022,7 @@ export const unwrap: <R, E, R2, InErr, InElem, InDone, OutErr, OutElem, OutDone>
  * @category constructors
  */
 export const unwrapScoped: <R, E, Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Effect.Effect<Scope.Scope | R, E, Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
+  self: Effect.Effect<R, E, Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
 ) => Channel<Env | Exclude<R, Scope.Scope>, InErr, InElem, InDone, E | OutErr, OutElem, OutDone> = channel.unwrapScoped
 
 /**

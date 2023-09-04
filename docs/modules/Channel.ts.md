@@ -530,7 +530,7 @@ Use a scoped effect to emit an output element.
 
 ```ts
 export declare const scoped: <R, E, A>(
-  effect: Effect.Effect<Scope.Scope | R, E, A>
+  effect: Effect.Effect<R, E, A>
 ) => Channel<Exclude<R, Scope.Scope>, unknown, unknown, unknown, E, A, unknown>
 ```
 
@@ -594,7 +594,7 @@ Makes a channel from a managed that returns a channel in case of success.
 
 ```ts
 export declare const unwrapScoped: <R, E, Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
-  self: Effect.Effect<Scope.Scope | R, E, Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
+  self: Effect.Effect<R, E, Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>>
 ) => Channel<Env | Exclude<R, Scope.Scope>, InErr, InElem, InDone, E | OutErr, OutElem, OutDone>
 ```
 

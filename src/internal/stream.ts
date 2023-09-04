@@ -580,9 +580,9 @@ export const asyncOption = <R, E, A>(
 
 /** @internal */
 export const asyncScoped = <R, E, A>(
-  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R | Scope.Scope, E, unknown>,
+  register: (emit: Emit.Emit<R, E, A, void>) => Effect.Effect<R, E, unknown>,
   outputBuffer = 16
-): Stream.Stream<R, E, A> =>
+): Stream.Stream<Exclude<R, Scope.Scope>, E, A> =>
   pipe(
     Effect.acquireRelease(
       Queue.bounded<Take.Take<E, A>>(outputBuffer),
@@ -5622,8 +5622,8 @@ export const scanEffect = dual<
 
 /** @internal */
 export const scoped = <R, E, A>(
-  effect: Effect.Effect<R | Scope.Scope, E, A>
-): Stream.Stream<Exclude<R | Scope.Scope, Scope.Scope>, E, A> =>
+  effect: Effect.Effect<R, E, A>
+): Stream.Stream<Exclude<R, Scope.Scope>, E, A> =>
   new StreamImpl(channel.ensuring(channel.scoped(pipe(effect, Effect.map(Chunk.of))), Effect.unit))
 
 /** @internal */
@@ -6754,8 +6754,8 @@ export const unwrap = <R, E, R2, E2, A>(
 
 /** @internal */
 export const unwrapScoped = <R, E, R2, E2, A>(
-  effect: Effect.Effect<R | Scope.Scope, E, Stream.Stream<R2, E2, A>>
-): Stream.Stream<Exclude<R | Scope.Scope, Scope.Scope> | R2, E | E2, A> => flatten(scoped(effect))
+  effect: Effect.Effect<R, E, Stream.Stream<R2, E2, A>>
+): Stream.Stream<Exclude<R, Scope.Scope> | R2, E | E2, A> => flatten(scoped(effect))
 
 /** @internal */
 export const updateService = dual<
