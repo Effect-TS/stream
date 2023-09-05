@@ -986,6 +986,7 @@ export const fromEffect: <R, E, Z>(effect: Effect.Effect<R, E, Z>) => Sink<R, E,
 /**
  * Create a sink which publishes each element to the specified hub.
  *
+ * @param shutdown If `true`, the hub will be shutdown after the sink is evaluated (defaults to `false`)
  * @since 1.0.0
  * @category constructors
  */
@@ -1011,6 +1012,7 @@ export const fromPush: <R, E, In, L, Z>(
 /**
  * Create a sink which enqueues each element into the specified queue.
  *
+ * @param shutdown If `true`, the queue will be shutdown after the sink is evaluated (defaults to `false`)
  * @since 1.0.0
  * @category constructors
  */
