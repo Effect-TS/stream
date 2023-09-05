@@ -1,5 +1,15 @@
 # @effect/stream
 
+## 0.36.0
+
+### Minor Changes
+
+- [#173](https://github.com/Effect-TS/stream/pull/173) [`a4855c2`](https://github.com/Effect-TS/stream/commit/a4855c2739c623beba00616440dbfa2cf1421bdd) Thanks [@tim-smart](https://github.com/tim-smart)! - update /io
+
+### Patch Changes
+
+- [#171](https://github.com/Effect-TS/stream/pull/171) [`e68589c`](https://github.com/Effect-TS/stream/commit/e68589cb957b1dcf031f78fa12f226bfa6e2eadf) Thanks [@tim-smart](https://github.com/tim-smart)! - refactor Scope elimination in signatures
+
 ## 0.35.1
 
 ### Patch Changes
