@@ -258,7 +258,7 @@ describe.concurrent("Stream", () => {
     )
   })
 
-  it.effect("serviceConstants - expose Effect and Stream service constants as Streams", () => {
+  it.effect("serviceConstants - expose non Effect nor Stream service constants as Streams", () => {
     interface Service {
       value: number
     }
