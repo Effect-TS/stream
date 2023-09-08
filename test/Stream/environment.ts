@@ -1,3 +1,4 @@
+import { toReadonlyArray } from "@effect/data/Chunk"
 import * as Context from "@effect/data/Context"
 import { pipe } from "@effect/data/Function"
 import * as ReadonlyArray from "@effect/data/ReadonlyArray"
@@ -215,4 +216,73 @@ describe.concurrent("Stream", () => {
       )).toEqual(["span", "span", "span"])
       expect(ReadonlyArray.map(spans, (s) => s.name)).toEqual(["span.1", "span.2", "span.3"])
     }))
+
+  it.effect("serviceFunctions - expose Effect and Stream service functions as Streams", () => {
+    interface Service {
+      foo: (x: string, y: number) => Stream.Stream<never, never, string>
+    }
+    const Service = Context.Tag<Service>()
+    const { foo } = Stream.serviceFunctions(Service)
+    return pipe(
+      Effect.gen(function*(_) {
+        expect(toReadonlyArray(yield* _(Stream.runCollect(foo("a", 3))))).toEqual(["a3"])
+      }),
+      Effect.provideService(
+        Service,
+        Service.of({
+          foo: (x, y) => Stream.fromIterable([`${x}${y}`])
+        })
+      )
+    )
+  })
+
+  it.effect("serviceConstants - expose Effect and Stream service constants as Streams", () => {
+    interface Service {
+      baz: Stream.Stream<never, never, string>
+      bazE: Effect.Effect<never, never, string>
+    }
+    const Service = Context.Tag<Service>()
+    const { baz, bazE } = Stream.serviceConstants(Service)
+    return pipe(
+      Effect.gen(function*(_) {
+        expect(toReadonlyArray(yield* _(Stream.runCollect(baz)))).toEqual(["42!"])
+        expect(toReadonlyArray(yield* _(Stream.runCollect(bazE)))).toEqual(["42!"])
+      }),
+      Effect.provideService(
+        Service,
+        Service.of({
+          baz: Stream.fromIterable(["42!"]),
+          bazE: Effect.succeed("42!")
+        })
+      )
+    )
+  })
+
+  it.effect("serviceMembers - expose both Effect and Stream service functions and constants as Streams", () => {
+    interface Service {
+      foo: (x: string, y: number) => Stream.Stream<never, never, string>
+      baz: Stream.Stream<never, never, string>
+      fooE: (x: string, y: number) => Effect.Effect<never, never, string>
+      bazE: Effect.Effect<never, never, string>
+    }
+    const Service = Context.Tag<Service>()
+    const { constants, functions } = Stream.serviceMembers(Service)
+    return pipe(
+      Effect.gen(function*(_) {
+        expect(toReadonlyArray(yield* _(Stream.runCollect(constants.baz)))).toEqual(["42!", "43!"])
+        expect(toReadonlyArray(yield* _(Stream.runCollect(functions.foo("a", 3))))).toEqual(["a3", "3a"])
+        expect(toReadonlyArray(yield* _(Stream.runCollect(constants.bazE)))).toEqual(["42!"])
+        expect(toReadonlyArray(yield* _(Stream.runCollect(functions.fooE("a", 3))))).toEqual(["a3"])
+      }),
+      Effect.provideService(
+        Service,
+        Service.of({
+          baz: Stream.fromIterable(["42!", "43!"]),
+          foo: (x, y) => Stream.fromIterable([`${x}${y}`, `${y}${x}`]),
+          bazE: Effect.succeed("42!"),
+          fooE: (x, y) => Effect.succeed(`${x}${y}`)
+        })
+      )
+    )
+  })
 })

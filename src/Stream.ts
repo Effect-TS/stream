@@ -3923,6 +3923,45 @@ export const unwrapScoped: <R, E, R2, E2, A>(
 ) => Stream<R2 | Exclude<R, Scope.Scope>, E | E2, A> = internal.unwrapScoped
 
 /**
+ * @since 1.0.0
+ * @category context
+ */
+export const serviceFunctions: <I, S>(
+  tag: Context.Tag<I, S>
+) => {
+  [k in { [k in keyof S]: S[k] extends (...args: Array<any>) => Stream<any, any, any> ? k : never }[keyof S]]:
+    S[k] extends (...args: infer Args) => Stream<infer R, infer E, infer A> ? (...args: Args) => Stream<R | I, E, A> :
+      never
+} = internal.serviceFunctions
+
+/**
+ * @since 1.0.0
+ * @category context
+ */
+export const serviceConstants: <I, S>(
+  tag: Context.Tag<I, S>
+) => {
+  [k in { [k in keyof S]: S[k] extends Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
+    Stream<infer R, infer E, infer A> ? Stream<R | I, E, A> : never
+} = internal.serviceConstants
+
+/**
+ * @since 1.0.0
+ * @category context
+ */
+export const serviceMembers: <I, S>(tag: Context.Tag<I, S>) => {
+  functions: {
+    [k in { [k in keyof S]: S[k] extends (...args: Array<any>) => Stream<any, any, any> ? k : never }[keyof S]]:
+      S[k] extends (...args: infer Args) => Stream<infer R, infer E, infer A> ? (...args: Args) => Stream<R | I, E, A>
+        : never
+  }
+  constants: {
+    [k in { [k in keyof S]: S[k] extends Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
+      Stream<infer R, infer E, infer A> ? Stream<R | I, E, A> : never
+  }
+} = internal.serviceMembers
+
+/**
  * Updates the specified service within the context of the `Stream`.
  *
  * @since 1.0.0

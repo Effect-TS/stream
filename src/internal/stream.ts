@@ -6758,6 +6758,51 @@ export const unwrapScoped = <R, E, R2, E2, A>(
 ): Stream.Stream<Exclude<R, Scope.Scope> | R2, E | E2, A> => flatten(scoped(effect))
 
 /** @internal */
+export const serviceFunctions = <I, S>(
+  tag: Context.Tag<I, S>
+): {
+  [k in { [k in keyof S]: S[k] extends (...args: Array<any>) => Stream.Stream<any, any, any> ? k : never }[keyof S]]:
+    S[k] extends (...args: infer Args) => Stream.Stream<infer R, infer E, infer A>
+      ? (...args: Args) => Stream.Stream<R | I, E, A>
+      : never
+} =>
+  new Proxy({} as any, {
+    get(_target: any, prop: any, _receiver) {
+      return (...args: Array<any>) => flatMap(tag, (s: any) => s[prop](...args))
+    }
+  })
+
+/** @internal */
+export const serviceConstants = <I, S>(
+  tag: Context.Tag<I, S>
+): {
+  [k in { [k in keyof S]: S[k] extends Stream.Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
+    Stream.Stream<infer R, infer E, infer A> ? Stream.Stream<R | I, E, A> : never
+} =>
+  new Proxy({} as any, {
+    get(_target: any, prop: any, _receiver) {
+      return flatMap(tag, (s: any) => s[prop])
+    }
+  })
+
+/** @internal */
+export const serviceMembers = <I, S>(tag: Context.Tag<I, S>): {
+  functions: {
+    [k in { [k in keyof S]: S[k] extends (...args: Array<any>) => Stream.Stream<any, any, any> ? k : never }[keyof S]]:
+      S[k] extends (...args: infer Args) => Stream.Stream<infer R, infer E, infer A>
+        ? (...args: Args) => Stream.Stream<R | I, E, A>
+        : never
+  }
+  constants: {
+    [k in { [k in keyof S]: S[k] extends Stream.Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
+      Stream.Stream<infer R, infer E, infer A> ? Stream.Stream<R | I, E, A> : never
+  }
+} => ({
+  functions: serviceFunctions(tag),
+  constants: serviceConstants(tag)
+})
+
+/** @internal */
 export const updateService = dual<
   <T extends Context.Tag<any, any>>(
     tag: T,
