@@ -236,13 +236,13 @@ describe.concurrent("Stream", () => {
     )
   })
 
-  it.effect("serviceConstants - expose Effect and Stream service constants as Streams", () => {
+  it.effect("serviceStreams - expose Effect and Stream service constants as Streams", () => {
     interface Service {
       baz: Stream.Stream<never, never, string>
       bazE: Effect.Effect<never, never, string>
     }
     const Service = Context.Tag<Service>()
-    const { baz, bazE } = Stream.serviceConstants(Service)
+    const { baz, bazE } = Stream.serviceStreams(Service)
     return pipe(
       Effect.gen(function*(_) {
         expect(toReadonlyArray(yield* _(Stream.runCollect(baz)))).toEqual(["42!"])
@@ -258,30 +258,19 @@ describe.concurrent("Stream", () => {
     )
   })
 
-  it.effect("serviceMembers - expose both Effect and Stream service functions and constants as Streams", () => {
+  it.effect("serviceConstants - expose Effect and Stream service constants as Streams", () => {
     interface Service {
-      foo: (x: string, y: number) => Stream.Stream<never, never, string>
-      baz: Stream.Stream<never, never, string>
-      fooE: (x: string, y: number) => Effect.Effect<never, never, string>
-      bazE: Effect.Effect<never, never, string>
+      value: number
     }
     const Service = Context.Tag<Service>()
-    const { constants, functions } = Stream.serviceMembers(Service)
+    const { value } = Stream.serviceConstants(Service)
     return pipe(
       Effect.gen(function*(_) {
-        expect(toReadonlyArray(yield* _(Stream.runCollect(constants.baz)))).toEqual(["42!", "43!"])
-        expect(toReadonlyArray(yield* _(Stream.runCollect(functions.foo("a", 3))))).toEqual(["a3", "3a"])
-        expect(toReadonlyArray(yield* _(Stream.runCollect(constants.bazE)))).toEqual(["42!"])
-        expect(toReadonlyArray(yield* _(Stream.runCollect(functions.fooE("a", 3))))).toEqual(["a3"])
+        expect(toReadonlyArray(yield* _(Stream.runCollect(value)))).toEqual([42])
       }),
       Effect.provideService(
         Service,
-        Service.of({
-          baz: Stream.fromIterable(["42!", "43!"]),
-          foo: (x, y) => Stream.fromIterable([`${x}${y}`, `${y}${x}`]),
-          bazE: Effect.succeed("42!"),
-          fooE: (x, y) => Effect.succeed(`${x}${y}`)
-        })
+        Service.of({ value: 42 })
       )
     )
   })

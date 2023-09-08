@@ -6776,6 +6776,24 @@ export const serviceFunctions = <I, S>(
 export const serviceConstants = <I, S>(
   tag: Context.Tag<I, S>
 ): {
+  [
+    k in {
+      [k in keyof S]: S[k] extends Stream.Stream<any, any, any> ? never
+        : S[k] extends (...args: any) => Stream.Stream<any, any, any> ? never
+        : k
+    }[keyof S]
+  ]: Stream.Stream<I, never, S[k]>
+} =>
+  new Proxy({} as any, {
+    get(_target: any, prop: any, _receiver) {
+      return map(tag, (s: any) => s[prop])
+    }
+  })
+
+/** @internal */
+export const serviceStreams = <I, S>(
+  tag: Context.Tag<I, S>
+): {
   [k in { [k in keyof S]: S[k] extends Stream.Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
     Stream.Stream<infer R, infer E, infer A> ? Stream.Stream<R | I, E, A> : never
 } =>
@@ -6784,23 +6802,6 @@ export const serviceConstants = <I, S>(
       return flatMap(tag, (s: any) => s[prop])
     }
   })
-
-/** @internal */
-export const serviceMembers = <I, S>(tag: Context.Tag<I, S>): {
-  functions: {
-    [k in { [k in keyof S]: S[k] extends (...args: Array<any>) => Stream.Stream<any, any, any> ? k : never }[keyof S]]:
-      S[k] extends (...args: infer Args) => Stream.Stream<infer R, infer E, infer A>
-        ? (...args: Args) => Stream.Stream<R | I, E, A>
-        : never
-  }
-  constants: {
-    [k in { [k in keyof S]: S[k] extends Stream.Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
-      Stream.Stream<infer R, infer E, infer A> ? Stream.Stream<R | I, E, A> : never
-  }
-} => ({
-  functions: serviceFunctions(tag),
-  constants: serviceConstants(tag)
-})
 
 /** @internal */
 export const updateService = dual<

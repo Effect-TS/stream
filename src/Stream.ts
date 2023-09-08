@@ -3938,28 +3938,28 @@ export const serviceFunctions: <I, S>(
  * @since 1.0.0
  * @category context
  */
-export const serviceConstants: <I, S>(
+export const serviceStreams: <I, S>(
   tag: Context.Tag<I, S>
 ) => {
   [k in { [k in keyof S]: S[k] extends Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
     Stream<infer R, infer E, infer A> ? Stream<R | I, E, A> : never
-} = internal.serviceConstants
+} = internal.serviceStreams
 
 /**
  * @since 1.0.0
  * @category context
  */
-export const serviceMembers: <I, S>(tag: Context.Tag<I, S>) => {
-  functions: {
-    [k in { [k in keyof S]: S[k] extends (...args: Array<any>) => Stream<any, any, any> ? k : never }[keyof S]]:
-      S[k] extends (...args: infer Args) => Stream<infer R, infer E, infer A> ? (...args: Args) => Stream<R | I, E, A>
-        : never
-  }
-  constants: {
-    [k in { [k in keyof S]: S[k] extends Stream<any, any, any> ? k : never }[keyof S]]: S[k] extends
-      Stream<infer R, infer E, infer A> ? Stream<R | I, E, A> : never
-  }
-} = internal.serviceMembers
+export const serviceConstants: <I, S>(
+  tag: Context.Tag<I, S>
+) => {
+  [
+    k in {
+      [k in keyof S]: S[k] extends Stream<any, any, any> ? never
+        : S[k] extends (...args: any) => Stream<any, any, any> ? never
+        : k
+    }[keyof S]
+  ]: Stream<I, never, S[k]>
+} = internal.serviceConstants
 
 /**
  * Updates the specified service within the context of the `Stream`.

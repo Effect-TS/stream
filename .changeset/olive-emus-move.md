@@ -2,4 +2,4 @@
 "@effect/stream": minor
 ---
 
-add Stream serviceFunctions / serviceConstants / serviceMembers
+add Stream serviceFunctions / serviceConstants / serviceStreams
