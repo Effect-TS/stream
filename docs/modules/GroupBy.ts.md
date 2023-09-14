@@ -16,7 +16,6 @@ Added in v1.0.0
   - [make](#make)
 - [destructors](#destructors)
   - [evaluate](#evaluate)
-  - [evaluateBuffer](#evaluatebuffer)
 - [models](#models)
   - [GroupBy (interface)](#groupby-interface)
 - [symbols](#symbols)
@@ -57,34 +56,14 @@ arbitrary order.
 
 ```ts
 export declare const evaluate: {
-  <K, E, V, R2, E2, A>(f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>): <R>(
-    self: GroupBy<R, E, K, V>
-  ) => Stream.Stream<R2 | R, E | E2, A>
-  <R, K, E, V, R2, E2, A>(
-    self: GroupBy<R, E, K, V>,
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ): Stream.Stream<R | R2, E | E2, A>
-}
-```
-
-Added in v1.0.0
-
-## evaluateBuffer
-
-Like `evaluate`, but with a configurable `bufferSize` parameter.
-
-**Signature**
-
-```ts
-export declare const evaluateBuffer: {
   <K, E, V, R2, E2, A>(
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
   <R, K, E, V, R2, E2, A>(
     self: GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ): Stream.Stream<R | R2, E | E2, A>
 }
 ```
