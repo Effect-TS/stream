@@ -38,42 +38,25 @@ const groupByVariance = {
 /** @internal */
 export const evaluate = dual<
   <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ) => <R>(self: GroupBy.GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>,
-  <R, K, E, V, R2, E2, A>(
-    self: GroupBy.GroupBy<R, E, K, V>,
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ) => Stream.Stream<R2 | R, E | E2, A>
->(
-  2,
-  <R, K, E, V, R2, E2, A>(
-    self: GroupBy.GroupBy<R, E, K, V>,
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
-  ): Stream.Stream<R | R2, E | E2, A> => evaluateBuffer(self, f, 16)
-)
-
-/** @internal */
-export const evaluateBuffer = dual<
-  <K, E, V, R2, E2, A>(
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ) => <R>(self: GroupBy.GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>,
   <R, K, E, V, R2, E2, A>(
     self: GroupBy.GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ) => Stream.Stream<R2 | R, E | E2, A>
 >(
   3,
   <R, K, E, V, R2, E2, A>(
     self: GroupBy.GroupBy<R, E, K, V>,
     f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
+    options?: { readonly bufferSize?: number }
   ): Stream.Stream<R | R2, E | E2, A> =>
     stream.flatMap(
       self.grouped,
       ([key, queue]) => f(key, stream.flattenTake(stream.fromQueue(queue, { shutdown: true }))),
-      { concurrency: "unbounded", bufferSize }
+      { concurrency: "unbounded", bufferSize: options?.bufferSize ?? 16 }
     )
 )
 
