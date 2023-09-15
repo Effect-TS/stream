@@ -1,5 +1,11 @@
 # @effect/stream
 
+## 0.36.1
+
+### Patch Changes
+
+- [#178](https://github.com/Effect-TS/stream/pull/178) [`81e2d51`](https://github.com/Effect-TS/stream/commit/81e2d513c73ddc3004cb915d1ef075847cd1d70d) Thanks [@gcanti](https://github.com/gcanti)! - Stream: replace Duration.Duration with Duration.DurationInput in public APIs
+
 ## 0.36.0
 
 ### Minor Changes
