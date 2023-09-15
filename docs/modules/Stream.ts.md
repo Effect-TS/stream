@@ -1114,7 +1114,7 @@ A stream that emits Unit values spaced by the specified duration.
 **Signature**
 
 ```ts
-export declare const tick: (interval: Duration.Duration) => Stream<never, never, void>
+export declare const tick: (interval: Duration.DurationInput) => Stream<never, never, void>
 ```
 
 Added in v1.0.0
@@ -3785,8 +3785,8 @@ has paused typing so as to not prematurely recommend results.
 
 ```ts
 export declare const debounce: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 }
 ```
 
@@ -4204,8 +4204,10 @@ Partitions the stream with the specified `chunkSize` or until the specified
 
 ```ts
 export declare const groupedWithin: {
-  (chunkSize: number, duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
-  <R, E, A>(self: Stream<R, E, A>, chunkSize: number, duration: Duration.Duration): Stream<R, E, Chunk.Chunk<A>>
+  (chunkSize: number, duration: Duration.DurationInput): <R, E, A>(
+    self: Stream<R, E, A>
+  ) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, chunkSize: number, duration: Duration.DurationInput): Stream<R, E, Chunk.Chunk<A>>
 }
 ```
 
@@ -4223,8 +4225,8 @@ given duration completes. See `interruptAfter` for this behavior.
 
 ```ts
 export declare const haltAfter: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 }
 ```
 
@@ -4335,8 +4337,8 @@ evaluation of this stream after the given `Duration`.
 
 ```ts
 export declare const interruptAfter: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 }
 ```
 
@@ -5286,7 +5288,7 @@ export declare const throttle: {
   <A>(options: {
     readonly cost: (chunk: Chunk.Chunk<A>) => number
     readonly units: number
-    readonly duration: Duration.Duration
+    readonly duration: Duration.DurationInput
     readonly burst?: number | undefined
     readonly strategy?: 'enforce' | 'shape' | undefined
   }): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A>
@@ -5295,7 +5297,7 @@ export declare const throttle: {
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number | undefined
       readonly strategy?: 'enforce' | 'shape' | undefined
     }
@@ -5326,7 +5328,7 @@ export declare const throttleEffect: {
   <A, R2, E2>(options: {
     readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
     readonly units: number
-    readonly duration: Duration.Duration
+    readonly duration: Duration.DurationInput
     readonly burst?: number | undefined
     readonly strategy?: 'enforce' | 'shape' | undefined
   }): <R, E>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A>
@@ -5335,7 +5337,7 @@ export declare const throttleEffect: {
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number | undefined
       readonly strategy?: 'enforce' | 'shape' | undefined
     }
@@ -5353,8 +5355,8 @@ Ends the stream if it does not produce a value after the specified duration.
 
 ```ts
 export declare const timeout: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 }
 ```
 
@@ -5369,8 +5371,8 @@ duration.
 
 ```ts
 export declare const timeoutFail: {
-  <E2>(error: LazyArg<E2>, duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
-  <R, E, A, E2>(self: Stream<R, E, A>, error: LazyArg<E2>, duration: Duration.Duration): Stream<R, E | E2, A>
+  <E2>(error: LazyArg<E2>, duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+  <R, E, A, E2>(self: Stream<R, E, A>, error: LazyArg<E2>, duration: Duration.DurationInput): Stream<R, E | E2, A>
 }
 ```
 
@@ -5385,10 +5387,10 @@ duration.
 
 ```ts
 export declare const timeoutFailCause: {
-  <E2>(cause: LazyArg<Cause.Cause<E2>>, duration: Duration.Duration): <R, E, A>(
+  <E2>(cause: LazyArg<Cause.Cause<E2>>, duration: Duration.DurationInput): <R, E, A>(
     self: Stream<R, E, A>
   ) => Stream<R, E2 | E, A>
-  <R, E, A, E2>(self: Stream<R, E, A>, cause: LazyArg<Cause.Cause<E2>>, duration: Duration.Duration): Stream<
+  <R, E, A, E2>(self: Stream<R, E, A>, cause: LazyArg<Cause.Cause<E2>>, duration: Duration.DurationInput): Stream<
     R,
     E | E2,
     A
@@ -5407,10 +5409,10 @@ duration.
 
 ```ts
 export declare const timeoutTo: {
-  <R2, E2, A2>(duration: Duration.Duration, that: Stream<R2, E2, A2>): <R, E, A>(
+  <R2, E2, A2>(duration: Duration.DurationInput, that: Stream<R2, E2, A2>): <R, E, A>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2 | A>
-  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, duration: Duration.Duration, that: Stream<R2, E2, A2>): Stream<
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, duration: Duration.DurationInput, that: Stream<R2, E2, A2>): Stream<
     R | R2,
     E | E2,
     A | A2

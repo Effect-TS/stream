@@ -1608,9 +1608,9 @@ export const crossWith = dual<
 
 /** @internal */
 export const debounce = dual<
-  (duration: Duration.Duration) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration) => Stream.Stream<R, E, A>
->(2, <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration): Stream.Stream<R, E, A> =>
+  (duration: Duration.DurationInput) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput) => Stream.Stream<R, E, A>
+>(2, <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput): Stream.Stream<R, E, A> =>
   pipe(
     singleProducerAsyncInput.make<never, Chunk.Chunk<A>, unknown>(),
     Effect.flatMap((input) =>
@@ -3221,19 +3221,19 @@ export const grouped = dual<
 export const groupedWithin = dual<
   (
     chunkSize: number,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, Chunk.Chunk<A>>,
   <R, E, A>(
     self: Stream.Stream<R, E, A>,
     chunkSize: number,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ) => Stream.Stream<R, E, Chunk.Chunk<A>>
 >(
   3,
   <R, E, A>(
     self: Stream.Stream<R, E, A>,
     chunkSize: number,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ): Stream.Stream<R, E, Chunk.Chunk<A>> =>
     aggregateWithin(self, _sink.collectAllN(chunkSize), Schedule.spaced(duration))
 )
@@ -3286,11 +3286,11 @@ export const haltWhen = dual<
 
 /** @internal */
 export const haltAfter = dual<
-  (duration: Duration.Duration) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration) => Stream.Stream<R, E, A>
+  (duration: Duration.DurationInput) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput) => Stream.Stream<R, E, A>
 >(
   2,
-  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration): Stream.Stream<R, E, A> =>
+  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput): Stream.Stream<R, E, A> =>
     pipe(self, haltWhen(Clock.sleep(duration)))
 )
 
@@ -3529,11 +3529,11 @@ export const intersperseAffixes = dual<
 
 /** @internal */
 export const interruptAfter = dual<
-  (duration: Duration.Duration) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration) => Stream.Stream<R, E, A>
+  (duration: Duration.DurationInput) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput) => Stream.Stream<R, E, A>
 >(
   2,
-  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration): Stream.Stream<R, E, A> =>
+  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput): Stream.Stream<R, E, A> =>
     pipe(self, interruptWhen(Clock.sleep(duration)))
 )
 
@@ -5020,12 +5020,7 @@ export const repeatWith = dual<
   }
 )
 
-/**
- * Repeats the value using the provided schedule.
- *
- * @since 1.0.0
- * @category constructors
- */
+/** @internal */
 export const repeatWithSchedule = <R, A, _>(
   value: A,
   schedule: Schedule.Schedule<R, A, _>
@@ -6220,7 +6215,7 @@ export const throttle = dual<
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -6230,7 +6225,7 @@ export const throttle = dual<
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -6242,7 +6237,7 @@ export const throttle = dual<
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -6259,7 +6254,7 @@ export const throttleEffect = dual<
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -6269,7 +6264,7 @@ export const throttleEffect = dual<
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -6281,7 +6276,7 @@ export const throttleEffect = dual<
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -6297,7 +6292,7 @@ const throttleEnforceEffect = <R, E, A, R2, E2>(
   self: Stream.Stream<R, E, A>,
   cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
   units: number,
-  duration: Duration.Duration,
+  duration: Duration.DurationInput,
   burst: number
 ): Stream.Stream<R | R2, E | E2, A> => {
   const loop = (
@@ -6340,7 +6335,7 @@ const throttleShapeEffect = <R, E, A, R2, E2>(
   self: Stream.Stream<R, E, A>,
   costFn: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>,
   units: number,
-  duration: Duration.Duration,
+  duration: Duration.DurationInput,
   burst: number
 ): Stream.Stream<R | R2, E | E2, A> => {
   const loop = (
@@ -6387,14 +6382,14 @@ const throttleShapeEffect = <R, E, A, R2, E2>(
 }
 
 /** @internal */
-export const tick = (interval: Duration.Duration): Stream.Stream<never, never, void> =>
+export const tick = (interval: Duration.DurationInput): Stream.Stream<never, never, void> =>
   repeatWithSchedule(void 0, Schedule.spaced(interval))
 
 /** @internal */
 export const timeout = dual<
-  (duration: Duration.Duration) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
-  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration) => Stream.Stream<R, E, A>
->(2, <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.Duration): Stream.Stream<R, E, A> =>
+  (duration: Duration.DurationInput) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A>,
+  <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput) => Stream.Stream<R, E, A>
+>(2, <R, E, A>(self: Stream.Stream<R, E, A>, duration: Duration.DurationInput): Stream.Stream<R, E, A> =>
   pipe(
     toPull(self),
     Effect.map(Effect.timeoutFail<Option.Option<E>>({
@@ -6408,19 +6403,19 @@ export const timeout = dual<
 export const timeoutFail = dual<
   <E2>(
     error: LazyArg<E2>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E2 | E, A>,
   <R, E, A, E2>(
     self: Stream.Stream<R, E, A>,
     error: LazyArg<E2>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ) => Stream.Stream<R, E2 | E, A>
 >(
   3,
   <R, E, A, E2>(
     self: Stream.Stream<R, E, A>,
     error: LazyArg<E2>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ): Stream.Stream<R, E | E2, A> => pipe(self, timeoutTo(duration, failSync(error)))
 )
 
@@ -6428,19 +6423,19 @@ export const timeoutFail = dual<
 export const timeoutFailCause = dual<
   <E2>(
     cause: LazyArg<Cause.Cause<E2>>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E2 | E, A>,
   <R, E, A, E2>(
     self: Stream.Stream<R, E, A>,
     cause: LazyArg<Cause.Cause<E2>>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ) => Stream.Stream<R, E2 | E, A>
 >(
   3,
   <R, E, A, E2>(
     self: Stream.Stream<R, E, A>,
     cause: LazyArg<Cause.Cause<E2>>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ): Stream.Stream<R, E | E2, A> =>
     pipe(
       toPull(self),
@@ -6457,19 +6452,19 @@ export const timeoutFailCause = dual<
 /** @internal */
 export const timeoutTo = dual<
   <R2, E2, A2>(
-    duration: Duration.Duration,
+    duration: Duration.DurationInput,
     that: Stream.Stream<R2, E2, A2>
   ) => <R, E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2 | A>,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    duration: Duration.Duration,
+    duration: Duration.DurationInput,
     that: Stream.Stream<R2, E2, A2>
   ) => Stream.Stream<R2 | R, E2 | E, A2 | A>
 >(
   3,
   <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    duration: Duration.Duration,
+    duration: Duration.DurationInput,
     that: Stream.Stream<R2, E2, A2>
   ): Stream.Stream<R | R2, E | E2, A | A2> => {
     const StreamTimeout = Cause.RuntimeException("Stream Timeout")
