@@ -38,6 +38,19 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), [1, 1, 1, 1, 1])
     }))
 
+  it.effect("tick", () =>
+    Effect.gen(function*($) {
+      const fiber = yield* $(
+        Stream.tick("10 millis"),
+        Stream.take(2),
+        Stream.runCollect,
+        Effect.fork
+      )
+      yield* $(TestClock.adjust(Duration.millis(50)))
+      const result = yield* $(Fiber.join(fiber))
+      assert.deepStrictEqual(Array.from(result), [undefined, undefined])
+    }))
+
   it.effect("repeat - short circuits", () =>
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))

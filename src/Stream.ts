@@ -830,8 +830,8 @@ export const crossWith: {
  * @category utils
  */
 export const debounce: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 } = internal.debounce
 
 /**
@@ -1695,8 +1695,11 @@ export const grouped: {
  * @category utils
  */
 export const groupedWithin: {
-  (chunkSize: number, duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
-  <R, E, A>(self: Stream<R, E, A>, chunkSize: number, duration: Duration.Duration): Stream<R, E, Chunk.Chunk<A>>
+  (
+    chunkSize: number,
+    duration: Duration.DurationInput
+  ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, Chunk.Chunk<A>>
+  <R, E, A>(self: Stream<R, E, A>, chunkSize: number, duration: Duration.DurationInput): Stream<R, E, Chunk.Chunk<A>>
 } = internal.groupedWithin
 
 /**
@@ -1710,8 +1713,8 @@ export const groupedWithin: {
  * @category utils
  */
 export const haltAfter: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 } = internal.haltAfter
 
 /**
@@ -1826,8 +1829,8 @@ export const intersperseAffixes: {
  * @category utils
  */
 export const interruptAfter: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 } = internal.interruptAfter
 
 /**
@@ -3635,7 +3638,7 @@ export const throttle: {
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -3645,7 +3648,7 @@ export const throttle: {
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => number
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -3673,7 +3676,7 @@ export const throttleEffect: {
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -3683,7 +3686,7 @@ export const throttleEffect: {
     options: {
       readonly cost: (chunk: Chunk.Chunk<A>) => Effect.Effect<R2, E2, number>
       readonly units: number
-      readonly duration: Duration.Duration
+      readonly duration: Duration.DurationInput
       readonly burst?: number
       readonly strategy?: "enforce" | "shape"
     }
@@ -3696,7 +3699,7 @@ export const throttleEffect: {
  * @since 1.0.0
  * @category constructors
  */
-export const tick: (interval: Duration.Duration) => Stream<never, never, void> = internal.tick
+export const tick: (interval: Duration.DurationInput) => Stream<never, never, void> = internal.tick
 
 /**
  * Ends the stream if it does not produce a value after the specified duration.
@@ -3705,8 +3708,8 @@ export const tick: (interval: Duration.Duration) => Stream<never, never, void> =
  * @category utils
  */
 export const timeout: {
-  (duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
-  <R, E, A>(self: Stream<R, E, A>, duration: Duration.Duration): Stream<R, E, A>
+  (duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E, A>
+  <R, E, A>(self: Stream<R, E, A>, duration: Duration.DurationInput): Stream<R, E, A>
 } = internal.timeout
 
 /**
@@ -3717,8 +3720,8 @@ export const timeout: {
  * @category utils
  */
 export const timeoutFail: {
-  <E2>(error: LazyArg<E2>, duration: Duration.Duration): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
-  <R, E, A, E2>(self: Stream<R, E, A>, error: LazyArg<E2>, duration: Duration.Duration): Stream<R, E | E2, A>
+  <E2>(error: LazyArg<E2>, duration: Duration.DurationInput): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
+  <R, E, A, E2>(self: Stream<R, E, A>, error: LazyArg<E2>, duration: Duration.DurationInput): Stream<R, E | E2, A>
 } = internal.timeoutFail
 
 /**
@@ -3731,12 +3734,12 @@ export const timeoutFail: {
 export const timeoutFailCause: {
   <E2>(
     cause: LazyArg<Cause.Cause<E2>>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ): <R, E, A>(self: Stream<R, E, A>) => Stream<R, E2 | E, A>
   <R, E, A, E2>(
     self: Stream<R, E, A>,
     cause: LazyArg<Cause.Cause<E2>>,
-    duration: Duration.Duration
+    duration: Duration.DurationInput
   ): Stream<R, E | E2, A>
 } = internal.timeoutFailCause
 
@@ -3749,12 +3752,12 @@ export const timeoutFailCause: {
  */
 export const timeoutTo: {
   <R2, E2, A2>(
-    duration: Duration.Duration,
+    duration: Duration.DurationInput,
     that: Stream<R2, E2, A2>
   ): <R, E, A>(self: Stream<R, E, A>) => Stream<R2 | R, E2 | E, A2 | A>
   <R, E, A, R2, E2, A2>(
     self: Stream<R, E, A>,
-    duration: Duration.Duration,
+    duration: Duration.DurationInput,
     that: Stream<R2, E2, A2>
   ): Stream<R | R2, E | E2, A | A2>
 } = internal.timeoutTo
