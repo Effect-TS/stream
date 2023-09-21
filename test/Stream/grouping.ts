@@ -121,7 +121,7 @@ describe.concurrent("Stream", () => {
   it.effect("grouped - group size is correct", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 100),
+        Stream.range(0, 99),
         Stream.grouped(10),
         Stream.map(Chunk.size),
         Stream.runCollect

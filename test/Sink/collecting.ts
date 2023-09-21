@@ -83,7 +83,7 @@ describe.concurrent("Sink", () => {
   it.effect("collectAllToMap", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.run(Sink.collectAllToMap(
           (n) => n % 3,
           (x, y) => x + y

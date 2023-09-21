@@ -15,7 +15,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.mapEffect((n) => Ref.update(ref, Chunk.append(n))),
         Stream.drain,
         Stream.runDrain

@@ -104,7 +104,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("flatMap - associativity", () =>
     Effect.gen(function*($) {
-      const stream = Stream.range(0, 5)
+      const stream = Stream.range(0, 4)
       const f = (n: number) => Stream.succeed(n * 2)
       const g = (n: number) => Stream.succeed(String(n))
       const { result1, result2 } = yield* $(Effect.all({
@@ -483,7 +483,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(0))
       const semaphore = yield* $(Effect.makeSemaphore(4))
       yield* $(
-        Stream.range(1, 13),
+        Stream.range(1, 12),
         Stream.flatMap((n) => {
           if (n > 8) {
             return pipe(
@@ -694,7 +694,7 @@ describe.concurrent("Stream", () => {
   it.effect("flattenExitOption - happy path", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.toQueue({ capacity: 1 }),
         Effect.flatMap((queue) =>
           pipe(
@@ -716,7 +716,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.concat(Stream.fail(error)),
         Stream.toQueue({ capacity: 1 }),
         Effect.flatMap((queue) =>

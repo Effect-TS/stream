@@ -231,7 +231,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
       yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.tap((n) =>
           pipe(
             Effect.fail("Boom"),

@@ -4644,7 +4644,7 @@ export const provideSomeLayer = dual<
 /** @internal */
 export const range = (min: number, max: number, chunkSize = DefaultChunkSize): Stream.Stream<never, never, number> =>
   suspend(() => {
-    if (min >= max) {
+    if (min > max) {
       return empty as Stream.Stream<never, never, number>
     }
     const go = (
@@ -4652,7 +4652,7 @@ export const range = (min: number, max: number, chunkSize = DefaultChunkSize): S
       max: number,
       chunkSize: number
     ): Channel.Channel<never, unknown, unknown, unknown, never, Chunk.Chunk<number>, unknown> => {
-      const remaining = max - min
+      const remaining = max - min + 1
       if (remaining > chunkSize) {
         return pipe(
           core.write(Chunk.range(min, min + chunkSize - 1)),

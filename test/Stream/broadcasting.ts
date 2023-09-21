@@ -13,7 +13,7 @@ describe.concurrent("Stream", () => {
   it.effect("broadcast - values", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.broadcast(2, 12),
         Effect.flatMap((streams) =>
           Effect.all({
@@ -31,7 +31,7 @@ describe.concurrent("Stream", () => {
   it.effect("broadcast - errors", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(
-        Stream.range(0, 1),
+        Stream.make(0),
         Stream.concat(Stream.fail("boom")),
         Stream.broadcast(2, 12),
         Effect.flatMap((streams) =>
@@ -49,7 +49,7 @@ describe.concurrent("Stream", () => {
   it.effect("broadcast - backpressure", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.flatMap(Stream.succeed),
         Stream.broadcast(2, 2),
         Effect.flatMap((streams) =>
@@ -87,7 +87,7 @@ describe.concurrent("Stream", () => {
   it.effect("broadcast - unsubscribe", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.broadcast(2, 2),
         Effect.flatMap((streams) =>
           pipe(

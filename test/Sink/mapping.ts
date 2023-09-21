@@ -12,7 +12,7 @@ describe.concurrent("Sink", () => {
   it.effect("as", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(pipe(Sink.succeed(1), Sink.as("as")))
       )
       assert.strictEqual(result, "as")
@@ -155,7 +155,7 @@ describe.concurrent("Sink", () => {
   it.effect("map", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(pipe(Sink.succeed(1), Sink.map((n) => `${n}`)))
       )
       assert.strictEqual(result, "1")
@@ -164,7 +164,7 @@ describe.concurrent("Sink", () => {
   it.effect("mapEffect - happy path", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(pipe(Sink.succeed(1), Sink.mapEffect((n) => Effect.succeed(n + 1))))
       )
       assert.strictEqual(result, 2)
@@ -173,7 +173,7 @@ describe.concurrent("Sink", () => {
   it.effect("mapEffect - error", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(pipe(Sink.succeed(1), Sink.mapEffect(() => Effect.fail("fail")))),
         Effect.flip
       )
@@ -183,7 +183,7 @@ describe.concurrent("Sink", () => {
   it.effect("mapError", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(pipe(Sink.fail("fail"), Sink.mapError((s) => s + "!"))),
         Effect.either
       )

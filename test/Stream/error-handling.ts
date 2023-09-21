@@ -333,7 +333,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const result = yield* $(
         Stream.empty,
-        Stream.orElseIfEmptyStream(() => Stream.range(0, 5)),
+        Stream.orElseIfEmptyStream(() => Stream.range(0, 4)),
         Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [0, 1, 2, 3, 4])
