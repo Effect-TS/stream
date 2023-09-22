@@ -22,7 +22,7 @@ describe.concurrent("Sink", () => {
         [1, 3, 7, 20],
         Effect.forEach((n) =>
           pipe(
-            Stream.range(1, 100),
+            Stream.range(1, 99),
             Stream.rechunk(n),
             Stream.run(sink),
             Effect.map((option) => Equal.equals(option, Option.some(Option.some(10))))
@@ -79,7 +79,7 @@ describe.concurrent("Sink", () => {
   it.effect("forEachWhile - handles leftovers", () =>
     Effect.gen(function*($) {
       const [result, value] = yield* $(
-        Stream.range(1, 5),
+        Stream.range(1, 4),
         Stream.run(pipe(
           Sink.forEachWhile((n: number) => Effect.succeed(n <= 3)),
           Sink.collectLeftover

@@ -250,46 +250,54 @@ describe.concurrent("Stream", () => {
       assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 10)))
     }))
 
-  it.effect("range - includes min value and excludes max value", () =>
+  it.effect("range - includes both endpoints", () =>
     Effect.gen(function*($) {
       const result = yield* $(Stream.runCollect(Stream.range(1, 2)))
-      assert.deepStrictEqual(Array.from(result), [1])
+      assert.deepStrictEqual(Array.from(result), [1, 2])
     }))
 
   it.effect("range - two large ranges can be concatenated", () =>
     Effect.gen(function*($) {
       const result = yield* $(
         Stream.range(1, 1_000),
-        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.concat(Stream.range(1_001, 2_000)),
         Stream.runCollect
       )
-      assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 1_999)))
+      assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 2000)))
     }))
 
   it.effect("range - two small ranges can be concatenated", () =>
     Effect.gen(function*($) {
       const result = yield* $(
         Stream.range(1, 10),
-        Stream.concat(Stream.range(10, 20)),
+        Stream.concat(Stream.range(11, 20)),
         Stream.runCollect
       )
-      assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 19)))
+      assert.deepStrictEqual(Array.from(result), Array.from(Chunk.range(1, 20)))
     }))
 
-  it.effect("range - emits no values when start >= end", () =>
+  it.effect("range - emits no values when start > end", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 1),
-        Stream.concat(Stream.range(2, 1)),
+        Stream.range(2, 1),
         Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [])
     }))
 
+  it.effect("range - emits 1 value when start === end", () =>
+    Effect.gen(function*($) {
+      const result = yield* $(
+        Stream.range(1, 1),
+        Stream.runCollect
+      )
+      assert.deepStrictEqual(Array.from(result), [1])
+    }))
+
   it.effect("range - emits values in chunks of chunkSize", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10, 2),
+        Stream.range(1, 9, 2),
         Stream.mapChunks((chunk) => Chunk.make(pipe(chunk, Chunk.reduce(0, (x, y) => x + y)))),
         Stream.runCollect
       )

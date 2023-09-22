@@ -2636,8 +2636,7 @@ export const provideSomeLayer: {
 } = internal.provideSomeLayer
 
 /**
- * Constructs a stream from a range of integers (lower bound included, upper
- * bound not included).
+ * Constructs a stream from a range of integers, including both endpoints.
  *
  * @since 1.0.0
  * @category constructors

@@ -22,7 +22,7 @@ describe.concurrent("Sink", () => {
   it.effect("fold - termination in the middle", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(Sink.fold<number, number>(0, (n) => n <= 5, (x, y) => x + y))
       )
       assert.strictEqual(result, 6)
@@ -31,7 +31,7 @@ describe.concurrent("Sink", () => {
   it.effect("fold - immediate termination", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(Sink.fold<number, number>(0, (n) => n <= -1, (x, y) => x + y))
       )
       assert.strictEqual(result, 0)
@@ -40,7 +40,7 @@ describe.concurrent("Sink", () => {
   it.effect("fold - no termination", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(1, 10),
+        Stream.range(1, 9),
         Stream.run(Sink.fold<number, number>(0, (n) => n <= 500, (x, y) => x + y))
       )
       assert.strictEqual(result, 45)
@@ -48,7 +48,7 @@ describe.concurrent("Sink", () => {
 
   it.effect("foldLeft equivalence with Chunk.reduce", () =>
     Effect.gen(function*($) {
-      const stream = Stream.range(1, 10)
+      const stream = Stream.range(1, 9)
       const result1 = yield* $(stream, Stream.run(Sink.foldLeft("", (s, n) => s + `${n}`)))
       const result2 = yield* $(stream, Stream.runCollect, Effect.map(Chunk.reduce("", (s, n) => s + `${n}`)))
       assert.strictEqual(result1, result2)

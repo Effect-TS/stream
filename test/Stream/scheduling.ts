@@ -14,7 +14,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const start = yield* $(Clock.currentTimeMillis)
       const fiber = yield* $(
-        Stream.range(1, 9),
+        Stream.range(1, 8),
         Stream.schedule(Schedule.fixed(Duration.millis(100))),
         Stream.mapEffect((n) =>
           pipe(

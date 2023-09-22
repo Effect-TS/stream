@@ -27,7 +27,7 @@ describe.concurrent("Stream", () => {
   it.effect("timeout - should end the stream", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.tap(() => Effect.sleep(Duration.infinity)),
         Stream.timeout(Duration.zero),
         Stream.runCollect
@@ -38,7 +38,7 @@ describe.concurrent("Stream", () => {
   it.effect("timeoutFail - succeed", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.tap(() => Effect.sleep(Duration.infinity)),
         Stream.timeoutFail(() => false, Duration.zero),
         Stream.runDrain,
@@ -63,7 +63,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.tap(() => Effect.sleep(Duration.infinity)),
         Stream.timeoutFailCause(() => Cause.die(error), Duration.zero),
         Stream.runDrain,
@@ -77,7 +77,7 @@ describe.concurrent("Stream", () => {
   it.effect("timeoutTo - succeed", () =>
     Effect.gen(function*($) {
       const result = yield* $(
-        Stream.range(0, 5),
+        Stream.range(0, 4),
         Stream.timeoutTo(Duration.infinity, Stream.succeed(-1)),
         Stream.runCollect
       )

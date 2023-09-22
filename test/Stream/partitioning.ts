@@ -29,7 +29,7 @@ describe.concurrent("Stream", () => {
   it.effect("partition - values", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(
-        Stream.range(0, 6),
+        Stream.range(0, 5),
         Stream.partition((n) => n % 2 === 0),
         Effect.flatMap(([evens, odds]) =>
           Effect.all({
@@ -46,7 +46,7 @@ describe.concurrent("Stream", () => {
   it.effect("partition - errors", () =>
     Effect.gen(function*($) {
       const { result1, result2 } = yield* $(
-        Stream.range(0, 1),
+        Stream.make(0),
         Stream.concat(Stream.fail("boom")),
         Stream.partition((n) => n % 2 === 0),
         Effect.flatMap(([evens, odds]) =>
@@ -64,7 +64,7 @@ describe.concurrent("Stream", () => {
   it.effect("partition - backpressure", () =>
     Effect.gen(function*($) {
       const { result1, result2, result3 } = yield* $(
-        Stream.range(0, 6),
+        Stream.range(0, 5),
         Stream.partition((n) => (n % 2 === 0), { bufferSize: 1 }),
         Effect.flatMap(([evens, odds]) =>
           Effect.gen(function*($) {

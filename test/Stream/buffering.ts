@@ -29,7 +29,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.concat(Stream.fail(error)),
         Stream.buffer({ capacity: 2 }),
         Stream.runCollect,
@@ -43,7 +43,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const latch = yield* $(Deferred.make<never, void>())
       const stream = pipe(
-        Stream.range(1, 5),
+        Stream.range(1, 4),
         Stream.tap((n) =>
           pipe(
             Ref.update(ref, Chunk.append(n)),
@@ -81,7 +81,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.concat(Stream.fail(error)),
         Stream.bufferChunks({ capacity: 2 }),
         Stream.runCollect,
@@ -95,7 +95,7 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const latch = yield* $(Deferred.make<never, void>())
       const stream = pipe(
-        Stream.range(1, 5),
+        Stream.range(1, 4),
         Stream.tap((n) =>
           pipe(
             Ref.update(ref, Chunk.append(n)),
@@ -120,7 +120,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         Stream.range(1, 1_000),
         Stream.concat(Stream.fail(error)),
-        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.concat(Stream.range(1_001, 2_000)),
         Stream.bufferChunks({ capacity: 2, strategy: "dropping" }),
         Stream.runCollect,
         Effect.exit
@@ -142,7 +142,7 @@ describe.concurrent("Stream", () => {
             Stream.fromEffect(Deferred.await(latch1)),
             Stream.flatMap(() =>
               pipe(
-                Stream.range(1, 17),
+                Stream.range(1, 16),
                 Stream.rechunk(1),
                 Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
@@ -154,7 +154,7 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Deferred.await(latch3)),
         Stream.flatMap(() =>
           pipe(
-            Stream.range(17, 25),
+            Stream.range(17, 24),
             Stream.rechunk(1),
             Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
@@ -211,7 +211,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         Stream.range(1, 1_000),
         Stream.concat(Stream.fail(error)),
-        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.concat(Stream.range(1_001, 2_000)),
         Stream.bufferChunks({ capacity: 2, strategy: "sliding" }),
         Stream.runCollect,
         Effect.exit
@@ -234,7 +234,7 @@ describe.concurrent("Stream", () => {
             Stream.fromEffect(Deferred.await(latch1)),
             Stream.flatMap(() =>
               pipe(
-                Stream.range(1, 17),
+                Stream.range(1, 16),
                 Stream.rechunk(1),
                 Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
@@ -246,7 +246,7 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Deferred.await(latch3)),
         Stream.flatMap(() =>
           pipe(
-            Stream.range(17, 26),
+            Stream.range(17, 25),
             Stream.rechunk(1),
             Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
@@ -336,7 +336,7 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Deferred.await(latch3)),
         Stream.flatMap(() =>
           pipe(
-            Stream.range(17, 25),
+            Stream.range(17, 24),
             Stream.rechunk(1),
             Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
@@ -393,7 +393,7 @@ describe.concurrent("Stream", () => {
       const result = yield* $(
         Stream.range(1, 1_000),
         Stream.concat(Stream.fail(error)),
-        Stream.concat(Stream.range(1_000, 2_000)),
+        Stream.concat(Stream.range(1_001, 2_000)),
         Stream.buffer({ capacity: 2, strategy: "sliding" }),
         Stream.runCollect,
         Effect.exit
@@ -415,7 +415,7 @@ describe.concurrent("Stream", () => {
             Stream.fromEffect(Deferred.await(latch1)),
             Stream.flatMap(() =>
               pipe(
-                Stream.range(1, 17),
+                Stream.range(1, 16),
                 Stream.rechunk(1),
                 Stream.ensuring(Deferred.succeed<never, void>(latch2, void 0))
               )
@@ -427,7 +427,7 @@ describe.concurrent("Stream", () => {
         Stream.fromEffect(Deferred.await(latch3)),
         Stream.flatMap(() =>
           pipe(
-            Stream.range(17, 25),
+            Stream.range(17, 24),
             Stream.rechunk(1),
             Stream.ensuring(Deferred.succeed<never, void>(latch4, void 0))
           )
@@ -500,7 +500,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const error = Cause.RuntimeException("boom")
       const result = yield* $(
-        Stream.range(0, 10),
+        Stream.range(0, 9),
         Stream.concat(Stream.fail(error)),
         Stream.buffer({ capacity: "unbounded" }),
         Stream.runCollect,
@@ -514,14 +514,14 @@ describe.concurrent("Stream", () => {
       const ref = yield* $(Ref.make(Chunk.empty<number>()))
       const latch = yield* $(Deferred.make<never, void>())
       const stream = pipe(
-        Stream.range(1, 1_000),
+        Stream.range(1, 999),
         Stream.tap((n) =>
           pipe(
             Ref.update(ref, Chunk.append(n)),
             Effect.zipRight(pipe(Deferred.succeed<never, void>(latch, void 0), Effect.when(() => n === 999)))
           )
         ),
-        Stream.rechunk(1_000),
+        Stream.rechunk(999),
         Stream.buffer({ capacity: "unbounded" })
       )
       const result1 = yield* $(stream, Stream.take(2), Stream.runCollect)

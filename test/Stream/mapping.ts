@@ -209,7 +209,7 @@ describe.concurrent("Stream", () => {
     Effect.gen(function*($) {
       const queue = yield* $(Queue.unbounded<number>())
       yield* $(
-        Stream.range(0, 9),
+        Stream.range(0, 8),
         Stream.mapEffect((n) => pipe(Queue.offer(queue, n)), { concurrency: 1 }),
         Stream.runDrain
       )
@@ -313,7 +313,7 @@ describe.concurrent("Stream", () => {
   it.effect("mapEffectPar - propagates the error of the original stream", () =>
     Effect.gen(function*($) {
       const fiber = yield* $(
-        Stream.range(1, 11),
+        Stream.range(1, 10),
         Stream.concat(Stream.fail(Cause.RuntimeException("boom"))),
         Stream.mapEffect(() => Effect.sleep(Duration.seconds(1)), { concurrency: 2 }),
         Stream.runDrain,

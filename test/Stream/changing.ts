@@ -7,7 +7,7 @@ import { assert, describe } from "vitest"
 describe.concurrent("Stream", () => {
   it.effect("changes", () =>
     Effect.gen(function*($) {
-      const stream = Stream.range(0, 20)
+      const stream = Stream.range(0, 19)
       const result = yield* $(
         stream,
         Stream.changes,
@@ -24,7 +24,7 @@ describe.concurrent("Stream", () => {
 
   it.effect("changesWithEffect", () =>
     Effect.gen(function*($) {
-      const stream = Stream.range(0, 20)
+      const stream = Stream.range(0, 19)
       const result = yield* $(
         stream,
         Stream.changesWithEffect((left, right) => Effect.succeed(left === right)),
