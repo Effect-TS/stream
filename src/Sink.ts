@@ -266,7 +266,7 @@ export const collectLeftover: <R, E, In, L, Z>(
  * @since 1.0.0
  * @category mapping
  */
-export const contramap = internal.contramap
+export const mapInput = internal.mapInput
 
 /**
  * Effectfully transforms this sink's input elements.
@@ -274,7 +274,7 @@ export const contramap = internal.contramap
  * @since 1.0.0
  * @category mapping
  */
-export const contramapEffect = internal.contramapEffect
+export const mapInputEffect = internal.mapInputEffect
 
 /**
  * Transforms this sink's input chunks. `f` must preserve chunking-invariance.
@@ -282,7 +282,7 @@ export const contramapEffect = internal.contramapEffect
  * @since 1.0.0
  * @category mapping
  */
-export const contramapChunks: {
+export const mapInputChunks: {
   <In0, In>(
     f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
   ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z>
@@ -290,7 +290,7 @@ export const contramapChunks: {
     self: Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
   ): Sink<R, E, In0, L, Z>
-} = internal.contramapChunks
+} = internal.mapInputChunks
 
 /**
  * Effectfully transforms this sink's input chunks. `f` must preserve
@@ -299,7 +299,7 @@ export const contramapChunks: {
  * @since 1.0.0
  * @category mapping
  */
-export const contramapChunksEffect: {
+export const mapInputChunksEffect: {
   <In0, R2, E2, In>(
     f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
   ): <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In0, L, Z>
@@ -307,7 +307,7 @@ export const contramapChunksEffect: {
     self: Sink<R, E, In, L, Z>,
     f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
   ): Sink<R | R2, E | E2, In0, L, Z>
-} = internal.contramapChunksEffect
+} = internal.mapInputChunksEffect
 
 /**
  * A sink that counts the number of elements fed to it.

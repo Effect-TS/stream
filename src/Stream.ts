@@ -2613,10 +2613,10 @@ export const provideServiceStream: {
  * @since 1.0.0
  * @category context
  */
-export const contramapContext: {
+export const mapInputContext: {
   <R0, R>(f: (env: Context.Context<R0>) => Context.Context<R>): <E, A>(self: Stream<R, E, A>) => Stream<R0, E, A>
   <E, A, R0, R>(self: Stream<R, E, A>, f: (env: Context.Context<R0>) => Context.Context<R>): Stream<R0, E, A>
-} = internal.contramapContext
+} = internal.mapInputContext
 
 /**
  * Splits the context into two parts, providing one part using the

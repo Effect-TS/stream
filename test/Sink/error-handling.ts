@@ -18,7 +18,7 @@ describe.concurrent("Sink", () => {
         Stream.run(
           pipe(
             Sink.drain,
-            Sink.contramapEffect((input: number) => Effect.try(() => input)),
+            Sink.mapInputEffect((input: number) => Effect.try(() => input)),
             Sink.mapError(() => ErrorSink)
           )
         ),

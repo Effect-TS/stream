@@ -514,7 +514,7 @@ export const concatOut: <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
  * @since 1.0.0
  * @category utils
  */
-export const contramap: {
+export const mapInput: {
   <InDone0, InDone>(
     f: (a: InDone0) => InDone
   ): <Env, InErr, InElem, OutErr, OutElem, OutDone>(
@@ -524,7 +524,7 @@ export const contramap: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (a: InDone0) => InDone
   ): Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
-} = channel.contramap
+} = channel.mapInput
 
 /**
  * Returns a new channel which is the same as this one but applies the given
@@ -533,7 +533,7 @@ export const contramap: {
  * @since 1.0.0
  * @category utils
  */
-export const contramapEffect: {
+export const mapInputEffect: {
   <Env1, InErr, InDone0, InDone>(
     f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
   ): <Env, InElem, OutErr, OutElem, OutDone>(
@@ -543,7 +543,7 @@ export const contramapEffect: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
   ): Channel<Env | Env1, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
-} = channel.contramapEffect
+} = channel.mapInputEffect
 
 /**
  * Returns a new channel which is the same as this one but applies the given
@@ -552,7 +552,7 @@ export const contramapEffect: {
  * @since 1.0.0
  * @category utils
  */
-export const contramapError: {
+export const mapInputError: {
   <InErr0, InErr>(
     f: (a: InErr0) => InErr
   ): <Env, InElem, InDone, OutErr, OutElem, OutDone>(
@@ -562,7 +562,7 @@ export const contramapError: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (a: InErr0) => InErr
   ): Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
-} = channel.contramapError
+} = channel.mapInputError
 
 /**
  * Returns a new channel which is the same as this one but applies the given
@@ -571,7 +571,7 @@ export const contramapError: {
  * @since 1.0.0
  * @category utils
  */
-export const contramapErrorEffect: {
+export const mapInputErrorEffect: {
   <Env1, InErr0, InErr, InDone>(
     f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
   ): <Env, InElem, OutErr, OutElem, OutDone>(
@@ -581,7 +581,7 @@ export const contramapErrorEffect: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
   ): Channel<Env | Env1, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
-} = channel.contramapErrorEffect
+} = channel.mapInputErrorEffect
 
 /**
  * Returns a new channel which is the same as this one but applies the given
@@ -590,7 +590,7 @@ export const contramapErrorEffect: {
  * @since 1.0.0
  * @category utils
  */
-export const contramapIn: {
+export const mapInputIn: {
   <InElem0, InElem>(
     f: (a: InElem0) => InElem
   ): <Env, InErr, InDone, OutErr, OutElem, OutDone>(
@@ -600,7 +600,7 @@ export const contramapIn: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (a: InElem0) => InElem
   ): Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
-} = channel.contramapIn
+} = channel.mapInputIn
 
 /**
  * Returns a new channel which is the same as this one but applies the given
@@ -609,7 +609,7 @@ export const contramapIn: {
  * @since 1.0.0
  * @category utils
  */
-export const contramapInEffect: {
+export const mapInputInEffect: {
   <Env1, InErr, InElem0, InElem>(
     f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
   ): <Env, InDone, OutErr, OutElem, OutDone>(
@@ -619,7 +619,7 @@ export const contramapInEffect: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
   ): Channel<Env | Env1, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
-} = channel.contramapInEffect
+} = channel.mapInputInEffect
 
 /**
  * Returns a new channel, which is the same as this one, except that all the
@@ -1739,7 +1739,7 @@ export const provideLayer: {
  * @since 1.0.0
  * @category context
  */
-export const contramapContext: {
+export const mapInputContext: {
   <Env0, Env>(
     f: (env: Context.Context<Env0>) => Context.Context<Env>
   ): <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
@@ -1749,7 +1749,7 @@ export const contramapContext: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     f: (env: Context.Context<Env0>) => Context.Context<Env>
   ): Channel<Env0, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-} = channel.contramapContext
+} = channel.mapInputContext
 
 /**
  * Splits the context into two parts, providing one part using the
