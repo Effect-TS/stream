@@ -261,7 +261,7 @@ export const concatOut = <Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>(
 ): Channel.Channel<Env, InErr, InElem, InDone, OutErr, OutElem, unknown> => core.concatAll(self)
 
 /** @internal */
-export const contramap = dual<
+export const mapInput = dual<
   <InDone0, InDone>(
     f: (a: InDone0) => InDone
   ) => <Env, InErr, InElem, OutErr, OutElem, OutDone>(
@@ -284,7 +284,7 @@ export const contramap = dual<
 })
 
 /** @internal */
-export const contramapEffect = dual<
+export const mapInputEffect = dual<
   <Env1, InErr, InDone0, InDone>(
     f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
   ) => <Env, InElem, OutErr, OutElem, OutDone>(
@@ -307,7 +307,7 @@ export const contramapEffect = dual<
 })
 
 /** @internal */
-export const contramapError = dual<
+export const mapInputError = dual<
   <InErr0, InErr>(
     f: (a: InErr0) => InErr
   ) => <Env, InElem, InDone, OutErr, OutElem, OutDone>(
@@ -330,7 +330,7 @@ export const contramapError = dual<
 })
 
 /** @internal */
-export const contramapErrorEffect = dual<
+export const mapInputErrorEffect = dual<
   <Env1, InErr0, InErr, InDone>(
     f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
   ) => <Env, InElem, OutErr, OutElem, OutDone>(
@@ -353,7 +353,7 @@ export const contramapErrorEffect = dual<
 })
 
 /** @internal */
-export const contramapIn = dual<
+export const mapInputIn = dual<
   <InElem0, InElem>(
     f: (a: InElem0) => InElem
   ) => <Env, InErr, InDone, OutErr, OutElem, OutDone>(
@@ -375,7 +375,7 @@ export const contramapIn = dual<
   return core.pipeTo(reader, self)
 })
 
-export const contramapInEffect = dual<
+export const mapInputInEffect = dual<
   <Env1, InErr, InElem0, InElem>(
     f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
   ) => <Env, InDone, OutErr, OutElem, OutDone>(
@@ -2060,7 +2060,7 @@ export const provideLayer = dual<
   unwrapScoped(Effect.map(Layer.build(layer), (env) => core.provideContext(self, env))))
 
 /** @internal */
-export const contramapContext = dual<
+export const mapInputContext = dual<
   <Env0, Env>(
     f: (env: Context.Context<Env0>) => Context.Context<Env>
   ) => <InErr, InElem, InDone, OutErr, OutElem, OutDone>(
@@ -2293,7 +2293,7 @@ export const updateService = dual<
   tag: T,
   f: (resource: Context.Tag.Service<T>) => Context.Tag.Service<T>
 ): Channel.Channel<R | T, InErr, unknown, InDone, OutErr, OutElem, OutDone> =>
-  contramapContext(self, (context: Context.Context<R>) =>
+  mapInputContext(self, (context: Context.Context<R>) =>
     Context.merge(
       context,
       Context.make(tag, f(Context.unsafeGet(context, tag)))

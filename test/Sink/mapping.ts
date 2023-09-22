@@ -18,71 +18,71 @@ describe.concurrent("Sink", () => {
       assert.strictEqual(result, "as")
     }))
 
-  it.effect("contramap - happy path", () =>
+  it.effect("mapInput - happy path", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramap((input: string) => Number.parseInt(input))
+        Sink.mapInput((input: string) => Number.parseInt(input))
       )
       const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
-  it.effect("contramap - error", () =>
+  it.effect("mapInput - error", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.fail("Ouch"),
-        Sink.contramap((input: string) => Number.parseInt(input))
+        Sink.mapInput((input: string) => Number.parseInt(input))
       )
       const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
-  it.effect("contramapChunks - happy path", () =>
+  it.effect("mapInputChunks - happy path", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapChunks<string, number>(Chunk.map((_) => Number.parseInt(_)))
+        Sink.mapInputChunks<string, number>(Chunk.map((_) => Number.parseInt(_)))
       )
       const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
-  it.effect("contramapChunks - error", () =>
+  it.effect("mapInputChunks - error", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.fail("Ouch"),
-        Sink.contramapChunks<string, number>(Chunk.map(Number.parseInt))
+        Sink.mapInputChunks<string, number>(Chunk.map(Number.parseInt))
       )
       const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
-  it.effect("contramapEffect - happy path", () =>
+  it.effect("mapInputEffect - happy path", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapEffect((s: string) => Effect.try(() => Number.parseInt(s)))
+        Sink.mapInputEffect((s: string) => Effect.try(() => Number.parseInt(s)))
       )
       const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink))
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
-  it.effect("contramapEffect - error", () =>
+  it.effect("mapInputEffect - error", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.fail("Ouch"),
-        Sink.contramapEffect((s: string) => Effect.try(() => Number.parseInt(s)))
+        Sink.mapInputEffect((s: string) => Effect.try(() => Number.parseInt(s)))
       )
       const result = yield* $(Stream.make("1", "2", "3"), Stream.run(sink), Effect.either)
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
-  it.effect("contramapEffect - error in transformation", () =>
+  it.effect("mapInputEffect - error in transformation", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapEffect((s: string) =>
+        Sink.mapInputEffect((s: string) =>
           Effect.try(() => {
             const result = Number.parseInt(s)
             if (Number.isNaN(result)) {
@@ -96,11 +96,11 @@ describe.concurrent("Sink", () => {
       assert.deepStrictEqual(result, Either.left(Cause.RuntimeException("Cannot parse \"a\" to an integer")))
     }))
 
-  it.effect("contramapChunksEffect - happy path", () =>
+  it.effect("mapInputChunksEffect - happy path", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
+        Sink.mapInputChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
             Effect.forEach((s) => Effect.try(() => Number.parseInt(s))),
@@ -112,11 +112,11 @@ describe.concurrent("Sink", () => {
       assert.deepStrictEqual(Array.from(result), [1, 2, 3])
     }))
 
-  it.effect("contramapChunksEffect - error", () =>
+  it.effect("mapInputChunksEffect - error", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.fail("Ouch"),
-        Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
+        Sink.mapInputChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
             Effect.forEach((s) => Effect.try(() => Number.parseInt(s))),
@@ -128,11 +128,11 @@ describe.concurrent("Sink", () => {
       assert.deepStrictEqual(result, Either.left("Ouch"))
     }))
 
-  it.effect("contramapChunksEffect - error in transformation", () =>
+  it.effect("mapInputChunksEffect - error in transformation", () =>
     Effect.gen(function*($) {
       const sink = pipe(
         Sink.collectAll<number>(),
-        Sink.contramapChunksEffect((chunk: Chunk.Chunk<string>) =>
+        Sink.mapInputChunksEffect((chunk: Chunk.Chunk<string>) =>
           pipe(
             chunk,
             Effect.forEach((s) =>

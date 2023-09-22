@@ -4603,7 +4603,7 @@ export const provideServiceStream = dual<
 )
 
 /** @internal */
-export const contramapContext = dual<
+export const mapInputContext = dual<
   <R0, R>(
     f: (env: Context.Context<R0>) => Context.Context<R>
   ) => <E, A>(self: Stream.Stream<R, E, A>) => Stream.Stream<R0, E, A>,
@@ -6772,7 +6772,7 @@ export const updateService = dual<
   ): Stream.Stream<R | T, E, A> =>
     pipe(
       self,
-      contramapContext((context) =>
+      mapInputContext((context) =>
         pipe(
           context,
           Context.add(tag, f(pipe(context, Context.unsafeGet(tag))))

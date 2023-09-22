@@ -98,10 +98,6 @@ Added in v1.0.0
   - [foldSink](#foldsink)
 - [mapping](#mapping)
   - [as](#as)
-  - [contramap](#contramap)
-  - [contramapChunks](#contramapchunks)
-  - [contramapChunksEffect](#contramapchunkseffect)
-  - [contramapEffect](#contramapeffect)
   - [dimap](#dimap)
   - [dimapChunks](#dimapchunks)
   - [dimapChunksEffect](#dimapchunkseffect)
@@ -109,6 +105,10 @@ Added in v1.0.0
   - [map](#map)
   - [mapEffect](#mapeffect)
   - [mapError](#maperror)
+  - [mapInput](#mapinput)
+  - [mapInputChunks](#mapinputchunks)
+  - [mapInputChunksEffect](#mapinputchunkseffect)
+  - [mapInputEffect](#mapinputeffect)
   - [mapLeftover](#mapleftover)
 - [models](#models)
   - [Sink (interface)](#sink-interface)
@@ -1337,83 +1337,6 @@ export declare const as: {
 
 Added in v1.0.0
 
-## contramap
-
-Transforms this sink's input elements.
-
-**Signature**
-
-```ts
-export declare const contramap: (<In0, In>(
-  f: (input: In0) => In
-) => <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z>) &
-  (<R, E, L, Z, In0, In>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In) => Sink<R, E, In0, L, Z>)
-```
-
-Added in v1.0.0
-
-## contramapChunks
-
-Transforms this sink's input chunks. `f` must preserve chunking-invariance.
-
-**Signature**
-
-```ts
-export declare const contramapChunks: {
-  <In0, In>(f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>): <R, E, L, Z>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R, E, In0, L, Z>
-  <R, E, L, Z, In0, In>(self: Sink<R, E, In, L, Z>, f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>): Sink<
-    R,
-    E,
-    In0,
-    L,
-    Z
-  >
-}
-```
-
-Added in v1.0.0
-
-## contramapChunksEffect
-
-Effectfully transforms this sink's input chunks. `f` must preserve
-chunking-invariance.
-
-**Signature**
-
-```ts
-export declare const contramapChunksEffect: {
-  <In0, R2, E2, In>(f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>): <R, E, L, Z>(
-    self: Sink<R, E, In, L, Z>
-  ) => Sink<R2 | R, E2 | E, In0, L, Z>
-  <R, E, L, Z, In0, R2, E2, In>(
-    self: Sink<R, E, In, L, Z>,
-    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
-  ): Sink<R | R2, E | E2, In0, L, Z>
-}
-```
-
-Added in v1.0.0
-
-## contramapEffect
-
-Effectfully transforms this sink's input elements.
-
-**Signature**
-
-```ts
-export declare const contramapEffect: (<In0, R2, E2, In>(
-  f: (input: In0) => Effect.Effect<R2, E2, In>
-) => <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In0, L, Z>) &
-  (<R, E, L, Z, In0, R2, E2, In>(
-    self: Sink<R, E, In, L, Z>,
-    f: (input: In0) => Effect.Effect<R2, E2, In>
-  ) => Sink<R | R2, E | E2, In0, L, Z>)
-```
-
-Added in v1.0.0
-
 ## dimap
 
 Transforms both inputs and result of this sink using the provided
@@ -1556,6 +1479,83 @@ export declare const mapError: {
   <E, E2>(f: (error: E) => E2): <R, In, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E2, In, L, Z>
   <R, In, L, Z, E, E2>(self: Sink<R, E, In, L, Z>, f: (error: E) => E2): Sink<R, E2, In, L, Z>
 }
+```
+
+Added in v1.0.0
+
+## mapInput
+
+Transforms this sink's input elements.
+
+**Signature**
+
+```ts
+export declare const mapInput: (<In0, In>(
+  f: (input: In0) => In
+) => <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R, E, In0, L, Z>) &
+  (<R, E, L, Z, In0, In>(self: Sink<R, E, In, L, Z>, f: (input: In0) => In) => Sink<R, E, In0, L, Z>)
+```
+
+Added in v1.0.0
+
+## mapInputChunks
+
+Transforms this sink's input chunks. `f` must preserve chunking-invariance.
+
+**Signature**
+
+```ts
+export declare const mapInputChunks: {
+  <In0, In>(f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>): <R, E, L, Z>(
+    self: Sink<R, E, In, L, Z>
+  ) => Sink<R, E, In0, L, Z>
+  <R, E, L, Z, In0, In>(self: Sink<R, E, In, L, Z>, f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>): Sink<
+    R,
+    E,
+    In0,
+    L,
+    Z
+  >
+}
+```
+
+Added in v1.0.0
+
+## mapInputChunksEffect
+
+Effectfully transforms this sink's input chunks. `f` must preserve
+chunking-invariance.
+
+**Signature**
+
+```ts
+export declare const mapInputChunksEffect: {
+  <In0, R2, E2, In>(f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>): <R, E, L, Z>(
+    self: Sink<R, E, In, L, Z>
+  ) => Sink<R2 | R, E2 | E, In0, L, Z>
+  <R, E, L, Z, In0, R2, E2, In>(
+    self: Sink<R, E, In, L, Z>,
+    f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
+  ): Sink<R | R2, E | E2, In0, L, Z>
+}
+```
+
+Added in v1.0.0
+
+## mapInputEffect
+
+Effectfully transforms this sink's input elements.
+
+**Signature**
+
+```ts
+export declare const mapInputEffect: (<In0, R2, E2, In>(
+  f: (input: In0) => Effect.Effect<R2, E2, In>
+) => <R, E, L, Z>(self: Sink<R, E, In, L, Z>) => Sink<R2 | R, E2 | E, In0, L, Z>) &
+  (<R, E, L, Z, In0, R2, E2, In>(
+    self: Sink<R, E, In, L, Z>,
+    f: (input: In0) => Effect.Effect<R2, E2, In>
+  ) => Sink<R | R2, E | E2, In0, L, Z>)
 ```
 
 Added in v1.0.0

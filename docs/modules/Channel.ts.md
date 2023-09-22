@@ -50,7 +50,7 @@ Added in v1.0.0
   - [contextWith](#contextwith)
   - [contextWithChannel](#contextwithchannel)
   - [contextWithEffect](#contextwitheffect)
-  - [contramapContext](#contramapcontext)
+  - [mapInputContext](#mapinputcontext)
   - [provideContext](#providecontext)
   - [provideLayer](#providelayer)
   - [provideService](#provideservice)
@@ -109,12 +109,6 @@ Added in v1.0.0
   - [concatMapWith](#concatmapwith)
   - [concatMapWithCustom](#concatmapwithcustom)
   - [concatOut](#concatout)
-  - [contramap](#contramap)
-  - [contramapEffect](#contramapeffect)
-  - [contramapError](#contramaperror)
-  - [contramapErrorEffect](#contramaperroreffect)
-  - [contramapIn](#contramapin)
-  - [contramapInEffect](#contramapineffect)
   - [doneCollect](#donecollect)
   - [drain](#drain)
   - [embedInput](#embedinput)
@@ -125,6 +119,12 @@ Added in v1.0.0
   - [foldChannel](#foldchannel)
   - [interruptWhen](#interruptwhen)
   - [interruptWhenDeferred](#interruptwhendeferred)
+  - [mapInput](#mapinput)
+  - [mapInputEffect](#mapinputeffect)
+  - [mapInputError](#mapinputerror)
+  - [mapInputErrorEffect](#mapinputerroreffect)
+  - [mapInputIn](#mapinputin)
+  - [mapInputInEffect](#mapinputineffect)
   - [mergeAll](#mergeall)
   - [mergeAllUnbounded](#mergeallunbounded)
   - [mergeAllUnboundedWith](#mergeallunboundedwith)
@@ -696,7 +696,7 @@ export declare const contextWithEffect: <Env, Env1, OutErr, OutDone>(
 
 Added in v1.0.0
 
-## contramapContext
+## mapInputContext
 
 Transforms the context being provided to the channel with the specified
 function.
@@ -704,7 +704,7 @@ function.
 **Signature**
 
 ```ts
-export declare const contramapContext: {
+export declare const mapInputContext: {
   <Env0, Env>(f: (env: Context.Context<Env0>) => Context.Context<Env>): <
     InErr,
     InElem,
@@ -1863,150 +1863,6 @@ export declare const concatOut: <Env, InErr, InElem, InDone, OutErr, OutElem, Ou
 
 Added in v1.0.0
 
-## contramap
-
-Returns a new channel which is the same as this one but applies the given
-function to the input channel's done value.
-
-**Signature**
-
-```ts
-export declare const contramap: {
-  <InDone0, InDone>(f: (a: InDone0) => InDone): <Env, InErr, InElem, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
-  <Env, InErr, InElem, OutErr, OutElem, OutDone, InDone0, InDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (a: InDone0) => InDone
-  ): Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
-}
-```
-
-Added in v1.0.0
-
-## contramapEffect
-
-Returns a new channel which is the same as this one but applies the given
-effectual function to the input channel's done value.
-
-**Signature**
-
-```ts
-export declare const contramapEffect: {
-  <Env1, InErr, InDone0, InDone>(f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>): <
-    Env,
-    InElem,
-    OutErr,
-    OutElem,
-    OutDone
-  >(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env1 | Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
-  <Env, InElem, OutErr, OutElem, OutDone, Env1, InErr, InDone0, InDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
-  ): Channel<Env | Env1, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
-}
-```
-
-Added in v1.0.0
-
-## contramapError
-
-Returns a new channel which is the same as this one but applies the given
-function to the input channel's error value.
-
-**Signature**
-
-```ts
-export declare const contramapError: {
-  <InErr0, InErr>(f: (a: InErr0) => InErr): <Env, InElem, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
-  <Env, InElem, InDone, OutErr, OutElem, OutDone, InErr0, InErr>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (a: InErr0) => InErr
-  ): Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
-}
-```
-
-Added in v1.0.0
-
-## contramapErrorEffect
-
-Returns a new channel which is the same as this one but applies the given
-effectual function to the input channel's error value.
-
-**Signature**
-
-```ts
-export declare const contramapErrorEffect: {
-  <Env1, InErr0, InErr, InDone>(f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>): <
-    Env,
-    InElem,
-    OutErr,
-    OutElem,
-    OutDone
-  >(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env1 | Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
-  <Env, InElem, OutErr, OutElem, OutDone, Env1, InErr0, InErr, InDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
-  ): Channel<Env | Env1, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
-}
-```
-
-Added in v1.0.0
-
-## contramapIn
-
-Returns a new channel which is the same as this one but applies the given
-function to the input channel's output elements.
-
-**Signature**
-
-```ts
-export declare const contramapIn: {
-  <InElem0, InElem>(f: (a: InElem0) => InElem): <Env, InErr, InDone, OutErr, OutElem, OutDone>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
-  <Env, InErr, InDone, OutErr, OutElem, OutDone, InElem0, InElem>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (a: InElem0) => InElem
-  ): Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
-}
-```
-
-Added in v1.0.0
-
-## contramapInEffect
-
-Returns a new channel which is the same as this one but applies the given
-effectual function to the input channel's output elements.
-
-**Signature**
-
-```ts
-export declare const contramapInEffect: {
-  <Env1, InErr, InElem0, InElem>(f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>): <
-    Env,
-    InDone,
-    OutErr,
-    OutElem,
-    OutDone
-  >(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
-  ) => Channel<Env1 | Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
-  <Env, InDone, OutErr, OutElem, OutDone, Env1, InErr, InElem0, InElem>(
-    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
-    f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
-  ): Channel<Env | Env1, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
-}
-```
-
-Added in v1.0.0
-
 ## doneCollect
 
 Returns a new channel, which is the same as this one, except that all the
@@ -2359,6 +2215,150 @@ export declare const interruptWhenDeferred: {
     self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
     deferred: Deferred.Deferred<OutErr1, OutDone1>
   ): Channel<Env, InErr, InElem, InDone, OutErr | OutErr1, OutElem, OutDone | OutDone1>
+}
+```
+
+Added in v1.0.0
+
+## mapInput
+
+Returns a new channel which is the same as this one but applies the given
+function to the input channel's done value.
+
+**Signature**
+
+```ts
+export declare const mapInput: {
+  <InDone0, InDone>(f: (a: InDone0) => InDone): <Env, InErr, InElem, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+  <Env, InErr, InElem, OutErr, OutElem, OutDone, InDone0, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InDone0) => InDone
+  ): Channel<Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## mapInputEffect
+
+Returns a new channel which is the same as this one but applies the given
+effectual function to the input channel's done value.
+
+**Signature**
+
+```ts
+export declare const mapInputEffect: {
+  <Env1, InErr, InDone0, InDone>(f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>): <
+    Env,
+    InElem,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+  <Env, InElem, OutErr, OutElem, OutDone, Env1, InErr, InDone0, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (i: InDone0) => Effect.Effect<Env1, InErr, InDone>
+  ): Channel<Env | Env1, InErr, InElem, InDone0, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## mapInputError
+
+Returns a new channel which is the same as this one but applies the given
+function to the input channel's error value.
+
+**Signature**
+
+```ts
+export declare const mapInputError: {
+  <InErr0, InErr>(f: (a: InErr0) => InErr): <Env, InElem, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InElem, InDone, OutErr, OutElem, OutDone, InErr0, InErr>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InErr0) => InErr
+  ): Channel<Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## mapInputErrorEffect
+
+Returns a new channel which is the same as this one but applies the given
+effectual function to the input channel's error value.
+
+**Signature**
+
+```ts
+export declare const mapInputErrorEffect: {
+  <Env1, InErr0, InErr, InDone>(f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>): <
+    Env,
+    InElem,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+  <Env, InElem, OutErr, OutElem, OutDone, Env1, InErr0, InErr, InDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (error: InErr0) => Effect.Effect<Env1, InErr, InDone>
+  ): Channel<Env | Env1, InErr0, InElem, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## mapInputIn
+
+Returns a new channel which is the same as this one but applies the given
+function to the input channel's output elements.
+
+**Signature**
+
+```ts
+export declare const mapInputIn: {
+  <InElem0, InElem>(f: (a: InElem0) => InElem): <Env, InErr, InDone, OutErr, OutElem, OutDone>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+  <Env, InErr, InDone, OutErr, OutElem, OutDone, InElem0, InElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InElem0) => InElem
+  ): Channel<Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+}
+```
+
+Added in v1.0.0
+
+## mapInputInEffect
+
+Returns a new channel which is the same as this one but applies the given
+effectual function to the input channel's output elements.
+
+**Signature**
+
+```ts
+export declare const mapInputInEffect: {
+  <Env1, InErr, InElem0, InElem>(f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>): <
+    Env,
+    InDone,
+    OutErr,
+    OutElem,
+    OutDone
+  >(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>
+  ) => Channel<Env1 | Env, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
+  <Env, InDone, OutErr, OutElem, OutDone, Env1, InErr, InElem0, InElem>(
+    self: Channel<Env, InErr, InElem, InDone, OutErr, OutElem, OutDone>,
+    f: (a: InElem0) => Effect.Effect<Env1, InErr, InElem>
+  ): Channel<Env | Env1, InErr, InElem0, InDone, OutErr, OutElem, OutDone>
 }
 ```
 

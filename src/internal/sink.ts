@@ -349,17 +349,17 @@ export const collectLeftover = <R, E, In, L, Z>(
   new SinkImpl(pipe(core.collectElements(toChannel(self)), channel.map(([chunks, z]) => [z, Chunk.flatten(chunks)])))
 
 /** @internal */
-export const contramap = dual<
+export const mapInput = dual<
   <In0, In>(f: (input: In0) => In) => <R, E, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R, E, In0, L, Z>,
   <R, E, L, Z, In0, In>(self: Sink.Sink<R, E, In, L, Z>, f: (input: In0) => In) => Sink.Sink<R, E, In0, L, Z>
 >(
   2,
   <R, E, L, Z, In0, In>(self: Sink.Sink<R, E, In, L, Z>, f: (input: In0) => In): Sink.Sink<R, E, In0, L, Z> =>
-    pipe(self, contramapChunks(Chunk.map(f)))
+    pipe(self, mapInputChunks(Chunk.map(f)))
 )
 
 /** @internal */
-export const contramapEffect = dual<
+export const mapInputEffect = dual<
   <In0, R2, E2, In>(
     f: (input: In0) => Effect.Effect<R2, E2, In>
   ) => <R, E, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In0, L, Z>,
@@ -373,7 +373,7 @@ export const contramapEffect = dual<
     self: Sink.Sink<R, E, In, L, Z>,
     f: (input: In0) => Effect.Effect<R2, E2, In>
   ): Sink.Sink<R | R2, E | E2, In0, L, Z> =>
-    contramapChunksEffect(
+    mapInputChunksEffect(
       self,
       (chunk) =>
         Effect.map(
@@ -384,7 +384,7 @@ export const contramapEffect = dual<
 )
 
 /** @internal */
-export const contramapChunks = dual<
+export const mapInputChunks = dual<
   <In0, In>(
     f: (chunk: Chunk.Chunk<In0>) => Chunk.Chunk<In>
   ) => <R, E, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R, E, In0, L, Z>,
@@ -408,7 +408,7 @@ export const contramapChunks = dual<
 )
 
 /** @internal */
-export const contramapChunksEffect = dual<
+export const mapInputChunksEffect = dual<
   <In0, R2, E2, In>(
     f: (chunk: Chunk.Chunk<In0>) => Effect.Effect<R2, E2, Chunk.Chunk<In>>
   ) => <R, E, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R2 | R, E2 | E, In0, L, Z>,
@@ -466,7 +466,7 @@ export const dimap = dual<
       readonly onInput: (input: In0) => In
       readonly onDone: (z: Z) => Z2
     }
-  ): Sink.Sink<R, E, In0, L, Z2> => map(contramap(self, options.onInput), options.onDone)
+  ): Sink.Sink<R, E, In0, L, Z2> => map(mapInput(self, options.onInput), options.onDone)
 )
 
 /** @internal */
@@ -494,7 +494,7 @@ export const dimapEffect = dual<
     }
   ): Sink.Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2> =>
     mapEffect(
-      contramapEffect(self, options.onInput),
+      mapInputEffect(self, options.onInput),
       options.onDone
     )
 )
@@ -524,7 +524,7 @@ export const dimapChunks = dual<
     }
   ): Sink.Sink<R, E, In0, L, Z2> =>
     map(
-      contramapChunks(self, options.onInput),
+      mapInputChunks(self, options.onInput),
       options.onDone
     )
 )
@@ -553,7 +553,7 @@ export const dimapChunksEffect = dual<
       readonly onDone: (z: Z) => Effect.Effect<R3, E3, Z2>
     }
   ): Sink.Sink<R | R2 | R3, E | E2 | E3, In0, L, Z2> =>
-    mapEffect(contramapChunksEffect(self, options.onInput), options.onDone)
+    mapEffect(mapInputChunksEffect(self, options.onInput), options.onDone)
 )
 
 /** @internal */
@@ -750,7 +750,7 @@ export const filterInput: {
   <In, In1 extends In>(f: Predicate<In1>): <R, E, L, Z>(self: Sink.Sink<R, E, In, L, Z>) => Sink.Sink<R, E, In1, L, Z>
 } = <In, In1 extends In>(f: Predicate<In1>) => {
   return <R, E, L, Z>(self: Sink.Sink<R, E, In, L, Z>): Sink.Sink<R, E, In1, L, Z> =>
-    pipe(self, contramapChunks(Chunk.filter(f)))
+    pipe(self, mapInputChunks(Chunk.filter(f)))
 }
 
 /** @internal */
@@ -768,7 +768,7 @@ export const filterInputEffect = dual<
     self: Sink.Sink<R, E, In, L, Z>,
     f: (input: In1) => Effect.Effect<R2, E2, boolean>
   ): Sink.Sink<R | R2, E | E2, In1, L, Z> =>
-    contramapChunksEffect(
+    mapInputChunksEffect(
       self,
       (chunk) => Effect.map(Effect.filter(chunk, f), Chunk.unsafeFromArray)
     )

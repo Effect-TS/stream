@@ -84,7 +84,7 @@ Added in v1.0.0
   - [contextWith](#contextwith)
   - [contextWithEffect](#contextwitheffect)
   - [contextWithStream](#contextwithstream)
-  - [contramapContext](#contramapcontext)
+  - [mapInputContext](#mapinputcontext)
   - [provideContext](#providecontext)
   - [provideLayer](#providelayer)
   - [provideService](#provideservice)
@@ -1301,7 +1301,7 @@ export declare const contextWithStream: <R0, R, E, A>(
 
 Added in v1.0.0
 
-## contramapContext
+## mapInputContext
 
 Transforms the context being provided to the stream with the specified
 function.
@@ -1309,7 +1309,7 @@ function.
 **Signature**
 
 ```ts
-export declare const contramapContext: {
+export declare const mapInputContext: {
   <R0, R>(f: (env: Context.Context<R0>) => Context.Context<R>): <E, A>(self: Stream<R, E, A>) => Stream<R0, E, A>
   <E, A, R0, R>(self: Stream<R, E, A>, f: (env: Context.Context<R0>) => Context.Context<R>): Stream<R0, E, A>
 }
