@@ -59,31 +59,15 @@ export declare namespace GroupBy {
  */
 export const evaluate: {
   <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    options?: { readonly bufferSize?: number }
   ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
   <R, K, E, V, R2, E2, A>(
     self: GroupBy<R, E, K, V>,
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>
+    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
+    options?: { readonly bufferSize?: number }
   ): Stream.Stream<R | R2, E | E2, A>
 } = internal.evaluate
-
-/**
- * Like `evaluate`, but with a configurable `bufferSize` parameter.
- *
- * @since 1.0.0
- * @category destructors
- */
-export const evaluateBuffer: {
-  <K, E, V, R2, E2, A>(
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
-  ): <R>(self: GroupBy<R, E, K, V>) => Stream.Stream<R2 | R, E | E2, A>
-  <R, K, E, V, R2, E2, A>(
-    self: GroupBy<R, E, K, V>,
-    f: (key: K, stream: Stream.Stream<never, E, V>) => Stream.Stream<R2, E2, A>,
-    bufferSize: number
-  ): Stream.Stream<R | R2, E | E2, A>
-} = internal.evaluateBuffer
 
 /**
  * Filter the groups to be processed.
