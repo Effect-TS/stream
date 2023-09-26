@@ -1,5 +1,33 @@
 # @effect/stream
 
+## 0.37.0
+
+### Minor Changes
+
+- [#181](https://github.com/Effect-TS/stream/pull/181) [`eab4bdb`](https://github.com/Effect-TS/stream/commit/eab4bdb66e2583f8871aa11005aa298a1f01d770) Thanks [@gcanti](https://github.com/gcanti)! - Stream: range now includes both endpoints
+
+- [#184](https://github.com/Effect-TS/stream/pull/184) [`29de179`](https://github.com/Effect-TS/stream/commit/29de179b3c1d7225d64d3d5f50a0d710f80ea9f1) Thanks [@gcanti](https://github.com/gcanti)! - rename contramap* functions to mapInput* functions:
+
+  - Channel
+    - contramap
+    - contramapEffect
+    - contramapError
+    - contramapErrorEffect
+    - contramapIn
+    - contramapInEffect
+    - contramapContext
+  - Sink
+    - contramap
+    - contramapEffect
+    - contramapChunks
+    - contramapChunksEffect
+  - Stream
+    - contramapContext
+
+- [#185](https://github.com/Effect-TS/stream/pull/185) [`e02abea`](https://github.com/Effect-TS/stream/commit/e02abeace2e9461d30df33cab7e99fc251491428) Thanks [@tim-smart](https://github.com/tim-smart)! - update dependencies
+
+- [#177](https://github.com/Effect-TS/stream/pull/177) [`081ac83`](https://github.com/Effect-TS/stream/commit/081ac839dc6692ab6faafaabe4f6a3b76d493d65) Thanks [@tim-smart](https://github.com/tim-smart)! - consolidate GroupBy.evaluate & evaluateBuffer
+
 ## 0.36.1
 
 ### Patch Changes
