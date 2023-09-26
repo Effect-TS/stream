@@ -63,7 +63,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("asyncEffect - handles defects", () =>
@@ -76,7 +76,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("asyncEffect - signals the end of the stream", () =>
@@ -176,7 +176,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("asyncInterrupt - handles defects", () =>
@@ -189,7 +189,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("asyncInterrupt - backpressure", () =>
@@ -274,7 +274,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("asyncOption - handles defects", () =>
@@ -287,7 +287,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("asyncOption - backpressure", () =>
@@ -369,7 +369,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("asyncScoped - handles defects", () =>
@@ -382,7 +382,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("asyncScoped - backpressure", () =>

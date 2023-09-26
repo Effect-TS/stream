@@ -3265,12 +3265,10 @@ export const haltWhen = dual<
               onFailure: core.fail,
               onDone: () => core.unit
             }),
-          onSome: Exit.match<E2, _, Channel.Channel<R2, E | E2, Chunk.Chunk<A>, unknown, E | E2, Chunk.Chunk<A>, void>>(
-            {
-              onFailure: core.failCause,
-              onSuccess: () => core.unit
-            }
-          )
+          onSome: Exit.match({
+            onFailure: core.failCause,
+            onSuccess: () => core.unit
+          })
         })),
         channel.unwrap
       )
@@ -6471,15 +6469,14 @@ export const timeoutTo = dual<
     return pipe(
       self,
       timeoutFailCause<E | E2>(() => Cause.die(StreamTimeout), duration),
-      catchSomeCause((annotatedCause) => {
-        const cause = Cause.unannotate(annotatedCause)
-        return Cause.isDieType(cause) &&
-            Cause.isRuntimeException(cause.defect) &&
-            cause.defect.message !== undefined &&
-            cause.defect.message === "Stream Timeout" ?
+      catchSomeCause((cause) =>
+        Cause.isDieType(cause) &&
+          Cause.isRuntimeException(cause.defect) &&
+          cause.defect.message !== undefined &&
+          cause.defect.message === "Stream Timeout" ?
           Option.some(that) :
           Option.none()
-      })
+      )
     )
   }
 )

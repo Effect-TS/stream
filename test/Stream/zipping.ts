@@ -142,7 +142,7 @@ describe.concurrent("Stream", () => {
         Effect.exit
       )
       assert.deepStrictEqual(
-        Exit.unannotate(result),
+        result,
         Exit.failCause(Cause.parallel(Cause.empty, Cause.die(Cause.RuntimeException("Ouch"))))
       )
     }))

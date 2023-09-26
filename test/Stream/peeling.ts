@@ -40,6 +40,6 @@ describe.concurrent("Stream", () => {
         Effect.exit,
         Effect.scoped
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("fail"))
+      assert.deepStrictEqual(result, Exit.fail("fail"))
     }))
 })

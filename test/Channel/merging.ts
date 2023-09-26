@@ -112,7 +112,7 @@ describe.concurrent("Channel", () => {
         Channel.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail<[string, boolean]>(["boom", true]))
+      assert.deepStrictEqual(result, Exit.fail<[string, boolean]>(["boom", true]))
     }))
 
   it.effect("mergeWith - interrupts losing side", () =>
@@ -143,6 +143,6 @@ describe.concurrent("Channel", () => {
           ))
       })
       const result = yield* $(Effect.exit(Channel.runDrain(merged)))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.succeed(void 0))
+      assert.deepStrictEqual(result, Exit.succeed(void 0))
     }))
 })

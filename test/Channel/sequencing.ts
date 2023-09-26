@@ -36,6 +36,6 @@ describe.concurrent("Channel", () => {
         Channel.zipRight(Channel.fail("hello"))
       )
       const result = yield* $(Effect.exit(Channel.runDrain(channel)))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("hello"))
+      assert.deepStrictEqual(result, Exit.fail("hello"))
     }))
 })

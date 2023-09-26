@@ -71,6 +71,6 @@ describe.concurrent("Stream", () => {
         Effect.flatMap(Queue.take),
         Effect.scoped
       )
-      assert.deepStrictEqual(Exit.unannotate(queue), Exit.die(Cause.RuntimeException("die")))
+      assert.deepStrictEqual(queue, Exit.die(Cause.RuntimeException("die")))
     }))
 })

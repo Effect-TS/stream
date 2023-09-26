@@ -400,7 +400,7 @@ describe.concurrent("Stream", () => {
       )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(defect))
+      assert.deepStrictEqual(result, Exit.die(defect))
     }))
 
   it.effect("flatMapPar - outer defects interrupt all fibers", () =>
@@ -426,7 +426,7 @@ describe.concurrent("Stream", () => {
       )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(defect))
+      assert.deepStrictEqual(result, Exit.die(defect))
     }))
 
   it.effect("flatMapPar - finalizer ordering", () =>
@@ -622,7 +622,7 @@ describe.concurrent("Stream", () => {
       )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("flatMapParSwitch - outer defects interrupt all fibers", () =>
@@ -648,7 +648,7 @@ describe.concurrent("Stream", () => {
       )
       const cancelled = yield* $(Ref.get(ref))
       assert.isTrue(cancelled)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("flatMapParSwitch - finalizer ordering", () =>
@@ -730,7 +730,7 @@ describe.concurrent("Stream", () => {
         Effect.scoped,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("flattenIterables", () =>

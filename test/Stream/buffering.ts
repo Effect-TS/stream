@@ -35,7 +35,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("buffer - fast producer progresses independently", () =>
@@ -87,7 +87,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("bufferChunks - fast producer progresses independently", () =>
@@ -125,7 +125,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("bufferChunksDropping - fast producer progress independently", () =>
@@ -216,7 +216,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("bufferChunksSliding - fast producer progress independently", () =>
@@ -307,7 +307,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("bufferDropping - fast producer progress independently", () =>
@@ -398,7 +398,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("bufferSliding - fast producer progress independently", () =>
@@ -482,7 +482,7 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(Cause.RuntimeException("boom")))
+      assert.deepStrictEqual(result, Exit.die(Cause.RuntimeException("boom")))
     }))
 
   it.effect("bufferUnbounded - buffers the stream", () =>
@@ -506,7 +506,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("bufferUnbounded - fast producer progress independently", () =>

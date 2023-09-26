@@ -295,7 +295,7 @@ describe.concurrent("Stream", () => {
       )
       const count = yield* $(Ref.get(ref))
       assert.strictEqual(count, 2)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
+      assert.deepStrictEqual(result, Exit.fail("boom"))
     }))
 
   it.effect("mapEffectPar - propagates the correct error with subsequent calls to mapEffectPar (ZIO #4514)", () =>
@@ -321,7 +321,7 @@ describe.concurrent("Stream", () => {
       )
       yield* $(TestClock.adjust(Duration.seconds(5)))
       const exit = yield* $(Fiber.await(fiber))
-      assert.deepStrictEqual(Exit.unannotate(exit), Exit.fail(Cause.RuntimeException("boom")))
+      assert.deepStrictEqual(exit, Exit.fail(Cause.RuntimeException("boom")))
     }))
 
   it.effect("mapEffectParUnordered - mapping with failure is failure", () =>
@@ -332,6 +332,6 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("fail"))
+      assert.deepStrictEqual(result, Exit.fail("fail"))
     }))
 })

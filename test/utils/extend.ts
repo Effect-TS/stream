@@ -35,7 +35,7 @@ export const effect = (() => {
       () =>
         pipe(
           Effect.suspend(self),
-          Effect.provideLayer(TestEnvironment.testContext()),
+          Effect.provide(TestEnvironment.testContext()),
           runTest
         ),
       timeout
@@ -52,7 +52,7 @@ export const effect = (() => {
         () =>
           pipe(
             Effect.suspend(self),
-            Effect.provideLayer(TestEnvironment.testContext()),
+            Effect.provide(TestEnvironment.testContext()),
             runTest
           ),
         timeout
@@ -68,7 +68,7 @@ export const effect = (() => {
         () =>
           pipe(
             Effect.suspend(self),
-            Effect.provideLayer(TestEnvironment.testContext()),
+            Effect.provide(TestEnvironment.testContext()),
             runTest
           ),
         timeout
@@ -134,7 +134,7 @@ export const scoped = <E, A>(
       pipe(
         Effect.suspend(self),
         Effect.scoped,
-        Effect.provideLayer(TestEnvironment.testContext()),
+        Effect.provide(TestEnvironment.testContext()),
         runTest
       ),
     timeout

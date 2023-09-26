@@ -45,7 +45,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("aggregate - error propagation #2", () =>
@@ -59,7 +59,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("aggregate - interruption propagation #1", () =>
@@ -263,7 +263,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("aggregateWithinEither - error propagation #2", () =>
@@ -278,7 +278,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("aggregateWithinEither - interruption propagation #1", () =>

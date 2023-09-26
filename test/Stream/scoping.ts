@@ -104,7 +104,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(Cause.RuntimeException("die")))
+      assert.deepStrictEqual(result, Exit.die(Cause.RuntimeException("die")))
     }))
 
   it.effect("ensuring", () =>

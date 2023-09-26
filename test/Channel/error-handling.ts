@@ -21,7 +21,7 @@ describe.concurrent("Channel", () => {
         Channel.concatMap(() => Channel.fail("error2"))
       )
       const result = yield* $(Effect.exit(Channel.runCollect(channel)))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error2"))
+      assert.deepStrictEqual(result, Exit.fail("error2"))
     }))
 
   it.effect("error cause is propagated on channel interruption", () =>
@@ -50,6 +50,6 @@ describe.concurrent("Channel", () => {
     Effect.gen(function*($) {
       const channel = Channel.scoped(Effect.fail("error"))
       const result = yield* $(Channel.runCollect(channel), Effect.exit)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
+      assert.deepStrictEqual(result, Exit.fail("error"))
     }))
 })
