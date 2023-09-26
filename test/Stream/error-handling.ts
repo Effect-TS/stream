@@ -33,7 +33,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("Ouch"))
+      assert.deepStrictEqual(result, Exit.fail("Ouch"))
     }))
 
   it.effect("absolve - round trip #1", () =>
@@ -58,8 +58,8 @@ describe.concurrent("Stream", () => {
         result1: Effect.exit(Stream.runCollect(stream)),
         result2: pipe(stream, Stream.either, Stream.mapEffect(identity), Stream.runCollect, Effect.exit)
       }))
-      assert.deepStrictEqual(Exit.unannotate(result1), Exit.fail("Ouch"))
-      assert.deepStrictEqual(Exit.unannotate(result2), Exit.fail("Ouch"))
+      assert.deepStrictEqual(result1, Exit.fail("Ouch"))
+      assert.deepStrictEqual(result2, Exit.fail("Ouch"))
     }))
 
   it.effect("catchAllCause - recovery from errors", () =>
@@ -152,7 +152,7 @@ describe.concurrent("Stream", () => {
         Effect.exit
       )
       const result = yield* $(Ref.get(ref))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
+      assert.deepStrictEqual(result, Exit.fail("boom"))
     }))
 
   it.effect("catchSome - recovery from some errors", () =>
@@ -195,12 +195,11 @@ describe.concurrent("Stream", () => {
       const stream2 = Stream.make(3, 4)
       const result = yield* $(
         stream1,
-        Stream.catchSomeCause((annotatedCause) => {
-          const cause = Cause.unannotate(annotatedCause)
-          return Cause.isFailType(cause) && cause.error === "boom" ?
+        Stream.catchSomeCause((cause) =>
+          Cause.isFailType(cause) && cause.error === "boom" ?
             Option.some(stream2) :
             Option.none()
-        }),
+        ),
         Stream.runCollect
       )
       assert.deepStrictEqual(Array.from(result), [1, 2, 3, 4])
@@ -263,7 +262,7 @@ describe.concurrent("Stream", () => {
         Effect.exit
       )
       const called = yield* $(Ref.get(ref))
-      assert.deepStrictEqual(Exit.unannotate(exit), Exit.fail("boom"))
+      assert.deepStrictEqual(exit, Exit.fail("boom"))
       assert.isTrue(called)
     }))
 

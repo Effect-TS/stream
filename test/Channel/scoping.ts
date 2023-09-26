@@ -61,8 +61,7 @@ describe.concurrent("Channel", () => {
         Channel.ensuring(Effect.unit),
         Channel.runDrain,
         Effect.sandbox,
-        Effect.either,
-        Effect.map(Either.mapLeft(Cause.unannotate))
+        Effect.either
       )
 
       assert.deepEqual(exit, Either.left(Cause.die("ok")))

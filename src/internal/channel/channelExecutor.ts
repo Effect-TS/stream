@@ -250,7 +250,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
                     this._currentChannel.effect() :
                     pipe(
                       this._currentChannel.effect(),
-                      Effect.provideContext(this._providedEnv)
+                      Effect.provide(this._providedEnv)
                     )
 
                   result = ChannelState.FromEffect(
@@ -566,7 +566,7 @@ export class ChannelExecutor<Env, InErr, InElem, InDone, OutErr, OutElem, OutDon
     if (this._providedEnv === undefined) {
       return effect
     }
-    return pipe(effect, Effect.provideContext(this._providedEnv))
+    return pipe(effect, Effect.provide(this._providedEnv))
   }
 
   runEnsuring(ensuring: core.Ensuring): void {

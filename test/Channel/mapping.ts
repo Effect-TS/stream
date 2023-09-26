@@ -46,7 +46,7 @@ describe.concurrent("Channel", () => {
         Channel.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(1))
+      assert.deepStrictEqual(result, Exit.fail(1))
     }))
 
   it.effect("mapOut - simple", () =>
@@ -131,7 +131,7 @@ describe.concurrent("Channel", () => {
         Channel.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
+      assert.deepStrictEqual(result, Exit.fail("error"))
     }))
 
   it.effect("concatMap - upstream acquireReleaseOut + downstream failure", () =>
@@ -145,7 +145,7 @@ describe.concurrent("Channel", () => {
         Effect.exit
       )
       const [exit, events] = yield* $(effect, Effect.zip(Ref.get(ref)))
-      assert.deepStrictEqual(Exit.unannotate(exit), Exit.fail("error"))
+      assert.deepStrictEqual(exit, Exit.fail("error"))
       assert.deepStrictEqual(events, ["Acquired", "Released"])
     }))
 
@@ -158,7 +158,7 @@ describe.concurrent("Channel", () => {
         Channel.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
+      assert.deepStrictEqual(result, Exit.fail("error"))
     }))
 
   it.effect("concatMap - with failure then flatMap", () =>
@@ -170,7 +170,7 @@ describe.concurrent("Channel", () => {
         Channel.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error"))
+      assert.deepStrictEqual(result, Exit.fail("error"))
     }))
 
   it.effect("concatMap - multiple concatMaps with failure in first and catchAll in second", () =>
@@ -182,7 +182,7 @@ describe.concurrent("Channel", () => {
         Channel.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("error2"))
+      assert.deepStrictEqual(result, Exit.fail("error2"))
     }))
 
   it.effect("concatMap - done value combination", () =>

@@ -22,7 +22,7 @@ describe.concurrent("Sink", () => {
         )
       )
       const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(refinedTo))
+      assert.deepStrictEqual(result, Exit.fail(refinedTo))
     }))
 
   it.effect("refineOrDieWith - refines", () =>
@@ -37,7 +37,7 @@ describe.concurrent("Sink", () => {
             Option.none(), (error) => error.message)
       )
       const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(refinedTo))
+      assert.deepStrictEqual(result, Exit.fail(refinedTo))
     }))
 
   it.effect("refineOrDieWith - dies", () =>
@@ -52,6 +52,6 @@ describe.concurrent("Sink", () => {
             Option.none(), (error) => error.message)
       )
       const result = yield* $(Stream.make(1, 2, 3), Stream.run(sink), Effect.exit)
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(void 0))
+      assert.deepStrictEqual(result, Exit.die(void 0))
     }))
 })

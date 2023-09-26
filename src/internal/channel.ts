@@ -725,7 +725,7 @@ const fromQueueInternal = <Err, Elem, Done>(
   pipe(
     core.fromEffect(Queue.take(queue)),
     core.flatMap(Either.match({
-      onLeft: Exit.match<Err, Done, Channel.Channel<never, unknown, unknown, unknown, Err, Elem, Done>>({
+      onLeft: Exit.match({
         onFailure: core.failCause,
         onSuccess: core.succeedNow
       }),
@@ -2004,14 +2004,12 @@ export const pipeToOrFail = dual<
       OutDone2
     > = core.readWithCause({
       onInput: (outElem) => pipe(core.write(outElem), core.flatMap(() => writer)),
-      onFailure: (annotatedCause) => {
-        const unannotated = Cause.unannotate(annotatedCause)
-        return Cause.isDieType(unannotated) &&
-            isChannelException(unannotated.defect) &&
-            Equal.equals(unannotated.defect, channelException)
-          ? core.fail(unannotated.defect.error as OutErr2)
-          : core.failCause(annotatedCause)
-      },
+      onFailure: (cause) =>
+        Cause.isDieType(cause) &&
+          isChannelException(cause.defect) &&
+          Equal.equals(cause.defect, channelException)
+          ? core.fail(cause.defect.error as OutErr2)
+          : core.failCause(cause),
       onDone: core.succeedNow
     })
 

@@ -79,7 +79,7 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
+      assert.deepStrictEqual(result, Exit.fail("boom"))
     }))
 
   it.effect("drainFork - fails the foreground stream if the background fails with a defect", () =>
@@ -91,6 +91,6 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 })

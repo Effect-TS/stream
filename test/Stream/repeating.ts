@@ -79,7 +79,7 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
+      assert.deepStrictEqual(result, Exit.fail("boom"))
     }))
 
   it.effect("repeatEither", () =>
@@ -189,7 +189,7 @@ describe.concurrent("Stream", () => {
         const stream = Stream.repeatEffectWithSchedule(effect, schedule)
         return yield* $(
           Stream.runCollect(stream),
-          Effect.provideLayer(TestEnvironment.testContext())
+          Effect.provide(TestEnvironment.testContext())
         )
       })
       const result = await Effect.runPromise(effect)

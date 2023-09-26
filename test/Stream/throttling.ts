@@ -275,7 +275,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(Option.none()))
+      assert.deepStrictEqual(result, Exit.fail(Option.none()))
     }))
 
   it.effect("debounce - should work with empty streams", () =>

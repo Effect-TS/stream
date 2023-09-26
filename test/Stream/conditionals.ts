@@ -42,7 +42,7 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("whenCase - returns the resulting stream if the given partial function is defined for the given value", () =>
@@ -88,7 +88,7 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("whenCase - dies if the partial function throws an exception", () =>
@@ -104,7 +104,7 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("whenCaseEffect - returns the resulting stream if the given partial function is defined for the given effectful value", () =>
@@ -146,7 +146,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 
   it.effect("whenCaseEffect - dies if the given partial function throws an exception", () =>
@@ -160,7 +160,7 @@ describe.concurrent("Stream", () => {
         Stream.runCollect,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.die(error))
+      assert.deepStrictEqual(result, Exit.die(error))
     }))
 
   it.effect("whenEffect - returns the stream if the effectful condition is satisfied", () =>
@@ -192,6 +192,6 @@ describe.concurrent("Stream", () => {
         Stream.runDrain,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(error))
+      assert.deepStrictEqual(result, Exit.fail(error))
     }))
 })

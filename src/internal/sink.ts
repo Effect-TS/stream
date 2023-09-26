@@ -2069,7 +2069,7 @@ export const zipWith = dual<
           onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
           onSuccess: (leftZ) =>
             mergeDecision.Await<R | R2, E2, Z2, E | E2, Z3>(
-              Exit.match<E2, Z2, Effect.Effect<R | R2, E | E2, Z3>>({
+              Exit.match({
                 onFailure: Effect.failCause,
                 onSuccess: (rightZ) => Effect.succeed(f(leftZ, rightZ))
               })
@@ -2079,7 +2079,7 @@ export const zipWith = dual<
           onFailure: (cause) => mergeDecision.Done(Effect.failCause(cause)),
           onSuccess: (rightZ) =>
             mergeDecision.Await<R | R2, E, Z, E | E2, Z3>(
-              Exit.match<E, Z, Effect.Effect<R | R2, E | E2, Z3>>({
+              Exit.match({
                 onFailure: Effect.failCause,
                 onSuccess: (leftZ) => Effect.succeed(f(leftZ, rightZ))
               })

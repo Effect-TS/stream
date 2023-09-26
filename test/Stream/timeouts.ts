@@ -68,8 +68,7 @@ describe.concurrent("Stream", () => {
         Stream.timeoutFailCause(() => Cause.die(error), Duration.zero),
         Stream.runDrain,
         Effect.sandbox,
-        Effect.either,
-        Effect.map(Either.mapLeft(Cause.unannotate))
+        Effect.either
       )
       assert.deepStrictEqual(result, Either.left(Cause.die(error)))
     }))

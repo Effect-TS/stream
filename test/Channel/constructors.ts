@@ -16,6 +16,6 @@ describe.concurrent("Channel", () => {
   it.effect("fail", () =>
     Effect.gen(function*($) {
       const result = yield* $(Effect.exit(Channel.runCollect(Channel.fail("uh oh"))))
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("uh oh"))
+      assert.deepStrictEqual(result, Exit.fail("uh oh"))
     }))
 })

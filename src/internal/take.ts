@@ -127,7 +127,7 @@ export const match = dual<
     readonly onSuccess: (chunk: Chunk.Chunk<A>) => Z3
   }
 ): Z | Z2 | Z3 =>
-  Exit.match<Option.Option<E>, Chunk.Chunk<A>, Z | Z2 | Z3>(self.exit, {
+  Exit.match(self.exit, {
     onFailure: (cause) =>
       Option.match(Cause.flipCauseOption(cause), {
         onNone: onEnd,

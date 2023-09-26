@@ -93,10 +93,10 @@ describe.concurrent("Sink", () => {
       const result2 = yield* $(run(single))
       const result3 = yield* $(run(double))
       const result4 = yield* $(run(failed))
-      assert.deepStrictEqual(Exit.unannotate(result1), Exit.succeed([[0], []]))
-      assert.deepStrictEqual(Exit.unannotate(result2), Exit.succeed([[30], [1]]))
-      assert.deepStrictEqual(Exit.unannotate(result3), Exit.succeed([[30], [1, 2]]))
-      assert.deepStrictEqual(Exit.unannotate(result4), Exit.fail("Ouch"))
+      assert.deepStrictEqual(result1, Exit.succeed([[0], []]))
+      assert.deepStrictEqual(result2, Exit.succeed([[30], [1]]))
+      assert.deepStrictEqual(result3, Exit.succeed([[30], [1, 2]]))
+      assert.deepStrictEqual(result4, Exit.fail("Ouch"))
     }))
 
   it.effect("foldUntil", () =>

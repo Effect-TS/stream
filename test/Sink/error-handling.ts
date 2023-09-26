@@ -24,6 +24,6 @@ describe.concurrent("Sink", () => {
         ),
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail(ErrorMapped))
+      assert.deepStrictEqual(result, Exit.fail(ErrorMapped))
     }))
 })

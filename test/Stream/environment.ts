@@ -78,7 +78,7 @@ describe.concurrent("Stream", () => {
         Stream.runHead,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
+      assert.deepStrictEqual(result, Exit.fail("boom"))
     }))
 
   it.effect("contextWithStream - success", () =>
@@ -112,7 +112,7 @@ describe.concurrent("Stream", () => {
         Stream.runHead,
         Effect.exit
       )
-      assert.deepStrictEqual(Exit.unannotate(result), Exit.fail("boom"))
+      assert.deepStrictEqual(result, Exit.fail("boom"))
     }))
 
   it.effect("provide", () =>
