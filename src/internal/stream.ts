@@ -2383,28 +2383,28 @@ export const filterEffect = dual<
 
 /** @internal */
 export const filterMap = dual<
-  <A, X extends A, B>(pf: (a: X) => Option.Option<B>) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, B>,
-  <R, E, A, X extends A, B>(self: Stream.Stream<R, E, A>, pf: (a: X) => Option.Option<B>) => Stream.Stream<R, E, B>
+  <A, B>(pf: (a: A) => Option.Option<B>) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, B>,
+  <R, E, A, B>(self: Stream.Stream<R, E, A>, pf: (a: A) => Option.Option<B>) => Stream.Stream<R, E, B>
 >(
   2,
-  <R, E, A, X extends A, B>(self: Stream.Stream<R, E, A>, pf: (a: X) => Option.Option<B>): Stream.Stream<R, E, B> =>
-    mapChunks(self, Chunk.filterMap(pf as (a: A) => Option.Option<B>))
+  <R, E, A, B>(self: Stream.Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream.Stream<R, E, B> =>
+    mapChunks(self, Chunk.filterMap(pf))
 )
 
 /** @internal */
 export const filterMapEffect = dual<
-  <A, X extends A, R2, E2, A2>(
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+  <A, R2, E2, A2>(
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, A, X extends A, R2, E2, A2>(
+  <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   2,
-  <R, E, A, X extends A, R2, E2, A2>(
+  <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
   ): Stream.Stream<R | R2, E | E2, A2> =>
     suspend(() => {
       const loop = (
@@ -2419,7 +2419,7 @@ export const filterMapEffect = dual<
           })
         } else {
           return pipe(
-            pf(next.value as X),
+            pf(next.value),
             Option.match({
               onNone: () => Effect.sync(() => loop(iterator)),
               onSome: Effect.map((a2) => core.flatMap(core.write(Chunk.of(a2)), () => loop(iterator)))
@@ -2434,16 +2434,16 @@ export const filterMapEffect = dual<
 
 /** @internal */
 export const filterMapWhile = dual<
-  <A, X extends A, A2>(
-    pf: (a: X) => Option.Option<A2>
+  <A, A2>(
+    pf: (a: A) => Option.Option<A2>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R, E, A2>,
-  <R, E, A, X extends A, A2>(self: Stream.Stream<R, E, A>, pf: (a: X) => Option.Option<A2>) => Stream.Stream<R, E, A2>
+  <R, E, A, A2>(self: Stream.Stream<R, E, A>, pf: (a: A) => Option.Option<A2>) => Stream.Stream<R, E, A2>
 >(
   2,
-  <R, E, A, X extends A, A2>(self: Stream.Stream<R, E, A>, pf: (a: X) => Option.Option<A2>) => {
+  <R, E, A, A2>(self: Stream.Stream<R, E, A>, pf: (a: A) => Option.Option<A2>) => {
     const loop: Channel.Channel<never, E, Chunk.Chunk<A>, unknown, E, Chunk.Chunk<A2>, unknown> = core.readWith({
       onInput: (input: Chunk.Chunk<A>) => {
-        const mapped = Chunk.filterMapWhile(input, pf as (a: A) => Option.Option<A2>)
+        const mapped = Chunk.filterMapWhile(input, pf)
         if (mapped.length === input.length) {
           return pipe(core.write(mapped), core.flatMap(() => loop))
         }
@@ -2458,18 +2458,18 @@ export const filterMapWhile = dual<
 
 /** @internal */
 export const filterMapWhileEffect = dual<
-  <A, X extends A, R2, E2, A2>(
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+  <A, R2, E2, A2>(
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
   ) => <R, E>(self: Stream.Stream<R, E, A>) => Stream.Stream<R2 | R, E2 | E, A2>,
-  <R, E, A, X extends A, R2, E2, A2>(
+  <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
   ) => Stream.Stream<R2 | R, E2 | E, A2>
 >(
   2,
-  <R, E, A, X extends A, R2, E2, A2>(
+  <R, E, A, R2, E2, A2>(
     self: Stream.Stream<R, E, A>,
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
+    pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>
   ): Stream.Stream<R | R2, E | E2, A2> =>
     suspend(() => {
       const loop = (
@@ -2484,7 +2484,7 @@ export const filterMapWhileEffect = dual<
           })
         } else {
           return channel.unwrap(
-            Option.match(pf(next.value as X), {
+            Option.match(pf(next.value), {
               onNone: () => Effect.succeed(core.unit),
               onSome: Effect.map(
                 (a2) => core.flatMap(core.write(Chunk.of(a2)), () => loop(iterator))

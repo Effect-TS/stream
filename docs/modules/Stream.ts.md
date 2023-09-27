@@ -4050,8 +4050,8 @@ Performs a filter and map in a single step.
 
 ```ts
 export declare const filterMap: {
-  <A, X extends A, B>(pf: (a: X) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
-  <R, E, A, X extends A, B>(self: Stream<R, E, A>, pf: (a: X) => Option.Option<B>): Stream<R, E, B>
+  <A, B>(pf: (a: A) => Option.Option<B>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, B>
+  <R, E, A, B>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<B>): Stream<R, E, B>
 }
 ```
 
@@ -4065,13 +4065,14 @@ Performs an effectful filter and map in a single step.
 
 ```ts
 export declare const filterMapEffect: {
-  <A, X extends A, R2, E2, A2>(pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
+  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, X extends A, R2, E2, A2>(
-    self: Stream<R, E, A>,
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
-  ): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
 }
 ```
 
@@ -4086,8 +4087,8 @@ function is defined.
 
 ```ts
 export declare const filterMapWhile: {
-  <A, X extends A, A2>(pf: (a: X) => Option.Option<A2>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
-  <R, E, A, X extends A, A2>(self: Stream<R, E, A>, pf: (a: X) => Option.Option<A2>): Stream<R, E, A2>
+  <A, A2>(pf: (a: A) => Option.Option<A2>): <R, E>(self: Stream<R, E, A>) => Stream<R, E, A2>
+  <R, E, A, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<A2>): Stream<R, E, A2>
 }
 ```
 
@@ -4102,13 +4103,14 @@ specified partial function is defined.
 
 ```ts
 export declare const filterMapWhileEffect: {
-  <A, X extends A, R2, E2, A2>(pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
+  <A, R2, E2, A2>(pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): <R, E>(
     self: Stream<R, E, A>
   ) => Stream<R2 | R, E2 | E, A2>
-  <R, E, A, X extends A, R2, E2, A2>(
-    self: Stream<R, E, A>,
-    pf: (a: X) => Option.Option<Effect.Effect<R2, E2, A2>>
-  ): Stream<R | R2, E | E2, A2>
+  <R, E, A, R2, E2, A2>(self: Stream<R, E, A>, pf: (a: A) => Option.Option<Effect.Effect<R2, E2, A2>>): Stream<
+    R | R2,
+    E | E2,
+    A2
+  >
 }
 ```
 
