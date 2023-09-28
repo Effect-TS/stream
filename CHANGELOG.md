@@ -1,5 +1,13 @@
 # @effect/stream
 
+## 0.37.1
+
+### Patch Changes
+
+- [#186](https://github.com/Effect-TS/stream/pull/186) [`6597345`](https://github.com/Effect-TS/stream/commit/6597345f84245865cb9b03cacf47394d7dc354a9) Thanks [@fubhy](https://github.com/fubhy)! - update `/io`
+
+- [#187](https://github.com/Effect-TS/stream/pull/187) [`0e4c6d1`](https://github.com/Effect-TS/stream/commit/0e4c6d1dd416836fe93833904e74d1daeb76a963) Thanks [@tim-smart](https://github.com/tim-smart)! - fix filterMap tacit usage
+
 ## 0.37.0
 
 ### Minor Changes
